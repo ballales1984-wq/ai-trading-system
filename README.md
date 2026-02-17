@@ -36,4 +36,3 @@ crypto_commodity_trading/
 ├── main.py            # Main entry point
 └── requirements.txt   # Dependencies
 ```
-
