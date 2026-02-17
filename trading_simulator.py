@@ -99,6 +99,7 @@ class TradingSimulator:
         # State
         self.running = False
         self.trade_history = []  # For tracking
+        self.equity_history = []  # For portfolio chart
         
         logger.info(f"TradingSimulator initialized with ${initial_balance}")
     
@@ -331,6 +332,16 @@ class TradingSimulator:
     
     def get_portfolio_state(self) -> Dict:
         """Get current portfolio state for dashboard"""
+        # Track equity history
+        from datetime import datetime
+        self.equity_history.append({
+            'timestamp': datetime.now(),
+            'value': self.portfolio.get_total_value()
+        })
+        # Keep only last 100 entries
+        if len(self.equity_history) > 100:
+            self.equity_history = self.equity_history[-100:]
+        
         return {
             'balance': self.portfolio.balance,
             'total_value': self.portfolio.get_total_value(),
@@ -339,6 +350,10 @@ class TradingSimulator:
             'trade_count': self.portfolio.trade_count,
             'win_rate': self.portfolio.get_win_rate()
         }
+    
+    def get_equity_history(self) -> List[Dict]:
+        """Get portfolio equity history for charting"""
+        return self.equity_history
     
     # ==================== PORTFOLIO CONTROL FUNCTIONS ====================
     

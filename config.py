@@ -31,6 +31,21 @@ CRYPTO_SYMBOLS = {
     'DOT': 'DOT/USDT',
     'AVAX': 'AVAX/USDT',
     'MATIC': 'MATIC/USDT',
+    # Additional cryptocurrencies
+    'BNB': 'BNB/USDT',
+    'DOGE': 'DOGE/USDT',
+    'LINK': 'LINK/USDT',
+    'ATOM': 'ATOM/USDT',
+    'UNI': 'UNI/USDT',
+    'LTC': 'LTC/USDT',
+    'NEAR': 'NEAR/USDT',
+    'APT': 'APT/USDT',
+    'ARB': 'ARB/USDT',
+    'OP': 'OP/USDT',
+    'INJ': 'INJ/USDT',
+    'SUI': 'SUI/USDT',
+    'SEI': 'SEI/USDT',
+    'TIA': 'TIA/USDT',
 }
 
 # Commodity-linked tokens (stablecoins backed by commodities)
@@ -47,8 +62,8 @@ COMMODITY_TOKENS = {
         'underlying': 'Gold',
         'api_symbol': 'XAUT/USDT'
     },
-    'Perp': {
-        'symbol': 'PEUSD/USDT',
+    'Perp Euro': {
+        'symbol': 'PEUR/USDT',
         'name': 'Perp Euro',
         'underlying': 'EUR',
         'api_symbol': 'PEUR/USDT'
@@ -58,6 +73,18 @@ COMMODITY_TOKENS = {
         'name': 'Lido Staked Ether',
         'underlying': 'ETH',
         'api_symbol': 'STETH/USDT'
+    },
+    'Staked BNB': {
+        'symbol': 'BNBUSDT',  # BNB staking on BNB Smart Chain
+        'name': 'Binance Staked BNB',
+        'underlying': 'BNB',
+        'api_symbol': 'BNB/USDT'
+    },
+    'Frax Share': {
+        'symbol': 'FXS/USDT',
+        'name': 'Frax Share',
+        'underlying': 'Crypto',
+        'api_symbol': 'FXS/USDT'
     },
 }
 
@@ -213,11 +240,37 @@ USE_BINANCE_TESTNET = os.getenv('USE_BINANCE_TESTNET', 'false').lower() == 'true
 
 # Simulated price ranges for testing
 SIMULATED_PRICES = {
+    # Major cryptos
     'BTC/USDT': (40000, 70000),
     'ETH/USDT': (2000, 3500),
     'XRP/USDT': (0.5, 0.8),
+    # Commodities
     'PAXG/USDT': (1900, 2100),
     'XAUT/USDT': (1900, 2100),
+    # Additional cryptos
+    'SOL/USDT': (100, 200),
+    'ADA/USDT': (0.3, 0.6),
+    'DOT/USDT': (5, 10),
+    'AVAX/USDT': (25, 45),
+    'MATIC/USDT': (0.6, 1.2),
+    'BNB/USDT': (300, 500),
+    'DOGE/USDT': (0.05, 0.15),
+    'LINK/USDT': (10, 20),
+    'ATOM/USDT': (7, 15),
+    'UNI/USDT': (5, 12),
+    'LTC/USDT': (60, 120),
+    'NEAR/USDT': (3, 8),
+    'APT/USDT': (5, 15),
+    'ARB/USDT': (0.8, 2.0),
+    'OP/USDT': (1.5, 4.0),
+    'INJ/USDT': (15, 40),
+    'SUI/USDT': (1, 4),
+    'SEI/USDT': (0.2, 0.8),
+    'TIA/USDT': (10, 30),
+    # Other tokens
+    'STETH/USDT': (2000, 3500),
+    'PEUR/USDT': (1.0, 1.1),
+    'FXS/USDT': (3, 10),
 }
 
 # Price volatility for simulation
