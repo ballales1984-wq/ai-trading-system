@@ -741,6 +741,43 @@ class TradingDashboard:
             
             return cards
         
+        # Pairs comparison callback
+        @self.app.callback(
+            Output('pairs-comparison', 'children'),
+            [Input('refresh-interval', 'n_intervals')]
+        )
+        def update_pairs_comparison(n):
+            """Update trading pairs comparison from Binance"""
+            try:
+                # Get top trading pairs from Binance
+                tickers = self.binance_research.get_24hr_tickers()
+                
+                if not tickers:
+                    return [html.P("Loading...", style={'color': self.theme['text_muted']})]
+                
+                # Sort by volume and get top 10
+                sorted_tickers = sorted(tickers, key=lambda x: x.get('quote_volume', 0), reverse=True)[:10]
+                
+                rows = []
+                for t in sorted_tickers:
+                    symbol = t.get('symbol', '')
+                    price = t.get('price', 0)
+                    change = t.get('price_change_percent', 0)
+                    volume = t.get('quote_volume', 0)
+                    
+                    color = self.theme['green'] if change >= 0 else self.theme['red']
+                    
+                    rows.append(html.Div([
+                        html.Span(symbol, style={'color': self.theme['text'], 'font-weight': 'bold', 'width': '80px', 'display': 'inline-block'}),
+                        html.Span(f"${price:,.0f}" if price > 1 else f"${price:.4f}", 
+                                 style={'color': self.theme['text_muted'], 'width': '70px', 'display': 'inline-block', 'text-align': 'right'}),
+                        html.Span(f"{change:+.1f}%", style={'color': color, 'width': '60px', 'display': 'inline-block', 'text-align': 'right'}),
+                    ], style={'display': 'flex', 'justify-content': 'space-between', 'padding': '5px', 'border-bottom': '1px solid #30363d'}))
+                
+                return rows
+            except Exception as e:
+                return [html.P(f"Error: {str(e)[:50]}", style={'color': self.theme['red'], 'font-size': '11px'})]
+        
         # Portfolio callback
         @self.app.callback(
             [Output('total-balance', 'children'),
