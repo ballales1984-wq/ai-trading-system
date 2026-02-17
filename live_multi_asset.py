@@ -30,6 +30,7 @@ from src.live.portfolio_live import (
     MomentumAllocator
 )
 from src.live.telegram_notifier import TelegramNotifier
+from src.live.risk_engine import RiskEngine, RiskManager
 from technical_analysis import TechnicalAnalyzer
 from data_collector import DataCollector
 from config import CRYPTO_SYMBOLS, SIMULATED_PRICES
@@ -120,6 +121,15 @@ class LiveMultiAssetTrader:
             logger.info("Telegram notifications enabled")
         else:
             logger.info("Telegram notifications disabled (no credentials)")
+        
+        # Initialize Risk Engine
+        self.risk_engine = RiskEngine(
+            max_drawdown=0.20,
+            sl_multiplier=2.0,
+            tp_multiplier=3.0,
+            trailing_multiplier=1.5
+        )
+        logger.info("Risk Engine initialized")
         
         # Initialize ML models
         self.models = {}
@@ -333,10 +343,7 @@ class LiveMultiAssetTrader:
             )
     
     def _check_stop_loss_take_profit(self, prices: Dict[str, float]):
-        """Check and execute stop loss / take profit."""
-        stop_loss_pct = 0.02  # 2%
-        take_profit_pct = 0.05  # 5%
-        
+        """Check and execute stop loss / take profit using RiskEngine."""
         for symbol, position in list(self.portfolio.positions.items()):
             if symbol not in prices:
                 continue
@@ -344,17 +351,47 @@ class LiveMultiAssetTrader:
             price = prices[symbol]
             position.update(price)
             
-            pnl_pct = position.unrealized_pnl / (position.entry_price * position.quantity)
+            # Use risk engine for exit signals
+            exit_signal = self.risk_engine.check_exit_signal(
+                asset=symbol,
+                current_price=price
+            )
             
-            # Check stop loss
-            if pnl_pct <= -stop_loss_pct:
-                logger.warning(f"Stop loss triggered for {symbol}")
-                self.portfolio.close_position(symbol, price, reason="stop_loss")
+            if exit_signal:
+                logger.warning(f"{exit_signal} triggered for {symbol}")
+                self.portfolio.close_position(symbol, price, reason=exit_signal.lower())
+                
+                # Notify via Telegram
+                if self.notifier:
+                    self.notifier.send_trade_execution(
+                        symbol=symbol,
+                        side="CLOSE",
+                        quantity=position.quantity,
+                        price=price,
+                        pnl=position.unrealized_pnl
+                    )
+        
+        # Check portfolio-level max drawdown
+        total_equity = self.portfolio.get_total_value(prices)
+        should_kill, drawdown = self.risk_engine.check_max_drawdown(total_equity)
+        
+        if should_kill:
+            logger.critical(f"MAX DRAWDOWN KILL SWITCH TRIGGERED: {drawdown:.2%}")
             
-            # Check take profit
-            elif pnl_pct >= take_profit_pct:
-                logger.info(f"Take profit triggered for {symbol}")
-                self.portfolio.close_position(symbol, price, reason="take_profit")
+            # Close all positions
+            for symbol, position in list(self.portfolio.positions.items()):
+                if symbol in prices:
+                    self.portfolio.close_position(symbol, prices[symbol], reason="kill_switch")
+            
+            # Notify via Telegram
+            if self.notifier:
+                self.notifier.send_error_alert(
+                    error_type="KILL_SWITCH",
+                    message=f"Max drawdown {drawdown:.2%} triggered - all positions closed"
+                )
+            
+            # Stop the trading
+            self.running = False
     
     def _print_status(self, prices: Dict[str, float]):
         """Print current status."""

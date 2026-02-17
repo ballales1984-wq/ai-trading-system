@@ -7,6 +7,7 @@ from .binance_multi_ws import BinanceMultiWebSocket
 from .position_sizing import calculate_position_size, VolatilityPositionSizer
 from .portfolio_live import LivePortfolio, EqualWeightAllocator, VolatilityParityAllocator, RiskParityAllocator
 from .telegram_notifier import TelegramNotifier, TelegramBotKeyboard
+from .risk_engine import RiskEngine, RiskManager
 
 __all__ = [
     'BinanceMultiWebSocket',
@@ -17,5 +18,7 @@ __all__ = [
     'VolatilityParityAllocator',
     'RiskParityAllocator',
     'TelegramNotifier',
-    'TelegramBotKeyboard'
+    'TelegramBotKeyboard',
+    'RiskEngine',
+    'RiskManager'
 ]
