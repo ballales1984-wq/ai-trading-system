@@ -24,6 +24,7 @@ from decision_engine import DecisionEngine
 from dashboard import TradingDashboard, print_dashboard_summary
 from auto_trader import AutoTradingBot
 from trading_simulator import TradingSimulator
+from live_multi_asset import LiveMultiAssetTrader
 
 
 def setup_logging():
@@ -41,7 +42,7 @@ def parse_args():
     
     parser.add_argument(
         '--mode', '-m',
-        choices=['signals', 'analysis', 'dashboard', 'test', 'auto', 'backtest', 'simulate', 'portfolio'],
+        choices=['signals', 'analysis', 'dashboard', 'test', 'auto', 'backtest', 'simulate', 'portfolio', 'live'],
         default='signals',
         help='Execution mode'
     )
@@ -63,6 +64,11 @@ def parse_args():
     parser.add_argument('--balance', type=float, default=10000.0)
     parser.add_argument('--days', type=int, default=30)
     parser.add_argument('--duration', type=int, default=60, help='Duration for simulate mode (seconds)')
+    parser.add_argument('--assets', type=str, default='BTCUSDT,ETHUSDT,SOLUSDT', help='Comma-separated list of assets for live mode')
+    parser.add_argument('--allocation', type=str, default='equal_weight', choices=['equal_weight', 'volatility_parity', 'risk_parity', 'momentum'], help='Portfolio allocation strategy')
+    parser.add_argument('--interval', type=str, default='1m', choices=['1m', '5m', '15m', '1h', '4h', '1d'], help='Kline interval for live mode')
+    parser.add_argument('--telegram-token', type=str, default='', help='Telegram bot token for notifications')
+    parser.add_argument('--telegram-chat-id', type=str, default='', help='Telegram chat ID for notifications')
     
     return parser.parse_args()
 
@@ -390,6 +396,52 @@ def run_portfolio_mode(args):
                       f"${t['price']:,.2f} | Qty: {t['quantity']:.4f} | P&L: ${t['pnl']:+,.2f}")
 
 
+def run_live_multi_asset_mode(args):
+    """Run live multi-asset trading"""
+    from live_multi_asset import LiveMultiAssetTrader
+    import signal
+    
+    # Parse assets
+    assets = args.assets.split(',') if hasattr(args, 'assets') else ['BTCUSDT', 'ETHUSDT', 'SOLUSDT']
+    assets = [a.strip().upper() for a in assets]
+    
+    # Get strategy
+    strategy = getattr(args, 'allocation', 'equal_weight')
+    
+    print("\n" + "="*70)
+    print("🚀 LIVE MULTI-ASSET TRADING SYSTEM")
+    print("="*70)
+    print(f"\n📈 Assets: {', '.join(assets)}")
+    print(f"💵 Capital: ${args.balance:,.2f}")
+    print(f"⏱️  Interval: {getattr(args, 'interval', '1m')}")
+    print(f"⚖️  Strategy: {strategy}")
+    print("\n" + "="*70)
+    
+    # Create trader
+    trader = LiveMultiAssetTrader(
+        assets=assets,
+        initial_capital=args.balance,
+        interval=getattr(args, 'interval', '1m'),
+        allocation_strategy=strategy,
+        testnet=getattr(args, 'testnet', False),
+        paper_trading=not getattr(args, 'live', False),
+        telegram_bot_token=getattr(args, 'telegram_token', '') or None,
+        telegram_chat_id=getattr(args, 'telegram_chat_id', '') or None
+    )
+    
+    # Handle signals
+    def signal_handler(sig, frame):
+        print("\n🛑 Shutting down...")
+        trader.stop()
+        sys.exit(0)
+    
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    
+    # Start trading
+    trader.start()
+
+
 def main():
     args = parse_args()
     setup_logging()
@@ -411,6 +463,8 @@ def main():
             run_simulate_mode(args)
         elif args.mode == 'portfolio':
             run_portfolio_mode(args)
+        elif args.mode == 'live':
+            run_live_multi_asset_mode(args)
         else:
             print(f"Unknown mode: {args.mode}")
             

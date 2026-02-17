@@ -50,41 +50,173 @@ CRYPTO_SYMBOLS = {
 
 # Commodity-linked tokens (stablecoins backed by commodities)
 COMMODITY_TOKENS = {
-    'PAX Gold': {
+    # Precious Metals
+    'PAXG': {
         'symbol': 'PAXG/USDT',
         'name': 'Paxos Gold',
         'underlying': 'Gold',
-        'api_symbol': 'PAXG/USDT'
+        'api_symbol': 'PAXG/USDT',
+        'category': 'precious_metal'
     },
-    'Tether Gold': {
+    'XAUT': {
         'symbol': 'XAUT/USDT',
         'name': 'Tether Gold',
         'underlying': 'Gold',
-        'api_symbol': 'XAUT/USDT'
+        'api_symbol': 'XAUT/USDT',
+        'category': 'precious_metal'
     },
-    'Perp Euro': {
+    # Energy Tokens (when available)
+    'WTI': {
+        'symbol': 'WTI/USDT',
+        'name': 'Wrapped Tokenized Oil',
+        'underlying': 'Crude Oil WTI',
+        'api_symbol': 'WTI/USDT',
+        'category': 'energy'
+    },
+    'NG': {
+        'symbol': 'NG/USDT',
+        'name': 'Natural Gas Token',
+        'underlying': 'Natural Gas',
+        'api_symbol': 'NG/USDT',
+        'category': 'energy'
+    },
+    # Fiat Tokens
+    'PEUR': {
         'symbol': 'PEUR/USDT',
         'name': 'Perp Euro',
         'underlying': 'EUR',
-        'api_symbol': 'PEUR/USDT'
+        'api_symbol': 'PEUR/USDT',
+        'category': 'fiat'
     },
-    'Staked Ether': {
+    'PGBP': {
+        'symbol': 'PGBP/USDT',
+        'name': 'Perp British Pound',
+        'underlying': 'GBP',
+        'api_symbol': 'PGBP/USDT',
+        'category': 'fiat'
+    },
+    'PJPY': {
+        'symbol': 'PJPY/USDT',
+        'name': 'Perp Japanese Yen',
+        'underlying': 'JPY',
+        'api_symbol': 'PJPY/USDT',
+        'category': 'fiat'
+    },
+    # Staking Tokens
+    'STETH': {
         'symbol': 'STETH/USDT',
         'name': 'Lido Staked Ether',
         'underlying': 'ETH',
-        'api_symbol': 'STETH/USDT'
+        'api_symbol': 'STETH/USDT',
+        'category': 'staking'
     },
-    'Staked BNB': {
-        'symbol': 'BNBUSDT',  # BNB staking on BNB Smart Chain
+    'BNB': {
+        'symbol': 'BNB/USDT',
         'name': 'Binance Staked BNB',
         'underlying': 'BNB',
-        'api_symbol': 'BNB/USDT'
+        'api_symbol': 'BNB/USDT',
+        'category': 'staking'
     },
-    'Frax Share': {
-        'symbol': 'FXS/USDT',
-        'name': 'Frax Share',
-        'underlying': 'Crypto',
-        'api_symbol': 'FXS/USDT'
+}
+
+# Commodities we track but may not have direct trading pairs
+# These are for simulation and tracking purposes
+TRACKED_COMMODITIES = {
+    # Precious Metals
+    'GOLD': {
+        'name': 'Gold (XAU/USD)',
+        'symbol': 'XAU',
+        'price_source': 'PAXG/USDT',
+        'category': 'precious_metal',
+        'typical_range': (1900, 2100)
+    },
+    'SILVER': {
+        'name': 'Silver (XAG/USD)',
+        'symbol': 'XAG',
+        'price_source': 'XAG/USDT',  # Might need simulation
+        'category': 'precious_metal',
+        'typical_range': (22, 28)
+    },
+    'PLATINUM': {
+        'name': 'Platinum (XPT/USD)',
+        'symbol': 'XPT',
+        'price_source': None,  # Simulation only
+        'category': 'precious_metal',
+        'typical_range': (900, 1100)
+    },
+    'PALLADIUM': {
+        'name': 'Palladium (XPD/USD)',
+        'symbol': 'XPD',
+        'price_source': None,  # Simulation only
+        'category': 'precious_metal',
+        'typical_range': (1000, 1400)
+    },
+    # Energy
+    'WTI_OIL': {
+        'name': 'Crude Oil WTI',
+        'symbol': 'CL',
+        'price_source': 'WTI/USDT',
+        'category': 'energy',
+        'typical_range': (70, 90)
+    },
+    'BRENT_OIL': {
+        'name': 'Brent Crude',
+        'symbol': 'BZ',
+        'price_source': None,  # Simulation only
+        'category': 'energy',
+        'typical_range': (75, 95)
+    },
+    'NATURAL_GAS': {
+        'name': 'Natural Gas',
+        'symbol': 'NG',
+        'price_source': 'NG/USDT',
+        'category': 'energy',
+        'typical_range': (2.5, 4.0)
+    },
+    # Agricultural
+    'WHEAT': {
+        'name': 'Wheat',
+        'symbol': 'ZW',
+        'price_source': None,  # Simulation only
+        'category': 'agricultural',
+        'typical_range': (5.5, 7.5)
+    },
+    'CORN': {
+        'name': 'Corn',
+        'symbol': 'ZC',
+        'price_source': None,  # Simulation only
+        'category': 'agricultural',
+        'typical_range': (4.5, 6.5)
+    },
+    'SOYBEANS': {
+        'name': 'Soybeans',
+        'symbol': 'ZS',
+        'price_source': None,  # Simulation only
+        'category': 'agricultural',
+        'typical_range': (11, 15)
+    },
+    # Indices (via crypto proxies)
+    'SP500': {
+        'name': 'S&P 500',
+        'symbol': 'SPX',
+        'price_source': None,  # Simulation only - could use 1000SHAKE/USDT or similar
+        'category': 'index',
+        'typical_range': (4500, 5500)
+    },
+    'NASDAQ': {
+        'name': 'NASDAQ 100',
+        'symbol': 'NDX',
+        'price_source': None,  # Simulation only
+        'category': 'index',
+        'typical_range': (15000, 19000)
+    },
+    # Crypto Indices
+    'BTC_ETH': {
+        'name': 'Bitcoin + Ethereum Index',
+        'symbol': 'BTCETH',
+        'price_source': None,  # Calculated from BTC+ETH
+        'category': 'crypto_index',
+        'typical_range': (40000, 75000)
     },
 }
 
@@ -244,9 +376,16 @@ SIMULATED_PRICES = {
     'BTC/USDT': (40000, 70000),
     'ETH/USDT': (2000, 3500),
     'XRP/USDT': (0.5, 0.8),
-    # Commodities
+    # Precious Metals (Commodity-backed tokens)
     'PAXG/USDT': (1900, 2100),
     'XAUT/USDT': (1900, 2100),
+    # Energy tokens
+    'WTI/USDT': (70, 90),
+    'NG/USDT': (2.5, 4.0),
+    # Fiat tokens
+    'PEUR/USDT': (1.0, 1.1),
+    'PGBP/USDT': (1.2, 1.35),
+    'PJPY/USDT': (0.006, 0.007),
     # Additional cryptos
     'SOL/USDT': (100, 200),
     'ADA/USDT': (0.3, 0.6),
@@ -267,10 +406,26 @@ SIMULATED_PRICES = {
     'SUI/USDT': (1, 4),
     'SEI/USDT': (0.2, 0.8),
     'TIA/USDT': (10, 30),
-    # Other tokens
+    # Staking tokens
     'STETH/USDT': (2000, 3500),
-    'PEUR/USDT': (1.0, 1.1),
+    # Other tokens
     'FXS/USDT': (3, 10),
+}
+
+# Simulated commodities (not directly tradeable on Binance)
+SIMULATED_COMMODITIES = {
+    'GOLD': {'price': 2000, 'volatility': 0.01},
+    'SILVER': {'price': 25, 'volatility': 0.015},
+    'PLATINUM': {'price': 1000, 'volatility': 0.012},
+    'PALLADIUM': {'price': 1200, 'volatility': 0.015},
+    'WTI_OIL': {'price': 80, 'volatility': 0.02},
+    'BRENT_OIL': {'price': 85, 'volatility': 0.02},
+    'NATURAL_GAS': {'price': 3.0, 'volatility': 0.03},
+    'WHEAT': {'price': 6.5, 'volatility': 0.025},
+    'CORN': {'price': 5.5, 'volatility': 0.02},
+    'SOYBEANS': {'price': 13, 'volatility': 0.02},
+    'SP500': {'price': 5000, 'volatility': 0.008},
+    'NASDAQ': {'price': 17000, 'volatility': 0.01},
 }
 
 # Price volatility for simulation

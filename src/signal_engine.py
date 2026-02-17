@@ -6,6 +6,8 @@ Professional signal generation combining:
 - Sentiment analysis
 - Multi-timeframe analysis
 - Signal filtering and confirmation
+- Advanced ML features
+- Ensemble models
 
 Author: AI Trading System
 Version: 1.0.0
@@ -15,6 +17,19 @@ import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
+
+# Import advanced features
+try:
+    from src.features import generate_advanced_features
+except ImportError:
+    generate_advanced_features = None
+
+# Import ensemble model
+try:
+    from src.models.ensemble import EnsembleSignalModel, load_model
+except ImportError:
+    EnsembleSignalModel = None
+    load_model = None
 
 
 @dataclass

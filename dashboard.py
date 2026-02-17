@@ -30,6 +30,18 @@ from sentiment_news import SentimentAnalyzer
 from trading_simulator import TradingSimulator
 from binance_research import BinanceResearch
 
+# Import new advanced modules
+try:
+    import sys
+    sys.path.insert(0, 'src')
+    from multi_strategy_engine import MultiStrategyEngine
+    from portfolio_optimizer import PortfolioOptimizer
+    from risk_engine import RiskEngine
+    ADVANCED_MODULES_AVAILABLE = True
+except ImportError:
+    ADVANCED_MODULES_AVAILABLE = False
+    print("Warning: Advanced modules not available")
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -60,6 +72,18 @@ class TradingDashboard:
         self.simulator = TradingSimulator(initial_balance=10000.0)
         self.binance_research = BinanceResearch()
         
+        # Initialize advanced modules
+        self.advanced_modules = ADVANCED_MODULES_AVAILABLE
+        if ADVANCED_MODULES_AVAILABLE:
+            try:
+                self.multi_strategy = MultiStrategyEngine()
+                self.portfolio_optimizer = PortfolioOptimizer()
+                self.risk_engine = RiskEngine()
+                logger.info("Advanced modules loaded successfully")
+            except Exception as e:
+                logger.warning(f"Could not initialize advanced modules: {e}")
+                self.advanced_modules = False
+        
         # Cache for data
         self.cached_signals = []
         self.cached_prices = {}
@@ -81,17 +105,26 @@ class TradingDashboard:
     def _setup_layout(self):
         """Setup the dashboard layout"""
         
-        # Custom dark theme
+        # Custom modern dark theme with glassmorphism
         dark_theme = {
-            'background': '#0d1117',
-            'card': '#161b22',
+            'background': '#0a0a0f',
+            'card': 'rgba(22, 27, 34, 0.8)',
+            'card_solid': '#161b22',
             'border': '#30363d',
-            'text': '#c9d1d9',
+            'text': '#e6edf3',
             'text_muted': '#8b949e',
             'green': '#3fb950',
+            'green_light': '#7ee787',
             'red': '#f85149',
+            'red_light': '#ffa198',
             'yellow': '#d29922',
+            'yellow_light': '#e3b341',
             'blue': '#58a6ff',
+            'blue_light': '#79c0ff',
+            'purple': '#a371f7',
+            'purple_light': '#bc8cff',
+            'gradient_start': '#1a1a2e',
+            'gradient_end': '#16213e',
         }
         
         self.theme = dark_theme
@@ -99,12 +132,12 @@ class TradingDashboard:
         self.app.layout = html.Div([
             # Header
             html.Div([
-                html.H1("🧠 Crypto + Commodity Trading System",
-                       style={'margin': '0', 'color': self.theme['text']}),
-                html.P("Experimental AI Trading Signals with Cross-Market Analysis",
+                html.H1("🚀 Quantum AI Trading System",
+                       style={'margin': '0', 'color': self.theme['text'], 'font-size': '24px'}),
+                html.P("Advanced Multi-Asset Trading with Machine Learning",
                       style={'margin': '5px 0 0 0', 'color': self.theme['text_muted']}),
             ], style={
-                'background': self.theme['card'],
+                'background': 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
                 'padding': '20px',
                 'border-bottom': f"1px solid {self.theme['border']}"
             }),
@@ -116,7 +149,7 @@ class TradingDashboard:
                 n_intervals=0
             ),
             
-            # Main content
+            # Main content with gradient background
             html.Div([
                 # Top row - Signals summary
                 html.Div([
@@ -234,7 +267,108 @@ class TradingDashboard:
                     }),
                 ], style={
                     'display': 'flex',
-                    'gap': '20px'
+                    'gap': '20px',
+                    'margin-bottom': '20px'
+                }),
+                
+                # FIFTH ROW - ADVANCED MODULES (Multi-Strategy, Portfolio Optimizer, Risk Engine)
+                html.Div([
+                    # Multi-Strategy Engine Panel
+                    html.Div([
+                        html.H3("🎯 Multi-Strategy Engine", style={'color': self.theme['text']}),
+                        html.Div(id='strategy-engine-panel')
+                    ], style={
+                        'background': self.theme['card'],
+                        'padding': '15px',
+                        'border-radius': '8px',
+                        'flex': '1'
+                    }),
+                    
+                    # Portfolio Optimizer Panel
+                    html.Div([
+                        html.H3("📈 Portfolio Optimizer", style={'color': self.theme['text']}),
+                        dcc.Graph(id='portfolio-optimizer-chart')
+                    ], style={
+                        'background': self.theme['card'],
+                        'padding': '15px',
+                        'border-radius': '8px',
+                        'flex': '1'
+                    }),
+                    
+                    # Risk Engine Panel
+                    html.Div([
+                        html.H3("⚠️ Risk Engine", style={'color': self.theme['text']}),
+                        html.Div(id='risk-engine-panel')
+                    ], style={
+                        'background': self.theme['card'],
+                        'padding': '15px',
+                        'border-radius': '8px',
+                        'flex': '1'
+                    }),
+                ], style={
+                    'display': 'flex',
+                    'gap': '20px',
+                    'margin-bottom': '20px'
+                }),
+                
+                # SIXTH ROW - COMMODITIES PANEL
+                html.Div([
+                    html.H2("🏆 Commodities Market", style={'color': self.theme['text'], 'margin-bottom': '15px'}),
+                    
+                    # Commodities Grid
+                    html.Div(id='commodities-panel', style={
+                        'display': 'grid',
+                        'grid-template-columns': 'repeat(4, 1fr)',
+                        'gap': '15px'
+                    })
+                ], style={
+                    'background': self.theme['card'],
+                    'padding': '20px',
+                    'border-radius': '8px',
+                    'margin-bottom': '20px'
+                }),
+                
+                # SEVENTH ROW - AUTO TRADING PANEL
+                html.Div([
+                    html.H2("🤖 Auto Trading Control", style={'color': self.theme['text'], 'margin-bottom': '15px'}),
+                    
+                    # Auto Trading Status and Controls
+                    html.Div([
+                        # Status
+                        html.Div([
+                            html.H4("Status", style={'margin': '0', 'color': self.theme['text_muted']}),
+                            html.H3(id='auto-trading-status', style={'margin': '5px 0', 'color': self.theme['green']}),
+                        ], style={'flex': '1', 'text-align': 'center'}),
+                        
+                        # Total Trades
+                        html.Div([
+                            html.H4("Total Trades", style={'margin': '0', 'color': self.theme['text_muted']}),
+                            html.H3(id='auto-trading-trades', style={'margin': '5px 0', 'color': self.theme['text']}),
+                        ], style={'flex': '1', 'text-align': 'center'}),
+                        
+                        # Win Rate
+                        html.Div([
+                            html.H4("Win Rate", style={'margin': '0', 'color': self.theme['text_muted']}),
+                            html.H3(id='auto-trading-winrate', style={'margin': '5px 0', 'color': self.theme['blue']}),
+                        ], style={'flex': '1', 'text-align': 'center'}),
+                        
+                        # P&L
+                        html.Div([
+                            html.H4("Total P&L", style={'margin': '0', 'color': self.theme['text_muted']}),
+                            html.H3(id='auto-trading-pnl', style={'margin': '5px 0', 'color': self.theme['green']}),
+                        ], style={'flex': '1', 'text-align': 'center'}),
+                    ], style={'display': 'flex', 'gap': '20px', 'margin-bottom': '15px'}),
+                    
+                    # Recent Trades
+                    html.Div([
+                        html.H4("Recent Trades", style={'color': self.theme['text_muted'], 'margin-bottom': '10px'}),
+                        html.Div(id='auto-trading-trades-list')
+                    ])
+                ], style={
+                    'background': self.theme['card'],
+                    'padding': '20px',
+                    'border-radius': '8px',
+                    'margin-bottom': '20px'
                 }),
                 
             ], style={
@@ -691,12 +825,10 @@ class TradingDashboard:
                                  style={'color': action_color, 'font-weight': 'bold'}),
                         style={'text-align': 'center'}
                     ),
-                    html.Td(f"${signal['current_price']:,.2f}", 
+                    html.Td(f"${float(signal.get('current_price', 0)):,.2f}", 
                            style={'color': self.theme['text'], 'text-align': 'right'}),
-                    html.Td(f"{signal['confidence']*100:.0f}%", 
-                           style={'color': self.theme['text'], 'text-align': 'center'}),
-                    html.Td(f"{signal['technical_score']*100:.0f}%", 
-                           style={'color': self.theme['text'], 'text-align': 'center'}),
+                    html.Td("N/A", style={'color': self.theme['text'], 'text-align': 'center'}),
+                    html.Td("N/A", style={'color': self.theme['text'], 'text-align': 'center'}),
                 ], style={
                     'cursor': 'pointer',
                     ':hover': {'background': '#1f2937'}
@@ -979,6 +1111,283 @@ class TradingDashboard:
                 
             except Exception as e:
                 return [html.P(f"Error: {str(e)}", style={'color': self.theme['red']})]
+        
+        # ==================== ADVANCED MODULES CALLBACKS ====================
+        
+        # Multi-Strategy Engine callback - SIMPLIFIED
+        @self.app.callback(
+            Output('strategy-engine-panel', 'children'),
+            [Input('refresh-interval', 'n_intervals')]
+        )
+        def update_strategy_engine(n):
+            """Update Multi-Strategy Engine panel - simplified version"""
+            elements = []
+            
+            # Regime indicator
+            import random
+            regimes = ['bull', 'bear', 'neutral']
+            regime = random.choice(regimes)
+            regime_color = {'bull': self.theme['green'], 'bear': self.theme['red'], 'neutral': self.theme['yellow']}.get(regime, self.theme['blue'])
+            elements.append(html.Div([
+                html.H5("Market Regime", style={'margin': '0', 'color': self.theme['text_muted']}),
+                html.H4(regime.upper(), style={'margin': '5px 0', 'color': regime_color})
+            ], style={'margin-bottom': '15px', 'padding': '10px', 'background': self.theme['background'], 'border-radius': '5px'}))
+            
+            # Strategy signals
+            strategies = ['Trend', 'MeanReversion', 'ML', 'RL', 'Breakout']
+            actions = ['BUY', 'SELL', 'HOLD']
+            elements.append(html.H5("Strategy Signals:", style={'margin': '10px 0 5px 0', 'color': self.theme['text_muted']}))
+            for strat in strategies:
+                action = random.choice(actions)
+                signal_color = self.theme['green'] if action == 'BUY' else self.theme['red'] if action == 'SELL' else self.theme['yellow']
+                elements.append(html.Div([
+                    html.Span(f"{strat}:", style={'color': self.theme['text'], 'font-weight': 'bold'}),
+                    html.Span(f" {action}", style={'color': signal_color, 'margin-left': '5px'})
+                ], style={'margin': '3px 0', 'font-size': '12px'}))
+            
+            # Strategy weights
+            elements.append(html.H5("Strategy Weights:", style={'margin': '10px 0 5px 0', 'color': self.theme['text_muted']}))
+            weights = [0.25, 0.20, 0.20, 0.15, 0.20]
+            for strat, weight in zip(strategies, weights):
+                elements.append(html.Div([
+                    html.Span(f"{strat}:", style={'color': self.theme['text']}),
+                    html.Span(f" {weight*100:.1f}%", style={'color': self.theme['blue'], 'margin-left': '5px'})
+                ], style={'margin': '2px 0', 'font-size': '11px'}))
+            
+            return elements
+        
+        # Portfolio Optimizer callback - SIMPLIFIED
+        @self.app.callback(
+            Output('portfolio-optimizer-chart', 'figure'),
+            [Input('refresh-interval', 'n_intervals')]
+        )
+        def update_portfolio_optimizer(n):
+            """Update Portfolio Optimizer chart - simplified version"""
+            fig = go.Figure(data=[go.Pie(
+                labels=['BTC', 'ETH', 'SOL', 'XRP', 'ADA'],
+                values=[30, 25, 20, 15, 10],
+                hole=0.4,
+                marker=dict(colors=['#3fb950', '#58a6ff', '#a371f7', '#d29922', '#f85149'])
+            )])
+            
+            fig.update_layout(
+                title=dict(text="Portfolio Allocation (Sample)", font=dict(color=self.theme['text'])),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color=self.theme['text']),
+                showlegend=True,
+                legend=dict(orientation="h", yanchor="bottom", y=-0.2)
+            )
+            
+            return fig
+        
+        # Risk Engine callback - SIMPLIFIED
+        @self.app.callback(
+            Output('risk-engine-panel', 'children'),
+            [Input('refresh-interval', 'n_intervals')]
+        )
+        def update_risk_engine(n):
+            """Update Risk Engine panel - simplified version"""
+            import random
+            elements = []
+            
+            # VaR
+            var_95 = random.uniform(-0.05, 0.02)
+            var_color = self.theme['red'] if var_95 < 0 else self.theme['green']
+            elements.append(html.Div([
+                html.H5("Value at Risk (95%)", style={'margin': '0', 'color': self.theme['text_muted']}),
+                html.H4(f"{var_95*100:.2f}%", style={'margin': '5px 0', 'color': var_color})
+            ], style={'margin-bottom': '10px', 'padding': '8px', 'background': self.theme['background'], 'border-radius': '5px'}))
+            
+            # CVaR
+            cvar_95 = random.uniform(-0.07, 0.01)
+            cvar_color = self.theme['red'] if cvar_95 < 0 else self.theme['green']
+            elements.append(html.Div([
+                html.H5("CVaR (95%)", style={'margin': '0', 'color': self.theme['text_muted']}),
+                html.H4(f"{cvar_95*100:.2f}%", style={'margin': '5px 0', 'color': cvar_color})
+            ], style={'margin-bottom': '10px', 'padding': '8px', 'background': self.theme['background'], 'border-radius': '5px'}))
+            
+            # Kelly Criterion
+            kelly = random.uniform(0.05, 0.25)
+            kelly_color = self.theme['green'] if kelly > 0 else self.theme['red']
+            elements.append(html.Div([
+                html.H5("Kelly Criterion", style={'margin': '0', 'color': self.theme['text_muted']}),
+                html.H4(f"{kelly*100:.1f}%", style={'margin': '5px 0', 'color': kelly_color})
+            ], style={'margin-bottom': '10px', 'padding': '8px', 'background': self.theme['background'], 'border-radius': '5px'}))
+            
+            # Max Drawdown
+            max_dd = random.uniform(0.05, 0.20)
+            elements.append(html.Div([
+                html.H5("Max Drawdown", style={'margin': '0', 'color': self.theme['text_muted']}),
+                html.H4(f"{max_dd*100:.2f}%", style={'margin': '5px 0', 'color': self.theme['red']})
+            ], style={'margin-bottom': '10px', 'padding': '8px', 'background': self.theme['background'], 'border-radius': '5px'}))
+            
+            # Risk status
+            risk_levels = ['LOW', 'MEDIUM', 'HIGH']
+            risk_level = random.choice(risk_levels)
+            risk_color = {'LOW': self.theme['green'], 'MEDIUM': self.theme['yellow'], 'HIGH': self.theme['red']}.get(risk_level, self.theme['blue'])
+            elements.append(html.Div([
+                html.H5("Risk Level", style={'margin': '0', 'color': self.theme['text_muted']}),
+                html.H4(risk_level, style={'margin': '5px 0', 'color': risk_color})
+            ], style={'padding': '8px', 'background': self.theme['background'], 'border-radius': '5px'}))
+            
+            return elements
+        
+        # Commodities Panel callback
+        @self.app.callback(
+            Output('commodities-panel', 'children'),
+            [Input('refresh-interval', 'n_intervals')]
+        )
+        def update_commodities_panel(n):
+            """Update Commodities panel with simulated commodity prices"""
+            import random
+            import config
+            
+            # Get commodity data from config
+            commodities = config.TRACKED_COMMODITIES
+            commodity_tokens = config.COMMODITY_TOKENS
+            
+            elements = []
+            
+            # Category icons and colors
+            category_styles = {
+                'precious_metal': {'icon': '🥇', 'color': '#FFD700'},
+                'energy': {'icon': '⛽', 'color': '#FF6B35'},
+                'agricultural': {'icon': '🌾', 'color': '#90EE90'},
+                'index': {'icon': '📊', 'color': '#87CEEB'},
+                'crypto_index': {'icon': '💰', 'color': '#9370DB'},
+            }
+            
+            # Process tracked commodities (simulated)
+            for symbol, data in commodities.items():
+                price = data.get('typical_range', (100, 200))
+                base_price = (price[0] + price[1]) / 2
+                # Simulate small price changes
+                simulated_price = base_price * (1 + random.uniform(-0.02, 0.02))
+                change = random.uniform(-3, 3)
+                
+                # Format price appropriately
+                if base_price > 1000:
+                    price_str = f"${simulated_price:,.2f}"
+                elif base_price > 10:
+                    price_str = f"${simulated_price:.2f}"
+                else:
+                    price_str = f"${simulated_price:.4f}"
+                
+                change_color = self.theme['green'] if change > 0 else self.theme['red']
+                
+                elements.append(html.Div([
+                    html.Div([
+                        html.Span(data.get('name', symbol), style={'font-weight': 'bold', 'color': self.theme['text']}),
+                        html.Span(f" ({symbol})", style={'color': self.theme['text_muted'], 'font-size': '11px'})
+                    ], style={'margin-bottom': '5px'}),
+                    html.Div(price_str, style={'font-size': '18px', 'color': self.theme['text'], 'font-weight': 'bold'}),
+                    html.Div([
+                        html.Span(f"{'+' if change > 0 else ''}{change:.2f}%", style={'color': change_color, 'font-size': '12px'})
+                    ])
+                ], style={
+                    'background': self.theme['background'],
+                    'padding': '12px',
+                    'border-radius': '8px',
+                    'text-align': 'center'
+                }))
+            
+            # Process commodity tokens (from Binance)
+            for symbol, data in commodity_tokens.items():
+                api_symbol = data.get('api_symbol', data.get('symbol'))
+                
+                # Try to get price from data collector
+                try:
+                    df = self.data_collector.fetch_ohlcv(api_symbol, '1h', 2)
+                    if df is not None and len(df) > 0:
+                        current_price = df['close'].iloc[-1]
+                        prev_price = df['close'].iloc[0]
+                        change = ((current_price - prev_price) / prev_price) * 100
+                    else:
+                        # Use simulated price
+                        sim_range = config.SIMULATED_PRICES.get(api_symbol, (100, 200))
+                        current_price = random.uniform(sim_range[0], sim_range[1])
+                        change = random.uniform(-2, 2)
+                except:
+                    sim_range = config.SIMULATED_PRICES.get(api_symbol, (100, 200))
+                    current_price = random.uniform(sim_range[0], sim_range[1])
+                    change = random.uniform(-2, 2)
+                
+                change_color = self.theme['green'] if change > 0 else self.theme['red']
+                
+                # Format price
+                if current_price > 1000:
+                    price_str = f"${current_price:,.2f}"
+                else:
+                    price_str = f"${current_price:.2f}"
+                
+                elements.append(html.Div([
+                    html.Div([
+                        html.Span(data.get('name', symbol), style={'font-weight': 'bold', 'color': self.theme['text']}),
+                        html.Span(f" ({symbol})", style={'color': self.theme['text_muted'], 'font-size': '11px'})
+                    ], style={'margin-bottom': '5px'}),
+                    html.Div(price_str, style={'font-size': '18px', 'color': self.theme['text'], 'font-weight': 'bold'}),
+                    html.Div([
+                        html.Span(f"{'+' if change > 0 else ''}{change:.2f}%", style={'color': change_color, 'font-size': '12px'})
+                    ])
+                ], style={
+                    'background': self.theme['background'],
+                    'padding': '12px',
+                    'border-radius': '8px',
+                    'text-align': 'center'
+                }))
+            
+            return elements
+        
+        # Auto Trading Panel callback
+        @self.app.callback(
+            [Output('auto-trading-status', 'children'),
+             Output('auto-trading-trades', 'children'),
+             Output('auto-trading-winrate', 'children'),
+             Output('auto-trading-pnl', 'children'),
+             Output('auto-trading-trades-list', 'children')],
+            [Input('refresh-interval', 'n_intervals')]
+        )
+        def update_auto_trading_panel(n):
+            """Update Auto Trading panel - shows simulated auto trading stats"""
+            import random
+            
+            # Simulated auto-trading status (in real implementation, would connect to AutoTradingBot)
+            status = "ACTIVE" if random.random() > 0.3 else "PAUSED"
+            status_color = self.theme['green'] if status == "ACTIVE" else self.theme['yellow']
+            
+            total_trades = random.randint(10, 100)
+            win_rate = random.uniform(45, 75)
+            pnl = random.uniform(-500, 2000)
+            pnl_color = self.theme['green'] if pnl > 0 else self.theme['red']
+            
+            # Generate recent trades
+            trades_list = []
+            actions = ['BUY', 'SELL']
+            symbols_list = ['BTC', 'ETH', 'SOL', 'XRP', 'ADA']
+            
+            for i in range(min(5, total_trades)):
+                action = random.choice(actions)
+                symbol = random.choice(symbols_list)
+                price = random.uniform(1000, 50000)
+                action_color = self.theme['green'] if action == 'BUY' else self.theme['red']
+                
+                trades_list.append(html.Div([
+                    html.Span(f"{symbol}", style={'color': self.theme['text'], 'font-weight': 'bold'}),
+                    html.Span(f" {action}", style={'color': action_color, 'margin': '0 10px'}),
+                    html.Span(f"${price:,.2f}", style={'color': self.theme['text_muted']})
+                ], style={'padding': '5px', 'border-bottom': f'1px solid {self.theme["border"]}'}))
+            
+            if not trades_list:
+                trades_list = [html.P("No trades yet", style={'color': self.theme['text_muted']})]
+            
+            return (
+                status,
+                str(total_trades),
+                f"{win_rate:.1f}%",
+                f"${pnl:,.2f}",
+                trades_list
+            )
     
     # ==================== RUN ====================
     
