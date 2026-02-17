@@ -204,3 +204,327 @@ class TestDashboard:
 # Run tests
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '--tb=short'])
+
+
+class TestHFTSimulator:
+    """Test HFT Simulator module"""
+    
+    def test_initialization(self):
+        """Test HFT simulator initialization"""
+        from src.hft.hft_simulator import HFTSimulator
+        import pandas as pd
+        
+        # Create sample tick data
+        ticks = pd.DataFrame({
+            'bid': [50000, 50100, 50200],
+            'ask': [50010, 50110, 50210],
+            'bid_size': [1.0, 1.5, 2.0],
+            'ask_size': [1.0, 1.2, 1.8]
+        })
+        
+        sim = HFTSimulator(ticks, latency_ms=20)
+        assert sim is not None
+        assert sim.latency == 0.02
+    
+    def test_get_tick(self):
+        """Test get_tick method"""
+        from src.hft.hft_simulator import HFTSimulator
+        import pandas as pd
+        
+        ticks = pd.DataFrame({
+            'bid': [50000, 50100],
+            'ask': [50010, 50110],
+            'bid_size': [1.0, 1.5],
+            'ask_size': [1.0, 1.2]
+        })
+        
+        sim = HFTSimulator(ticks)
+        tick = sim.get_tick()
+        assert tick is not None
+    
+    def test_execute_order(self):
+        """Test order execution"""
+        from src.hft.hft_simulator import HFTSimulator
+        import pandas as pd
+        
+        ticks = pd.DataFrame({
+            'bid': [50000, 50100],
+            'ask': [50010, 50110],
+            'bid_size': [10.0, 10.0],
+            'ask_size': [10.0, 10.0]
+        })
+        
+        sim = HFTSimulator(ticks)
+        trade = sim.execute('BUY', 0.1)
+        assert trade is not None
+        assert 'price' in trade
+
+
+class TestHFTRLEnv:
+    """Test HFT RL Environment"""
+    
+    def test_initialization(self):
+        """Test RL environment initialization"""
+        from src.hft.hft_env import HFTRLEnv
+        from src.hft.hft_simulator import HFTSimulator
+        import pandas as pd
+        
+        ticks = pd.DataFrame({
+            'bid': [50000] * 100,
+            'ask': [50010] * 100,
+            'bid_size': [1.0] * 100,
+            'ask_size': [1.0] * 100
+        })
+        
+        sim = HFTSimulator(ticks)
+        env = HFTRLEnv(sim)
+        assert env is not None
+        assert env.state_dim == 8
+    
+    def test_reset(self):
+        """Test environment reset"""
+        from src.hft.hft_env import HFTRLEnv
+        from src.hft.hft_simulator import HFTSimulator
+        import pandas as pd
+        
+        ticks = pd.DataFrame({
+            'bid': [50000] * 100,
+            'ask': [50010] * 100,
+            'bid_size': [1.0] * 100,
+            'ask_size': [1.0] * 100
+        })
+        
+        sim = HFTSimulator(ticks)
+        env = HFTRLEnv(sim)
+        state = env.reset()
+        assert len(state) == 8
+
+
+class TestAutoMLEngine:
+    """Test AutoML Engine"""
+    
+    def test_genome_creation(self):
+        """Test strategy genome creation"""
+        from src.automl.automl_engine import StrategyGenome
+        
+        genome = StrategyGenome()
+        assert genome is not None
+        assert genome.use_rsi is True
+        assert genome.rsi_period == 14
+    
+    def test_genome_mutation(self):
+        """Test genome mutation"""
+        from src.automl.automl_engine import StrategyGenome
+        
+        genome = StrategyGenome()
+        mutated = genome.mutate(mutation_rate=1.0)
+        assert mutated is not None
+    
+    def test_genome_crossover(self):
+        """Test genome crossover"""
+        from src.automl.automl_engine import StrategyGenome
+        
+        parent1 = StrategyGenome()
+        parent2 = StrategyGenome()
+        child = StrategyGenome.crossover(parent1, parent2)
+        assert child is not None
+    
+    def test_automl_evolver(self):
+        """Test AutoML evolver"""
+        from src.automl.automl_engine import AutoMLEvolver
+        
+        evolver = AutoMLEvolver(
+            population_size=10,
+            generations=2
+        )
+        assert evolver is not None
+        assert evolver.population_size == 10
+
+
+class TestMultiAgentMarket:
+    """Test Multi-Agent Market Simulator"""
+    
+    def test_market_agent(self):
+        """Test market agent creation"""
+        from src.simulations.multi_agent_market import MarketAgent
+        
+        agent = MarketAgent('test_agent', initial_capital=10000)
+        assert agent is not None
+        assert agent.agent_id == 'test_agent'
+        assert agent.capital == 10000
+    
+    def test_market_maker(self):
+        """Test market maker agent"""
+        from src.simulations.multi_agent_market import MarketMaker
+        
+        mm = MarketMaker('mm_1', spread=0.001, size=1.0)
+        assert mm is not None
+        assert mm.spread == 0.001
+    
+    def test_taker(self):
+        """Test taker agent"""
+        from src.simulations.multi_agent_market import Taker
+        
+        taker = Taker('taker_1', frequency=0.1)
+        assert taker is not None
+        assert taker.frequency == 0.1
+    
+    def test_arbitrageur(self):
+        """Test arbitrageur agent"""
+        from src.simulations.multi_agent_market import Arbitrageur
+        
+        arb = Arbitrageur('arb_1', threshold=0.001)
+        assert arb is not None
+        assert arb.threshold == 0.001
+    
+    def test_multi_agent_market(self):
+        """Test multi-agent market creation"""
+        from src.simulations.multi_agent_market import MultiAgentMarket
+        
+        market = MultiAgentMarket(
+            initial_price=50000,
+            n_market_makers=1,
+            n_takers=1,
+            n_arbitrageurs=0,
+            include_rl_agent=False
+        )
+        assert market is not None
+        assert len(market.agents) == 2
+
+
+class TestMetaEvolution:
+    """Test Meta-Evolution Engine"""
+    
+    def test_hybrid_agent(self):
+        """Test hybrid agent creation"""
+        from src.meta.meta_evolution_engine import HybridAgent
+        
+        agent = HybridAgent()
+        assert agent is not None
+        agent.weight_rl = 0.3
+        agent.weight_ml = 0.3
+        agent.weight_gp = 0.4
+    
+    def test_meta_evolution_engine(self):
+        """Test meta evolution engine"""
+        from src.meta.meta_evolution_engine import MetaEvolutionEngine
+        
+        engine = MetaEvolutionEngine(
+            population_size=10,
+            elite_ratio=0.1
+        )
+        assert engine is not None
+        assert engine.population_size == 10
+    
+    def test_gp_component(self):
+        """Test GP component"""
+        from src.meta.meta_evolution_engine import GPComponent
+        
+        gp = GPComponent(max_depth=3)
+        assert gp is not None
+        state = np.random.randn(8)
+        decision = gp.evaluate(state)
+        assert decision in [-1, 0, 1]
+
+
+class TestMultiMarketEvolution:
+    """Test Multi-Market Evolution"""
+    
+    def test_market_creation(self):
+        """Test market creation"""
+        from src.meta.multi_market_evolution import Market
+        
+        market = Market(
+            name='crypto',
+            base_volatility=0.02,
+            base_liquidity=0.5,
+            base_spread=0.001
+        )
+        assert market is not None
+        assert market.name == 'crypto'
+    
+    def test_market_simulator(self):
+        """Test market simulator"""
+        from src.meta.multi_market_evolution import MarketSimulator
+        
+        sim = MarketSimulator(
+            name='test',
+            volatility=0.01,
+            liquidity=1.0
+        )
+        assert sim is not None
+    
+    def test_migrating_agent(self):
+        """Test migrating agent"""
+        from src.meta.multi_market_evolution import MigratingAgent
+        
+        agent = MigratingAgent('agent_1', 'RL')
+        assert agent is not None
+        assert agent.agent_type == 'RL'
+    
+    def test_multi_market_evolution(self):
+        """Test multi-market evolution engine"""
+        from src.meta.multi_market_evolution import MultiMarketEvolution, Market
+        
+        markets = {
+            'crypto': Market('crypto', 0.02, 0.5, 0.001),
+            'forex': Market('forex', 0.001, 1.0, 0.0001)
+        }
+        
+        engine = MultiMarketEvolution(markets, population_size=10)
+        assert engine is not None
+
+
+class TestEmergentCommunication:
+    """Test Emergent Communication Engine"""
+    
+    def test_communication_agent(self):
+        """Test communication agent"""
+        from src.meta.emergent_communication import CommunicationAgent
+        
+        agent = CommunicationAgent(
+            agent_id='test',
+            agent_type='RL',
+            policy=np.random.randn(8),
+            msg_encoder=np.random.randn(8, 4),
+            msg_decoder=np.random.randn(4, 8)
+        )
+        assert agent is not None
+    
+    def test_send_message(self):
+        """Test message sending"""
+        from src.meta.emergent_communication import CommunicationAgent
+        
+        agent = CommunicationAgent(
+            agent_id='test',
+            agent_type='RL',
+            policy=np.ones(8),
+            msg_encoder=np.eye(8, 4),
+            msg_decoder=np.eye(4, 8)
+        )
+        
+        state = np.random.randn(8)
+        msg = agent.send_message(state)
+        assert len(msg) == 4
+    
+    def test_communication_evolution(self):
+        """Test communication evolution"""
+        from src.meta.emergent_communication import CommunicationEvolution
+        
+        # Create mock environment
+        class MockSimulator:
+            def reset(self): pass
+            def get_state(self): return np.random.randn(8)
+            def step_multi(self, actions): return None, [0]*4, False
+        
+        class MockEnv:
+            def __init__(self):
+                self.simulator = MockSimulator()
+                self.agents = []
+            def run_episode(self): return [0.0]
+            def get_communication_stats(self): return {}
+        
+        env = MockEnv()
+        engine = CommunicationEvolution(env, population_size=10)
+        assert engine is not None
+
