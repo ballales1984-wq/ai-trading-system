@@ -102,7 +102,22 @@ ai-trading-system/
 │   │   ├── __init__.py
 │   │   └── ensemble.py          # Ensemble model
 │   │
-│   └── quant/                  # Quantitative strategies
+│   │   ├── hft/                  # HFT modules
+│   │   │   ├── hft_simulator.py  # Tick-by-tick simulator
+│   │   │   └── hft_env.py        # RL training environment
+│   │
+│   │   ├── automl/               # AutoML
+│   │   │   └── automl_engine.py  # Strategy evolution
+│   │
+│   │   ├── meta/                 # Meta-evolution
+│   │   │   ├── meta_evolution_engine.py  # Hybrid agent evolution
+│   │   │   ├── multi_market_evolution.py  # Multi-market migration
+│   │   │   └── emergent_communication.py  # Agent communication
+│   │
+│   │   ├── simulations/          # Market simulation
+│   │   │   └── multi_agent_market.py  # Multi-agent market
+│   │   │
+│   │   └── quant/│   └── quant/                  # Quantitative strategies
 │
 ├── dashboard/
 │   └── app.py                   # Professional Dash dashboard
