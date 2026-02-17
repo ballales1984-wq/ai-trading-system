@@ -414,7 +414,7 @@ class TradingDashboard:
                 shared_xaxes=True,
                 vertical_spacing=0.05,
                 row_heights=[0.5, 0.15, 0.15, 0.2],
-                subplot_titles=('Price + EMA + Bollinger Bands', 'MACD', 'RSI', 'Volume')
+                subplot_titles=('Price + EMA + Bollinger Bands + VWAP', 'MACD + Signal', 'RSI + Stoch', 'Volume + ATR')
             )
             
             # Candlestick
@@ -447,6 +447,26 @@ class TradingDashboard:
                     name='EMA 21',
                     line=dict(color='#d29922', width=1.5)
                 ), row=1, col=1)
+            
+            # SMA 50
+            fig.add_trace(go.Scatter(
+                x=df.index,
+                y=df['close'].rolling(window=50).mean(),
+                mode='lines',
+                name='SMA 50',
+                line=dict(color='#a371f7', width=1.5, dash='dot')
+            ), row=1, col=1)
+            
+            # VWAP (Volume Weighted Average Price)
+            typical_price = (df['high'] + df['low'] + df['close']) / 3
+            vwap = (typical_price * df['volume']).cumsum() / df['volume'].cumsum()
+            fig.add_trace(go.Scatter(
+                x=df.index,
+                y=vwap,
+                mode='lines',
+                name='VWAP',
+                line=dict(color='#f778ba', width=2)
+            ), row=1, col=1)
             
             # Bollinger Bands
             if analysis.bb_upper > 0:
@@ -526,9 +546,25 @@ class TradingDashboard:
                 showlegend=False
             ), row=3, col=1)
             
+            # Stochastic Oscillator
+            low_14 = df['low'].rolling(window=14).min()
+            high_14 = df['high'].rolling(window=14).max()
+            stoch = 100 * (df['close'] - low_14) / (high_14 - low_14)
+            
+            fig.add_trace(go.Scatter(
+                x=df.index,
+                y=stoch,
+                mode='lines',
+                name='Stochastic',
+                line=dict(color='#f0883e', width=1.5),
+                showlegend=False
+            ), row=3, col=1)
+            
             # RSI reference lines
             fig.add_hline(y=70, line_dash="dash", line_color="rgba(248, 81, 73, 0.5)", row=3, col=1)
             fig.add_hline(y=30, line_dash="dash", line_color="rgba(63, 185, 80, 0.5)", row=3, col=1)
+            fig.add_hline(y=80, line_dash="dot", line_color="rgba(240, 136, 62, 0.5)", row=3, col=1)
+            fig.add_hline(y=20, line_dash="dot", line_color="rgba(240, 136, 62, 0.5)", row=3, col=1)
             
             # Volume (row 4)
             colors_vol = [self.theme['green'] if df['close'].iloc[i] >= df['open'].iloc[i] else self.theme['red'] 
@@ -542,12 +578,28 @@ class TradingDashboard:
                 showlegend=False
             ), row=4, col=1)
             
+            # ATR (Average True Range)
+            high_low = df['high'] - df['low']
+            high_close = abs(df['high'] - df['close'].shift())
+            low_close = abs(df['low'] - df['close'].shift())
+            true_range = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
+            atr = true_range.rolling(window=14).mean()
+            
+            fig.add_trace(go.Scatter(
+                x=df.index,
+                y=atr,
+                mode='lines',
+                name='ATR',
+                line=dict(color='#79c0ff', width=1.5),
+                showlegend=False
+            ), row=4, col=1)
+            
             # Update layout
             fig.update_layout(
                 template='plotly_dark',
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
-                height=700,
+                height=750,
                 xaxis_rangeslider_visible=False,
                 legend=dict(
                     orientation="h",
