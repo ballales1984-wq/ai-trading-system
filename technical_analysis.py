@@ -473,6 +473,160 @@ class TechnicalAnalyzer:
         
         return vwap.iloc[-1] if not pd.isna(vwap.iloc[-1]) else 0.0
     
+    def calculate_obv(self, df: pd.DataFrame) -> float:
+        """
+        Calculate On-Balance Volume (OBV).
+        """
+        if 'volume' not in df.columns or len(df) < 2:
+            return 0.0
+        
+        obv = (np.sign(df['close'].diff()) * df['volume']).cumsum()
+        return obv.iloc[-1] if not pd.isna(obv.iloc[-1]) else 0.0
+    
+    def calculate_cci(self, df: pd.DataFrame, period: int = 20) -> float:
+        """
+        Calculate Commodity Channel Index (CCI).
+        """
+        if len(df) < period:
+            return 0.0
+        
+        tp = (df['high'] + df['low'] + df['close']) / 3
+        sma = tp.rolling(window=period).mean()
+        mad = tp.rolling(window=period).apply(lambda x: np.abs(x - x.mean()).mean())
+        
+        cci = (tp - sma) / (0.015 * mad)
+        return cci.iloc[-1] if not pd.isna(cci.iloc[-1]) else 0.0
+    
+    def calculate_williams_r(self, df: pd.DataFrame, period: int = 14) -> float:
+        """
+        Calculate Williams %R.
+        """
+        if len(df) < period:
+            return -50.0
+        
+        highest_high = df['high'].rolling(window=period).max()
+        lowest_low = df['low'].rolling(window=period).min()
+        
+        williams_r = -100 * (highest_high - df['close']) / (highest_high - lowest_low)
+        return williams_r.iloc[-1] if not pd.isna(williams_r.iloc[-1]) else -50.0
+    
+    def calculate_roc(self, df: pd.DataFrame, period: int = 12) -> float:
+        """
+        Calculate Rate of Change (ROC).
+        """
+        if len(df) < period:
+            return 0.0
+        
+        roc = ((df['close'] - df['close'].shift(period)) / df['close'].shift(period)) * 100
+        return roc.iloc[-1] if not pd.isna(roc.iloc[-1]) else 0.0
+    
+    def calculate_ichimoku(self, df: pd.DataFrame) -> Dict[str, float]:
+        """
+        Calculate Ichimoku Cloud components.
+        
+        Returns: Dictionary with tenkan_sen, kijun_sen, senkou_span_a, senkou_span_b, chikou_span
+        """
+        if len(df) < 52:
+            return {
+                'tenkan_sen': 0.0, 'kijun_sen': 0.0,
+                'senkou_span_a': 0.0, 'senkou_span_b': 0.0, 'chikou_span': 0.0
+            }
+        
+        # Tenkan-sen (Conversion Line)
+        high9 = df['high'].rolling(window=9).max()
+        low9 = df['low'].rolling(window=9).min()
+        tenkan_sen = (high9 + low9) / 2
+        
+        # Kijun-sen (Base Line)
+        high26 = df['high'].rolling(window=26).max()
+        low26 = df['low'].rolling(window=26).min()
+        kijun_sen = (high26 + low26) / 2
+        
+        # Senkou Span A (Leading Span A)
+        senkou_span_a = ((tenkan_sen + kijun_sen) / 2).shift(26)
+        
+        # Senkou Span B (Leading Span B)
+        high52 = df['high'].rolling(window=52).max()
+        low52 = df['low'].rolling(window=52).min()
+        senkou_span_b = ((high52 + low52) / 2).shift(26)
+        
+        # Chikou Span (Lagging Span)
+        chikou_span = df['close'].shift(-26)
+        
+        return {
+            'tenkan_sen': tenkan_sen.iloc[-1] if not pd.isna(tenkan_sen.iloc[-1]) else 0.0,
+            'kijun_sen': kijun_sen.iloc[-1] if not pd.isna(kijun_sen.iloc[-1]) else 0.0,
+            'senkou_span_a': senkou_span_a.iloc[-1] if not pd.isna(senkou_span_a.iloc[-1]) else 0.0,
+            'senkou_span_b': senkou_span_b.iloc[-1] if not pd.isna(senkou_span_b.iloc[-1]) else 0.0,
+            'chikou_span': chikou_span.iloc[-1] if not pd.isna(chikou_span.iloc[-1]) else 0.0
+        }
+    
+    def calculate_fibonacci_retracement(self, df: pd.DataFrame) -> Dict[str, float]:
+        """
+        Calculate Fibonacci Retracement levels.
+        """
+        if len(df) < 20:
+            return {'level_0': 0.0, 'level_236': 0.0, 'level_382': 0.0, 
+                    'level_500': 0.0, 'level_618': 0.0, 'level_786': 0.0, 'level_100': 0.0}
+        
+        # Use last 20 candles for swing
+        high = df['high'].iloc[-20:].max()
+        low = df['low'].iloc[-20:].min()
+        diff = high - low
+        
+        levels = {
+            'level_0': low,
+            'level_236': low + diff * 0.236,
+            'level_382': low + diff * 0.382,
+            'level_500': low + diff * 0.500,
+            'level_618': low + diff * 0.618,
+            'level_786': low + diff * 0.786,
+            'level_100': high
+        }
+        
+        return levels
+    
+    def calculate_pivot_points(self, df: pd.DataFrame) -> Dict[str, float]:
+        """
+        Calculate Pivot Points and Support/Resistance levels.
+        """
+        if len(df) < 2:
+            return {'pivot': 0.0, 's1': 0.0, 's2': 0.0, 'r1': 0.0, 'r2': 0.0}
+        
+        # Use previous candle for pivot
+        prev = df.iloc[-2]
+        pivot = (prev['high'] + prev['low'] + prev['close']) / 3
+        
+        r1 = 2 * pivot - prev['low']
+        s1 = 2 * pivot - prev['high']
+        r2 = pivot + (prev['high'] - prev['low'])
+        s2 = pivot - (prev['high'] - prev['low'])
+        
+        return {
+            'pivot': pivot,
+            'r1': r1, 'r2': r2,
+            's1': s1, 's2': s2
+        }
+    
+    def calculate_heikin_ashi(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculate Heikin-Ashi candles.
+        """
+        if len(df) < 1:
+            return df
+        
+        ha = df.copy()
+        ha['ha_close'] = (df['open'] + df['high'] + df['low'] + df['close']) / 4
+        ha['ha_open'] = (df['open'].iloc[0] + df['close'].iloc[0]) / 2
+        
+        for i in range(1, len(ha)):
+            ha.iloc[i, ha.columns.get_loc('ha_open')] = (ha.iloc[i-1]['ha_open'] + ha.iloc[i-1]['ha_close']) / 2
+        
+        ha['ha_high'] = ha[['ha_open', 'ha_close', 'high']].max(axis=1)
+        ha['ha_low'] = ha[['ha_open', 'ha_close', 'low']].min(axis=1)
+        
+        return ha
+    
     # ==================== SIGNAL GENERATION ====================
     
     def _rsi_signal(self, rsi: float) -> str:
