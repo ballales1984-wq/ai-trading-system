@@ -524,7 +524,7 @@ class TradingDashboard:
         debug = debug if debug is not None else self.debug
         
         logger.info(f"Starting dashboard on {host}:{port}")
-        self.app.run_server(host=host, port=port, debug=debug)
+        self.app.run(host=host, port=port, debug=debug)
 
 
 # ==================== SIMPLE CONSOLE OUTPUT ====================

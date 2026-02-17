@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Crypto Commodity Trading System - Main Entry Point
 Experimental system for crypto + commodity-linked trading signals + auto trading
 """
 
 import sys
+import io
 import argparse
 import logging
 from datetime import datetime
+
+# Fix Unicode output on Windows
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 import config
 
@@ -17,6 +23,7 @@ from sentiment_news import SentimentAnalyzer
 from decision_engine import DecisionEngine
 from dashboard import TradingDashboard, print_dashboard_summary
 from auto_trader import AutoTradingBot
+from trading_simulator import TradingSimulator
 
 
 def setup_logging():
@@ -34,7 +41,7 @@ def parse_args():
     
     parser.add_argument(
         '--mode', '-m',
-        choices=['signals', 'analysis', 'dashboard', 'test', 'auto', 'backtest'],
+        choices=['signals', 'analysis', 'dashboard', 'test', 'auto', 'backtest', 'simulate'],
         default='signals',
         help='Execution mode'
     )
@@ -48,6 +55,7 @@ def parse_args():
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--balance', type=float, default=10000.0)
     parser.add_argument('--days', type=int, default=30)
+    parser.add_argument('--duration', type=int, default=60, help='Duration for simulate mode (seconds)')
     
     return parser.parse_args()
 
@@ -247,6 +255,31 @@ def run_auto_mode(args):
         print(f"🎯 Win Rate: {bot.portfolio.get_win_rate():.1f}%")
 
 
+def run_simulate_mode(args):
+    """Run trading simulation"""
+    from trading_simulator import TradingSimulator
+    
+    print("\n" + "="*70)
+    print("TRADING SIMULATOR")
+    print("="*70 + "\n")
+    
+    print(f"🎮 Starting Trading Simulation...")
+    print(f"   Initial Balance: ${args.balance:,.2f}")
+    print(f"   Duration: {args.duration} seconds")
+    print(f"   Position Size: 20%")
+    print(f"   Stop Loss: 2%")
+    print(f"   Take Profit: 5%")
+    print()
+    
+    simulator = TradingSimulator(initial_balance=args.balance)
+    
+    try:
+        simulator.start(duration_seconds=args.duration)
+    except KeyboardInterrupt:
+        print("\n\n🛑 Simulation stopped by user")
+        simulator._print_final_results()
+
+
 def main():
     args = parse_args()
     setup_logging()
@@ -264,6 +297,8 @@ def main():
             run_backtest_mode(args)
         elif args.mode == 'auto':
             run_auto_mode(args)
+        elif args.mode == 'simulate':
+            run_simulate_mode(args)
         else:
             print(f"Unknown mode: {args.mode}")
             
