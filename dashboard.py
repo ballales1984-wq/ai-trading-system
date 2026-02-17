@@ -680,8 +680,12 @@ class TradingDashboard:
                     'HOLD': self.theme['yellow']
                 }.get(signal['action'], self.theme['text'])
                 
+                # Calculate mini-recommendation badge
+                rec = signal.get('recommendation', {})
+                entry_price = rec.get('entry_price', signal.get('current_price', 0))
+                
                 rows.append(html.Tr([
-                    html.Td(signal['symbol'], style={'color': self.theme['text']}),
+                    html.Td(signal['symbol'], style={'color': self.theme['text'], 'font-weight': 'bold'}),
                     html.Td(
                         html.Span(signal['action'], 
                                  style={'color': action_color, 'font-weight': 'bold'}),
@@ -689,19 +693,22 @@ class TradingDashboard:
                     ),
                     html.Td(f"${signal['current_price']:,.2f}", 
                            style={'color': self.theme['text'], 'text-align': 'right'}),
-                    html.Td(signal['confidence'], 
+                    html.Td(f"{signal['confidence']*100:.0f}%", 
                            style={'color': self.theme['text'], 'text-align': 'center'}),
-                    html.Td(f"{signal['technical_score']}", 
+                    html.Td(f"{signal['technical_score']*100:.0f}%", 
                            style={'color': self.theme['text'], 'text-align': 'center'}),
-                ]))
+                ], style={
+                    'cursor': 'pointer',
+                    ':hover': {'background': '#1f2937'}
+                }))
             
             return html.Table([
                 html.Thead(html.Tr([
                     html.Th("Symbol", style={'color': self.theme['text_muted']}),
                     html.Th("Action", style={'color': self.theme['text_muted'], 'text-align': 'center'}),
                     html.Th("Price", style={'color': self.theme['text_muted'], 'text-align': 'right'}),
-                    html.Th("Confidence", style={'color': self.theme['text_muted'], 'text-align': 'center'}),
-                    html.Th("Technical", style={'color': self.theme['text_muted'], 'text-align': 'center'}),
+                    html.Th("Conf%", style={'color': self.theme['text_muted'], 'text-align': 'center'}),
+                    html.Th("Tech%", style={'color': self.theme['text_muted'], 'text-align': 'center'}),
                 ])),
                 html.Tbody(rows)
             ], style={'width': '100%', 'border-collapse': 'collapse'})
