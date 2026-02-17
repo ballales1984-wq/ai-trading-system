@@ -41,12 +41,19 @@ def parse_args():
     
     parser.add_argument(
         '--mode', '-m',
-        choices=['signals', 'analysis', 'dashboard', 'test', 'auto', 'backtest', 'simulate'],
+        choices=['signals', 'analysis', 'dashboard', 'test', 'auto', 'backtest', 'simulate', 'portfolio'],
         default='signals',
         help='Execution mode'
     )
     
+    # Portfolio control arguments
+    parser.add_argument('--portfolio-action', type=str, 
+                        choices=['check', 'close', 'close-all', 'reset', 'analyze', 'history'],
+                        help='Portfolio action to perform')
     parser.add_argument('--symbol', '-s', type=str, default=None)
+    parser.add_argument('--stop-loss', type=float, help='Set stop-loss percentage')
+    parser.add_argument('--take-profit', type=float, help='Set take-profit percentage')
+    parser.add_argument('--position-size', type=float, help='Set position size percentage')
     parser.add_argument('--exchange', '-e', type=str, default='binance')
     parser.add_argument('--simulation', '-sim', action='store_true', default=True)
     parser.add_argument('--dashboard', '-d', action='store_true')
@@ -280,6 +287,109 @@ def run_simulate_mode(args):
         simulator._print_final_results()
 
 
+def run_portfolio_mode(args):
+    """Run portfolio control commands"""
+    from trading_simulator import TradingSimulator
+    
+    print("\n" + "="*70)
+    print("PORTFOLIO CONTROL")
+    print("="*70 + "\n")
+    
+    # Initialize simulator (loads saved state if available)
+    simulator = TradingSimulator(initial_balance=args.balance)
+    
+    # Handle settings changes first
+    if args.stop_loss is not None:
+        result = simulator.set_stop_loss(args.stop_loss)
+        print(f"{'✅' if result['status'] == 'SUCCESS' else '❌'} {result['message']}")
+    
+    if args.take_profit is not None:
+        result = simulator.set_take_profit(args.take_profit)
+        print(f"{'✅' if result['status'] == 'SUCCESS' else '❌'} {result['message']}")
+    
+    if args.position_size is not None:
+        result = simulator.set_position_size(args.position_size)
+        print(f"{'✅' if result['status'] == 'SUCCESS' else '❌'} {result['message']}")
+    
+    # Handle portfolio actions
+    action = args.portfolio_action
+    
+    if action == 'check' or action is None:
+        # Check portfolio status
+        status = simulator.check_portfolio()
+        print("\n📊 PORTFOLIO STATUS:")
+        print("-" * 40)
+        print(f"💰 Balance:        ${status['balance']:,.2f}")
+        print(f"📈 Total Value:    ${status['total_value']:,.2f}")
+        print(f"💵 Total P&L:     ${status['total_pnl']:+,.2f} ({status['pnl_percent']:+,.2f}%)")
+        print(f"📋 Open Positions: {status['open_positions']}/{status['max_positions']}")
+        print(f"🎯 Win Rate:      {status['win_rate']:.1f}%")
+        print(f"📊 Total Trades:  {status['trade_count']}")
+        print("\n⚙️ SETTINGS:")
+        print("-" * 40)
+        print(f"Position Size:  {status['settings']['position_size_percent']:.1f}%")
+        print(f"Stop Loss:      {status['settings']['stop_loss_percent']:.1f}%")
+        print(f"Take Profit:    {status['settings']['take_profit_percent']:.1f}%")
+        
+        if status['positions_detail']:
+            print("\n📋 OPEN POSITIONS:")
+            print("-" * 40)
+            for sym, pos in status['positions_detail'].items():
+                pnl = (pos['current_price'] - pos['entry_price']) * pos['quantity']
+                pnl_pct = ((pos['current_price'] - pos['entry_price']) / pos['entry_price']) * 100
+                print(f"  {sym}: ${pos['current_price']:,.2f} ({pnl_pct:+.2f}%)")
+    
+    elif action == 'close':
+        if not args.symbol:
+            print("❌ Error: --symbol required to close a position")
+            return
+        result = simulator.close_position(args.symbol)
+        print(f"{'✅' if result['status'] == 'SUCCESS' else '❌'} {result['message']}")
+        if result['status'] == 'SUCCESS':
+            print(f"   Price: ${result['price']:,.2f}")
+            print(f"   P&L: ${result['pnl']:+,.2f}")
+    
+    elif action == 'close-all':
+        result = simulator.close_all_positions()
+        print(f"✅ Closed {result['total_closed']} positions")
+        for pos in result['closed_positions']:
+            print(f"   {pos['message']} - P&L: ${pos['pnl']:+,.2f}")
+    
+    elif action == 'reset':
+        result = simulator.reset_portfolio()
+        print(f"✅ {result['message']}")
+        print(f"   New Balance: ${result['new_balance']:,.2f}")
+    
+    elif action == 'analyze':
+        analysis = simulator.get_portfolio_analysis()
+        if analysis['status'] == 'NO_DATA':
+            print("📊 No trades to analyze yet.")
+        else:
+            print("\n📊 PORTFOLIO ANALYSIS:")
+            print("-" * 40)
+            print(f"Total Trades:    {analysis['total_trades']}")
+            print(f"Winning Trades:  {analysis['winning_trades']}")
+            print(f"Losing Trades:   {analysis['losing_trades']}")
+            print(f"Win Rate:        {analysis['win_rate']:.1f}%")
+            print(f"Total P&L:       ${analysis['total_pnl']:+,.2f}")
+            print(f"Average Win:     ${analysis['average_win']:+,.2f}")
+            print(f"Average Loss:    ${analysis['average_loss']:,.2f}")
+            print(f"Profit Factor:   {analysis['profit_factor']:.2f}")
+            print(f"Best Trade:      ${analysis['best_trade']:+,.2f}")
+            print(f"Worst Trade:     ${analysis['worst_trade']:+,.2f}")
+    
+    elif action == 'history':
+        trades = simulator.get_trade_history()
+        if not trades:
+            print("📜 No trade history yet.")
+        else:
+            print("\n📜 TRADE HISTORY:")
+            print("-" * 60)
+            for t in trades:
+                print(f"  {t['timestamp']} | {t['symbol']} | {t['action']} | "
+                      f"${t['price']:,.2f} | Qty: {t['quantity']:.4f} | P&L: ${t['pnl']:+,.2f}")
+
+
 def main():
     args = parse_args()
     setup_logging()
@@ -299,6 +409,8 @@ def main():
             run_auto_mode(args)
         elif args.mode == 'simulate':
             run_simulate_mode(args)
+        elif args.mode == 'portfolio':
+            run_portfolio_mode(args)
         else:
             print(f"Unknown mode: {args.mode}")
             

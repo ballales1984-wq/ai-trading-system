@@ -339,6 +339,239 @@ class TradingSimulator:
             'trade_count': self.portfolio.trade_count,
             'win_rate': self.portfolio.get_win_rate()
         }
+    
+    # ==================== PORTFOLIO CONTROL FUNCTIONS ====================
+    
+    def check_portfolio(self) -> Dict:
+        """
+        Check portfolio status - returns detailed portfolio information.
+        
+        Returns:
+            Dict with portfolio status details
+        """
+        state = self.get_portfolio_state()
+        
+        # Calculate additional metrics
+        initial = self.portfolio.initial_balance
+        current = state['total_value']
+        pnl_percent = ((current - initial) / initial) * 100 if initial > 0 else 0
+        
+        return {
+            'status': 'OK',
+            'balance': state['balance'],
+            'total_value': current,
+            'initial_balance': initial,
+            'total_pnl': state['total_pnl'],
+            'pnl_percent': pnl_percent,
+            'open_positions': len(state['positions']),
+            'max_positions': self.max_positions,
+            'trade_count': state['trade_count'],
+            'win_rate': state['win_rate'],
+            'positions_detail': state['positions'],
+            'settings': {
+                'position_size_percent': self.position_size_percent * 100,
+                'stop_loss_percent': self.stop_loss_percent * 100,
+                'take_profit_percent': self.take_profit_percent * 100,
+            }
+        }
+    
+    def close_position(self, symbol: str) -> Dict:
+        """
+        Manually close an open position.
+        
+        Args:
+            symbol: Trading symbol to close
+            
+        Returns:
+            Dict with close result
+        """
+        if symbol not in self.portfolio.positions:
+            return {'status': 'ERROR', 'message': f'No open position for {symbol}'}
+        
+        position = self.portfolio.positions[symbol]
+        
+        # Get current price
+        try:
+            df = self.data_collector.fetch_ohlcv(symbol, '1h', 1)
+            current_price = df['close'].iloc[-1] if df is not None else position.current_price
+        except:
+            current_price = position.current_price
+        
+        # Calculate P&L
+        pnl = (current_price - position.entry_price) * position.quantity
+        self.portfolio.balance += (current_price * position.quantity)
+        self.portfolio.total_pnl += pnl
+        
+        # Record trade
+        trade = Trade(
+            id=f"{datetime.now().timestamp()}",
+            symbol=symbol,
+            action='SELL',
+            quantity=position.quantity,
+            price=current_price,
+            timestamp=datetime.now(),
+            pnl=pnl
+        )
+        self.portfolio.trades.append(trade)
+        self.portfolio.trade_count += 1
+        if pnl > 0:
+            self.portfolio.win_count += 1
+        
+        # Remove position
+        del self.portfolio.positions[symbol]
+        
+        return {
+            'status': 'SUCCESS',
+            'message': f'Closed position for {symbol}',
+            'price': current_price,
+            'quantity': position.quantity,
+            'pnl': pnl
+        }
+    
+    def close_all_positions(self) -> Dict:
+        """
+        Close all open positions.
+        
+        Returns:
+            Dict with close results
+        """
+        closed = []
+        for symbol in list(self.portfolio.positions.keys()):
+            result = self.close_position(symbol)
+            if result['status'] == 'SUCCESS':
+                closed.append(result)
+        
+        return {
+            'status': 'SUCCESS',
+            'closed_positions': closed,
+            'total_closed': len(closed)
+        }
+    
+    def set_stop_loss(self, percent: float) -> Dict:
+        """
+        Set stop-loss percentage.
+        
+        Args:
+            percent: Stop-loss percentage (e.g., 2.0 for 2%)
+            
+        Returns:
+            Dict with setting result
+        """
+        if percent < 0 or percent > 50:
+            return {'status': 'ERROR', 'message': 'Stop-loss must be between 0% and 50%'}
+        
+        self.stop_loss_percent = percent / 100
+        
+        return {
+            'status': 'SUCCESS',
+            'message': f'Stop-loss set to {percent}%',
+            'stop_loss_percent': percent
+        }
+    
+    def set_take_profit(self, percent: float) -> Dict:
+        """
+        Set take-profit percentage.
+        
+        Args:
+            percent: Take-profit percentage (e.g., 5.0 for 5%)
+            
+        Returns:
+            Dict with setting result
+        """
+        if percent < 0 or percent > 100:
+            return {'status': 'ERROR', 'message': 'Take-profit must be between 0% and 100%'}
+        
+        self.take_profit_percent = percent / 100
+        
+        return {
+            'status': 'SUCCESS',
+            'message': f'Take-profit set to {percent}%',
+            'take_profit_percent': percent
+        }
+    
+    def set_position_size(self, percent: float) -> Dict:
+        """
+        Set position size percentage.
+        
+        Args:
+            percent: Position size percentage (e.g., 20.0 for 20%)
+            
+        Returns:
+            Dict with setting result
+        """
+        if percent < 1 or percent > 50:
+            return {'status': 'ERROR', 'message': 'Position size must be between 1% and 50%'}
+        
+        self.position_size_percent = percent / 100
+        
+        return {
+            'status': 'SUCCESS',
+            'message': f'Position size set to {percent}%',
+            'position_size_percent': percent
+        }
+    
+    def get_trade_history(self, limit: int = 50) -> List[Dict]:
+        """
+        Get trade history.
+        
+        Args:
+            limit: Maximum number of trades to return
+            
+        Returns:
+            List of trade dictionaries
+        """
+        trades = self.portfolio.trades[-limit:]
+        return [asdict(t) for t in trades]
+    
+    def reset_portfolio(self) -> Dict:
+        """
+        Reset portfolio to initial state.
+        
+        Returns:
+            Dict with reset result
+        """
+        initial = self.portfolio.initial_balance
+        self.portfolio = Portfolio(
+            balance=initial,
+            initial_balance=initial
+        )
+        
+        return {
+            'status': 'SUCCESS',
+            'message': 'Portfolio reset to initial state',
+            'new_balance': initial
+        }
+    
+    def get_portfolio_analysis(self) -> Dict:
+        """
+        Get detailed portfolio analysis.
+        
+        Returns:
+            Dict with analysis metrics
+        """
+        if not self.portfolio.trades:
+            return {'status': 'NO_DATA', 'message': 'No trades to analyze'}
+        
+        trades = self.portfolio.trades
+        winning_trades = [t for t in trades if t.pnl > 0]
+        losing_trades = [t for t in trades if t.pnl <= 0]
+        
+        avg_win = sum(t.pnl for t in winning_trades) / len(winning_trades) if winning_trades else 0
+        avg_loss = sum(t.pnl for t in losing_trades) / len(losing_trades) if losing_trades else 0
+        
+        return {
+            'status': 'OK',
+            'total_trades': len(trades),
+            'winning_trades': len(winning_trades),
+            'losing_trades': len(losing_trades),
+            'win_rate': self.portfolio.get_win_rate(),
+            'total_pnl': self.portfolio.total_pnl,
+            'average_win': avg_win,
+            'average_loss': avg_loss,
+            'profit_factor': abs(avg_win / avg_loss) if avg_loss != 0 else 0,
+            'best_trade': max((t.pnl for t in trades), default=0),
+            'worst_trade': min((t.pnl for t in trades), default=0),
+        }
 
 
 def run_simulation(duration: int = 300):
