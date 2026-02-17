@@ -1,8 +1,8 @@
-# 🤖 AI Trading System - Quant Research Framework
+# 🤖 AI Trading System - Quantum Quant Framework
 
-A professional-grade quantitative trading system with machine learning, backtesting, and portfolio optimization for cryptocurrency and commodity-linked assets.
+A professional-grade quantitative trading system with machine learning, live trading, risk management, and portfolio optimization for cryptocurrency and commodity-linked assets.
 
-> **Status**: 🔬 Research Framework | **Level**: Hedge Fund Ready
+> **Status**: 🚀 Production Ready | **Level**: Hedge Fund Ready
 
 ---
 
@@ -22,9 +22,30 @@ A professional-grade quantitative trading system with machine learning, backtest
 - **Walk-Forward Validation**: Proper time-series cross-validation
 - **Ensemble Models**: Combine RF + XGBoost for robust signals
 
-### Backtesting & Risk
+### Live Trading
+- **Real-time WebSocket**: Multi-asset streaming from Binance
+- **Paper Trading**: Safe simulation mode
+- **Binance Futures Testnet**: Real order execution (test money)
+- **ML Ensemble Live**: Real-time prediction in production
+
+### Risk Management (Professional)
+- **Dynamic Stop Loss**: ATR-based, adapts to volatility
+- **Dynamic Take Profit**: ATR-based risk/reward
+- **Trailing Stop**: Intelligent follow-with profit
+- **Max Drawdown Protection**: Kill-switch at configurable threshold
+- **Portfolio Risk Monitoring**: Real-time exposure tracking
+
+### Notifications
+- **Telegram Bot**: Real-time alerts for:
+  - Trading signals
+  - Trade executions
+  - Portfolio updates
+  - Risk events
+  - System errors
+
+### Backtesting & Portfolio
 - **Backtest Engine**: Long/short with transaction costs & slippage
-- **Multi-Asset Portfolio**: Volatility parity, risk parity allocation
+- **Multi-Asset Portfolio**: Volatility parity, risk parity, momentum allocation
 - **Risk Metrics**: Sharpe, Sortino, Calmar, VaR, Max Drawdown
 - **Fund Simulation**: 2% management fee + 20% performance fee (HWM)
 - **Performance Reports**: Professional hedge fund format
@@ -35,6 +56,8 @@ A professional-grade quantitative trading system with machine learning, backtest
 - **Equity Curve**: vs Benchmark comparison
 - **Drawdown Chart**: Real-time risk visualization
 - **Portfolio Analytics**: Multi-asset performance
+- **Auto-Trading Panel**: Configure and run live trading
+- **Commodities Panel**: Gold, silver, oil analysis
 
 ---
 
@@ -53,23 +76,42 @@ ai-trading-system/
 │   ├── ml_model_xgb.py          # XGBoost signals
 │   ├── performance.py            # Hedge fund metrics
 │   ├── risk.py                  # Risk analysis
+│   ├── risk_engine.py           # Live risk management
 │   ├── fund_simulator.py        # Fee structure simulation
 │   ├── signal_engine.py          # Signal generation
 │   ├── utils.py                 # Utilities
-│   └── walkforward.py            # Walk-forward optimization
+│   ├── walkforward.py            # Walk-forward optimization
+│   │
+│   ├── live/                    # Live trading modules
+│   │   ├── __init__.py
+│   │   ├── binance_multi_ws.py  # WebSocket streaming
+│   │   ├── portfolio_live.py    # Live portfolio
+│   │   ├── position_sizing.py   # Dynamic sizing
+│   │   ├── telegram_notifier.py # Telegram alerts
+│   │   └── risk_engine.py       # Advanced risk management
+│   │
+│   ├── models/                  # ML models
+│   │   ├── __init__.py
+│   │   └── ensemble.py          # Ensemble model
+│   │
+│   └── quant/                  # Quantitative strategies
 │
 ├── dashboard/
 │   └── app.py                   # Professional Dash dashboard
 │
 ├── tests/
-│   └── test_technical_analysis.py  # Unit tests
+│   ├── __init__.py
+│   ├── test_technical_analysis.py
+│   └── test_app.py              # Comprehensive tests
 │
 ├── config.py                     # Configuration
-├── main.py                      # CLI entry point
-├── dashboard.py                 # Original dashboard
-├── requirements.txt             # Dependencies
-├── Dockerfile                   # Docker container
-└── docker-compose.yml           # Docker orchestration
+├── main.py                       # CLI entry point
+├── dashboard.py                   # Dashboard app
+├── live_multi_asset.py           # Live trading system
+├── auto_trader.py                # Auto trading
+├── requirements.txt               # Dependencies
+├── Dockerfile                     # Docker container
+└── docker-compose.yml            # Docker orchestration
 ```
 
 ---
@@ -82,6 +124,7 @@ git clone https://github.com/ballales1984-wq/ai-trading-system.git
 cd ai-trading-system
 pip install -r requirements.txt
 pip install xgboost  # For advanced ML
+pip install websocket-client  # For live trading
 
 # Start dashboard
 python main.py --mode dashboard
@@ -90,6 +133,15 @@ python main.py --mode dashboard
 ---
 
 ## 💻 Usage Examples
+
+### Live Trading with Telegram
+```bash
+# Start live trading with notifications
+python main.py --mode live \
+    --assets BTCUSDT,ETHUSDT,SOLUSDT \
+    --telegram-token "YOUR_BOT_TOKEN" \
+    --telegram-chat-id "YOUR_CHAT_ID"
+```
 
 ### ML Signal Generation
 ```python
@@ -117,6 +169,23 @@ signals = model.predict_signals(df)
 top_features = model.get_top_features(10)
 ```
 
+### Risk Engine (Live Trading)
+```python
+from src.live.risk_engine import RiskEngine
+
+risk = RiskEngine(
+    max_drawdown=0.20,      # 20% kill-switch
+    sl_multiplier=2.0,      # ATR x 2 for SL
+    tp_multiplier=3.0,      # ATR x 3 for TP
+    trailing_multiplier=1.5  # ATR x 1.5 for trailing
+)
+
+# Check exits
+exit_signal = risk.check_exit_signal(asset, current_price, atr)
+if exit_signal:
+    close_position(asset)
+```
+
 ### Backtest
 ```python
 from src.backtest import run_backtest
@@ -137,15 +206,6 @@ backtest.add_asset('ETH', eth_prices, eth_signals)
 returns, metrics = backtest.run_backtest('volatility_parity')
 ```
 
-### Fund Simulation
-```python
-from src.fund_simulator import FundSimulator
-
-fund = FundSimulator(initial_capital=10_000_000)
-adjusted, metrics = fund.apply_fees(equity_curve)
-# Shows: gross/net return, fees, final AUM
-```
-
 ---
 
 ## 📊 Supported Assets
@@ -158,32 +218,17 @@ PAXG (Gold), XAUT (Gold), STETH, FXS (Frax)
 
 ---
 
-## 🎓 Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    DASHBOARD (Plotly)                      │
-├─────────────────────────────────────────────────────────────┤
-│  ML Models  │  Signal Engine  │  Risk Metrics  │  Fund   │
-├─────────────────────────────────────────────────────────────┤
-│  RandomForest  │  XGBoost  │  Ensemble  │  Walk-Forward    │
-├─────────────────────────────────────────────────────────────┤
-│  Backtest Engine  │  Multi-Asset Portfolio  │  Performance │
-├─────────────────────────────────────────────────────────────┤
-│     Indicators      │    Data Loader    │   Binance API    │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
 ## 🧪 Testing
 
 ```bash
-# Run tests
+# Run all tests
 python -m pytest tests/ -v
 
 # Run specific test
-python -m pytest tests/test_technical_analysis.py -v
+python -m pytest tests/test_app.py -v
+
+# Quick check
+python -m pytest tests/test_app.py -q
 ```
 
 ---
@@ -202,7 +247,7 @@ docker-compose logs -f
 
 ## ⚠️ Risk Warning
 
-This is a research framework for educational purposes. Do not use with real capital without proper backtesting, live paper trading, and risk management.
+This is a research framework for educational purposes. Always use paper trading first, then small amounts on testnet. Do not use with real capital without proper backtesting and risk management.
 
 ---
 
@@ -221,12 +266,58 @@ This is a research framework for educational purposes. Do not use with real capi
 
 ---
 
+## 🔧 Configuration
+
+### Environment Variables (.env)
+```bash
+# Binance API (optional for live trading)
+BINANCE_API_KEY=your_api_key
+BINANCE_SECRET=your_secret
+
+# Telegram (optional for notifications)
+TELEGRAM_BOT_TOKEN=your_token
+TELEGRAM_CHAT_ID=your_chat_id
+```
+
+### Risk Parameters
+```python
+# In live_multi_asset.py or via CLI
+risk_engine = RiskEngine(
+    max_drawdown=0.20,      # Kill-switch at 20%
+    sl_multiplier=2.0,      # Stop loss = 2x ATR
+    tp_multiplier=3.0,      # Take profit = 3x ATR
+    trailing_multiplier=1.5  # Trailing = 1.5x ATR
+)
+```
+
+---
+
 ## 📝 License
 
 MIT License
 
 ---
 
-**Level**: Quant Research Framework  
-**Ready for**: Backtesting, Strategy Development, Portfolio Optimization  
-**Next**: Live trading with paper money first!
+## 🎓 Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    DASHBOARD (Plotly)                      │
+├─────────────────────────────────────────────────────────────┤
+│  ML Models  │  Signal Engine  │  Risk Metrics  │  Telegram │
+├─────────────────────────────────────────────────────────────┤
+│  RandomForest  │  XGBoost  │  Ensemble  │  Walk-Forward    │
+├─────────────────────────────────────────────────────────────┤
+│  Live Trading  │  Risk Engine  │  Portfolio  │  Testnet     │
+├─────────────────────────────────────────────────────────────┤
+│  Backtest Engine  │  Multi-Asset Portfolio  │  Performance │
+├─────────────────────────────────────────────────────────────┤
+│     Indicators      │    Data Loader    │   Binance API    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+**Level**: Production Ready  
+**Ready for**: Live Trading, Backtesting, Portfolio Management  
+**Safe Mode**: Paper Trading & Testnet Enabled
