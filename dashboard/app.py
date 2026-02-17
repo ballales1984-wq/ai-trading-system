@@ -29,7 +29,10 @@ from src.data_loader import DataLoader
 from src.indicators import calculate_all_indicators, rsi, macd, bollinger_bands
 from src.signal_engine import generate_composite_signal, detect_trend
 from src.backtest import run_backtest
-from src.risk import calculate_all_risk_metrics, max_drawdown
+from src.risk import calculate_all_risk_metrics, max_drawdown, rolling_drawdown
+from src.ml_model import MLSignalModel
+from src.performance import generate_performance_report, calculate_all_performance_metrics
+from src.fund_simulator import FundSimulator, generate_fund_report
 
 
 # Initialize app
@@ -143,6 +146,41 @@ app.layout = html.Div([
         ], className="metric-card"),
     ], className="metrics-row"),
     
+    # ML & Fund Metrics Row
+    html.Div([
+        html.Div([
+            html.Div("ML Accuracy", className="metric-label"),
+            html.Div(id='ml-accuracy', className="metric-value metric-value-ml")
+        ], className="metric-card"),
+        
+        html.Div([
+            html.Div("ML Confidence", className="metric-label"),
+            html.Div(id='ml-confidence', className="metric-value metric-value-ml")
+        ], className="metric-card"),
+        
+        html.Div([
+            html.Div("Sortino", className="metric-label"),
+            html.Div(id='sortino-ratio', className="metric-value")
+        ], className="metric-card"),
+        
+        html.Div([
+            html.Div("VaR 95%", className="metric-label"),
+            html.Div(id='var-metric', className="metric-value")
+        ], className="metric-card"),
+        
+        html.Div([
+            html.Div("Fund Net Return", className="metric-label"),
+            html.Div(id='fund-net-return', className="metric-value metric-value-fund")
+        ], className="metric-card"),
+    ], className="metrics-row"),
+    
+    # Drawdown Chart Row
+    html.Div([
+        html.Div([
+            dcc.Graph(id='drawdown-chart', className="chart")
+        ], className="chart-container")
+    ], className="charts-row"),
+    
     # Main Charts
     html.Div([
         # Price Chart with Indicators
@@ -177,6 +215,8 @@ app.layout = html.Div([
     # Hidden store for data
     dcc.Store(id='market-data'),
     dcc.Store(id='backtest-results'),
+    dcc.Store(id='ml-results'),
+    dcc.Store(id='fund-results'),
     
     # Auto-refresh interval
     dcc.Interval(
@@ -491,6 +531,148 @@ def update_signal_dist(data):
     return fig
 
 
+# ML Model Callback
+@callback(
+    Output('ml-results', 'data'),
+    Input('market-data', 'data')
+)
+def run_ml_analysis(data):
+    """Run ML model analysis."""
+    df = pd.DataFrame.from_dict(data)
+    
+    try:
+        model = MLSignalModel('random_forest', n_estimators=50)
+        metrics = model.train(df)
+        signals = model.predict_signals(df)
+        
+        # Get latest prediction confidence
+        result = model.predict(df)
+        latest_prob = result.probability[-1] if len(result.probability) > 0 else 0.5
+        
+        return {
+            'accuracy': metrics.get('accuracy', 0),
+            'precision': metrics.get('precision', 0),
+            'recall': metrics.get('recall', 0),
+            'f1': metrics.get('f1', 0),
+            'confidence': latest_prob,
+            'signals': signals.to_dict()
+        }
+    except Exception as e:
+        print(f"ML Error: {e}")
+        return {
+            'accuracy': 0,
+            'precision': 0,
+            'recall': 0,
+            'f1': 0,
+            'confidence': 0.5,
+            'signals': {}
+        }
+
+
+# Fund Simulator Callback
+@callback(
+    Output('fund-results', 'data'),
+    Input('backtest-results', 'data')
+)
+def run_fund_simulation(data):
+    """Run fund simulation with fees."""
+    if not data or 'equity' not in data:
+        return {'net_return': 0, 'total_fees': 0}
+    
+    try:
+        equity = pd.Series(data['equity'])
+        
+        fund = FundSimulator(initial_capital=1000000)
+        adjusted, metrics = fund.apply_fees(equity)
+        
+        return {
+            'net_return': metrics.net_return * 100,
+            'gross_return': metrics.gross_return * 100,
+            'total_fees': metrics.total_fees,
+            'management_fee': metrics.management_fee,
+            'performance_fee': metrics.performance_fee,
+            'final_aum': metrics.aum_final
+        }
+    except Exception as e:
+        print(f"Fund Error: {e}")
+        return {'net_return': 0, 'total_fees': 0}
+
+
+# ML & Fund Metrics Callback
+@callback(
+    [Output('ml-accuracy', 'children'),
+     Output('ml-confidence', 'children'),
+     Output('sortino-ratio', 'children'),
+     Output('var-metric', 'children'),
+     Output('fund-net-return', 'children')],
+    [Input('ml-results', 'data'),
+     Input('backtest-results', 'data'),
+     Input('fund-results', 'data')]
+)
+def update_ml_fund_metrics(ml_data, backtest_data, fund_data):
+    """Update ML and Fund metrics."""
+    # ML metrics
+    ml_acc = f"{ml_data.get('accuracy', 0)*100:.1f}%" if ml_data else "N/A"
+    ml_conf = f"{ml_data.get('confidence', 0.5)*100:.1f}%" if ml_data else "N/A"
+    
+    # Risk metrics from backtest
+    sortino = "N/A"
+    var_val = "N/A"
+    if backtest_data and 'risk_metrics' in backtest_data:
+        risk = backtest_data['risk_metrics']
+        sortino = f"{risk.get('sortino_ratio', 0):.2f}"
+        var_val = f"{risk.get('var_95', 0)*100:.2f}%"
+    
+    # Fund metrics
+    fund_net = "N/A"
+    if fund_data:
+        fund_net = f"{fund_data.get('net_return', 0):+.2f}%"
+    
+    return ml_acc, ml_conf, sortino, var_val, fund_net
+
+
+# Drawdown Chart Callback
+@callback(
+    Output('drawdown-chart', 'figure'),
+    Input('backtest-results', 'data')
+)
+def update_drawdown_chart(data):
+    """Update drawdown chart."""
+    if not data or 'equity' not in data:
+        fig = go.Figure()
+        fig.update_layout(
+            title='Drawdown',
+            template='plotly_dark',
+            height=250
+        )
+        return fig
+    
+    equity = pd.Series(data['equity'])
+    peak = equity.expanding().max()
+    drawdown = (equity - peak) / peak * 100
+    
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=drawdown.index,
+            y=drawdown.values,
+            mode='lines',
+            name='Drawdown',
+            fill='tozeroy',
+            line=dict(color='#ff4444', width=2)
+        )
+    )
+    
+    fig.update_layout(
+        title='Drawdown (%)',
+        template='plotly_dark',
+        height=250,
+        yaxis_title='Drawdown %'
+    )
+    
+    return fig
+
+
 # Add CSS
 app.index_string = '''
 <!DOCTYPE html>
@@ -585,6 +767,12 @@ app.index_string = '''
                 color: #58a6ff;
                 font-size: 1.5em;
                 font-weight: bold;
+            }
+            .metric-value-ml {
+                color: #a371f7;
+            }
+            .metric-value-fund {
+                color: #3fb950;
             }
             .charts-row {
                 display: flex;
