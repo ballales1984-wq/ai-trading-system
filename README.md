@@ -1,122 +1,232 @@
-# Crypto Commodity Trading System
+# 🤖 AI Trading System - Quant Research Framework
 
-An experimental AI-powered trading system for cryptocurrency and commodity-linked assets with real-time market analysis.
+A professional-grade quantitative trading system with machine learning, backtesting, and portfolio optimization for cryptocurrency and commodity-linked assets.
 
-## Features
+> **Status**: 🔬 Research Framework | **Level**: Hedge Fund Ready
 
-### Core Features
+---
+
+## 🎯 Features
+
+### Core Trading
 - **Data Collection**: Real-time crypto prices from Binance API (28+ trading pairs)
-- **Technical Analysis**: RSI, EMA, SMA, Bollinger Bands, MACD, VWAP, Stochastic, ATR
+- **Technical Analysis**: RSI, EMA, SMA, Bollinger Bands, MACD, VWAP, Stochastic, ATR, ADX
 - **Cross-Market Analysis**: Correlations between crypto and commodity assets
 - **News/Sentiment**: Market sentiment analysis with Fear & Greed index
 - **Decision Engine**: Probabilistic trading signals with risk management
-- **Trading Simulator**: Paper trading with portfolio tracking
 
-### Dashboard Features
-- **Interactive Charts**: Candlestick charts with multiple indicators
-- **Timeframe Selector**: 1h, 4h, 1d timeframes
-- **MACD & RSI Panels**: Technical oscillator subplots
-- **Volume & ATR**: Trading volume with volatility indicator
-- **Portfolio Performance**: Equity curve tracking
-- **Binance Market Data**: Real-time prices, volume, dominance
-- **Pairs Comparison**: Top 10 USDT pairs by volume
-- **Live Clock**: Real-time system clock
+### Machine Learning (Quant Level)
+- **Random Forest Classifier**: Supervised ML for signal generation
+- **XGBoost**: Advanced gradient boosting for prediction
+- **Feature Engineering**: Returns, volatility, momentum, regime detection
+- **Walk-Forward Validation**: Proper time-series cross-validation
+- **Ensemble Models**: Combine RF + XGBoost for robust signals
 
-## Supported Trading Pairs
+### Backtesting & Risk
+- **Backtest Engine**: Long/short with transaction costs & slippage
+- **Multi-Asset Portfolio**: Volatility parity, risk parity allocation
+- **Risk Metrics**: Sharpe, Sortino, Calmar, VaR, Max Drawdown
+- **Fund Simulation**: 2% management fee + 20% performance fee (HWM)
+- **Performance Reports**: Professional hedge fund format
+
+### Dashboard
+- **Interactive Charts**: Candlestick with multiple indicators
+- **ML Metrics**: Accuracy, confidence, feature importance
+- **Equity Curve**: vs Benchmark comparison
+- **Drawdown Chart**: Real-time risk visualization
+- **Portfolio Analytics**: Multi-asset performance
+
+---
+
+## 📂 Project Structure
+
+```
+ai-trading-system/
+│
+├── src/                          # Quant modules
+│   ├── __init__.py              # Package exports
+│   ├── backtest.py              # Backtesting engine
+│   ├── backtest_multi.py        # Multi-asset portfolio
+│   ├── data_loader.py           # Data loading (CSV/API)
+│   ├── indicators.py             # Technical indicators
+│   ├── ml_model.py              # Random Forest signals
+│   ├── ml_model_xgb.py          # XGBoost signals
+│   ├── performance.py            # Hedge fund metrics
+│   ├── risk.py                  # Risk analysis
+│   ├── fund_simulator.py        # Fee structure simulation
+│   ├── signal_engine.py          # Signal generation
+│   ├── utils.py                 # Utilities
+│   └── walkforward.py            # Walk-forward optimization
+│
+├── dashboard/
+│   └── app.py                   # Professional Dash dashboard
+│
+├── tests/
+│   └── test_technical_analysis.py  # Unit tests
+│
+├── config.py                     # Configuration
+├── main.py                      # CLI entry point
+├── dashboard.py                 # Original dashboard
+├── requirements.txt             # Dependencies
+├── Dockerfile                   # Docker container
+└── docker-compose.yml           # Docker orchestration
+```
+
+---
+
+## 🚀 Quick Start
+
+```bash
+# Clone and install
+git clone https://github.com/ballales1984-wq/ai-trading-system.git
+cd ai-trading-system
+pip install -r requirements.txt
+pip install xgboost  # For advanced ML
+
+# Start dashboard
+python main.py --mode dashboard
+```
+
+---
+
+## 💻 Usage Examples
+
+### ML Signal Generation
+```python
+from src.ml_model import MLSignalModel
+from src.indicators import calculate_all_indicators
+
+# Prepare data with indicators
+df = calculate_all_indicators(price_data)
+
+# Train ML model
+model = MLSignalModel('random_forest')
+metrics = model.train(df)
+
+# Generate signals
+signals = model.predict_signals(df)
+```
+
+### XGBoost Model
+```python
+from src.ml_model_xgb import XGBSignalModel
+
+model = XGBSignalModel(n_estimators=300, max_depth=6)
+model.fit(df)
+signals = model.predict_signals(df)
+top_features = model.get_top_features(10)
+```
+
+### Backtest
+```python
+from src.backtest import run_backtest
+from src.performance import generate_performance_report
+
+result = run_backtest(df, signals, initial_capital=10000)
+print(generate_performance_report(result.strategy_returns, result.equity_curve))
+```
+
+### Multi-Asset Portfolio
+```python
+from src.backtest_multi import MultiAssetBacktest
+
+backtest = MultiAssetBacktest(initial_capital=1_000_000)
+backtest.add_asset('BTC', btc_prices, btc_signals)
+backtest.add_asset('ETH', eth_prices, eth_signals)
+
+returns, metrics = backtest.run_backtest('volatility_parity')
+```
+
+### Fund Simulation
+```python
+from src.fund_simulator import FundSimulator
+
+fund = FundSimulator(initial_capital=10_000_000)
+adjusted, metrics = fund.apply_fees(equity_curve)
+# Shows: gross/net return, fees, final AUM
+```
+
+---
+
+## 📊 Supported Assets
 
 ### Cryptocurrencies
 BTC, ETH, XRP, SOL, ADA, DOT, AVAX, MATIC, BNB, DOGE, LINK, ATOM, UNI, LTC, NEAR, APT, ARB, OP, INJ, SUI, SEI, TIA
 
 ### Commodity Tokens
-PAXG (Gold), XAUT (Gold), STETH (Ethereum), FXS (Frax)
+PAXG (Gold), XAUT (Gold), STETH, FXS (Frax)
 
-## Installation
+---
+
+## 🎓 Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    DASHBOARD (Plotly)                      │
+├─────────────────────────────────────────────────────────────┤
+│  ML Models  │  Signal Engine  │  Risk Metrics  │  Fund   │
+├─────────────────────────────────────────────────────────────┤
+│  RandomForest  │  XGBoost  │  Ensemble  │  Walk-Forward    │
+├─────────────────────────────────────────────────────────────┤
+│  Backtest Engine  │  Multi-Asset Portfolio  │  Performance │
+├─────────────────────────────────────────────────────────────┤
+│     Indicators      │    Data Loader    │   Binance API    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🧪 Testing
 
 ```bash
-# Clone the repository
-git clone https://github.com/ballales1984-wq/ai-trading-system.git
-cd ai-trading-system
+# Run tests
+python -m pytest tests/ -v
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Copy environment file
-copy .env.example .env
+# Run specific test
+python -m pytest tests/test_technical_analysis.py -v
 ```
 
-## Configuration
+---
 
-Edit `.env` file to add your API keys:
-
-```env
-# Binance API (for real data)
-BINANCE_API_KEY=your_key
-BINANCE_SECRET_KEY=your_secret
-
-# News API (optional)
-NEWS_API_KEY=your_key
-
-# Simulation mode
-SIMULATION_MODE=false
-```
-
-## Usage
+## 🐳 Docker
 
 ```bash
-# Start dashboard (default)
-python main.py --mode dashboard
+# Build and run
+docker-compose up -d
 
-# Generate signals
-python main.py --mode signals
-
-# Run analysis
-python main.py --mode analysis --symbol BTC/USDT
-
-# Backtest
-python main.py --mode backtest
-
-# Auto trading (paper)
-python main.py --mode auto
-
-# Portfolio control
-python main.py --mode portfolio --portfolio-action check
+# View logs
+docker-compose logs -f
 ```
 
-## Dashboard
+---
 
-Open http://localhost:8050 in your browser to view the interactive dashboard.
+## ⚠️ Risk Warning
 
-### Dashboard Sections:
-1. **Signals Summary** - Total/Buy/Sell/Hold signals
-2. **Portfolio** - Balance, PnL, Win Rate
-3. **Price Chart** - Candlesticks + EMA + Bollinger + VWAP
-4. **MACD** - Moving Average Convergence Divergence
-5. **RSI/Stochastic** - Momentum oscillators
-6. **Volume/ATR** - Trading activity
-7. **Trading Signals** - Top 10 opportunities
-8. **Pairs Comparison** - Top 10 by volume
-9. **Binance Market** - Real-time BTC/ETH data
+This is a research framework for educational purposes. Do not use with real capital without proper backtesting, live paper trading, and risk management.
 
-## Project Structure
+---
 
-```
-├── config.py              # Configuration settings
-├── data_collector.py     # Data collection from Binance
-├── technical_analysis.py  # Technical indicators
-├── sentiment_news.py      # News and sentiment analysis
-├── decision_engine.py     # Trading signals generation
-├── trading_simulator.py   # Paper trading simulator
-├── auto_trader.py        # Auto trading bot
-├── binance_research.py   # Binance research API
-├── dashboard.py          # Interactive Dash dashboard
-├── main.py              # CLI entry point
-└── requirements.txt      # Dependencies
-```
+## 📈 Performance Metrics Available
 
-## Risk Warning
+| Metric | Description |
+|--------|-------------|
+| Annual Return | Compound annual growth rate |
+| Sharpe Ratio | Risk-adjusted return |
+| Sortino Ratio | Downside risk-adjusted |
+| Calmar Ratio | Return / Max Drawdown |
+| Max Drawdown | Largest peak-to-trough |
+| VaR 95% | Value at Risk (95% confidence) |
+| Win Rate | Percentage of profitable trades |
+| Profit Factor | Gross gains / Gross losses |
 
-This is an experimental system for educational purposes. Do not use with real money without proper testing and risk management.
+---
 
-## License
+## 📝 License
 
 MIT License
+
+---
+
+**Level**: Quant Research Framework  
+**Ready for**: Backtesting, Strategy Development, Portfolio Optimization  
+**Next**: Live trading with paper money first!
