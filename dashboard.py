@@ -27,6 +27,7 @@ from data_collector import DataCollector
 from technical_analysis import TechnicalAnalyzer
 from decision_engine import DecisionEngine
 from sentiment_news import SentimentAnalyzer
+from trading_simulator import TradingSimulator
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -55,6 +56,7 @@ class TradingDashboard:
         self.decision_engine = DecisionEngine(self.data_collector)
         self.technical_analyzer = TechnicalAnalyzer()
         self.sentiment_analyzer = SentimentAnalyzer()
+        self.simulator = TradingSimulator(initial_balance=10000.0)
         
         # Cache for data
         self.cached_signals = []
@@ -117,6 +119,11 @@ class TradingDashboard:
                 # Top row - Signals summary
                 html.Div([
                     self._create_signals_summary(),
+                ], style={'margin-bottom': '20px'}),
+                
+                # Portfolio Section
+                html.Div([
+                    self._create_portfolio_section(),
                 ], style={'margin-bottom': '20px'}),
                 
                 # Second row - Charts
@@ -263,6 +270,49 @@ class TradingDashboard:
         ], style={
             'display': 'flex',
             'gap': '15px'
+        })
+
+    def _create_portfolio_section(self) -> html.Div:
+        """Create portfolio/balance section"""
+        return html.Div([
+            html.H3("Portfolio Balance", style={'color': self.theme['text']}),
+            
+            # Balance Row
+            html.Div([
+                # Total Balance
+                html.Div([
+                    html.H4("Total Balance", style={'margin': '0', 'color': self.theme['text_muted']}),
+                    html.H2(id='total-balance', style={'margin': '5px 0', 'color': self.theme['text']}),
+                ], style={'flex': '1', 'text-align': 'center'}),
+                
+                # Available Balance
+                html.Div([
+                    html.H4("Available", style={'margin': '0', 'color': self.theme['text_muted']}),
+                    html.H2(id='available-balance', style={'margin': '5px 0', 'color': self.theme['green']}),
+                ], style={'flex': '1', 'text-align': 'center'}),
+                
+                # PnL
+                html.Div([
+                    html.H4("Total P&L", style={'margin': '0', 'color': self.theme['text_muted']}),
+                    html.H2(id='total-pnl', style={'margin': '5px 0', 'color': self.theme['green']}),
+                ], style={'flex': '1', 'text-align': 'center'}),
+                
+                # Win Rate
+                html.Div([
+                    html.H4("Win Rate", style={'margin': '0', 'color': self.theme['text_muted']}),
+                    html.H2(id='win-rate', style={'margin': '5px 0', 'color': self.theme['blue']}),
+                ], style={'flex': '1', 'text-align': 'center'}),
+                
+            ], style={'display': 'flex', 'gap': '15px', 'margin-top': '15px'}),
+            
+            # Positions
+            html.Div(id='positions-list', style={'margin-top': '15px'}),
+            
+        ], style={
+            'background': self.theme['card'],
+            'padding': '15px',
+            'border-radius': '8px',
+            'margin-top': '20px'
         })
     
     # ==================== CALLBACKS ====================
@@ -508,6 +558,53 @@ class TradingDashboard:
             
             return cards
     
+    # ==================== PORTFOLIO CALLBACKS ====================
+    
+    @self.app.callback(
+        [Output('total-balance', 'children'),
+         Output('available-balance', 'children'),
+         Output('total-pnl', 'children'),
+         Output('win-rate', 'children'),
+         Output('positions-list', 'children')],
+        [Input('refresh-interval', 'n_intervals')]
+    )
+    def update_portfolio(n):
+        """Update portfolio data"""
+        # Run one iteration of trading
+        try:
+            signals = self.decision_engine.generate_signals()
+            self.simulator._process_signals(signals)
+            self.simulator._manage_positions()
+            self.simulator._update_portfolio()
+        except:
+            pass
+        
+        # Get portfolio state
+        state = self.simulator.get_portfolio_state()
+        
+        total = f"${state['total_value']:,.2f}"
+        available = f"${state['balance']:,.2f}"
+        pnl = state['total_pnl']
+        pnl_color = self.theme['green'] if pnl >= 0 else self.theme['red']
+        pnl_text = f"${pnl:+,.2f}"
+        win_rate = f"{state['win_rate']:.1f}%"
+        
+        # Positions
+        positions = []
+        for symbol, pos in state['positions'].items():
+            pnl_pct = ((pos['current_price'] - pos['entry_price']) / pos['entry_price']) * 100
+            pos_color = self.theme['green'] if pnl_pct >= 0 else self.theme['red']
+            
+            positions.append(html.Div([
+                html.Span(symbol, style={'color': self.theme['text'], 'font-weight': 'bold'}),
+                html.Span(f" ${pos['current_price']:,.2f}", style={'color': self.theme['text_muted']}),
+                html.Span(f" ({pnl_pct:+,.2f}%)", style={'color': pos_color}),
+            ], style={'margin': '5px 0', 'display': 'block'}))
+        
+        positions_display = positions if positions else [html.P("No open positions", style={'color': self.theme['text_muted']})]
+        
+        return total, available, pnl_text, win_rate, positions_display
+
     # ==================== RUN ====================
     
     def run(self, host: str = None, port: int = None, debug: bool = None):
