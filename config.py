@@ -197,7 +197,15 @@ LOGGING_CONFIG = {
 
 # ==================== SIMULATION MODE ====================
 # If True, use simulated prices instead of real API calls
-SIMULATION_MODE = True
+SIMULATION_MODE = False  # Set to False for real exchange data
+
+# ==================== BINANCE API CONFIGURATION ====================
+# Get your API keys from: https://www.binance.com/en/my/settings/api-management
+BINANCE_API_KEY = os.getenv('BINANCE_API_KEY', '')
+BINANCE_SECRET_KEY = os.getenv('BINANCE_SECRET_KEY', '')
+
+# Testnet (use for testing without real money)
+USE_BINANCE_TESTNET = os.getenv('USE_BINANCE_TESTNET', 'false').lower() == 'true'
 
 # Simulated price ranges for testing
 SIMULATED_PRICES = {

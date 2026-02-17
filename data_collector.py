@@ -106,10 +106,24 @@ class DataCollector:
         """Initialize the exchange API"""
         try:
             if self.exchange_name == 'binance':
-                self.exchange = ccxt.binance({
-                    'enableRateLimit': True,
-                    'options': {'defaultType': 'spot'}
-                })
+                # Check if we have API keys for authenticated requests
+                if config.BINANCE_API_KEY and config.BINANCE_SECRET_KEY:
+                    self.exchange = ccxt.binance({
+                        'apiKey': config.BINANCE_API_KEY,
+                        'secret': config.BINANCE_SECRET_KEY,
+                        'enableRateLimit': True,
+                        'options': {'defaultType': 'spot'},
+                        # Use testnet if enabled
+                        'testnet': config.USE_BINANCE_TESTNET,
+                    })
+                    logger.info("Binance API initialized with authentication")
+                else:
+                    # Public API (rate limited)
+                    self.exchange = ccxt.binance({
+                        'enableRateLimit': True,
+                        'options': {'defaultType': 'spot'}
+                    })
+                    logger.info("Binance API initialized (public, no auth)")
             elif self.exchange_name == 'kucoin':
                 self.exchange = ccxt.kucoin({'enableRateLimit': True})
             elif self.exchange_name == 'bybit':

@@ -410,6 +410,69 @@ class TechnicalAnalyzer:
         
         return ((current - past) / past) * 100
     
+    def calculate_adx(self, df: pd.DataFrame, period: int = 14) -> Dict[str, float]:
+        """
+        Calculate Average Directional Index (ADX) - Trend strength indicator.
+        
+        Returns:
+            Dictionary with 'adx', 'plus_di', 'minus_di'
+        """
+        if len(df) < period + 1:
+            return {'adx': 0.0, 'plus_di': 0.0, 'minus_di': 0.0}
+        
+        high = df['high']
+        low = df['low']
+        close = df['close']
+        
+        # Calculate +DM and -DM
+        plus_dm = high.diff()
+        minus_dm = -low.diff()
+        
+        plus_dm[plus_dm < 0] = 0
+        minus_dm[minus_dm < 0] = 0
+        
+        # Calculate True Range
+        tr1 = high - low
+        tr2 = abs(high - close.shift(1))
+        tr3 = abs(low - close.shift(1))
+        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+        
+        # Smooth the values
+        atr = tr.rolling(window=period).mean()
+        plus_di_smooth = plus_dm.rolling(window=period).mean()
+        minus_di_smooth = minus_dm.rolling(window=period).mean()
+        
+        # Calculate DI
+        plus_di = 100 * (plus_di_smooth / atr)
+        minus_di = 100 * (minus_di_smooth / atr)
+        
+        # Calculate DX
+        dx = 100 * abs(plus_di - minus_di) / (plus_di + minus_di)
+        
+        # Calculate ADX
+        adx = dx.rolling(window=period).mean()
+        
+        return {
+            'adx': adx.iloc[-1] if not pd.isna(adx.iloc[-1]) else 0.0,
+            'plus_di': plus_di.iloc[-1] if not pd.isna(plus_di.iloc[-1]) else 0.0,
+            'minus_di': minus_di.iloc[-1] if not pd.isna(minus_di.iloc[-1]) else 0.0,
+        }
+    
+    def calculate_vwap(self, df: pd.DataFrame) -> float:
+        """
+        Calculate Volume Weighted Average Price (VWAP).
+        """
+        if len(df) < 1 or 'volume' not in df.columns:
+            return df['close'].mean() if len(df) > 0 else 0.0
+        
+        # Typical Price
+        typical_price = (df['high'] + df['low'] + df['close']) / 3
+        
+        # VWAP
+        vwap = (typical_price * df['volume']).cumsum() / df['volume'].cumsum()
+        
+        return vwap.iloc[-1] if not pd.isna(vwap.iloc[-1]) else 0.0
+    
     # ==================== SIGNAL GENERATION ====================
     
     def _rsi_signal(self, rsi: float) -> str:
