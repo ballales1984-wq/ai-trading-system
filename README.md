@@ -59,6 +59,14 @@ A professional-grade quantitative trading system with machine learning, live tra
 - **Auto-Trading Panel**: Configure and run live trading
 - **Commodities Panel**: Gold, silver, oil analysis
 
+### Advanced Trading (Quant Level)
+- **HFT Simulator**: Tick-by-tick simulation with orderbook, latency, slippage
+- **Multi-Agent Market**: Market makers, takers, arbitrageurs simulation
+- **RL Training Environment**: Gym-compatible environment for reinforcement learning
+- **AutoML Engine**: Genetic algorithm for strategy evolution
+- **Hyperparameter Optimization**: Bayesian-style parameter tuning
+- **Strategy Genome**: Genetic representation of trading strategies
+
 ---
 
 ## 📂 Project Structure
