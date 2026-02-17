@@ -149,11 +149,62 @@ class SentimentAnalyzer:
     
     def _fetch_real_news(self, query: str, assets: List[str], 
                         hours: int) -> List[NewsItem]:
-        """Fetch real news from API"""
-        # Placeholder for real API integration
-        # Would use NewsAPI, CryptoPanic, or other services
-        logger.info("Real news API not configured - using simulation")
-        return self._generate_simulated_news(assets, hours)
+        """Fetch real news from NewsAPI"""
+        import requests
+        from datetime import datetime, timedelta
+        
+        news_items = []
+        
+        # Calculate date range
+        end_date = datetime.now()
+        start_date = end_date - timedelta(hours=hours)
+        
+        # Search for each asset
+        for asset in assets:
+            try:
+                # Use the query parameter or asset name
+                search_term = query if query else asset
+                
+                url = f"https://newsapi.org/v2/everything"
+                params = {
+                    'q': search_term,
+                    'from': start_date.isoformat(),
+                    'to': end_date.isoformat(),
+                    'language': 'en',
+                    'sortBy': 'publishedAt',
+                    'pageSize': 10,
+                    'apiKey': self.news_api_key
+                }
+                
+                response = requests.get(url, params=params, timeout=10)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    articles = data.get('articles', [])
+                    
+                    for article in articles:
+                        news_item = NewsItem(
+                            title=article.get('title', ''),
+                            description=article.get('description', ''),
+                            source=article.get('source', {}).get('name', 'Unknown'),
+                            url=article.get('url', ''),
+                            published_at=article.get('publishedAt', ''),
+                            sentiment_score=self._analyze_sentiment(
+                                article.get('title', '') + ' ' + article.get('description', '')
+                            ),
+                            asset=asset
+                        )
+                        news_items.append(news_item)
+                        
+                elif response.status_code == 401:
+                    logger.error("NewsAPI: Invalid API key")
+                elif response.status_code == 429:
+                    logger.error("NewsAPI: Rate limit exceeded")
+                    
+            except Exception as e:
+                logger.warning(f"Error fetching news for {asset}: {e}")
+        
+        return news_items if news_items else self._generate_simulated_news(assets, hours)
     
     def _generate_simulated_news(self, assets: List[str], 
                                  hours: int) -> List[NewsItem]:
