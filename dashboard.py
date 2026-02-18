@@ -158,6 +158,9 @@ class TradingDashboard:
                                       'padding': '10px 15px', 'border-radius': '5px', 'cursor': 'pointer',
                                       'font-weight': 'bold'}),
                 ], style={'display': 'flex', 'align-items': 'center'}),
+                
+                # Hidden store for trading mode state
+                dcc.Store(id='trading-mode-selector', data='dashboard'),
             ], style={
                 'background': 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
                 'padding': '20px',
@@ -527,6 +530,35 @@ class TradingDashboard:
     def _setup_callbacks(self):
         """Setup Dash callbacks"""
         
+        # Store current mode in a dcc.Store
+        self.current_mode = 'dashboard'
+        self.trading_active = False
+        
+        @self.app.callback(
+            Output('trading-mode-selector', 'data'),
+            [Input('btn-monitor', 'n_clicks'),
+             Input('btn-paper', 'n_clicks'),
+             Input('btn-live', 'n_clicks'),
+             Input('btn-backtest', 'n_clicks')]
+        )
+        def update_mode_from_buttons(monitor_clicks, paper_clicks, live_clicks, backtest_clicks):
+            """Update trading mode based on button clicks"""
+            import dash
+            ctx = dash.callback_context
+            if not ctx.triggered:
+                return 'dashboard'
+            
+            button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+            
+            mode_map = {
+                'btn-monitor': 'dashboard',
+                'btn-paper': 'paper', 
+                'btn-live': 'live',
+                'btn-backtest': 'backtest'
+            }
+            
+            return mode_map.get(button_id, 'dashboard')
+        
         @self.app.callback(
             [Output('signals-data', 'data'),
              Output('total-signals', 'children'),
@@ -555,7 +587,7 @@ class TradingDashboard:
         
         @self.app.callback(
             Output('mode-control-panel', 'children'),
-            [Input('trading-mode-selector', 'value')]
+            [Input('trading-mode-selector', 'data')]
         )
         def update_mode_panel(mode):
             """Update mode control panel based on selected trading mode"""
