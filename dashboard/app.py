@@ -74,7 +74,7 @@ def generate_sample_data(days: int = 365) -> pd.DataFrame:
 app.layout = html.Div([
     # Header
     html.Div([
-        html.H1("🤖 AI Trading System", className="header-title"),
+        html.H1("🤖 AI Trading System v2.0", className="header-title"),
         html.Div([
             html.Span("Professional Trading Dashboard", className="header-subtitle")
         ])
@@ -114,9 +114,27 @@ app.layout = html.Div([
         ], className="control-group"),
         
         html.Div([
-            html.Button('🔄 Refresh', id='refresh-btn', className="btn-refresh")
+            html.Button('Refresh', id='refresh-btn', className="btn-refresh")
         ], className="control-group")
     ], className="controls"),
+    
+    # Core v2.0 Live Status
+    html.Div([
+        html.Div([
+            html.Div("Core Status", className="metric-label"),
+            html.Div("Ready", className="metric-value metric-value-live")
+        ], className="metric-card"),
+        
+        html.Div([
+            html.Div("Mode", className="metric-label"),
+            html.Div("Paper", className="metric-value")
+        ], className="metric-card"),
+        
+        html.Div([
+            html.Div("Risk Level", className="metric-label"),
+            html.Div("LOW", className="metric-value metric-value-risk")
+        ], className="metric-card"),
+    ], className="metrics-row"),
     
     # Metrics Row
     html.Div([
@@ -773,6 +791,12 @@ app.index_string = '''
             }
             .metric-value-fund {
                 color: #3fb950;
+            }
+            .metric-value-live {
+                color: #f0883e;
+            }
+            .metric-value-risk {
+                color: #f85149;
             }
             .charts-row {
                 display: flex;
