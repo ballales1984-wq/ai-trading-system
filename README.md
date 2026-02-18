@@ -188,6 +188,9 @@ ai-trading-system/
 ├── live_multi_asset.py        # Live trading system
 ├── auto_trader.py             # Auto trading
 ├── test_core.py              # Core module tests
+├── test_paper_trading.py      # Paper trading validation (Phase 1)
+├── test_phase2.py             # Testnet integration (Phase 2)
+├── run_live.py                # Live trading entry point
 ├── ARCHITECTURE.md            # Architecture documentation
 ├── requirements.txt           # Dependencies
 ├── Dockerfile                 # Docker container
@@ -305,6 +308,12 @@ PAXG (Gold), XAUT (Gold), STETH, FXS (Frax)
 ```bash
 # Run core tests (v2.0)
 python test_core.py
+
+# Run Paper Trading validation tests (Phase 1)
+python test_paper_trading.py
+
+# Run Binance Testnet integration tests (Phase 2)
+python test_phase2.py
 
 # Run all tests
 python -m pytest tests/ -v
