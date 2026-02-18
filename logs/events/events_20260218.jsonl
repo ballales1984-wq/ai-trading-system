@@ -1,0 +1,4 @@
+{"event_type": "engine_started", "timestamp": "2026-02-18T01:23:29.393083", "data": {"mode": "paper"}, "source": "engine"}
+{"event_type": "signal_generated", "timestamp": "2026-02-18T01:23:29.394970", "data": {"symbol": "BTCUSDT", "action": "BUY", "quantity": 0.1, "confidence": 0.8}, "source": "external"}
+{"event_type": "signal_executed", "timestamp": "2026-02-18T01:23:29.396459", "data": {"symbol": "BTCUSDT", "action": "BUY", "quantity": 0.1, "confidence": 0.8}, "source": "engine"}
+{"event_type": "state_saved", "timestamp": "2026-02-18T01:23:29.409908", "data": {"equity": 100000}, "source": "engine"}

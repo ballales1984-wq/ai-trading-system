@@ -1,0 +1,8 @@
+2026-02-18 01:23:29,270 - src.core.engine - INFO - Trading engine initialized
+2026-02-18 01:23:29,271 - src.core.engine - INFO - Starting trading engine...
+2026-02-18 01:23:29,278 - src.core.engine - WARNING - Could not restore state: EventHandler() takes no arguments
+2026-02-18 01:23:29,392 - src.core.engine - INFO - Background tasks started
+2026-02-18 01:23:29,394 - src.core.engine - INFO - Trading engine started in paper mode
+2026-02-18 01:23:29,396 - src.core.engine - INFO - Processing signal: BTCUSDT BUY conf=0.80
+2026-02-18 01:23:29,397 - src.core.engine - INFO - Stopping trading engine...
+2026-02-18 01:23:29,411 - src.core.engine - ERROR - Error stopping engine: Object of type datetime is not JSON serializable
