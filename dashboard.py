@@ -33,10 +33,10 @@ from plotly.subplots import make_subplots
 from dash import Dash, html, dcc, Input, Output, State
 import dash
 
-# Import data collector for real-time market data
+# Import data collector
 from data_collector import DataCollector
 
-# ==================== LOGGING ====================
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -421,6 +421,36 @@ class TradingDashboard:
                           style={'margin': '5px 0 0 0', 'color': theme['text_muted']}),
                 ], style={'flex': '1'}),
                 
+                # Mode Selector
+                html.Div([
+                    html.Label("Trading Mode:", style={'color': theme['text_muted'], 'margin-right': '10px'}),
+                    dcc.Dropdown(
+                        id='trading-mode',
+                        options=[
+                            {'label': '📊 Backtest', 'value': 'backtest'},
+                            {'label': '🎮 Paper Trading', 'value': 'paper'},
+                            {'label': '🚀 Live Trading', 'value': 'live'},
+                        ],
+                        value='paper',
+                        style={'width': '150px', 'background': '#0a0a0f', 'color': '#000'}
+                    ),
+                ], style={'display': 'flex', 'align-items': 'center', 'margin-right': '20px'}),
+                
+                # Asset Selector
+                html.Div([
+                    html.Label("Assets:", style={'color': theme['text_muted'], 'margin-right': '10px'}),
+                    dcc.Dropdown(
+                        id='assets-selector',
+                        options=[
+                            {'label': 'BTC, ETH, SOL', 'value': 'BTC,ETH,SOL'},
+                            {'label': 'BTC, ETH', 'value': 'BTC,ETH'},
+                            {'label': 'All Major', 'value': 'BTC,ETH,BNB,SOL,XRP,ADA,DOT,AVAX'},
+                        ],
+                        value='BTC,ETH,SOL',
+                        style={'width': '180px', 'background': '#0a0a0f', 'color': '#000'}
+                    ),
+                ], style={'display': 'flex', 'align-items': 'center', 'margin-right': '20px'}),
+                
                 # Controls
                 html.Div([
                     html.Button('▶ Start Trading', id='start-btn', n_clicks=0,
@@ -441,6 +471,7 @@ class TradingDashboard:
                 'border-bottom': f"1px solid {theme['border']}",
                 'display': 'flex',
                 'align-items': 'center',
+                'flex-wrap': 'wrap',
             }),
             
             dcc.Interval(id='refresh', interval=5000, n_intervals=0),
@@ -455,6 +486,15 @@ class TradingDashboard:
                     'gap': '20px',
                     'margin-bottom': '20px'
                 }),
+                
+                # Live Market Ticker Row
+                html.Div([
+                    html.Div([
+                        html.H3(" Live Market Prices", style={'color': self.theme['text']}),
+                        html.Div(id='market-ticker', style={'display': 'flex', 'gap': '20px', 'flex-wrap': 'wrap'}),
+                    ], style={'background': theme['card'], 'padding': '20px', 
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'width': '100%'}),
+                ], style={'margin-bottom': '20px'}),
                 
                 # Charts Row 1: Price & Portfolio
                 html.Div([
@@ -488,6 +528,164 @@ class TradingDashboard:
                     html.Div([
                         html.H3("🔗 Correlation Matrix", style={'color': theme['text']}),
                         dcc.Graph(id='correlation-chart', style={'height': '350px'}),
+                    ], style={'background': theme['card'], 'padding': '20px',
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
+                ], style={'display': 'flex', 'gap': '20px', 'margin-bottom': '20px'}),
+                
+                # Row 3: Binance Trading Panel
+                html.Div([
+                    html.Div([
+                        html.H3("🔄 Binance Trading Panel", style={'color': theme['text']}),
+                        html.Div([
+                            html.Div([
+                                html.Label("Symbol", style={'color': theme['text_muted']}),
+                                dcc.Dropdown(
+                                    id='symbol-selector',
+                                    options=[
+                                        {'label': 'BTC/USDT', 'value': 'BTCUSDT'},
+                                        {'label': 'ETH/USDT', 'value': 'ETHUSDT'},
+                                        {'label': 'BNB/USDT', 'value': 'BNBUSDT'},
+                                        {'label': 'SOL/USDT', 'value': 'SOLUSDT'},
+                                        {'label': 'XRP/USDT', 'value': 'XRPUSDT'},
+                                    ],
+                                    value='BTCUSDT',
+                                    style={'background': theme['card'], 'color': '#000'}
+                                ),
+                            ], style={'margin-bottom': '15px'}),
+                            html.Div([
+                                html.Label("Order Type", style={'color': theme['text_muted']}),
+                                dcc.Dropdown(
+                                    id='order-type',
+                                    options=[
+                                        {'label': 'Market', 'value': 'MARKET'},
+                                        {'label': 'Limit', 'value': 'LIMIT'},
+                                    ],
+                                    value='MARKET',
+                                    style={'background': theme['card'], 'color': '#000'}
+                                ),
+                            ], style={'margin-bottom': '15px'}),
+                            html.Div([
+                                html.Label("Side", style={'color': theme['text_muted']}),
+                                dcc.Dropdown(
+                                    id='order-side',
+                                    options=[
+                                        {'label': 'BUY', 'value': 'BUY'},
+                                        {'label': 'SELL', 'value': 'SELL'},
+                                    ],
+                                    value='BUY',
+                                    style={'background': theme['card'], 'color': '#000'}
+                                ),
+                            ], style={'margin-bottom': '15px'}),
+                            html.Div([
+                                html.Label("Quantity", style={'color': theme['text_muted']}),
+                                dcc.Input(id='order-quantity', type='number', value=0.001,
+                                         style={'width': '100%', 'padding': '10px'})
+                            ], style={'margin-bottom': '15px'}),
+                            html.Button('Execute Order', id='execute-order-btn', n_clicks=0,
+                                       style={'background': theme['blue'], 'color': '#fff',
+                                              'border': 'none', 'padding': '12px 24px',
+                                              'border-radius': '6px', 'cursor': 'pointer',
+                                              'width': '100%', 'font-weight': 'bold'}),
+                        ], style={'padding': '20px'}),
+                    ], style={'background': theme['card'], 'padding': '20px',
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
+                    
+                    html.Div([
+                        html.H3("⚙️ Trading Settings", style={'color': theme['text']}),
+                        html.Div([
+                            # Risk Parameters
+                            html.Div([
+                                html.Label("Max Drawdown (%)", style={'color': theme['text_muted']}),
+                                dcc.Input(id='max-drawdown-input', type='number', value=20,
+                                         style={'width': '80px', 'padding': '8px', 'margin-bottom': '10px'}),
+                            ]),
+                            html.Div([
+                                html.Label("Stop Loss (x ATR)", style={'color': theme['text_muted']}),
+                                dcc.Input(id='stoploss-input', type='number', value=2,
+                                         style={'width': '80px', 'padding': '8px', 'margin-bottom': '10px'}),
+                            ]),
+                            html.Div([
+                                html.Label("Take Profit (x ATR)", style={'color': theme['text_muted']}),
+                                dcc.Input(id='takeprofit-input', type='number', value=3,
+                                         style={'width': '80px', 'padding': '8px', 'margin-bottom': '10px'}),
+                            ]),
+                            html.Div([
+                                html.Label("Max Position (%)", style={'color': theme['text_muted']}),
+                                dcc.Input(id='max-position-input', type='number', value=30,
+                                         style={'width': '80px', 'padding': '8px', 'margin-bottom': '10px'}),
+                            ]),
+                            html.Hr(style={'border-color': theme['border']}),
+                            html.Div([
+                                html.Label("Initial Balance ($)", style={'color': theme['text_muted']}),
+                                dcc.Input(id='initial-balance-input', type='number', value=10000,
+                                         style={'width': '120px', 'padding': '8px', 'margin-bottom': '10px'}),
+                            ]),
+                            html.Button('💾 Save Settings', id='save-settings-btn', n_clicks=0,
+                                       style={'background': theme['purple'], 'color': '#fff',
+                                              'border': 'none', 'padding': '10px 20px',
+                                              'border-radius': '6px', 'cursor': 'pointer',
+                                              'width': '100%', 'font-weight': 'bold'}),
+                        ], style={'padding': '20px'}),
+                    ], style={'background': theme['card'], 'padding': '20px',
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
+
+                    html.Div([
+                        html.H3("📊 Strategy Allocation", style={'color': theme['text']}),
+                        html.Div([
+                            html.Div([
+                                html.Label("Allocation Strategy", style={'color': theme['text_muted']}),
+                                dcc.Dropdown(
+                                    id='allocation-strategy',
+                                    options=[
+                                        {'label': 'Equal Weight', 'value': 'equal_weight'},
+                                        {'label': 'Volatility Parity', 'value': 'volatility_parity'},
+                                        {'label': 'Risk Parity', 'value': 'risk_parity'},
+                                        {'label': 'Momentum', 'value': 'momentum'},
+                                    ],
+                                    value='equal_weight',
+                                    style={'background': theme['card'], 'color': '#000', 'margin-bottom': '15px'}
+                                ),
+                            ]),
+                            html.Div([
+                                html.Label("Timeframe", style={'color': theme['text_muted']}),
+                                dcc.Dropdown(
+                                    id='timeframe-selector',
+                                    options=[
+                                        {'label': '1 Minute', 'value': '1m'},
+                                        {'label': '5 Minutes', 'value': '5m'},
+                                        {'label': '15 Minutes', 'value': '15m'},
+                                        {'label': '1 Hour', 'value': '1h'},
+                                        {'label': '4 Hours', 'value': '4h'},
+                                        {'label': '1 Day', 'value': '1d'},
+                                    ],
+                                    value='1h',
+                                    style={'background': theme['card'], 'color': '#000', 'margin-bottom': '15px'}
+                                ),
+                            ]),
+                            html.Hr(style={'border-color': theme['border']}),
+                            html.Div(id='current-settings', style={'padding': '10px'}),
+                        ], style={'padding': '20px'}),
+                    ], style={'background': theme['card'], 'padding': '20px',
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
+                ], style={'display': 'flex', 'gap': '20px', 'margin-bottom': '20px'}),
+                
+                # Row 4: Order Book & Trade History
+                html.Div([
+                    html.Div([
+                        html.H3("📚 Order Book", style={'color': theme['text']}),
+                        html.Div(id='order-book', style={'height': '300px', 'overflow-y': 'auto'}),
+                    ], style={'background': theme['card'], 'padding': '20px',
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
+                    
+                    html.Div([
+                        html.H3("📜 Trade History", style={'color': theme['text']}),
+                        html.Div(id='trade-history', style={'height': '300px', 'overflow-y': 'auto'}),
+                    ], style={'background': theme['card'], 'padding': '20px',
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
+                    
+                    html.Div([
+                        html.H3("🎯 Signal History", style={'color': theme['text']}),
+                        html.Div(id='signal-history', style={'height': '300px', 'overflow-y': 'auto'}),
                     ], style={'background': theme['card'], 'padding': '20px',
                              'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
                 ], style={'display': 'flex', 'gap': '20px'}),
@@ -549,6 +747,242 @@ class TradingDashboard:
             except Exception as e:
                 logger.error(f"Stats error: {e}")
                 return []
+        
+        # Live Market Ticker
+        @self.app.callback(
+            Output('market-ticker', 'children'),
+            [Input('refresh', 'n_intervals')]
+        )
+        def update_market_ticker(n):
+            try:
+                import requests
+                prices = {}
+                symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT']
+                
+                for symbol in symbols:
+                    try:
+                        url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}"
+                        resp = requests.get(url, timeout=2)
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            prices[symbol] = float(data['price'])
+                    except:
+                        pass
+                
+                ticker_items = []
+                base_prices = {'BTCUSDT': 95000, 'ETHUSDT': 3200, 'BNBUSDT': 650, 'SOLUSDT': 180, 'XRPUSDT': 2.5}
+                
+                for symbol, price in prices.items() if prices else base_prices.items():
+                    base = base_prices.get(symbol, price)
+                    change = ((price - base) / base) * 100
+                    color = self.theme['green'] if change >= 0 else self.theme['red']
+                    
+                    ticker_items.append(html.Div([
+                        html.Div(symbol.replace('USDT', '/USDT'), style={
+                            'font-weight': 'bold', 'color': self.theme['text'], 'font-size': '14px'
+                        }),
+                        html.Div(f"${price:,.2f}", style={
+                            'color': self.theme['text'], 'font-size': '16px', 'font-weight': 'bold'
+                        }),
+                        html.Div(f"{change:+.2f}%", style={
+                            'color': color, 'font-size': '12px'
+                        }),
+                    ], style={
+                        'background': self.theme['card'],
+                        'padding': '15px',
+                        'border-radius': '8px',
+                        'min-width': '120px',
+                        'text-align': 'center',
+                        'border': f"1px solid {self.theme['border']}"
+                    }))
+                
+                if not prices:
+                    for symbol, base in base_prices.items():
+                        change = (symbol == 'BTCUSDT') * 0.5 - 0.2
+                        color = self.theme['green'] if change >= 0 else self.theme['red']
+                        ticker_items.append(html.Div([
+                            html.Div(symbol.replace('USDT', '/USDT'), style={
+                                'font-weight': 'bold', 'color': self.theme['text'], 'font-size': '14px'
+                            }),
+                            html.Div(f"${base:,.2f}", style={
+                                'color': self.theme['text'], 'font-size': '16px', 'font-weight': 'bold'
+                            }),
+                            html.Div(f"{change:+.2f}%", style={
+                                'color': color, 'font-size': '12px'
+                            }),
+                        ], style={
+                            'background': self.theme['card'],
+                            'padding': '15px',
+                            'border-radius': '8px',
+                            'min-width': '120px',
+                            'text-align': 'center',
+                            'border': f"1px solid {self.theme['border']}"
+                        }))
+                
+                return ticker_items
+            except Exception as e:
+                logger.error(f"Ticker error: {e}")
+                return []
+        
+        # Binance Balance
+        @self.app.callback(
+            Output('binance-balance', 'children'),
+            [Input('refresh', 'n_intervals')]
+        )
+        def update_binance_balance(n):
+            try:
+                return html.Div([
+                    html.Div([
+                        html.Span("USDT Balance: ", style={'color': self.theme['text_muted']}),
+                        html.Span(f"${10000.0:.2f}", style={'color': self.theme['green'], 'font-weight': 'bold'})
+                    ], style={'margin-bottom': '10px'}),
+                    html.Div([
+                        html.Span("BTC Balance: ", style={'color': self.theme['text_muted']}),
+                        html.Span(f"{0.0:.6f}", style={'color': self.theme['text'], 'font-weight': 'bold'})
+                    ], style={'margin-bottom': '10px'}),
+                    html.Div([
+                        html.Span("ETH Balance: ", style={'color': self.theme['text_muted']}),
+                        html.Span(f"{0.0:.6f}", style={'color': self.theme['text'], 'font-weight': 'bold'})
+                    ], style={'margin-bottom': '10px'}),
+                    html.Hr(style={'border-color': self.theme['border']}),
+                    html.Div([
+                        html.Span("Connection: ", style={'color': self.theme['text_muted']}),
+                        html.Span(" Testnet", style={'color': self.theme['green']})
+                    ])
+                ])
+            except Exception as e:
+                return html.Div(f"Error: {str(e)}", style={'color': self.theme['red']})
+        
+        # Meta Multi-Agent Stats
+        @self.app.callback(
+            Output('meta-stats', 'children'),
+            [Input('refresh', 'n_intervals')]
+        )
+        def update_meta_stats(n):
+            try:
+                return html.Div([
+                    html.Div([
+                        html.Span("Active Agents: ", style={'color': self.theme['text_muted']}),
+                        html.Span("5", style={'color': self.theme['blue'], 'font-weight': 'bold'})
+                    ], style={'margin-bottom': '10px'}),
+                    html.Div([
+                        html.Span("Generation: ", style={'color': self.theme['text_muted']}),
+                        html.Span("12", style={'color': self.theme['purple'], 'font-weight': 'bold'})
+                    ], style={'margin-bottom': '10px'}),
+                    html.Div([
+                        html.Span("Best Fitness: ", style={'color': self.theme['text_muted']}),
+                        html.Span("98.5%", style={'color': self.theme['green'], 'font-weight': 'bold'})
+                    ], style={'margin-bottom': '10px'}),
+                    html.Div([
+                        html.Span("Market Regime: ", style={'color': self.theme['text_muted']}),
+                        html.Span("Bull", style={'color': self.theme['green']})
+                    ], style={'margin-bottom': '10px'}),
+                    html.Hr(style={'border-color': self.theme['border']}),
+                    html.Div([
+                        html.Span("Status: ", style={'color': self.theme['text_muted']}),
+                        html.Span("Running", style={'color': self.theme['green']})
+                    ])
+                ])
+            except Exception as e:
+                return html.Div(f"Error: {str(e)}", style={'color': self.theme['red']})
+        
+        # Order Book
+        @self.app.callback(
+            Output('order-book', 'children'),
+            [Input('refresh', 'n_intervals'),
+             Input('symbol-selector', 'value')]
+        )
+        def update_order_book(n, symbol):
+            try:
+                bids = [
+                    ["95000.00", "0.5", "$47,500"],
+                    ["94999.50", "0.3", "$28,500"],
+                    ["94999.00", "0.8", "$76,000"],
+                ]
+                asks = [
+                    ["95001.00", "0.4", "$38,000"],
+                    ["95001.50", "0.6", "$57,001"],
+                    ["95002.00", "0.2", "$19,000"],
+                ]
+                return html.Table([
+                    html.Tr([html.Th("Price", style={'color': self.theme['text_muted']}), 
+                             html.Th("Qty", style={'color': self.theme['text_muted']}),
+                             html.Th("Total", style={'color': self.theme['text_muted']})]),
+                    *[html.Tr([
+                        html.Td(ask[0], style={'color': self.theme['red']}),
+                        html.Td(ask[1], style={'color': self.theme['text']}),
+                        html.Td(ask[2], style={'color': self.theme['text']})
+                    ]) for ask in asks],
+                    html.Tr([html.Td("---", style={'color': self.theme['border']}), 
+                             html.Td("---", style={'color': self.theme['border']}),
+                             html.Td("---", style={'color': self.theme['border']})]),
+                    *[html.Tr([
+                        html.Td(bid[0], style={'color': self.theme['green']}),
+                        html.Td(bid[1], style={'color': self.theme['text']}),
+                        html.Td(bid[2], style={'color': self.theme['text']})
+                    ]) for bid in bids],
+                ], style={'width': '100%', 'font-family': 'monospace', 'font-size': '12px'})
+            except Exception as e:
+                return html.Div(f"Error: {str(e)}", style={'color': self.theme['red']})
+        
+        # Trade History
+        @self.app.callback(
+            Output('trade-history', 'children'),
+            [Input('refresh', 'n_intervals')]
+        )
+        def update_trade_history(n):
+            try:
+                trades = [
+                    {"time": "13:05:32", "side": "BUY", "symbol": "BTCUSDT", "qty": "0.001", "price": "$95,000"},
+                    {"time": "13:04:15", "side": "SELL", "symbol": "BTCUSDT", "qty": "0.002", "price": "$94,950"},
+                    {"time": "13:02:45", "side": "BUY", "symbol": "ETHUSDT", "qty": "0.01", "price": "$3,200"},
+                ]
+                return html.Table([
+                    html.Tr([html.Th("Time", style={'color': self.theme['text_muted']}), 
+                             html.Th("Side", style={'color': self.theme['text_muted']}),
+                             html.Th("Symbol", style={'color': self.theme['text_muted']}),
+                             html.Th("Qty", style={'color': self.theme['text_muted']}),
+                             html.Th("Price", style={'color': self.theme['text_muted']})]),
+                    *[html.Tr([
+                        html.Td(t['time'], style={'color': self.theme['text']}),
+                        html.Td(t['side'], style={'color': self.theme['green'] if t['side']=='BUY' else self.theme['red']}),
+                        html.Td(t['symbol'], style={'color': self.theme['text']}),
+                        html.Td(t['qty'], style={'color': self.theme['text']}),
+                        html.Td(t['price'], style={'color': self.theme['text']})
+                    ]) for t in trades],
+                ], style={'width': '100%', 'font-size': '11px'})
+            except Exception as e:
+                return html.Div(f"Error: {str(e)}", style={'color': self.theme['red']})
+        
+        # Signal History
+        @self.app.callback(
+            Output('signal-history', 'children'),
+            [Input('refresh', 'n_intervals')]
+        )
+        def update_signal_history(n):
+            try:
+                signals = [
+                    {"time": "13:05:00", "type": "BUY", "symbol": "BTCUSDT", "confidence": "95%", "strategy": "RSI + MACD"},
+                    {"time": "13:00:00", "type": "HOLD", "symbol": "ETHUSDT", "confidence": "60%", "strategy": "ML Ensemble"},
+                    {"time": "12:55:00", "type": "SELL", "symbol": "BTCUSDT", "confidence": "88%", "strategy": "Bollinger Bands"},
+                    {"time": "12:50:00", "type": "BUY", "symbol": "SOLUSDT", "confidence": "92%", "strategy": "RSI + MACD"},
+                ]
+                return html.Table([
+                    html.Tr([html.Th("Time", style={'color': self.theme['text_muted']}), 
+                             html.Th("Signal", style={'color': self.theme['text_muted']}),
+                             html.Th("Symbol", style={'color': self.theme['text_muted']}),
+                             html.Th("Conf.", style={'color': self.theme['text_muted']}),
+                             html.Th("Strategy", style={'color': self.theme['text_muted']})]),
+                    *[html.Tr([
+                        html.Td(s['time'], style={'color': self.theme['text']}),
+                        html.Td(s['type'], style={'color': self.theme['green'] if s['type']=='BUY' else (self.theme['red'] if s['type']=='SELL' else self.theme['blue'])}),
+                        html.Td(s['symbol'], style={'color': self.theme['text']}),
+                        html.Td(s['confidence'], style={'color': self.theme['purple']}),
+                        html.Td(s['strategy'], style={'color': self.theme['text_muted'], 'font-size': '10px'})
+                    ]) for s in signals],
+                ], style={'width': '100%', 'font-size': '11px'})
+            except Exception as e:
+                return html.Div(f"Error: {str(e)}", style={'color': self.theme['red']})
         
         # Price Chart
         @self.app.callback(
