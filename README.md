@@ -2,7 +2,7 @@
 
 A professional-grade quantitative trading system with machine learning, live trading, risk management, and portfolio optimization for cryptocurrency and commodity-linked assets.
 
-> **Status**: 🚀 Production Ready | **Level**: Hedge Fund Ready
+> **Status**: 🚀 Production Ready v2.0 | **Level**: Hedge Fund Ready
 
 ---
 
@@ -69,6 +69,65 @@ A professional-grade quantitative trading system with machine learning, live tra
 
 ---
 
+## 🏗️ Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    DASHBOARD (Plotly/Dash)                │
+├─────────────────────────────────────────────────────────────┤
+│ ML Models │ Signal Engine │ Risk Metrics │ Telegram       │
+├─────────────────────────────────────────────────────────────┤
+│ RandomForest │ XGBoost │ Ensemble │ Walk-Forward          │
+├─────────────────────────────────────────────────────────────┤
+│ Live Trading │ Risk Engine │ Portfolio │ Testnet          │
+├─────────────────────────────────────────────────────────────┤
+│ Backtest Engine │ Multi-Asset Portfolio │ Performance     │
+├─────────────────────────────────────────────────────────────┤
+│ Indicators │ Data Loader │ Binance API │ Sentiment       │
+├─────────────────────────────────────────────────────────────┤
+│ HFT Simulator │ Multi-Agent │ RL Env │ AutoML            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Core v2.0 Architecture (Event-Driven)
+
+```
+                           ┌──────────────┐
+                           │  Dashboard   │
+                           │ (Plotly/Dash)│
+                           └─────┬────────┘
+                                 │
+                                 ▼
+                    ┌───────────────────────────┐
+                    │      State Manager        │
+                    │ (SQLite persistence)     │
+                    └─────┬───────────┬────────┘
+                          │           │
+          ┌───────────────┘           └───────────────┐
+          ▼                                         ▼
+ ┌───────────────────┐                       ┌───────────────────┐
+ │   Risk Engine     │                       │    Event Bus      │
+ │ - Max Drawdown    │                       │ - Pub/Sub events │
+ │ - Position Limits │                       │ - Signal handling│
+ │ - Emergency Stop  │                       └────────┬──────────┘
+ └────────┬──────────┘                                │
+          │                                           ▼
+          ▼                                 ┌─────────────────────┐
+ ┌───────────────────┐                     │ Order Manager       │
+ │ Portfolio Manager │                     │ - Retry logic       │
+ │ - Multi-asset     │                     │ - Risk validation   │
+ │ - Position sizing │                     └────────┬──────────┘
+ └────────┬──────────┘                              │
+          │                                          ▼
+          ▼                               ┌─────────────────────┐
+ ┌───────────────────┐                  │ Broker Interface    │
+ │   Trading Engine  │                  │ - Paper Trading    │
+ │   Orchestrator    │                  │ - Live (Binance)   │
+ └───────────────────┘                  └─────────────────────┘
+```
+
+---
+
 ## 📂 Project Structure
 
 ```
@@ -82,59 +141,57 @@ ai-trading-system/
 │   ├── indicators.py             # Technical indicators
 │   ├── ml_model.py              # Random Forest signals
 │   ├── ml_model_xgb.py          # XGBoost signals
-│   ├── performance.py            # Hedge fund metrics
+│   ├── performance.py           # Hedge fund metrics
 │   ├── risk.py                  # Risk analysis
 │   ├── risk_engine.py           # Live risk management
 │   ├── fund_simulator.py        # Fee structure simulation
-│   ├── signal_engine.py          # Signal generation
+│   ├── signal_engine.py         # Signal generation
 │   ├── utils.py                 # Utilities
-│   ├── walkforward.py            # Walk-forward optimization
+│   ├── walkforward.py           # Walk-forward optimization
 │   │
-│   ├── live/                    # Live trading modules
-│   │   ├── __init__.py
-│   │   ├── binance_multi_ws.py  # WebSocket streaming
-│   │   ├── portfolio_live.py    # Live portfolio
-│   │   ├── position_sizing.py   # Dynamic sizing
-│   │   ├── telegram_notifier.py # Telegram alerts
-│   │   └── risk_engine.py       # Advanced risk management
+│   ├── core/                   # NEW: Production Core v2.0
+│   │   ├── __init__.py         # Core exports
+│   │   ├── event_bus.py        # Event-driven pub/sub
+│   │   ├── state_manager.py    # SQLite persistence
+│   │   ├── engine.py           # Main orchestrator
+│   │   ├── portfolio/
+│   │   │   └── portfolio_manager.py  # Multi-asset portfolio
+│   │   ├── risk/
+│   │   │   └── risk_engine.py  # Professional risk
+│   │   └── execution/
+│   │       ├── broker_interface.py  # Paper/Live broker
+│   │       └── order_manager.py     # Order execution + retry
 │   │
-│   ├── models/                  # ML models
-│   │   ├── __init__.py
-│   │   └── ensemble.py          # Ensemble model
+│   ├── live/                   # Live trading modules
+│   │   ├── binance_multi_ws.py
+│   │   ├── portfolio_live.py
+│   │   ├── position_sizing.py
+│   │   ├── telegram_notifier.py
+│   │   └── risk_engine.py
 │   │
-│   │   ├── hft/                  # HFT modules
-│   │   │   ├── hft_simulator.py  # Tick-by-tick simulator
-│   │   │   └── hft_env.py        # RL training environment
-│   │
-│   │   ├── automl/               # AutoML
-│   │   │   └── automl_engine.py  # Strategy evolution
-│   │
-│   │   ├── meta/                 # Meta-evolution
-│   │   │   ├── meta_evolution_engine.py  # Hybrid agent evolution
-│   │   │   ├── multi_market_evolution.py  # Multi-market migration
-│   │   │   └── emergent_communication.py  # Agent communication
-│   │
-│   │   ├── simulations/          # Market simulation
-│   │   │   └── multi_agent_market.py  # Multi-agent market
-│   │   │
-│   │   └── quant/│   └── quant/                  # Quantitative strategies
+│   ├── models/                 # ML models
+│   ├── hft/                   # HFT modules
+│   ├── automl/                # AutoML
+│   ├── meta/                  # Meta-evolution
+│   ├── simulations/           # Market simulation
+│   └── quant/                 # Quantitative strategies
 │
 ├── dashboard/
-│   └── app.py                   # Professional Dash dashboard
+│   └── app.py                 # Professional Dash dashboard
 │
 ├── tests/
-│   ├── __init__.py
-│   ├── test_technical_analysis.py
-│   └── test_app.py              # Comprehensive tests
+│   └── test_technical_analysis.py
 │
-├── config.py                     # Configuration
-├── main.py                       # CLI entry point
-├── dashboard.py                   # Dashboard app
-├── live_multi_asset.py           # Live trading system
-├── auto_trader.py                # Auto trading
-├── requirements.txt               # Dependencies
-├── Dockerfile                     # Docker container
-└── docker-compose.yml            # Docker orchestration
+├── config.py                   # Configuration
+├── main.py                    # CLI entry point
+├── dashboard.py               # Dashboard app
+├── live_multi_asset.py        # Live trading system
+├── auto_trader.py             # Auto trading
+├── test_core.py              # Core module tests
+├── ARCHITECTURE.md            # Architecture documentation
+├── requirements.txt           # Dependencies
+├── Dockerfile                 # Docker container
+└── docker-compose.yml         # Docker orchestration
 ```
 
 ---
@@ -146,8 +203,10 @@ ai-trading-system/
 git clone https://github.com/ballales1984-wq/ai-trading-system.git
 cd ai-trading-system
 pip install -r requirements.txt
-pip install xgboost  # For advanced ML
-pip install websocket-client  # For live trading
+pip install xgboost websocket-client
+
+# Test core modules (new v2.0)
+python test_core.py
 
 # Start dashboard
 python main.py --mode dashboard
@@ -157,16 +216,42 @@ python main.py --mode dashboard
 
 ## 💻 Usage Examples
 
-### Live Trading with Telegram
-```bash
-# Start live trading with notifications
-python main.py --mode live \
-    --assets BTCUSDT,ETHUSDT,SOLUSDT \
-    --telegram-token "YOUR_BOT_TOKEN" \
-    --telegram-chat-id "YOUR_CHAT_ID"
+### Core v2.0 - Paper Trading
+
+```python
+from src.core import (
+    TradingEngine, PaperBroker, RiskEngine, 
+    PortfolioManager, create_broker
+)
+
+# Create broker
+broker = PaperBroker(initial_balance=100000)
+await broker.connect()
+
+# Create risk engine
+risk = RiskEngine(
+    initial_balance=100000,
+    limits=RiskLimits(
+        max_position_pct=0.3,
+        max_daily_loss_pct=0.05,
+        max_drawdown_pct=0.20
+    )
+)
+
+# Create portfolio
+portfolio = PortfolioManager(initial_balance=100000)
+
+# Open position
+position = portfolio.open_position("BTCUSDT", "long", 0.5, 45000)
+print(f"Opened: {position.symbol} {position.quantity}")
+
+# Update prices
+portfolio.update_prices({"BTCUSDT": 46000})
+print(f"PnL: ${portfolio.get_metrics().unrealized_pnl:.2f}")
 ```
 
 ### ML Signal Generation
+
 ```python
 from src.ml_model import MLSignalModel
 from src.indicators import calculate_all_indicators
@@ -183,6 +268,7 @@ signals = model.predict_signals(df)
 ```
 
 ### XGBoost Model
+
 ```python
 from src.ml_model_xgb import XGBSignalModel
 
@@ -192,41 +278,14 @@ signals = model.predict_signals(df)
 top_features = model.get_top_features(10)
 ```
 
-### Risk Engine (Live Trading)
-```python
-from src.live.risk_engine import RiskEngine
+### Live Trading with Telegram
 
-risk = RiskEngine(
-    max_drawdown=0.20,      # 20% kill-switch
-    sl_multiplier=2.0,      # ATR x 2 for SL
-    tp_multiplier=3.0,      # ATR x 3 for TP
-    trailing_multiplier=1.5  # ATR x 1.5 for trailing
-)
-
-# Check exits
-exit_signal = risk.check_exit_signal(asset, current_price, atr)
-if exit_signal:
-    close_position(asset)
-```
-
-### Backtest
-```python
-from src.backtest import run_backtest
-from src.performance import generate_performance_report
-
-result = run_backtest(df, signals, initial_capital=10000)
-print(generate_performance_report(result.strategy_returns, result.equity_curve))
-```
-
-### Multi-Asset Portfolio
-```python
-from src.backtest_multi import MultiAssetBacktest
-
-backtest = MultiAssetBacktest(initial_capital=1_000_000)
-backtest.add_asset('BTC', btc_prices, btc_signals)
-backtest.add_asset('ETH', eth_prices, eth_signals)
-
-returns, metrics = backtest.run_backtest('volatility_parity')
+```bash
+# Start live trading with notifications
+python main.py --mode live \
+    --assets BTCUSDT,ETHUSDT,SOLUSDT \
+    --telegram-token "YOUR_BOT_TOKEN" \
+    --telegram-chat-id "YOUR_CHAT_ID"
 ```
 
 ---
@@ -244,11 +303,11 @@ PAXG (Gold), XAUT (Gold), STETH, FXS (Frax)
 ## 🧪 Testing
 
 ```bash
+# Run core tests (v2.0)
+python test_core.py
+
 # Run all tests
 python -m pytest tests/ -v
-
-# Run specific test
-python -m pytest tests/test_app.py -v
 
 # Quick check
 python -m pytest tests/test_app.py -q
@@ -292,6 +351,7 @@ This is a research framework for educational purposes. Always use paper trading 
 ## 🔧 Configuration
 
 ### Environment Variables (.env)
+
 ```bash
 # Binance API (optional for live trading)
 BINANCE_API_KEY=your_api_key
@@ -303,12 +363,13 @@ TELEGRAM_CHAT_ID=your_chat_id
 ```
 
 ### Risk Parameters
+
 ```python
 # In live_multi_asset.py or via CLI
 risk_engine = RiskEngine(
-    max_drawdown=0.20,      # Kill-switch at 20%
-    sl_multiplier=2.0,      # Stop loss = 2x ATR
-    tp_multiplier=3.0,      # Take profit = 3x ATR
+    max_drawdown=0.20,       # Kill-switch at 20%
+    sl_multiplier=2.0,       # Stop loss = 2x ATR
+    tp_multiplier=3.0,       # Take profit = 3x ATR
     trailing_multiplier=1.5  # Trailing = 1.5x ATR
 )
 ```
@@ -321,87 +382,19 @@ MIT License
 
 ---
 
-## 🎓 Architecture
+## 🎓 Architecture (Detailed)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    DASHBOARD (Plotly)                      │
-├─────────────────────────────────────────────────────────────┤
-│  ML Models  │  Signal Engine  │  Risk Metrics  │  Telegram │
-├─────────────────────────────────────────────────────────────┤
-│  RandomForest  │  XGBoost  │  Ensemble  │  Walk-Forward    │
-├─────────────────────────────────────────────────────────────┤
-│  Live Trading  │  Risk Engine  │  Portfolio  │  Testnet     │
-├─────────────────────────────────────────────────────────────┤
-│  Backtest Engine  │  Multi-Asset Portfolio  │  Performance │
-├─────────────────────────────────────────────────────────────┤
-│     Indicators      │    Data Loader    │   Binance API    │
-└─────────────────────────────────────────────────────────────┘
-```
+See [ARCHITECTURE.md](ARCHITECTURE.md) for complete architecture documentation including:
+
+- Complete Data Flow Diagram
+- Core System Architecture (v2.0)
+- Event-Driven Flow
+- HFT & Multi-Agent Simulation
+- Dashboard Architecture
+- Complete System Overview
 
 ---
 
-**Level**: Production Ready  
-**Ready for**: Live Trading, Backtesting, Portfolio Management  
+**Level**: Production Ready v2.0  
+**Ready for**: Live Trading, Backtesting, Portfolio Management, SaaS  
 **Safe Mode**: Paper Trading & Testnet Enabled
-
----
-
-## 🏗️ NEW: Production Core Architecture (v2.0)
-
-The system now includes a production-ready core architecture with event-driven design:
-
-```
-                           ┌──────────────┐
-                           │  Dashboard   │
-                           │ (Plotly/Dash)│
-                           └─────┬────────┘
-                                 │
-                                 ▼
-                    ┌───────────────────────────┐
-                    │      State Manager        │
-                    │ (SQLite persistence)     │
-                    └─────┬───────────┬────────┘
-                          │           │
-          ┌───────────────┘           └───────────────┐
-          ▼                                         ▼
- ┌───────────────────┐                       ┌───────────────────┐
- │   Risk Engine     │                       │    Event Bus      │
- │ - Max Drawdown    │                       │ - Pub/Sub events  │
- │ - Position Limits │                       │ - Signal handling │
- │ - Emergency Stop  │                       └────────┬──────────┘
- └────────┬──────────┘                                │
-          │                                           ▼
-          ▼                                 ┌─────────────────────┐
- ┌───────────────────┐                     │ Order Manager       │
- │ Portfolio Manager │                     │ - Retry logic       │
- │ - Multi-asset     │                     │ - Risk validation   │
- │ - Position sizing │                     └────────┬──────────┘
- └────────┬──────────┘                              │
-          │                                          ▼
-          ▼                               ┌─────────────────────┐
- ┌───────────────────┐                  │ Broker Interface    │
- │   Trading Engine  │                  │ - Paper Trading    │
- │   Orchestrator    │                  │ - Live (Binance)   │
- └───────────────────┘                  └─────────────────────┘
-```
-
-### New Core Modules
-
-| Module | Description |
-|--------|-------------|
-| [`src/core/event_bus.py`](src/core/event_bus.py) | Event-driven pub/sub system |
-| [`src/core/state_manager.py`](src/core/state_manager.py) | SQLite persistence for portfolio, orders, models |
-| [`src/core/engine.py`](src/core/engine.py) | Main trading orchestrator |
-| [`src/core/portfolio/portfolio_manager.py`](src/core/portfolio/portfolio_manager.py) | Multi-asset portfolio management |
-| [`src/core/risk/risk_engine.py`](src/core/risk/risk_engine.py) | Professional risk management |
-| [`src/core/execution/broker_interface.py`](src/core/execution/broker_interface.py) | Paper/Live broker abstraction |
-| [`src/core/execution/order_manager.py`](src/core/execution/order_manager.py) | Order execution with retry logic |
-
-### Quick Test
-```bash
-# Test core modules
-python test_core.py
-```
-
-All core components tested and working!
