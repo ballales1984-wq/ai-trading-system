@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Data - AI Trading</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.2/css/bootstrap.min.css}">
+    <script th:src="@{/webjars/jquery/3.7.1/jquery.min.js}"></script>
+    <script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/"><span class="text-warning">AI</span> Trading</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/">Dashboard</a>
+                <a class="nav-link active" href="/market">Market</a>
+                <a class="nav-link" href="/signals">Signals</a>
+                <a class="nav-link" href="/portfolio">Portfolio</a>
+                <a class="nav-link" href="/trade">Trade</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2>Market Data</h2>
+        
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <form method="get" action="/market" class="d-flex">
+                    <select name="symbol" class="form-select me-2">
+                        <option th:each="s : ${symbols}" 
+                                th:value="${s}" 
+                                th:text="${s}"
+                                th:selected="${s == selectedSymbol}">BTCUSDT</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary">Load Data</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="row" th:if="${marketData != null}">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h4 th:text="${marketData.symbol}">BTCUSDT</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <h5>Current Price</h5>
+                                <h2 class="text-primary" th:text="'$' + ${#numbers.formatDecimal(marketData.price, 1, 2)}">$52,000</h2>
+                            </div>
+                            <div class="col-md-3">
+                                <h5>24h Change</h5>
+                                <h4 th:classappend="${marketData.changePercent24h >= 0} ? 'text-success' : 'text-danger'"
+                                    th:text="${#numbers.formatDecimal(marketData.changePercent24h, 1, 2)} + '%'">2.0%</h4>
+                            </div>
+                            <div class="col-md-3">
+                                <h5>24h High</h5>
+                                <h4 class="text-success" th:text="'$' + ${#numbers.formatDecimal(marketData.high24h, 1, 2)}">$54,600</h4>
+                            </div>
+                            <div class="col-md-3">
+                                <h5>24h Low</h5>
+                                <h4 class="text-danger" th:text="'$' + ${#numbers.formatDecimal(marketData.low24h, 1, 2)}">$49,400</h4>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Volume (24h)</h5>
+                                <h4 th:text="${#numbers.formatDecimal(marketData.volume24h, 1, 0)}">1,000,000</h4>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Change (24h)</h5>
+                                <h4 th:classappend="${marketData.change24h >= 0} ? 'text-success' : 'text-danger'"
+                                    th:text="'$' + ${#numbers.formatDecimal(marketData.change24h, 1, 2)}">$1,040</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -8,6 +8,10 @@ requests==2.32.5
 python-dotenv==1.2.1
 python-dateutil==2.9.0.post0
 
+# Web Server (for frontend API)
+flask==3.0.0
+flask-cors==4.0.0
+
 # Technical Analysis
 TA-Lib==0.6.8
 
