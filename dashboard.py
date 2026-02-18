@@ -92,7 +92,8 @@ class TradingDashboard:
         self.app = dash.Dash(
             __name__,
             title="Crypto Commodity Trading Dashboard",
-            update_title=None
+            update_title=None,
+            suppress_callback_exceptions=True
         )
         
         self._setup_layout()
