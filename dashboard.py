@@ -162,6 +162,7 @@ class TradingDashboard:
                 
                 # Hidden store for trading mode state
                 dcc.Store(id='trading-mode-selector', data='dashboard'),
+                dcc.Store(id='trading-status', data='stopped'),
             ], style={
                 'background': 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
                 'padding': '20px',
@@ -752,6 +753,35 @@ class TradingDashboard:
                 ])
             
             return html.Div()
+        
+        # Trading start/stop callbacks
+        @self.app.callback(
+            Output('trading-status', 'data'),
+            [Input('start-paper-btn', 'n_clicks'),
+             Input('stop-paper-btn', 'n_clicks'),
+             Input('start-live-btn', 'n_clicks'),
+             Input('stop-live-btn', 'n_clicks'),
+             Input('trading-mode-selector', 'data')]
+        )
+        def update_trading_status(start_paper, stop_paper, start_live, stop_live, mode):
+            """Handle start/stop button clicks for trading"""
+            import dash
+            ctx = dash.callback_context
+            if not ctx.triggered:
+                return 'stopped'
+            
+            button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+            
+            if button_id == 'start-paper-btn' and mode == 'paper':
+                return 'running_paper'
+            elif button_id == 'stop-paper-btn' and mode == 'paper':
+                return 'stopped'
+            elif button_id == 'start-live-btn' and mode == 'live':
+                return 'running_live'
+            elif button_id == 'stop-live-btn' and mode == 'live':
+                return 'stopped'
+            
+            return 'stopped'
         
         @self.app.callback(
             Output('price-chart', 'figure'),
