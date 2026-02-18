@@ -1,30 +1,42 @@
-# Core dependencies for Crypto Commodity Trading System
-pandas>=2.0.0
-numpy>=1.24.0
-requests>=2.31.0
-python-dotenv>=1.0.0
+# AI Trading System - Pinned Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core
+pandas==3.0.0
+numpy==2.4.1
+requests==2.32.5
+python-dotenv==1.2.1
+python-dateutil==2.9.0.post0
 
 # Technical Analysis
-ta-lib>=0.4.28  # May require manual installation
+TA-Lib==0.6.8
 
 # Data APIs
-ccxt>=4.0.0  # Unified crypto exchange API
+ccxt==4.5.38
 
 # Dashboard & Visualization
-plotly>=5.18.0
-dash>=2.14.0
+plotly==6.5.2
+dash==4.0.0
 
 # News & Sentiment
-newsapi-python>=0.2.6
-textblob>=0.17.1
+newsapi-python==0.2.7
+textblob==0.19.0
 
-# Machine Learning (optional)
-scikit-learn>=1.3.0
+# Machine Learning
+scikit-learn==1.8.0
 
-# Async (optional, for real-time)
-aiohttp>=3.9.0
-websockets>=12.0
+# Async (real-time)
+aiohttp==3.13.3
+websockets==16.0
 
-# Utility
-python-dateutil>=2.8.2
+# Testing
+pytest==9.0.2
+pytest-cov==6.0.0
+flake8==7.0.0
 
+# Code Quality
+pylint==4.0.4
+black==25.1.0
+
+# Utilities
+tqdm==4.67.3
