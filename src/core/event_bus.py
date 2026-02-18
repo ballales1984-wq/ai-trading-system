@@ -20,6 +20,13 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
+def json_serializer(obj):
+    """JSON serializer for objects not serializable by default."""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
+
 class EventType(Enum):
     """Event types in the trading system."""
     # Market events
@@ -168,7 +175,7 @@ class EventBus:
         log_file = self._log_dir / f"events_{event.timestamp.strftime('%Y%m%d')}.jsonl"
         
         with open(log_file, 'a') as f:
-            f.write(json.dumps(event.to_dict()) + '\n')
+            f.write(json.dumps(event.to_dict(), default=json_serializer) + '\n')
     
     def get_event_history(
         self,
@@ -246,6 +253,21 @@ class RiskEventHandler(EventHandler):
             await self.on_alert(event.data)
         elif event.event_type == EventType.EMERGENCY_EXIT and self.on_emergency:
             await self.on_emergency(event.data)
+
+
+class CallbackEventHandler(EventHandler):
+    """Generic handler that wraps a callback function."""
+    
+    def __init__(self, callback: Callable):
+        """Initialize handler with callback."""
+        self.callback = callback
+    
+    async def handle(self, event: Event):
+        """Handle event by calling the callback."""
+        if asyncio.iscoroutinefunction(self.callback):
+            await self.callback(event)
+        else:
+            self.callback(event)
 
 
 def create_event(event_type: EventType, data: Dict[str, Any], source: str = "system") -> Event:

@@ -17,7 +17,8 @@ from pathlib import Path
 
 from src.core.event_bus import (
     EventBus, EventType, Event, EventHandler,
-    create_event, SignalEventHandler, RiskEventHandler
+    create_event, SignalEventHandler, RiskEventHandler,
+    CallbackEventHandler
 )
 from src.core.state_manager import StateManager
 
@@ -252,10 +253,14 @@ class TradingEngine:
             if self.broker:
                 await self.broker.disconnect()
             
-            # Publish stopped event
+            # Publish stopped event - convert datetime to ISO format
+            stats_copy = self.stats.copy()
+            if stats_copy.get('started_at'):
+                stats_copy['started_at'] = stats_copy['started_at'].isoformat()
+            
             await self.event_bus.publish(create_event(
                 EventType.ENGINE_STOPPED,
-                {'stats': self.stats},
+                {'stats': stats_copy},
                 'engine'
             ))
             
@@ -428,10 +433,13 @@ class TradingEngine:
             if state['positions']:
                 logger.info(f"Restored {len(state['positions'])} positions")
             
-            # Subscribe to state saved event
+            # Subscribe to state saved event using CallbackEventHandler
+            async def state_saved_handler(event):
+                logger.debug(f"Auto-saved: {event.data}")
+            
             self.event_bus.subscribe(
                 EventType.STATE_SAVED,
-                EventHandler(lambda e: logger.debug(f"Auto-saved: {e.data}"))
+                CallbackEventHandler(state_saved_handler)
             )
             
         except Exception as e:

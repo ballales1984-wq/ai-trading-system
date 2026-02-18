@@ -237,11 +237,25 @@ class TradingDaemon:
                     self.state.total_trades = 1
                     self.state.winrate = 100 if pnl_change > 0 else 0
                 
-                # Mock positions
+                # Expanded portfolio with more crypto assets
+                # Using mock data for demonstration - in production, connect to live exchange
+                import random
                 self._positions = {
-                    'BTC': {'size': np.random.randint(-1, 2), 'entry': 50000},
-                    'ETH': {'size': np.random.randint(-2, 3), 'entry': 3000},
-                    'BNB': {'size': np.random.randint(-1, 2), 'entry': 400}
+                    'BTC': {'size': random.randint(-1, 2), 'entry': 67000},
+                    'ETH': {'size': random.randint(-2, 3), 'entry': 3200},
+                    'BNB': {'size': random.randint(-1, 2), 'entry': 620},
+                    'SOL': {'size': random.randint(-3, 4), 'entry': 175},
+                    'XRP': {'size': random.randint(-10, 15), 'entry': 2.45},
+                    'ADA': {'size': random.randint(-100, 150), 'entry': 0.92},
+                    'DOGE': {'size': random.randint(-500, 800), 'entry': 0.31},
+                    'AVAX': {'size': random.randint(-5, 8), 'entry': 36},
+                    'DOT': {'size': random.randint(-10, 15), 'entry': 7.2},
+                    'MATIC': {'size': random.randint(-50, 80), 'entry': 0.43},
+                    'LINK': {'size': random.randint(-5, 8), 'entry': 21},
+                    'ATOM': {'size': random.randint(-10, 15), 'entry': 9.2},
+                    'UNI': {'size': random.randint(-10, 15), 'entry': 11.5},
+                    'LTC': {'size': random.randint(-2, 3), 'entry': 102},
+                    'ETC': {'size': random.randint(-5, 8), 'entry': 27},
                 }
                 self.state.open_positions = sum(1 for p in self._positions.values() if p['size'] != 0)
     
@@ -397,26 +411,46 @@ class TradingDashboard:
         logger.info("Production TradingDashboard initialized")
     
     def _build_layout(self):
+        # Enhanced cyberpunk/neon theme with improved visuals
         theme = {
-            'background': '#0a0a0f',
-            'card': 'rgba(22, 27, 34, 0.8)',
-            'border': '#30363d',
-            'text': '#e6edf3',
-            'text_muted': '#8b949e',
-            'green': '#3fb950',
-            'red': '#f85149',
-            'blue': '#58a6ff',
-            'purple': '#a371f7',
+            'background': '#0d0d12',
+            'card': 'linear-gradient(135deg, rgba(20, 20, 35, 0.95) 0%, rgba(30, 30, 50, 0.9) 100%)',
+            'border': '#2d2d44',
+            'text': '#ffffff',
+            'text_muted': '#9ca3af',
+            'green': '#00ff88',
+            'red': '#ff4757',
+            'blue': '#00d4ff',
+            'purple': '#a855f7',
+            'orange': '#ff9500',
+            'yellow': '#ffd60a',
+            'cyan': '#00f5ff',
+            'pink': '#ff6b9d',
+            'gradient': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        }
+        
+        # Enhanced card style with shadows and larger padding
+        card_style = {
+            'background': theme['card'],
+            'padding': '25px',
+            'border-radius': '16px',
+            'border': f"1px solid {theme['border']}",
+            'box-shadow': '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
+            'backdrop-filter': 'blur(10px)',
         }
         
         self.theme = theme
         
         self.app.layout = html.Div([
-            # Header
+            # Header with gradient background
             html.Div([
                 html.Div([
                     html.H1("🚀 Quantum AI Trading System", 
-                            style={'margin': '0', 'color': theme['text'], 'font-size': '28px'}),
+                            style={'margin': '0', 'color': '#ffffff', 'font-size': '32px', 
+                                   'text-shadow': '0 0 20px rgba(102, 126, 234, 0.8)',
+                                   'background': '-webkit-linear-gradient(45deg, #00ff88, #00d4ff)',
+                                   '-webkit-background-clip': 'text',
+                                   '-webkit-text-fill-color': 'transparent'}),
                     html.P("Production Trading Dashboard",
                           style={'margin': '5px 0 0 0', 'color': theme['text_muted']}),
                 ], style={'flex': '1'}),
@@ -482,37 +516,34 @@ class TradingDashboard:
             
             # Main Content
             html.Div([
-                # Stats Row
+                # Stats Row - Enhanced with larger cards
                 html.Div(id='stats-row', style={
                     'display': 'grid',
                     'grid-template-columns': 'repeat(5, 1fr)',
-                    'gap': '20px',
-                    'margin-bottom': '20px'
+                    'gap': '25px',
+                    'margin-bottom': '25px'
                 }),
                 
-                # Live Market Ticker Row
+                # Live Market Ticker Row - Larger cards
                 html.Div([
                     html.Div([
-                        html.H3(" Live Market Prices", style={'color': self.theme['text']}),
-                        html.Div(id='market-ticker', style={'display': 'flex', 'gap': '20px', 'flex-wrap': 'wrap'}),
-                    ], style={'background': theme['card'], 'padding': '20px', 
-                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'width': '100%'}),
-                ], style={'margin-bottom': '20px'}),
+                        html.H3("📊 Live Market Prices", style={'color': self.theme['text'], 'font-size': '20px'}),
+                        html.Div(id='market-ticker', style={'display': 'flex', 'gap': '25px', 'flex-wrap': 'wrap'}),
+                    ], style={**card_style, 'width': '100%', 'margin-bottom': '25px'}),
+                ]),
                 
-                # Charts Row 1: Price & Portfolio
+                # Charts Row 1: Price & Portfolio - Larger charts
                 html.Div([
                     html.Div([
-                        html.H3("📈 Price Chart", style={'color': theme['text']}),
-                        dcc.Graph(id='price-chart', style={'height': '400px'}),
-                    ], style={'background': theme['card'], 'padding': '20px', 
-                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '2'}),
+                        html.H3("📈 Price Chart", style={'color': theme['text'], 'font-size': '20px'}),
+                        dcc.Graph(id='price-chart', style={'height': '500px'}),
+                    ], style={**card_style, 'flex': '2'}),
                     
                     html.Div([
-                        html.H3("💰 Portfolio Equity", style={'color': theme['text']}),
-                        dcc.Graph(id='portfolio-chart', style={'height': '400px'}),
-                    ], style={'background': theme['card'], 'padding': '20px',
-                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
-                ], style={'display': 'flex', 'gap': '20px', 'margin-bottom': '20px'}),
+                        html.H3("💰 Portfolio Equity", style={'color': theme['text'], 'font-size': '20px'}),
+                        dcc.Graph(id='portfolio-chart', style={'height': '500px'}),
+                    ], style={**card_style, 'flex': '1'}),
+                ], style={'display': 'flex', 'gap': '25px', 'margin-bottom': '25px'}),
                 
                 # Charts Row 2: Risk & Positions
                 html.Div([
@@ -545,11 +576,36 @@ class TradingDashboard:
                                 dcc.Dropdown(
                                     id='symbol-selector',
                                     options=[
-                                        {'label': 'BTC/USDT', 'value': 'BTCUSDT'},
-                                        {'label': 'ETH/USDT', 'value': 'ETHUSDT'},
-                                        {'label': 'BNB/USDT', 'value': 'BNBUSDT'},
-                                        {'label': 'SOL/USDT', 'value': 'SOLUSDT'},
-                                        {'label': 'XRP/USDT', 'value': 'XRPUSDT'},
+                                        {'label': 'BTC/USDT - Bitcoin', 'value': 'BTCUSDT'},
+                                        {'label': 'ETH/USDT - Ethereum', 'value': 'ETHUSDT'},
+                                        {'label': 'BNB/USDT - BNB', 'value': 'BNBUSDT'},
+                                        {'label': 'SOL/USDT - Solana', 'value': 'SOLUSDT'},
+                                        {'label': 'XRP/USDT - Ripple', 'value': 'XRPUSDT'},
+                                        {'label': 'ADA/USDT - Cardano', 'value': 'ADAUSDT'},
+                                        {'label': 'DOGE/USDT - Dogecoin', 'value': 'DOGEUSDT'},
+                                        {'label': 'AVAX/USDT - Avalanche', 'value': 'AVAXUSDT'},
+                                        {'label': 'DOT/USDT - Polkadot', 'value': 'DOTUSDT'},
+                                        {'label': 'MATIC/USDT - Polygon', 'value': 'MATICUSDT'},
+                                        {'label': 'LINK/USDT - Chainlink', 'value': 'LINKUSDT'},
+                                        {'label': 'ATOM/USDT - Cosmos', 'value': 'ATOMUSDT'},
+                                        {'label': 'UNI/USDT - Uniswap', 'value': 'UNIUSDT'},
+                                        {'label': 'LTC/USDT - Litecoin', 'value': 'LTCUSDT'},
+                                        {'label': 'ETC/USDT - Ethereum Classic', 'value': 'ETCUSDT'},
+                                        {'label': 'XLM/USDT - Stellar', 'value': 'XLMUSDT'},
+                                        {'label': 'NEAR/USDT - Near', 'value': 'NEARUSDT'},
+                                        {'label': 'APT/USDT - Aptos', 'value': 'APTUSDT'},
+                                        {'label': 'ARB/USDT - Arbitrum', 'value': 'ARBUSDT'},
+                                        {'label': 'OP/USDT - Optimism', 'value': 'OPUSDT'},
+                                        {'label': 'INJ/USDT - Injective', 'value': 'INJUSDT'},
+                                        {'label': 'SUI/USDT - Sui', 'value': 'SUIUSDT'},
+                                        {'label': 'PEPE/USDT - Pepe', 'value': 'PEPEUSDT'},
+                                        {'label': 'SHIB/USDT - Shiba Inu', 'value': 'SHIBUSDT'},
+                                        {'label': 'TRX/USDT - TRON', 'value': 'TRXUSDT'},
+                                        {'label': 'FIL/USDT - Filecoin', 'value': 'FILUSDT'},
+                                        {'label': 'HBAR/USDT - Hedera', 'value': 'HBARUSDT'},
+                                        {'label': 'VET/USDT - VeChain', 'value': 'VETUSDT'},
+                                        {'label': 'ALGO/USDT - Algorand', 'value': 'ALGOUSDT'},
+                                        {'label': 'FTM/USDT - Fantom', 'value': 'FTMUSDT'},
                                     ],
                                     value='BTCUSDT',
                                     style={'background': theme['card'], 'color': '#000'}
@@ -759,69 +815,103 @@ class TradingDashboard:
         def update_market_ticker(n):
             try:
                 import requests
-                prices = {}
-                symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT']
+                ticker_items = []
                 
+                # Crypto emoji icons
+                CRYPTO_ICONS = {
+                    'BTC': '₿', 'ETH': 'Ξ', 'BNB': 'B', 'SOL': 'S', 'XRP': 'X',
+                    'ADA': 'A', 'DOGE': 'Ð', 'AVAX': 'A', 'DOT': '●', 'MATIC': 'M',
+                    'LINK': '⬡', 'ATOM': '⚛', 'UNI': 'U', 'LTC': 'Ł', 'ETC': 'Ξ',
+                    'XLM': '✦', 'NEAR': 'N', 'APT': 'A', 'ARB': 'A', 'OP': 'O',
+                    'INJ': 'I', 'SUI': 'S', 'SEI': 'S', 'TIA': 'T', 'FIL': 'F',
+                }
+                
+                # Extended list of crypto assets
+                symbols = [
+                    'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT',
+                    'ADAUSDT', 'DOGEUSDT', 'AVAXUSDT', 'DOTUSDT', 'MATICUSDT',
+                    'LINKUSDT', 'ATOMUSDT', 'UNIUSDT', 'LTCUSDT', 'ETCUSDT',
+                    'XLMUSDT', 'NEARUSDT', 'APTUSDT', 'ARBUSDT', 'OPUSDT',
+                    'INJUSDT', 'SUIUSDT', 'SEIUSDT', 'TIAUSDT', 'FILUSDT'
+                ]
+                
+                # Use Binance 24hr ticker API for real price and change
                 for symbol in symbols:
                     try:
-                        url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}"
-                        resp = requests.get(url, timeout=2)
+                        url = f"https://api.binance.com/api/v3/ticker/24hr?symbol={symbol}"
+                        resp = requests.get(url, timeout=3)
                         if resp.status_code == 200:
                             data = resp.json()
-                            prices[symbol] = float(data['price'])
-                    except:
-                        pass
+                            price = float(data['lastPrice'])
+                            change_pct = float(data['priceChangePercent'])
+                            
+                            base = symbol.replace('USDT', '')
+                            icon = CRYPTO_ICONS.get(base, '')
+                            
+                            # Build ticker card with icon and big symbol
+                            ticker_items.append(html.Div([
+                                html.Div([
+                                    html.Span(icon, style={'font-size': '20px', 'margin-right': '5px'}),
+                                    html.Span(base, style={
+                                        'font-weight': 'bold', 
+                                        'font-size': '22px',
+                                        'font-family': 'Arial Black, sans-serif',
+                                    })
+                                ], style={'margin-bottom': '8px'}),
+                                html.Div(f"${price:,.2f}", style={
+                                    'color': '#ffffff', 'font-size': '15px', 'font-weight': 'bold'
+                                }),
+                                html.Div(f"{change_pct:+.2f}%", style={
+                                    'color': '#00ff88' if change_pct >= 0 else '#ff4757', 
+                                    'font-size': '14px', 
+                                    'font-weight': 'bold',
+                                    'margin-top': '5px'
+                                }),
+                            ], style={
+                                'background': 'linear-gradient(145deg, #1e1e30 0%, #2a2a4a 100%)',
+                                'padding': '16px',
+                                'border-radius': '14px',
+                                'min-width': '115px',
+                                'text-align': 'center',
+                                'border': '2px solid #00ff88' if change_pct >= 0 else '2px solid #ff4757',
+                                'box-shadow': '0 6px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+                            }))
+                    except Exception as e:
+                        logger.warning(f"Failed to fetch {symbol}: {e}")
+                        continue
                 
-                ticker_items = []
-                base_prices = {'BTCUSDT': 95000, 'ETHUSDT': 3200, 'BNBUSDT': 650, 'SOLUSDT': 180, 'XRPUSDT': 2.5}
-                
-                for symbol, price in prices.items() if prices else base_prices.items():
-                    base = base_prices.get(symbol, price)
-                    change = ((price - base) / base) * 100
-                    color = self.theme['green'] if change >= 0 else self.theme['red']
-                    
-                    ticker_items.append(html.Div([
-                        html.Div(symbol.replace('USDT', '/USDT'), style={
-                            'font-weight': 'bold', 'color': self.theme['text'], 'font-size': '14px'
-                        }),
-                        html.Div(f"${price:,.2f}", style={
-                            'color': self.theme['text'], 'font-size': '16px', 'font-weight': 'bold'
-                        }),
-                        html.Div(f"{change:+.2f}%", style={
-                            'color': color, 'font-size': '12px'
-                        }),
-                    ], style={
-                        'background': self.theme['card'],
-                        'padding': '15px',
-                        'border-radius': '8px',
-                        'min-width': '120px',
-                        'text-align': 'center',
-                        'border': f"1px solid {self.theme['border']}"
-                    }))
-                
-                if not prices:
-                    for symbol, base in base_prices.items():
-                        change = (symbol == 'BTCUSDT') * 0.5 - 0.2
+                # Fallback: show mock data if API fails
+                if not ticker_items:
+                    base_prices = {
+                        'BTC': 95000, 'ETH': 3200, 'BNB': 650, 'SOL': 180, 'XRP': 2.5,
+                        'ADA': 0.95, 'DOGE': 0.32, 'AVAX': 38, 'DOT': 7.5, 'MATIC': 0.45,
+                        'LINK': 22, 'ATOM': 9.5, 'UNI': 12, 'LTC': 105, 'ETC': 28,
+                        'XLM': 0.12, 'NEAR': 5.5, 'APT': 9, 'ARB': 1.1, 'OP': 2.8
+                    }
+                    for symbol, price in base_prices.items():
+                        change = np.random.uniform(-5, 5)
                         color = self.theme['green'] if change >= 0 else self.theme['red']
                         ticker_items.append(html.Div([
-                            html.Div(symbol.replace('USDT', '/USDT'), style={
-                                'font-weight': 'bold', 'color': self.theme['text'], 'font-size': '14px'
+                            html.Div(symbol, style={
+                                'font-weight': 'bold', 'color': '#ffffff', 'font-size': '14px'
                             }),
-                            html.Div(f"${base:,.2f}", style={
-                                'color': self.theme['text'], 'font-size': '16px', 'font-weight': 'bold'
+                            html.Div(f"${price:,.2f}", style={
+                                'color': '#ffffff', 'font-size': '16px', 'font-weight': 'bold'
                             }),
                             html.Div(f"{change:+.2f}%", style={
                                 'color': color, 'font-size': '12px'
                             }),
                         ], style={
-                            'background': self.theme['card'],
+                            'background': 'rgba(40, 40, 60, 0.9)',
                             'padding': '15px',
-                            'border-radius': '8px',
+                            'border-radius': '10px',
                             'min-width': '120px',
                             'text-align': 'center',
-                            'border': f"1px solid {self.theme['border']}"
+                            'border': f"1px solid {self.theme['border']}",
+                            'box-shadow': '0 2px 8px rgba(0,0,0,0.3)'
                         }))
                 
+                logger.info(f"Ticker updated: {len(ticker_items)} symbols")
                 return ticker_items
             except Exception as e:
                 logger.error(f"Ticker error: {e}")

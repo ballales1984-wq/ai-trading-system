@@ -15,9 +15,23 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import sqlite3
 from contextlib import contextmanager
+import numpy as np
 
 
 logger = logging.getLogger(__name__)
+
+
+def json_serializer(obj):
+    """JSON serializer for objects not serializable by default."""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
 
 @dataclass
@@ -95,6 +109,80 @@ class ModelState:
         data = asdict(self)
         data['trained_at'] = self.trained_at.isoformat()
         data['loaded_at'] = self.loaded_at.isoformat()
+        return data
+
+
+@dataclass
+class SignalState:
+    """Signal state for tracking ML signals."""
+    symbol: str
+    signal_type: str  # BUY, SELL, HOLD
+    confidence: float
+    source: str  # ml_model, xgboost, ensemble, etc.
+    timestamp: datetime = field(default_factory=datetime.now)
+    
+    def to_dict(self) -> Dict:
+        """Convert to dictionary."""
+        data = asdict(self)
+        data['timestamp'] = self.timestamp.isoformat()
+        return data
+
+
+@dataclass
+class PriceHistoryState:
+    """Price history for backtesting."""
+    symbol: str
+    timestamp: datetime
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
+    
+    def to_dict(self) -> Dict:
+        """Convert to dictionary."""
+        data = asdict(self)
+        data['timestamp'] = self.timestamp.isoformat()
+        return data
+
+
+@dataclass
+class ModelPerformanceState:
+    """Model performance tracking."""
+    model_id: str
+    accuracy: float
+    precision: float
+    recall: float
+    f1: float
+    confusion_matrix: str  # JSON string
+    timestamp: datetime = field(default_factory=datetime.now)
+    
+    def to_dict(self) -> Dict:
+        """Convert to dictionary."""
+        data = asdict(self)
+        data['timestamp'] = self.timestamp.isoformat()
+        return data
+
+
+@dataclass
+class BacktestResultState:
+    """Backtest results storage."""
+    strategy: str
+    initial_balance: float
+    final_balance: float
+    total_return: float
+    total_trades: int
+    winning_trades: int
+    losing_trades: int
+    win_rate: float
+    max_drawdown: float
+    sharpe_ratio: float
+    timestamp: datetime = field(default_factory=datetime.now)
+    
+    def to_dict(self) -> Dict:
+        """Convert to dictionary."""
+        data = asdict(self)
+        data['timestamp'] = self.timestamp.isoformat()
         return data
 
 
@@ -207,17 +295,7 @@ class StateManager:
                 )
             """)
             
-            # Event log table
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS event_log (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    event_type TEXT,
-                    data TEXT,
-                    timestamp TEXT
-                )
-            """)
-            
-            conn.commit()
+# Event
     
     # Portfolio methods
     def save_portfolio_state(self, state: PortfolioState):
@@ -499,6 +577,18 @@ class StateManager:
     # Event log methods
     def log_event(self, event_type: str, data: Dict):
         """Log event."""
+        # Convert datetime objects to ISO format strings for JSON serialization
+        def convert_datetime(obj):
+            if isinstance(obj, datetime):
+                return obj.isoformat()
+            elif isinstance(obj, dict):
+                return {k: convert_datetime(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_datetime(item) for item in obj]
+            return obj
+        
+        serializable_data = convert_datetime(data)
+        
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -506,7 +596,7 @@ class StateManager:
                 VALUES (?, ?, ?)
             """, (
                 event_type,
-                json.dumps(data),
+                json.dumps(serializable_data),
                 datetime.now().isoformat()
             ))
             conn.commit()

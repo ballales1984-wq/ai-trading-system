@@ -2,3 +2,29 @@
 {"event_type": "signal_generated", "timestamp": "2026-02-18T01:23:29.394970", "data": {"symbol": "BTCUSDT", "action": "BUY", "quantity": 0.1, "confidence": 0.8}, "source": "external"}
 {"event_type": "signal_executed", "timestamp": "2026-02-18T01:23:29.396459", "data": {"symbol": "BTCUSDT", "action": "BUY", "quantity": 0.1, "confidence": 0.8}, "source": "engine"}
 {"event_type": "state_saved", "timestamp": "2026-02-18T01:23:29.409908", "data": {"equity": 100000}, "source": "engine"}
+{"event_type": "order_placed", "timestamp": "2026-02-18T12:42:31.642929", "data": {"symbol": "BTCUSDT", "side": "BUY", "qty": 0.001}, "source": "system"}
+{"event_type": "order_placed", "timestamp": "2026-02-18T12:45:21.538210", "data": {"symbol": "BTCUSDT", "side": "BUY", "qty": 0.001}, "source": "system"}
+{"event_type": "order_placed", "timestamp": "2026-02-18T12:47:44.995602", "data": {"symbol": "BTCUSDT", "side": "BUY", "qty": 0.001}, "source": "system"}
+{"event_type": "engine_started", "timestamp": "2026-02-18T14:31:36.096241", "data": {"mode": "paper"}, "source": "engine"}
+{"event_type": "signal_generated", "timestamp": "2026-02-18T14:31:36.099205", "data": {"symbol": "BTCUSDT", "action": "BUY", "quantity": 0.1, "confidence": 0.8}, "source": "external"}
+{"event_type": "signal_executed", "timestamp": "2026-02-18T14:31:36.100944", "data": {"symbol": "BTCUSDT", "action": "BUY", "quantity": 0.1, "confidence": 0.8}, "source": "engine"}
+{"event_type": "state_saved", "timestamp": "2026-02-18T14:31:36.113790", "data": {"equity": 100000}, "source": "engine"}
+{"event_type": "engine_started", "timestamp": "2026-02-18T14:40:51.938284", "data": {"mode": "paper"}, "source": "engine"}
+{"event_type": "signal_generated", "timestamp": "2026-02-18T14:40:51.940764", "data": {"symbol": "BTCUSDT", "action": "BUY", "quantity": 0.1, "confidence": 0.8}, "source": "external"}
+{"event_type": "signal_executed", "timestamp": "2026-02-18T14:40:51.942563", "data": {"symbol": "BTCUSDT", "action": "BUY", "quantity": 0.1, "confidence": 0.8}, "source": "engine"}
+{"event_type": "state_saved", "timestamp": "2026-02-18T14:40:51.966984", "data": {"equity": 100000}, "source": "engine"}
+{"event_type": "engine_started", "timestamp": "2026-02-18T14:43:18.410413", "data": {"mode": "paper"}, "source": "engine"}
+{"event_type": "signal_generated", "timestamp": "2026-02-18T14:43:18.415100", "data": {"symbol": "BTCUSDT", "action": "BUY", "quantity": 0.1, "confidence": 0.8}, "source": "external"}
+{"event_type": "signal_executed", "timestamp": "2026-02-18T14:43:18.420217", "data": {"symbol": "BTCUSDT", "action": "BUY", "quantity": 0.1, "confidence": 0.8}, "source": "engine"}
+{"event_type": "state_saved", "timestamp": "2026-02-18T14:43:18.445990", "data": {"equity": 100000}, "source": "engine"}
+{"event_type": "engine_stopped", "timestamp": "2026-02-18T14:43:18.448214", "data": {"stats": {"started_at": "2026-02-18T14:43:18.414407", "signals_processed": 1, "orders_placed": 0, "orders_filled": 0, "orders_rejected": 0, "total_pnl": 0.0, "emergency_stops": 0}}, "source": "engine"}
+{"event_type": "engine_started", "timestamp": "2026-02-18T14:45:54.673234", "data": {"mode": "paper"}, "source": "engine"}
+{"event_type": "signal_generated", "timestamp": "2026-02-18T14:45:54.674979", "data": {"symbol": "BTCUSDT", "action": "BUY", "quantity": 0.1, "confidence": 0.8}, "source": "external"}
+{"event_type": "signal_executed", "timestamp": "2026-02-18T14:45:54.676181", "data": {"symbol": "BTCUSDT", "action": "BUY", "quantity": 0.1, "confidence": 0.8}, "source": "engine"}
+{"event_type": "state_saved", "timestamp": "2026-02-18T14:45:54.691052", "data": {"equity": 100000}, "source": "engine"}
+{"event_type": "engine_stopped", "timestamp": "2026-02-18T14:45:54.692406", "data": {"stats": {"started_at": "2026-02-18T14:45:54.674504", "signals_processed": 1, "orders_placed": 0, "orders_filled": 0, "orders_rejected": 0, "total_pnl": 0.0, "emergency_stops": 0}}, "source": "engine"}
+{"event_type": "engine_started", "timestamp": "2026-02-18T14:54:24.369954", "data": {"mode": "paper"}, "source": "engine"}
+{"event_type": "signal_generated", "timestamp": "2026-02-18T14:54:24.373424", "data": {"symbol": "BTCUSDT", "action": "BUY", "quantity": 0.1, "confidence": 0.8}, "source": "external"}
+{"event_type": "signal_executed", "timestamp": "2026-02-18T14:54:24.375208", "data": {"symbol": "BTCUSDT", "action": "BUY", "quantity": 0.1, "confidence": 0.8}, "source": "engine"}
+{"event_type": "state_saved", "timestamp": "2026-02-18T14:54:24.398240", "data": {"equity": 100000}, "source": "engine"}
+{"event_type": "engine_stopped", "timestamp": "2026-02-18T14:54:24.400583", "data": {"stats": {"started_at": "2026-02-18T14:54:24.372706", "signals_processed": 1, "orders_placed": 0, "orders_filled": 0, "orders_rejected": 0, "total_pnl": 0.0, "emergency_stops": 0}}, "source": "engine"}

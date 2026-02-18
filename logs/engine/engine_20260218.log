@@ -6,3 +6,39 @@
 2026-02-18 01:23:29,396 - src.core.engine - INFO - Processing signal: BTCUSDT BUY conf=0.80
 2026-02-18 01:23:29,397 - src.core.engine - INFO - Stopping trading engine...
 2026-02-18 01:23:29,411 - src.core.engine - ERROR - Error stopping engine: Object of type datetime is not JSON serializable
+2026-02-18 14:31:35,973 - src.core.engine - INFO - Trading engine initialized
+2026-02-18 14:31:35,974 - src.core.engine - INFO - Starting trading engine...
+2026-02-18 14:31:35,979 - src.core.engine - WARNING - Could not restore state: EventHandler() takes no arguments
+2026-02-18 14:31:36,095 - src.core.engine - INFO - Background tasks started
+2026-02-18 14:31:36,098 - src.core.engine - INFO - Trading engine started in paper mode
+2026-02-18 14:31:36,100 - src.core.engine - INFO - Processing signal: BTCUSDT BUY conf=0.80
+2026-02-18 14:31:36,102 - src.core.engine - INFO - Stopping trading engine...
+2026-02-18 14:31:36,116 - src.core.engine - ERROR - Error stopping engine: Object of type datetime is not JSON serializable
+2026-02-18 14:40:51,827 - src.core.engine - INFO - Trading engine initialized
+2026-02-18 14:40:51,828 - src.core.engine - INFO - Starting trading engine...
+2026-02-18 14:40:51,938 - src.core.engine - INFO - Background tasks started
+2026-02-18 14:40:51,940 - src.core.engine - INFO - Trading engine started in paper mode
+2026-02-18 14:40:51,942 - src.core.engine - INFO - Processing signal: BTCUSDT BUY conf=0.80
+2026-02-18 14:40:51,944 - src.core.engine - INFO - Stopping trading engine...
+2026-02-18 14:40:51,969 - src.core.engine - ERROR - Error stopping engine: Object of type datetime is not JSON serializable
+2026-02-18 14:43:18,292 - src.core.engine - INFO - Trading engine initialized
+2026-02-18 14:43:18,293 - src.core.engine - INFO - Starting trading engine...
+2026-02-18 14:43:18,410 - src.core.engine - INFO - Background tasks started
+2026-02-18 14:43:18,414 - src.core.engine - INFO - Trading engine started in paper mode
+2026-02-18 14:43:18,419 - src.core.engine - INFO - Processing signal: BTCUSDT BUY conf=0.80
+2026-02-18 14:43:18,421 - src.core.engine - INFO - Stopping trading engine...
+2026-02-18 14:43:18,449 - src.core.engine - INFO - Trading engine stopped
+2026-02-18 14:45:54,564 - src.core.engine - INFO - Trading engine initialized
+2026-02-18 14:45:54,565 - src.core.engine - INFO - Starting trading engine...
+2026-02-18 14:45:54,673 - src.core.engine - INFO - Background tasks started
+2026-02-18 14:45:54,674 - src.core.engine - INFO - Trading engine started in paper mode
+2026-02-18 14:45:54,675 - src.core.engine - INFO - Processing signal: BTCUSDT BUY conf=0.80
+2026-02-18 14:45:54,676 - src.core.engine - INFO - Stopping trading engine...
+2026-02-18 14:45:54,693 - src.core.engine - INFO - Trading engine stopped
+2026-02-18 14:54:24,244 - src.core.engine - INFO - Trading engine initialized
+2026-02-18 14:54:24,245 - src.core.engine - INFO - Starting trading engine...
+2026-02-18 14:54:24,368 - src.core.engine - INFO - Background tasks started
+2026-02-18 14:54:24,372 - src.core.engine - INFO - Trading engine started in paper mode
+2026-02-18 14:54:24,374 - src.core.engine - INFO - Processing signal: BTCUSDT BUY conf=0.80
+2026-02-18 14:54:24,377 - src.core.engine - INFO - Stopping trading engine...
+2026-02-18 14:54:24,401 - src.core.engine - INFO - Trading engine stopped

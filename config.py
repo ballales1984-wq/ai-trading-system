@@ -46,6 +46,17 @@ CRYPTO_SYMBOLS = {
     'SUI': 'SUI/USDT',
     'SEI': 'SEI/USDT',
     'TIA': 'TIA/USDT',
+    # New additions
+    'ETC': 'ETC/USDT',
+    'XLM': 'XLM/USDT',
+    'FIL': 'FIL/USDT',
+    'HBAR': 'HBAR/USDT',
+    'VET': 'VET/USDT',
+    'ALGO': 'ALGO/USDT',
+    'FTM': 'FTM/USDT',
+    'PEPE': 'PEPE/USDT',
+    'SHIB': 'SHIB/USDT',
+    'TRX': 'TRX/USDT',
 }
 
 # Commodity-linked tokens (stablecoins backed by commodities)
