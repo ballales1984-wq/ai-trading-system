@@ -249,9 +249,79 @@ class PricePredictor:
         except Exception as e:
             logger.error(f"Feature importance error: {e}")
             return None
-
-
-class SimpleMovingAveragePredictor:
+    
+    def save_model(self, filepath: str) -> bool:
+        """
+        Save trained model to disk
+        
+        Args:
+            filepath: Path to save the model
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.is_trained:
+            logger.warning("Cannot save: model not trained")
+            return False
+        
+        try:
+            import pickle
+            model_data = {
+                'rf_model': self.rf_model,
+                'gb_model': self.gb_model,
+                'scaler': self.scaler,
+                'feature_names': self.feature_names,
+                'is_trained': self.is_trained
+            }
+            with open(filepath, 'wb') as f:
+                pickle.dump(model_data, f)
+            logger.info(f"Model saved to {filepath}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to save model: {e}")
+            return False
+    
+    def load_model(self, filepath: str) -> bool:
+        """
+        Load trained model from disk
+        
+        Args:
+            filepath: Path to load the model from
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            import pickle
+            with open(filepath, 'rb') as f:
+                model_data = pickle.load(f)
+            
+            self.rf_model = model_data['rf_model']
+            self.gb_model = model_data['gb_model']
+            self.scaler = model_data['scaler']
+            self.feature_names = model_data['feature_names']
+            self.is_trained = model_data['is_trained']
+            
+            logger.info(f"Model loaded from {filepath}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to load model: {e}")
+            return False
+    
+    def to_dict(self) -> Dict:
+        """
+        Export model configuration as dictionary
+        
+        Returns:
+            Dict with model configuration
+        """
+        return {
+            'is_trained': self.is_trained,
+            'feature_names': self.feature_names,
+            'has_rf_model': self.rf_model is not None,
+            'has_gb_model': self.gb_model is not None,
+            'has_scaler': self.scaler is not None
+        }
     """
     Simple predictor using moving averages for trend prediction
     No ML required - uses technical analysis rules

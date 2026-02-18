@@ -304,7 +304,13 @@ DECISION_SETTINGS = {
         'correlation': 0.20,
         'sentiment': 0.15,
         'volatility': 0.10,
-    }
+    },
+    
+    # ML Blackbox Agent settings
+    'ml_enabled': True,
+    'ml_weight': 0.15,  # Weight for ML prediction in signal generation
+    'ml_confidence_weight': 0.30,  # Weight for ML confidence in final confidence
+    'ml_model_path': 'models/ml_predictor.pkl',
 }
 
 # ==================== NEWS & SENTIMENT ====================
