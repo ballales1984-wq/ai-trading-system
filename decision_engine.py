@@ -17,6 +17,7 @@ import config
 from data_collector import DataCollector, MarketData, CorrelationData
 from technical_analysis import TechnicalAnalyzer, TechnicalAnalysis
 from sentiment_news import SentimentAnalyzer, SentimentData
+from ml_predictor import PricePredictor, get_ml_predictor
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -48,6 +49,7 @@ class TradingSignal:
     sentiment_score: float = 0.5
     correlation_score: float = 0.5
     volatility_score: float = 0.5
+    ml_score: float = 0.5  # ML prediction score (blackbox agent)
     
     # Metadata
     timestamp: datetime = field(default_factory=datetime.now)
@@ -128,6 +130,10 @@ class DecisionEngine:
         self.sentiment_analyzer = sentiment_analyzer or SentimentAnalyzer()
         self.technical_analyzer = TechnicalAnalyzer()
         
+        # Initialize ML Predictor (Blackbox Agent)
+        self.ml_predictor = get_ml_predictor()
+        self.ml_enabled = True
+        
         self.settings = config.DECISION_SETTINGS
         self.portfolio = PortfolioState()
         
@@ -136,6 +142,70 @@ class DecisionEngine:
         self.cache_duration = 60  # seconds
         
         logger.info("DecisionEngine initialized")
+    
+    # ==================== ML COORDINATION (BLACKBOX AGENT) ====================
+    
+    def train_ml_model(self, symbol: str = None, df: pd.DataFrame = None) -> bool:
+        """
+        Train the ML predictor (blackbox agent) on historical data.
+        
+        Args:
+            symbol: Symbol to train on (if df not provided)
+            df: DataFrame with OHLCV data
+            
+        Returns:
+            True if training succeeded, False otherwise
+        """
+        try:
+            if df is None and symbol:
+                # Fetch data if not provided
+                df = self.data_collector.fetch_ohlcv(symbol, config.DEFAULT_TIMEFRAME, 200)
+            
+            if df is None or df.empty:
+                logger.warning("No data available for ML training")
+                return False
+            
+            # Train the ML model
+            result = self.ml_predictor.train(df)
+            if result:
+                logger.info(f"ML model trained successfully for {symbol or 'default'}")
+                self.ml_enabled = True
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"ML training failed: {e}")
+            return False
+    
+    def enable_ml(self, enabled: bool = True):
+        """Enable or disable ML integration (blackbox agent coordination)"""
+        self.ml_enabled = enabled
+        logger.info(f"ML integration {'enabled' if enabled else 'disabled'}")
+    
+    def is_ml_ready(self) -> bool:
+        """Check if ML predictor is ready for inference"""
+        return self.ml_predictor.is_trained and self.ml_enabled
+    
+    def get_ml_prediction(self, symbol: str) -> Optional[Dict]:
+        """
+        Get ML prediction for a symbol (direct blackbox agent query).
+        
+        Args:
+            symbol: Trading symbol
+            
+        Returns:
+            Prediction dict with 'prediction', 'confidence', or None
+        """
+        if not self.is_ml_ready():
+            return None
+        
+        try:
+            df = self.data_collector.fetch_ohlcv(symbol, config.DEFAULT_TIMEFRAME, 100)
+            if df is not None:
+                return self.ml_predictor.predict(df)
+        except Exception as e:
+            logger.warning(f"ML prediction failed for {symbol}: {e}")
+        
+        return None
     
     # ==================== SIGNAL GENERATION ====================
     
@@ -192,6 +262,21 @@ class DecisionEngine:
         
         technical_analysis = self.technical_analyzer.analyze(df, symbol)
         
+        # Get ML Prediction (Blackbox Agent Coordination)
+        ml_score = 0.5
+        ml_confidence = 0.0
+        if self.ml_enabled and self.ml_predictor.is_trained:
+            try:
+                prediction = self.ml_predictor.predict(df)
+                if prediction:
+                    # Convert ML prediction to score (1=BULLISH, 0=NEUTRAL, -1=BEARISH)
+                    ml_confidence = prediction.get('confidence', 0.5)
+                    ml_direction = prediction.get('prediction', 0)  # -1, 0, or 1
+                    ml_score = (ml_direction + 1) / 2  # Convert -1,0,1 to 0,0.5,1
+                    logger.info(f"ML Prediction for {symbol}: direction={ml_direction}, confidence={ml_confidence}")
+            except Exception as e:
+                logger.warning(f"ML prediction failed for {symbol}: {e}")
+        
         # Get sentiment analysis
         asset_name = symbol.split('/')[0]
         sentiment = self.sentiment_analyzer.get_combined_sentiment(asset_name)
@@ -204,12 +289,13 @@ class DecisionEngine:
         # Calculate volatility score
         volatility_score = self._calculate_volatility_score(df, technical_analysis)
         
-        # Combine all factors
+        # Combine all factors (including ML prediction)
         combined_score = self._combine_factors(
             technical_analysis,
             sentiment,
             correlations,
-            volatility_score
+            volatility_score,
+            ml_score  # Include ML prediction in scoring
         )
         
         # Generate signal
@@ -218,7 +304,8 @@ class DecisionEngine:
             technical_analysis,
             sentiment,
             correlations,
-            volatility_score
+            volatility_score,
+            ml_confidence  # Include ML confidence
         )
         
         # Create trading signal
@@ -234,6 +321,7 @@ class DecisionEngine:
             sentiment_score=(sentiment['combined_score'] + 1) / 2,  # Convert -1,1 to 0,1
             correlation_score=correlations.get('avg_correlation', 0.5),
             volatility_score=volatility_score,
+            ml_score=ml_score,  # Blackbox agent prediction score
             reason=self._generate_reason(technical_analysis, sentiment, action)
         )
         
@@ -313,8 +401,9 @@ class DecisionEngine:
     def _combine_factors(self, technical: TechnicalAnalysis, 
                         sentiment: Dict,
                         correlations: Dict,
-                        volatility_score: float) -> float:
-        """Combine all factors into a single score"""
+                        volatility_score: float,
+                        ml_score: float = 0.5) -> float:
+        """Combine all factors into a single score (including ML prediction)"""
         weights = self.settings['weights']
         
         # Normalize sentiment score to 0-1
@@ -323,14 +412,18 @@ class DecisionEngine:
         # Correlation score (use absolute value to consider negative correlations)
         correlation_score = abs(correlations.get('avg_correlation', 0))
         
-        # Calculate weighted score
-        score = (
+        # Calculate weighted score (include ML prediction)
+        ml_weight = 0.15  # Weight for ML prediction
+        base_score = (
             technical.technical_score * weights['technical'] +
             technical.momentum_score * weights['momentum'] +
             correlation_score * weights['correlation'] +
             sentiment_score * weights['sentiment'] +
             volatility_score * weights['volatility']
         )
+        
+        # Blend ML score with base score
+        score = base_score * (1 - ml_weight) + ml_score * ml_weight
         
         return max(0, min(1, score))
     
@@ -353,8 +446,9 @@ class DecisionEngine:
     def _calculate_confidence(self, technical: TechnicalAnalysis,
                              sentiment: Dict,
                              correlations: Dict,
-                             volatility_score: float) -> float:
-        """Calculate confidence level for the signal"""
+                             volatility_score: float,
+                             ml_confidence: float = 0.5) -> float:
+        """Calculate confidence level for the signal (including ML prediction)"""
         # Base confidence from technical analysis
         confidence = technical.technical_score
         
@@ -364,6 +458,10 @@ class DecisionEngine:
         
         # Adjust for volatility (lower volatility = higher confidence)
         confidence = (confidence + volatility_score) / 2
+        
+        # Blend with ML confidence (if available)
+        if ml_confidence > 0:
+            confidence = confidence * 0.7 + ml_confidence * 0.3
         
         return max(0, min(1, confidence))
     

@@ -20,6 +20,11 @@ import config
 # Configure logging
 logger = logging.getLogger(__name__)
 
+# Free alternative APIs
+COINGECKO_API_URL = "https://api.coingecko.com/api/v3"
+CRYPTOPANIC_URL = "https://cryptopanic.com/api/v1/posts/"
+FEAR_GREED_URL = "https://api.alternative.me/fng/"
+
 
 # ==================== DATA STRUCTURES ====================
 
@@ -286,7 +291,100 @@ class SentimentAnalyzer:
         news_items.sort(key=lambda x: x.published_at, reverse=True)
         
         return news_items
+
+    # ==================== FREE API METHODS ====================
     
+    def fetch_fear_greed_index(self) -> Dict:
+        """
+        Fetch real Fear & Greed Index from Alternative.me API.
+        This is a free API that doesn't require authentication.
+        
+        Returns:
+            Dict with fear_greed_index value and classification
+        """
+        try:
+            import requests
+            response = requests.get(FEAR_GREED_URL, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('data'):
+                    fgi = data['data'][0]
+                    return {
+                        'value': int(fgi.get('value', 50)),
+                        'value_classification': fgi.get('value_classification', 'Neutral'),
+                        'timestamp': fgi.get('time_until_update', '')
+                    }
+        except Exception as e:
+            logger.warning(f"Error fetching Fear & Greed Index: {e}")
+        
+        # Fallback to simulated data
+        return {
+            'value': random.randint(20, 80),
+            'value_classification': 'Neutral',
+            'timestamp': datetime.now().isoformat()
+        }
+
+    def fetch_cryptopanic_news(self, filter_kind: str = 'hot') -> List[Dict]:
+        """
+        Fetch news from CryptoPanic aggregator (free, no key required).
+        
+        Args:
+            filter_kind: Filter type - 'hot', 'latest', 'rising', 'bullish', 'bearish'
+        
+        Returns:
+            List of news items
+        """
+        try:
+            import requests
+            params = {'filter': filter_kind, 'auth_token': 'public'}
+            response = requests.get(CRYPTOPANIC_URL, params=params, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                results = data.get('results', [])
+                return [
+                    {
+                        'title': item.get('title', ''),
+                        'domain': item.get('domain', ''),
+                        'published_at': item.get('published_at', ''),
+                        'votes': item.get('votes', {}).get('positive', 0)
+                    }
+                    for item in results[:20]
+                ]
+        except Exception as e:
+            logger.warning(f"Error fetching CryptoPanic news: {e}")
+        
+        return []
+
+    def fetch_coingecko_market_data(self, vs_currency: str = 'usd', 
+                                   per_page: int = 100) -> List[Dict]:
+        """
+        Fetch market data from CoinGecko API (free, rate limited).
+        
+        Args:
+            vs_currency: Currency to compare against (usd, eur, etc.)
+            per_page: Number of coins to fetch
+        
+        Returns:
+            List of market data for top coins
+        """
+        try:
+            import requests
+            url = f"{COINGECKO_API_URL}/coins/markets"
+            params = {
+                'vs_currency': vs_currency,
+                'order': 'market_cap_desc',
+                'per_page': per_page,
+                'page': 1,
+                'sparkline': False
+            }
+            response = requests.get(url, params=params, timeout=10)
+            if response.status_code == 200:
+                return response.json()
+        except Exception as e:
+            logger.warning(f"Error fetching CoinGecko data: {e}")
+        
+        return []
+
     # ==================== SENTIMENT ANALYSIS ====================
     
     def _analyze_text_sentiment(self, text: str) -> float:

@@ -128,6 +128,16 @@ class DataCollector:
                 self.exchange = ccxt.kucoin({'enableRateLimit': True})
             elif self.exchange_name == 'bybit':
                 self.exchange = ccxt.bybit({'enableRateLimit': True})
+            elif self.exchange_name == 'coinbase':
+                self.exchange = ccxt.coinbase({'enableRateLimit': True})
+            elif self.exchange_name == 'kraken':
+                self.exchange = ccxt.kraken({'enableRateLimit': True})
+            elif self.exchange_name == 'okx':
+                self.exchange = ccxt.okx({'enableRateLimit': True})
+            elif self.exchange_name == 'gateio':
+                self.exchange = ccxt.gateio({'enableRateLimit': True})
+            elif self.exchange_name == 'huobi':
+                self.exchange = ccxt.huobi({'enableRateLimit': True})
             else:
                 self.exchange = ccxt.binance({'enableRateLimit': True})
             
