@@ -34,6 +34,5 @@
   "tests/test_app_analysis.py::TestUtilities::test_utils_import": true,
   "tests/test_app_analysis.py::TestUtilities::test_indicators_import": true,
   "tests/test_app_analysis.py::TestLiveTrading::test_live_trading_import": true,
-  "tests/test_app_analysis.py::TestIntegration::test_full_import_chain": true,
-  "tests/test_technical_analysis.py::TestDecisionEngine::test_signal_generation": true
+  "tests/test_app_analysis.py::TestIntegration::test_full_import_chain": true
 }
