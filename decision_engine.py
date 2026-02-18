@@ -183,7 +183,7 @@ class DecisionEngine:
     
     def is_ml_ready(self) -> bool:
         """Check if ML predictor is ready for inference"""
-        return self.ml_predictor.is_trained and self.ml_enabled
+        return hasattr(self.ml_predictor, 'is_trained') and self.ml_predictor.is_trained and self.ml_enabled
     
     def get_ml_prediction(self, symbol: str) -> Optional[Dict]:
         """
@@ -265,7 +265,7 @@ class DecisionEngine:
         # Get ML Prediction (Blackbox Agent Coordination)
         ml_score = 0.5
         ml_confidence = 0.0
-        if self.ml_enabled and self.ml_predictor.is_trained:
+        if self.ml_enabled and hasattr(self.ml_predictor, 'is_trained') and self.ml_predictor.is_trained:
             try:
                 prediction = self.ml_predictor.predict(df)
                 if prediction:
