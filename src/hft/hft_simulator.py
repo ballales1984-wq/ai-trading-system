@@ -122,7 +122,8 @@ class HFTSimulator:
         executed_price = base_price * (1 + impact) if side == "BUY" else base_price * (1 - impact)
         
         # Slippage model (random component)
-        slippage = np.random.normal(0, spread * 0.1) if 'ask' in tick and 'bid' in tick else 0
+        spread = tick.get('ask', 0) - tick.get('bid', 0) if 'ask' in tick and 'bid' in tick else 0.01
+        slippage = np.random.normal(0, spread * 0.1) if spread > 0 else 0
         executed_price += slippage
         
         # Calculate fees

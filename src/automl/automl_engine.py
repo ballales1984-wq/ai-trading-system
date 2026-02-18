@@ -41,7 +41,7 @@ class StrategyGenome:
     macd_signal: int = 9
     
     bb_period: int = 20
- bb_std: float = 2.0
+    bb_std: float = 2.0
     
     atr_period: int = 14
     stochastic_period: int = 14
