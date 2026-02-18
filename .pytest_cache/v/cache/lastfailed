@@ -21,5 +21,18 @@
   "tests/test_all_modules.py::TestSentimentAnalysis::test_sentiment_score_range": true,
   "tests/test_all_modules.py::TestConfig::test_trading_config": true,
   "tests/test_all_modules.py::TestConfig::test_risk_config": true,
-  "tests/test_all_modules.py::TestIntegration::test_risk_check_in_trading": true
+  "tests/test_all_modules.py::TestIntegration::test_risk_check_in_trading": true,
+  "tests/test_app_analysis.py::TestDataCollection::test_technical_analysis_import": true,
+  "tests/test_app_analysis.py::TestDataCollection::test_sentiment_news_import": true,
+  "tests/test_app_analysis.py::TestDataCollection::test_onchain_analysis_import": true,
+  "tests/test_app_analysis.py::TestCoreModules::test_ml_predictor_import": true,
+  "tests/test_app_analysis.py::TestDatabase::test_database_import": true,
+  "tests/test_app_analysis.py::TestPerformance::test_performance_module_import": true,
+  "tests/test_app_analysis.py::TestPerformance::test_kpi_module_import": true,
+  "tests/test_app_analysis.py::TestExecution::test_execution_module_import": true,
+  "tests/test_app_analysis.py::TestPortfolio::test_allocation_module_import": true,
+  "tests/test_app_analysis.py::TestUtilities::test_utils_import": true,
+  "tests/test_app_analysis.py::TestUtilities::test_indicators_import": true,
+  "tests/test_app_analysis.py::TestLiveTrading::test_live_trading_import": true,
+  "tests/test_app_analysis.py::TestIntegration::test_full_import_chain": true
 }
