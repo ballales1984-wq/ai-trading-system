@@ -33,6 +33,9 @@ from plotly.subplots import make_subplots
 from dash import Dash, html, dcc, Input, Output, State
 import dash
 
+# Import data collector for real-time market data
+from data_collector import DataCollector
+
 # ==================== LOGGING ====================
 
 logging.basicConfig(
@@ -291,12 +294,14 @@ class TradingDaemon:
 # ==================== DATA PROVIDER ====================
 
 class DataProvider:
-    """Cached data provider"""
+    """Cached data provider with real-time market data"""
     
     def __init__(self):
         self._cache: Dict = {}
         self._cache_time: Dict = {}
         self._cache_ttl = 10
+        # Initialize real data collector
+        self._collector = DataCollector()
     
     def _is_cache_valid(self, key: str) -> bool:
         if key not in self._cache or key not in self._cache_time:
@@ -309,6 +314,18 @@ class DataProvider:
         if self._is_cache_valid(cache_key):
             return self._cache[cache_key]
         
+        # Try to fetch real data from Binance
+        try:
+            df = self._collector.fetch_ohlcv(symbol, '1h', limit)
+            if df is not None and not df.empty:
+                self._cache[cache_key] = df
+                self._cache_time[cache_key] = time.time()
+                logger.info(f"Fetched real data for {symbol}: {len(df)} candles")
+                return df
+        except Exception as e:
+            logger.warning(f"Failed to fetch {symbol} from Binance: {e}")
+        
+        # Fallback to sample data if API fails
         np.random.seed(42)
         dates = pd.date_range(end=datetime.now(), periods=limit, freq='1h')
         base_price = 50000
@@ -331,12 +348,19 @@ class DataProvider:
         return df
     
     def get_returns(self) -> pd.DataFrame:
-        """Generate mock returns for multiple assets"""
+        """Generate returns for multiple assets (from real data or fallback)"""
         assets = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP']
         returns_dict = {}
         
         for asset in assets:
-            returns_dict[asset] = pd.Series(np.random.randn(100) * 0.02)
+            try:
+                df = self._collector.fetch_ohlcv(f'{asset}USDT', '1h', 100)
+                if df is not None and not df.empty:
+                    returns_dict[asset] = df['close'].pct_change().dropna()
+                else:
+                    returns_dict[asset] = pd.Series(np.random.randn(100) * 0.02)
+            except:
+                returns_dict[asset] = pd.Series(np.random.randn(100) * 0.02)
         
         return pd.DataFrame(returns_dict)
 
