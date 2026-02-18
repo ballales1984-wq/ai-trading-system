@@ -52,15 +52,14 @@ class BinanceMultiWebSocket:
     
     def _get_stream_url(self) -> str:
         """Get the WebSocket stream URL."""
-        if self.testnet:
-            return "wss://testnet.binance.vision/ws"
+        # Using public WebSocket endpoint (no auth needed for market data)
         return "wss://stream.binance.com:9443/ws"
     
     def _get_kline_url(self) -> str:
         """Get the WebSocket kline stream URL."""
-        if self.testnet:
-            return "wss://testnet.binance.vision/stream"
-        return "wss://stream.binance.com:9443/stream"
+        # Using public WebSocket endpoint - stream name in path
+        # No API key needed for public market data streams
+        return "wss://stream.binance.com:9443/ws"
     
     def _create_kline_stream(self, symbol: str) -> str:
         """Create the kline stream name for a symbol."""
@@ -133,7 +132,8 @@ class BinanceMultiWebSocket:
     def _start_stream(self, symbol: str):
         """Start WebSocket stream for a single symbol."""
         stream_name = self._create_kline_stream(symbol)
-        url = f"{self._get_kline_url()}/?streams={stream_name}"
+        # Using single stream endpoint - stream name in path
+        url = f"{self._get_kline_url()}/{stream_name}"
         
         ws = websocket.WebSocketApp(
             url,
