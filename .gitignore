@@ -28,6 +28,29 @@ env/
 .vscode/
 .idea/
 *.swp
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+logs/
+*.log
+
+# Data
+data/*.json
+data/*.db
+data/*.csv
+cache/
+
+# Images
+*.png
+*.jpg
+*.jpeg
+
+# Environment
+.env
 *.swo
 *~
 
