@@ -386,7 +386,7 @@ class TradingDashboard:
         # Initialize Dash
         self.app = Dash(
             __name__,
-            title="Quantum AI Trading Dashboard",
+            title="Quantum AI Trading System v2.0",
             update_title=None,
             suppress_callback_exceptions=True
         )
