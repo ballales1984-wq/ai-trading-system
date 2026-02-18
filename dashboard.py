@@ -132,14 +132,39 @@ class TradingDashboard:
         self.app.layout = html.Div([
             # Header
             html.Div([
-                html.H1("🚀 Quantum AI Trading System",
-                       style={'margin': '0', 'color': self.theme['text'], 'font-size': '24px'}),
-                html.P("Advanced Multi-Asset Trading with Machine Learning",
-                      style={'margin': '5px 0 0 0', 'color': self.theme['text_muted']}),
+                html.Div([
+                    html.H1("🚀 Quantum AI Trading System",
+                           style={'margin': '0', 'color': self.theme['text'], 'font-size': '24px'}),
+                    html.P("Advanced Multi-Asset Trading with Machine Learning",
+                          style={'margin': '5px 0 0 0', 'color': self.theme['text_muted']}),
+                ], style={'flex': '1'}),
+                
+                # Quick Action Buttons
+                html.Div([
+                    html.Button('📊 Monitor', id='btn-monitor', n_clicks=0,
+                               style={'background': '#58a6ff', 'color': '#fff', 'border': 'none', 
+                                      'padding': '10px 15px', 'border-radius': '5px', 'cursor': 'pointer',
+                                      'margin-right': '8px', 'font-weight': 'bold'}),
+                    html.Button('📈 Paper', id='btn-paper', n_clicks=0,
+                               style={'background': '#3fb950', 'color': '#fff', 'border': 'none', 
+                                      'padding': '10px 15px', 'border-radius': '5px', 'cursor': 'pointer',
+                                      'margin-right': '8px', 'font-weight': 'bold'}),
+                    html.Button('🔴 Live', id='btn-live', n_clicks=0,
+                               style={'background': '#f85149', 'color': '#fff', 'border': 'none', 
+                                      'padding': '10px 15px', 'border-radius': '5px', 'cursor': 'pointer',
+                                      'margin-right': '8px', 'font-weight': 'bold'}),
+                    html.Button('📉 Backtest', id='btn-backtest', n_clicks=0,
+                               style={'background': '#a371f7', 'color': '#fff', 'border': 'none', 
+                                      'padding': '10px 15px', 'border-radius': '5px', 'cursor': 'pointer',
+                                      'font-weight': 'bold'}),
+                ], style={'display': 'flex', 'align-items': 'center'}),
             ], style={
                 'background': 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
                 'padding': '20px',
-                'border-bottom': f"1px solid {self.theme['border']}"
+                'border-bottom': f"1px solid {self.theme['border']}",
+                'display': 'flex',
+                'justify-content': 'space-between',
+                'align-items': 'center'
             }),
             
             # Refresh interval
@@ -151,6 +176,9 @@ class TradingDashboard:
             
             # Main content with gradient background
             html.Div([
+                # Mode Control Panel
+                html.Div(id='mode-control-panel', style={'margin-bottom': '20px'}),
+                
                 # Top row - Signals summary
                 html.Div([
                     self._create_signals_summary(),
@@ -524,6 +552,173 @@ class TradingDashboard:
             signals_json = json.dumps([s.to_dict() for s in signals], default=str)
             
             return signals_json, str(total), str(buy), str(sell), str(hold), f"{avg_conf:.0f}%"
+        
+        @self.app.callback(
+            Output('mode-control-panel', 'children'),
+            [Input('trading-mode-selector', 'value')]
+        )
+        def update_mode_panel(mode):
+            """Update mode control panel based on selected trading mode"""
+            
+            if mode == 'dashboard':
+                return html.Div([
+                    html.Div([
+                        html.Span("📊 ", style={'font-size': '20px'}),
+                        html.Span("Monitoring Mode - Real-time analytics and signals", 
+                                 style={'color': self.theme['blue'], 'font-weight': 'bold'})
+                    ], style={
+                        'background': self.theme['card'],
+                        'padding': '15px 20px',
+                        'border-radius': '8px',
+                        'border': f"1px solid {self.theme['blue']}"
+                    })
+                ])
+            
+            elif mode == 'paper':
+                return html.Div([
+                    html.Div([
+                        html.Div([
+                            html.Span("📈 ", style={'font-size': '20px'}),
+                            html.Span("Paper Trading Mode", 
+                                     style={'color': self.theme['green'], 'font-weight': 'bold', 'font-size': '18px'})
+                        ], style={'margin-bottom': '10px'}),
+                        
+                        html.P("💰 Initial Balance: $10,000 (simulated)", 
+                              style={'color': self.theme['text_muted'], 'margin': '5px 0'}),
+                        html.P("🔄 Orders are simulated - no real money", 
+                              style={'color': self.theme['text_muted'], 'margin': '5px 0'}),
+                        
+                        html.Div([
+                            html.Button('▶ Start Paper Trading', id='start-paper-btn', n_clicks=0,
+                                       style={
+                                           'background': self.theme['green'],
+                                           'color': '#fff',
+                                           'border': 'none',
+                                           'padding': '10px 20px',
+                                           'border-radius': '5px',
+                                           'cursor': 'pointer',
+                                           'margin-right': '10px'
+                                       }),
+                            html.Button('⏹ Stop', id='stop-paper-btn', n_clicks=0,
+                                       style={
+                                           'background': self.theme['red'],
+                                           'color': '#fff',
+                                           'border': 'none',
+                                           'padding': '10px 20px',
+                                           'border-radius': '5px',
+                                           'cursor': 'pointer'
+                                       }),
+                        ], style={'margin-top': '15px'})
+                    ], style={
+                        'background': self.theme['card'],
+                        'padding': '20px',
+                        'border-radius': '8px',
+                        'border': f"1px solid {self.theme['green']}"
+                    })
+                ])
+            
+            elif mode == 'live':
+                return html.Div([
+                    html.Div([
+                        html.Div([
+                            html.Span("🔴 ", style={'font-size': '20px'}),
+                            html.Span("Live Trading (Testnet)", 
+                                     style={'color': self.theme['red'], 'font-weight': 'bold', 'font-size': '18px'})
+                        ], style={'margin-bottom': '10px'}),
+                        
+                        html.P("⚠️ Trading on Binance TESTNET - No real money", 
+                              style={'color': self.theme['yellow'], 'margin': '5px 0', 'font-weight': 'bold'}),
+                        html.P("🔑 API Keys configured in .env file", 
+                              style={'color': self.theme['text_muted'], 'margin': '5px 0'}),
+                        
+                        html.Div([
+                            html.Button('▶ Start Live Trading', id='start-live-btn', n_clicks=0,
+                                       style={
+                                           'background': self.theme['red'],
+                                           'color': '#fff',
+                                           'border': 'none',
+                                           'padding': '10px 20px',
+                                           'border-radius': '5px',
+                                           'cursor': 'pointer',
+                                           'margin-right': '10px'
+                                       }),
+                            html.Button('⏹ Stop', id='stop-live-btn', n_clicks=0,
+                                       style={
+                                           'background': self.theme['text_muted'],
+                                           'color': '#fff',
+                                           'border': 'none',
+                                           'padding': '10px 20px',
+                                           'border-radius': '5px',
+                                           'cursor': 'pointer'
+                                       }),
+                        ], style={'margin-top': '15px'})
+                    ], style={
+                        'background': self.theme['card'],
+                        'padding': '20px',
+                        'border-radius': '8px',
+                        'border': f"1px solid {self.theme['red']}"
+                    })
+                ])
+            
+            elif mode == 'backtest':
+                return html.Div([
+                    html.Div([
+                        html.Div([
+                            html.Span("📉 ", style={'font-size': '20px'}),
+                            html.Span("Backtest Mode", 
+                                     style={'color': self.theme['purple'], 'font-weight': 'bold', 'font-size': '18px'})
+                        ], style={'margin-bottom': '10px'}),
+                        
+                        html.Div([
+                            html.Label("Symbol:", style={'color': self.theme['text_muted'], 'margin-right': '10px'}),
+                            dcc.Dropdown(
+                                id='backtest-symbol',
+                                options=[
+                                    {'label': 'BTC/USDT', 'value': 'BTCUSDT'},
+                                    {'label': 'ETH/USDT', 'value': 'ETHUSDT'},
+                                    {'label': 'BNB/USDT', 'value': 'BNBUSDT'},
+                                ],
+                                value='BTCUSDT',
+                                style={'color': '#000', 'width': '150px', 'display': 'inline-block'},
+                                clearable=False
+                            ),
+                        ], style={'margin-bottom': '10px'}),
+                        
+                        html.Div([
+                            html.Label("Days:", style={'color': self.theme['text_muted'], 'margin-right': '10px'}),
+                            dcc.Dropdown(
+                                id='backtest-days',
+                                options=[
+                                    {'label': '7 Days', 'value': 7},
+                                    {'label': '30 Days', 'value': 30},
+                                    {'label': '90 Days', 'value': 90},
+                                    {'label': '180 Days', 'value': 180},
+                                    {'label': '365 Days', 'value': 365},
+                                ],
+                                value=30,
+                                style={'color': '#000', 'width': '150px', 'display': 'inline-block'},
+                                clearable=False
+                            ),
+                        ], style={'margin-bottom': '15px'}),
+                        
+                        html.Button('▶ Run Backtest', id='run-backtest-btn', n_clicks=0,
+                                   style={
+                                       'background': self.theme['purple'],
+                                       'color': '#fff',
+                                       'border': 'none',
+                                       'padding': '10px 20px',
+                                       'border-radius': '5px',
+                                       'cursor': 'pointer'
+                                   })
+                    ], style={
+                        'background': self.theme['card'],
+                        'padding': '20px',
+                        'border-radius': '8px',
+                        'border': f"1px solid {self.theme['purple']}"
+                    })
+                ])
+            
+            return html.Div()
         
         @self.app.callback(
             Output('price-chart', 'figure'),
