@@ -442,9 +442,12 @@ class TradingDashboard:
                     dcc.Dropdown(
                         id='assets-selector',
                         options=[
-                            {'label': 'BTC, ETH, SOL', 'value': 'BTC,ETH,SOL'},
+{'label': 'BTC, ETH, SOL', 'value': 'BTC,ETH,SOL'},
                             {'label': 'BTC, ETH', 'value': 'BTC,ETH'},
                             {'label': 'All Major', 'value': 'BTC,ETH,BNB,SOL,XRP,ADA,DOT,AVAX'},
+                            {'label': 'Top 10', 'value': 'BTC,ETH,BNB,XRP,SOL,ADA,DOT,AVAX,MATIC,LINK'},
+                            {'label': 'Top 20', 'value': 'BTC,ETH,BNB,XRP,SOL,ADA,DOT,AVAX,MATIC,LINK,ATOM,LTC,UNI,NEAR,APT,ARB,OP,INJ,SUI,SEI'},
+                            {'label': 'All Assets (30+)', 'value': 'BTC,ETH,BNB,XRP,SOL,ADA,DOT,AVAX,MATIC,DOGE,LINK,ATOM,UNI,LTC,NEAR,APT,ARB,OP,INJ,SUI,SEI,TIA,STETH,PAXG,XAUT,WTI,NG,PEUR,PGBP,PJPY,FXS'},
                         ],
                         value='BTC,ETH,SOL',
                         style={'width': '180px', 'background': '#0a0a0f', 'color': '#000'}
