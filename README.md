@@ -344,3 +344,64 @@ MIT License
 **Level**: Production Ready  
 **Ready for**: Live Trading, Backtesting, Portfolio Management  
 **Safe Mode**: Paper Trading & Testnet Enabled
+
+---
+
+## 🏗️ NEW: Production Core Architecture (v2.0)
+
+The system now includes a production-ready core architecture with event-driven design:
+
+```
+                           ┌──────────────┐
+                           │  Dashboard   │
+                           │ (Plotly/Dash)│
+                           └─────┬────────┘
+                                 │
+                                 ▼
+                    ┌───────────────────────────┐
+                    │      State Manager        │
+                    │ (SQLite persistence)     │
+                    └─────┬───────────┬────────┘
+                          │           │
+          ┌───────────────┘           └───────────────┐
+          ▼                                         ▼
+ ┌───────────────────┐                       ┌───────────────────┐
+ │   Risk Engine     │                       │    Event Bus      │
+ │ - Max Drawdown    │                       │ - Pub/Sub events  │
+ │ - Position Limits │                       │ - Signal handling │
+ │ - Emergency Stop  │                       └────────┬──────────┘
+ └────────┬──────────┘                                │
+          │                                           ▼
+          ▼                                 ┌─────────────────────┐
+ ┌───────────────────┐                     │ Order Manager       │
+ │ Portfolio Manager │                     │ - Retry logic       │
+ │ - Multi-asset     │                     │ - Risk validation   │
+ │ - Position sizing │                     └────────┬──────────┘
+ └────────┬──────────┘                              │
+          │                                          ▼
+          ▼                               ┌─────────────────────┐
+ ┌───────────────────┐                  │ Broker Interface    │
+ │   Trading Engine  │                  │ - Paper Trading    │
+ │   Orchestrator    │                  │ - Live (Binance)   │
+ └───────────────────┘                  └─────────────────────┘
+```
+
+### New Core Modules
+
+| Module | Description |
+|--------|-------------|
+| [`src/core/event_bus.py`](src/core/event_bus.py) | Event-driven pub/sub system |
+| [`src/core/state_manager.py`](src/core/state_manager.py) | SQLite persistence for portfolio, orders, models |
+| [`src/core/engine.py`](src/core/engine.py) | Main trading orchestrator |
+| [`src/core/portfolio/portfolio_manager.py`](src/core/portfolio/portfolio_manager.py) | Multi-asset portfolio management |
+| [`src/core/risk/risk_engine.py`](src/core/risk/risk_engine.py) | Professional risk management |
+| [`src/core/execution/broker_interface.py`](src/core/execution/broker_interface.py) | Paper/Live broker abstraction |
+| [`src/core/execution/order_manager.py`](src/core/execution/order_manager.py) | Order execution with retry logic |
+
+### Quick Test
+```bash
+# Test core modules
+python test_core.py
+```
+
+All core components tested and working!
