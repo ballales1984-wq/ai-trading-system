@@ -11,14 +11,14 @@ A **professional-grade algorithmic trading system** that replicates hedge fund c
 ## 🏗️ Architecture Overview
 
 ```
-External APIs (15+)  →  API Registry  →  Central Database
+External APIs (18+)  →  API Registry  →  Central Database
                                               ↓
                                       Analysis Engine
                                     (Technical + Sentiment + Events)
                                               ↓
                                     Monte Carlo Engine (5 Levels)
                                               ↓
-                                      Decision Engine
+                                    Decision Engine
                                     (BUY/SELL/HOLD + Confidence)
                                               ↓
                                     Execution Engine → Exchanges
@@ -32,12 +32,12 @@ External APIs (15+)  →  API Registry  →  Central Database
 
 ## ✨ Key Features
 
-### 📊 Multi-Source Data Ingestion
+### 📊 Multi-Source Data Ingestion (18 APIs)
 | Category | APIs | Purpose |
 |---|---|---|
-| **Market Data** | Binance, CoinGecko, Alpha Vantage, Quandl | OHLCV prices, historical series |
+| **Market Data** | Binance, CoinGecko, Alpha Vantage, Quandl, CoinMarketCap | OHLCV prices, historical series, crypto rankings |
 | **Sentiment** | NewsAPI, Benzinga, Twitter/X, GDELT | News sentiment, social mood |
-| **Macro Events** | Trading Economics, EconPulse | Economic calendar, GDP, CPI |
+| **Macro Events** | Trading Economics, EconPulse, Investing.com | Economic calendar, GDP, CPI |
 | **Natural Events** | Open-Meteo, Climate TRACE, USGS | Weather, climate, hydrology |
 | **Innovation** | EIA, Google Patents, Lens.org | Energy prices, tech patents |
 

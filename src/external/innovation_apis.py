@@ -49,43 +49,67 @@ class EIAClient(BaseAPIClient):
         )
 
     async def fetch(self, **kwargs) -> List[NormalizedRecord]:
-        sector = kwargs.get("sector", "petroleum")
+        sector = kwargs.get("sector", "electricity")
         series_id = kwargs.get("series_id", "")
 
-        # Default series: WTI crude oil spot price
+        # EIA v2 uses different endpoints and parameters
         if not series_id:
             route_map = {
                 "petroleum": "/petroleum/pri/spt/data/",
                 "natural-gas": "/natural-gas/pri/sum/data/",
                 "electricity": "/electricity/retail-sales/data/",
             }
-            route = route_map.get(sector, "/petroleum/pri/spt/data/")
+            route = route_map.get(sector, "/electricity/retail-sales/data/")
         else:
             route = f"/seriesid/{series_id}"
 
         url = f"{self.base_url}{route}"
+        
+        # Build params based on sector - EIA v2 format
         params: Dict[str, Any] = {
             "api_key": self.api_key,
-            "frequency": "monthly",
-            "sort[0][column]": "period",
-            "sort[0][direction]": "desc",
             "length": 100,
         }
+        
+        # Add sector-specific parameters
+        if sector == "electricity":
+            params["frequency"] = "annual"
+            params["data[0]"] = "price"
+            params["facets[sectorid][]"] = "RES"  # residential
+        elif sector == "petroleum":
+            params["frequency"] = "monthly"
+            params["data[0]"] = "value"
+        elif sector == "natural-gas":
+            params["frequency"] = "monthly"
+            params["data[0]"] = "value"
 
         records: List[NormalizedRecord] = []
-        if aiohttp is None or not self.api_key:
+        if not self.api_key:
             return records
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, params=params) as resp:
-                    if resp.status != 200:
-                        raise RuntimeError(f"EIA HTTP {resp.status}")
-                    data = await resp.json()
+            # Use requests instead of aiohttp for better DNS handling
+            import requests
+            resp = requests.get(url, params=params, timeout=30)
+            if resp.status_code != 200:
+                raise RuntimeError(f"EIA HTTP {resp.status_code}")
+            data = resp.json()
 
             response_data = data.get("response", {}).get("data", [])
             for entry in response_data:
                 period = entry.get("period", "")
+                
+                # Find the value field - EIA v2 uses different field names
+                # Check common value field names
+                value = None
+                for key in ['value', 'price', 'price-value', 'total']:
+                    if key in entry and entry[key]:
+                        try:
+                            value = float(entry[key])
+                            break
+                        except (ValueError, TypeError):
+                            pass
+                
                 try:
                     if len(period) == 7:  # YYYY-MM
                         ts = datetime.strptime(period, "%Y-%m").replace(tzinfo=timezone.utc)
@@ -94,39 +118,51 @@ class EIAClient(BaseAPIClient):
                     else:
                         ts = datetime.strptime(period[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
                 except (ValueError, TypeError):
-                    continue
+                    ts = datetime.now(timezone.utc)
 
-                records.append(
-                    NormalizedRecord(
-                        timestamp=ts,
-                        category=APICategory.INNOVATION,
-                        source_api="eia",
-                        data_type="energy_price",
-                        payload={
-                            "sector": sector,
-                            "product": entry.get("product-name", entry.get("product", "")),
-                            "area": entry.get("area-name", entry.get("area", "")),
-                            "value": float(entry.get("value", 0) or 0),
-                            "units": entry.get("units", ""),
-                        },
-                        quality=DataQuality.HIGH,
-                        confidence=0.9,
+                if value is not None:
+                    # Get appropriate field names based on sector
+                    if sector == "electricity":
+                        area = entry.get("stateDescription", entry.get("stateid", ""))
+                        product = entry.get("sectorName", entry.get("sectorid", ""))
+                        units = entry.get("price-units", "")
+                    else:
+                        area = entry.get("area-name", entry.get("area", ""))
+                        product = entry.get("product-name", entry.get("product", ""))
+                        units = entry.get("units", "")
+                    
+                    records.append(
+                        NormalizedRecord(
+                            timestamp=ts,
+                            category=APICategory.INNOVATION,
+                            source_api="eia",
+                            data_type="energy_price",
+                            payload={
+                                "sector": sector,
+                                "product": product,
+                                "area": area,
+                                "value": value,
+                                "units": units,
+                            },
+                            quality=DataQuality.HIGH,
+                            confidence=0.9,
+                        )
                     )
-                )
         except Exception as exc:
             logger.warning(f"EIA fetch failed: {exc}")
 
         return records
 
     async def health_check(self) -> bool:
-        if aiohttp is None or not self.api_key:
+        if not self.api_key:
             return False
         try:
+            # Use requests for health check (more reliable than aiohttp)
+            import requests
             url = f"{self.base_url}/petroleum/pri/spt/data/"
             params = {"api_key": self.api_key, "length": 1}
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, params=params) as resp:
-                    return resp.status == 200
+            resp = requests.get(url, params=params, timeout=10)
+            return resp.status_code == 200
         except Exception:
             return False
 
