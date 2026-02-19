@@ -11,6 +11,8 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException, status, Query
 from pydantic import BaseModel, Field
 
+from app.core.data_adapter import get_data_adapter
+
 
 router = APIRouter()
 
@@ -137,22 +139,44 @@ async def get_portfolio_summary() -> PortfolioSummary:
     
     Returns total portfolio value, cash, positions, and P&L.
     """
-    positions = portfolio_data["positions"]
-    cash = portfolio_data["cash_balance"]
+    # Try to get real data first
+    adapter = get_data_adapter()
+    real_data = adapter.get_portfolio_summary()
     
-    market_value = sum(p["market_value"] for p in positions)
-    unrealized_pnl = sum(p["unrealized_pnl"] for p in positions)
-    realized_pnl = sum(p["realized_pnl"] for p in positions)
-    margin_used = sum(p["margin_used"] for p in positions)
+    # Use real data if available, otherwise fallback to mock
+    if real_data.get('total_value', 0) > 0 or real_data.get('num_positions', 0) > 0:
+        positions = adapter.get_positions()
+        cash = real_data.get('cash_balance', 0)
+    else:
+        positions = portfolio_data["positions"]
+        cash = portfolio_data["cash_balance"]
     
-    total_value = cash + market_value
-    total_pnl = unrealized_pnl + realized_pnl
-    
-    # Assume starting capital of 1M
-    starting_capital = 1000000.0
-    daily_pnl = total_pnl * 0.1  # Simulated daily P&L
-    daily_return_pct = (daily_pnl / starting_capital) * 100
-    total_return_pct = ((total_value - starting_capital) / starting_capital) * 100
+    # Use real data if available
+    if real_data.get('total_value', 0) > 0:
+        total_value = real_data.get('total_value', cash + sum(p.get('market_value', 0) for p in positions))
+        total_pnl = real_data.get('total_pnl', 0)
+        unrealized_pnl = real_data.get('unrealized_pnl', sum(p.get('unrealized_pnl', 0) for p in positions))
+        realized_pnl = real_data.get('realized_pnl', sum(p.get('realized_pnl', 0) for p in positions))
+        daily_pnl = real_data.get('daily_pnl', 0)
+        daily_return_pct = real_data.get('daily_return_pct', 0)
+        total_return_pct = real_data.get('total_return_pct', 0)
+        market_value = real_data.get('market_value', sum(p.get('market_value', 0) for p in positions))
+        margin_used = sum(p.get('margin_used', 0) for p in positions)
+    else:
+        # Fallback to calculated values
+        market_value = sum(p.get("market_value", 0) for p in positions)
+        unrealized_pnl = sum(p.get("unrealized_pnl", 0) for p in positions)
+        realized_pnl = sum(p.get("realized_pnl", 0) for p in positions)
+        margin_used = sum(p.get("margin_used", 0) for p in positions)
+        
+        total_value = cash + market_value
+        total_pnl = unrealized_pnl + realized_pnl
+        
+        # Assume starting capital of 1M
+        starting_capital = 1000000.0
+        daily_pnl = total_pnl * 0.1  # Simulated daily P&L
+        daily_return_pct = (daily_pnl / starting_capital) * 100
+        total_return_pct = ((total_value - starting_capital) / starting_capital) * 100
     
     return PortfolioSummary(
         total_value=total_value,
@@ -178,7 +202,14 @@ async def list_positions(
     """
     List all open positions.
     """
-    positions = portfolio_data["positions"]
+    # Try to get real positions first
+    adapter = get_data_adapter()
+    real_positions = adapter.get_positions()
+    
+    if real_positions:
+        positions = real_positions
+    else:
+        positions = portfolio_data["positions"]
     
     if symbol:
         positions = [p for p in positions if p["symbol"] == symbol]
@@ -264,23 +295,31 @@ async def get_portfolio_history(
     Returns historical portfolio values for the specified number of days.
     Default is 30 days if not specified.
     """
-    import random
+    # Try to get real history first
+    adapter = get_data_adapter()
+    real_history = adapter.get_portfolio_history(days=days)
     
-    # Ensure days is within valid range
-    days = max(1, min(365, days))
-    
-    history = []
-    base_value = 1000000.0
-    
-    for i in range(days):
-        date = f"2026-01-{i+1:02d}" if i < 48 else f"2026-02-{i-47:02d}"
-        daily_return = random.uniform(-0.02, 0.025)
-        base_value *= (1 + daily_return)
+    if real_history:
+        history = [HistoryEntry(**h) for h in real_history]
+    else:
+        # Fallback to simulated data
+        import random
         
-        history.append(HistoryEntry(
-            date=date,
-            value=base_value,
-            daily_return=daily_return * 100,
-        ))
+        # Ensure days is within valid range
+        days = max(1, min(365, days))
+        
+        history = []
+        base_value = 1000000.0
+        
+        for i in range(days):
+            date = f"2026-01-{i+1:02d}" if i < 48 else f"2026-02-{i-47:02d}"
+            daily_return = random.uniform(-0.02, 0.025)
+            base_value *= (1 + daily_return)
+            
+            history.append(HistoryEntry(
+                date=date,
+                value=base_value,
+                daily_return=daily_return * 100,
+            ))
     
     return PortfolioHistory(history=history)

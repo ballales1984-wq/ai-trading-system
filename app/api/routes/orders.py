@@ -11,6 +11,7 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException, status, Query
 
 from pydantic import BaseModel, Field
+from app.core.data_adapter import get_data_adapter
 
 
 router = APIRouter()
@@ -117,7 +118,14 @@ async def list_orders(
     """
     List all orders with optional filters.
     """
-    orders = list(orders_db.values())
+    # Try to get real orders first
+    adapter = get_data_adapter()
+    real_orders = adapter.get_orders()
+    
+    if real_orders:
+        orders = [OrderResponse(**o) for o in real_orders]
+    else:
+        orders = list(orders_db.values())
     
     # Apply filters
     if symbol:
