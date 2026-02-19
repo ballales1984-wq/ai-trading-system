@@ -23,6 +23,7 @@ Usage:
 # -- Existing exchange clients --
 from .bybit_client import BybitClient, create_bybit_client
 from .okx_client import OKXClient, create_okx_client
+from .coinmarketcap_client import CoinMarketCapClient, create_coinmarketcap_client
 
 # -- API Registry --
 from .api_registry import (
@@ -144,6 +145,8 @@ __all__ = [
     "OKXClient",
     "create_okx_client",
     "create_exchange_client",
+    "CoinMarketCapClient",
+    "create_coinmarketcap_client",
     # Registry
     "APICategory",
     "APIRegistry",
