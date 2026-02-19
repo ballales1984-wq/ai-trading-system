@@ -150,6 +150,14 @@ class RiskEngine:
         quantity = signal.get('quantity', 0)
         price = signal.get('price', 0)
         
+        # Validate quantity
+        if quantity <= 0:
+            return False, f"Invalid quantity: {quantity} <= 0"
+        
+        # Validate price
+        if price <= 0:
+            return False, f"Invalid price: {price} <= 0"
+        
         # Check trading hours
         if not self._check_trading_hours():
             return False, "Outside trading hours"
