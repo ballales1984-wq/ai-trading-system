@@ -545,33 +545,320 @@ class BinanceBroker(BrokerInterface):
         self.logger.info("Disconnected from Binance")
         return True
     
+    async def _signed_request(self, method: str, endpoint: str, params: Dict = None) -> Dict:
+        """Make a signed request to Binance API."""
+        import aiohttp
+        import hmac
+        import hashlib
+        import time
+        from urllib.parse import urlencode
+        
+        params = params or {}
+        params['timestamp'] = int(time.time() * 1000)
+        params['recvWindow'] = 5000
+        
+        query_string = urlencode(params)
+        signature = hmac.new(
+            self.api_secret.encode('utf-8'),
+            query_string.encode('utf-8'),
+            hashlib.sha256
+        ).hexdigest()
+        params['signature'] = signature
+        
+        headers = {'X-MBX-APIKEY': self.api_key}
+        url = f"{self.base_url}/{endpoint}"
+        
+        async with aiohttp.ClientSession() as session:
+            if method == 'GET':
+                async with session.get(url, params=params, headers=headers) as resp:
+                    data = await resp.json()
+                    if resp.status != 200:
+                        raise Exception(f"Binance API error {resp.status}: {data}")
+                    return data
+            elif method == 'POST':
+                async with session.post(url, params=params, headers=headers) as resp:
+                    data = await resp.json()
+                    if resp.status != 200:
+                        raise Exception(f"Binance API error {resp.status}: {data}")
+                    return data
+            elif method == 'DELETE':
+                async with session.delete(url, params=params, headers=headers) as resp:
+                    data = await resp.json()
+                    if resp.status != 200:
+                        raise Exception(f"Binance API error {resp.status}: {data}")
+                    return data
+    
+    async def _public_request(self, endpoint: str, params: Dict = None) -> Dict:
+        """Make a public (unsigned) request to Binance API."""
+        import aiohttp
+        
+        url = f"{self.base_url}/{endpoint}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params or {}) as resp:
+                data = await resp.json()
+                if resp.status != 200:
+                    raise Exception(f"Binance API error {resp.status}: {data}")
+                return data
+    
     async def place_order(self, order: Order) -> Order:
         """Place order on Binance."""
         self._check_rate_limit()
         
-        # Implementation would use Binance API
-        # For now, raise NotImplementedError
-        raise NotImplementedError("Binance integration requires API keys")
+        if not self.is_connected:
+            raise ConnectionError("Not connected to Binance")
+        
+        if not self.api_key or not self.api_secret:
+            raise ValueError("Binance API keys not configured. Set BINANCE_API_KEY and BINANCE_API_SECRET in .env")
+        
+        # Generate client order ID
+        order.client_order_id = order.client_order_id or self._generate_client_order_id()
+        
+        params = {
+            'symbol': order.symbol,
+            'side': order.side.value,
+            'type': order.order_type.value,
+            'quantity': str(order.quantity),
+            'newClientOrderId': order.client_order_id,
+            'timeInForce': order.time_in_force.value
+        }
+        
+        # Add price for limit orders
+        if order.order_type in [OrderType.LIMIT, OrderType.STOP_LOSS_LIMIT, OrderType.TAKE_PROFIT_LIMIT]:
+            if order.price is None:
+                raise ValueError(f"Price required for {order.order_type.value} orders")
+            params['price'] = str(order.price)
+        
+        # Add stop price
+        if order.order_type in [OrderType.STOP_LOSS, OrderType.STOP_LOSS_LIMIT,
+                                 OrderType.TAKE_PROFIT, OrderType.TAKE_PROFIT_LIMIT]:
+            if order.stop_price is None:
+                raise ValueError(f"Stop price required for {order.order_type.value} orders")
+            params['stopPrice'] = str(order.stop_price)
+        
+        # Market orders don't need timeInForce
+        if order.order_type == OrderType.MARKET:
+            params.pop('timeInForce', None)
+        
+        try:
+            result = await self._signed_request('POST', 'v3/order', params)
+            
+            # Map Binance response to Order
+            order.order_id = str(result.get('orderId', ''))
+            status_map = {
+                'NEW': OrderStatus.OPEN,
+                'PARTIALLY_FILLED': OrderStatus.PARTIALLY_FILLED,
+                'FILLED': OrderStatus.FILLED,
+                'CANCELED': OrderStatus.CANCELLED,
+                'REJECTED': OrderStatus.REJECTED,
+                'EXPIRED': OrderStatus.EXPIRED
+            }
+            order.status = status_map.get(result.get('status', ''), OrderStatus.PENDING)
+            order.filled_quantity = float(result.get('executedQty', 0))
+            
+            # Calculate average fill price from fills
+            fills = result.get('fills', [])
+            if fills:
+                total_qty = sum(float(f['qty']) for f in fills)
+                total_cost = sum(float(f['qty']) * float(f['price']) for f in fills)
+                order.avg_fill_price = total_cost / total_qty if total_qty > 0 else 0
+                order.commission = sum(float(f.get('commission', 0)) for f in fills)
+            elif result.get('price'):
+                order.avg_fill_price = float(result['price'])
+            
+            order.updated_at = datetime.now()
+            
+            # Store order
+            self._orders[order.order_id] = order
+            self._log_order(order, "PLACED")
+            
+            self.logger.info(
+                f"Order placed on Binance: {order.side.value} {order.quantity} {order.symbol} "
+                f"-> ID={order.order_id} status={order.status.value}"
+            )
+            
+            return order
+            
+        except Exception as e:
+            order.status = OrderStatus.REJECTED
+            self._log_order(order, f"REJECTED: {e}")
+            self.logger.error(f"Failed to place order on Binance: {e}")
+            raise
     
     async def cancel_order(self, order_id: str, symbol: str) -> bool:
         """Cancel order on Binance."""
-        raise NotImplementedError("Binance integration requires API keys")
+        self._check_rate_limit()
+        
+        if not self.is_connected:
+            raise ConnectionError("Not connected to Binance")
+        
+        try:
+            result = await self._signed_request('DELETE', 'v3/order', {
+                'symbol': symbol,
+                'orderId': int(order_id)
+            })
+            
+            if result.get('status') == 'CANCELED':
+                if order_id in self._orders:
+                    self._orders[order_id].status = OrderStatus.CANCELLED
+                    self._orders[order_id].updated_at = datetime.now()
+                    self._log_order(self._orders[order_id], "CANCELLED")
+                self.logger.info(f"Order cancelled on Binance: {order_id}")
+                return True
+            
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"Failed to cancel order {order_id}: {e}")
+            return False
     
     async def get_order_status(self, order_id: str, symbol: str) -> Order:
         """Get order status from Binance."""
-        raise NotImplementedError("Binance integration requires API keys")
+        self._check_rate_limit()
+        
+        if not self.is_connected:
+            raise ConnectionError("Not connected to Binance")
+        
+        try:
+            result = await self._signed_request('GET', 'v3/order', {
+                'symbol': symbol,
+                'orderId': int(order_id)
+            })
+            
+            status_map = {
+                'NEW': OrderStatus.OPEN,
+                'PARTIALLY_FILLED': OrderStatus.PARTIALLY_FILLED,
+                'FILLED': OrderStatus.FILLED,
+                'CANCELED': OrderStatus.CANCELLED,
+                'REJECTED': OrderStatus.REJECTED,
+                'EXPIRED': OrderStatus.EXPIRED
+            }
+            
+            order = Order(
+                symbol=result['symbol'],
+                side=OrderSide(result['side']),
+                order_type=OrderType(result['type']),
+                quantity=float(result['origQty']),
+                price=float(result['price']) if float(result['price']) > 0 else None,
+                stop_price=float(result.get('stopPrice', 0)) or None,
+                order_id=str(result['orderId']),
+                status=status_map.get(result['status'], OrderStatus.PENDING),
+                filled_quantity=float(result['executedQty']),
+                avg_fill_price=float(result.get('avgPrice', 0) or result.get('price', 0)),
+                client_order_id=result.get('clientOrderId', '')
+            )
+            
+            # Update cache
+            self._orders[order.order_id] = order
+            
+            return order
+            
+        except Exception as e:
+            self.logger.error(f"Failed to get order status {order_id}: {e}")
+            raise
     
     async def get_balance(self) -> AccountBalance:
         """Get balance from Binance."""
-        raise NotImplementedError("Binance integration requires API keys")
+        self._check_rate_limit()
+        
+        if not self.is_connected:
+            raise ConnectionError("Not connected to Binance")
+        
+        try:
+            result = await self._signed_request('GET', 'v3/account')
+            
+            # Calculate totals from all balances
+            total_equity = 0.0
+            available_balance = 0.0
+            
+            for asset_balance in result.get('balances', []):
+                free = float(asset_balance.get('free', 0))
+                locked = float(asset_balance.get('locked', 0))
+                
+                # For simplicity, sum USDT-equivalent (only count stablecoins directly)
+                asset = asset_balance['asset']
+                if asset in ['USDT', 'BUSD', 'USDC']:
+                    total_equity += free + locked
+                    available_balance += free
+            
+            return AccountBalance(
+                total_equity=total_equity,
+                available_balance=available_balance,
+                total_margin=total_equity - available_balance,
+                unrealized_pnl=0.0,  # Spot doesn't have unrealized PnL
+                realized_pnl=0.0
+            )
+            
+        except Exception as e:
+            self.logger.error(f"Failed to get balance from Binance: {e}")
+            raise
     
     async def get_positions(self) -> List[Position]:
-        """Get positions from Binance."""
-        raise NotImplementedError("Binance integration requires API keys")
+        """Get positions from Binance (spot balances as positions)."""
+        self._check_rate_limit()
+        
+        if not self.is_connected:
+            raise ConnectionError("Not connected to Binance")
+        
+        try:
+            result = await self._signed_request('GET', 'v3/account')
+            positions = []
+            
+            for asset_balance in result.get('balances', []):
+                free = float(asset_balance.get('free', 0))
+                locked = float(asset_balance.get('locked', 0))
+                total = free + locked
+                
+                if total > 0 and asset_balance['asset'] not in ['USDT', 'BUSD', 'USDC']:
+                    symbol = f"{asset_balance['asset']}USDT"
+                    
+                    # Get current price
+                    try:
+                        ticker = await self.get_ticker(symbol)
+                        current_price = ticker.last_price
+                    except Exception:
+                        current_price = 0.0
+                    
+                    position = Position(
+                        symbol=symbol,
+                        quantity=total,
+                        current_price=current_price,
+                        entry_price=0.0,  # Binance spot doesn't track entry price
+                        unrealized_pnl=0.0
+                    )
+                    positions.append(position)
+                    self._positions[symbol] = position
+            
+            return positions
+            
+        except Exception as e:
+            self.logger.error(f"Failed to get positions from Binance: {e}")
+            raise
     
     async def get_ticker(self, symbol: str) -> MarketTicker:
         """Get ticker from Binance."""
-        raise NotImplementedError("Binance integration requires API keys")
+        self._check_rate_limit()
+        
+        if not self.is_connected:
+            raise ConnectionError("Not connected to Binance")
+        
+        try:
+            # Get 24hr ticker + order book top
+            ticker_data = await self._public_request('v3/ticker/24hr', {'symbol': symbol})
+            book_data = await self._public_request('v3/ticker/bookTicker', {'symbol': symbol})
+            
+            return MarketTicker(
+                symbol=symbol,
+                bid_price=float(book_data.get('bidPrice', 0)),
+                ask_price=float(book_data.get('askPrice', 0)),
+                last_price=float(ticker_data.get('lastPrice', 0)),
+                volume=float(ticker_data.get('volume', 0)),
+                quote_volume=float(ticker_data.get('quoteVolume', 0)),
+                timestamp=datetime.now()
+            )
+            
+        except Exception as e:
+            self.logger.error(f"Failed to get ticker for {symbol}: {e}")
+            raise
 
 
 def create_broker(broker_type: str, config: Dict[str, Any]) -> BrokerInterface:

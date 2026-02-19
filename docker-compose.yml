@@ -1,6 +1,48 @@
 version: '3.8'
 
 services:
+  # ============================================================
+  # PostgreSQL Database
+  # ============================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: trading-postgres
+    environment:
+      POSTGRES_DB: trading
+      POSTGRES_USER: ${POSTGRES_USER:-trading}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-trading_secret}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trading"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================================
+  # Redis Cache
+  # ============================================================
+  redis:
+    image: redis:7-alpine
+    container_name: trading-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================================
+  # Trading System (Dashboard + Engine)
+  # ============================================================
   trading-system:
     build: .
     container_name: ai-trading-system
@@ -11,10 +53,17 @@ services:
       - BINANCE_SECRET_KEY=${BINANCE_SECRET_KEY}
       - NEWS_API_KEY=${NEWS_API_KEY}
       - SIMULATION_MODE=${SIMULATION_MODE:-true}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-trading}:${POSTGRES_PASSWORD:-trading_secret}@postgres:5432/trading
+      - REDIS_URL=redis://redis:6379/0
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
       - ./cache:/app/cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8050/"]
@@ -23,11 +72,34 @@ services:
       retries: 3
       start_period: 10s
 
-  # Optional: Watchtower for auto-updates
-  # watchtower:
-  #   image: containrrr/watchtower
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   environment:
-  #     - WATCHTOWER_INTERVAL=3600
-  #   command: --cleanup ai-trading-system
+  # ============================================================
+  # FastAPI Backend
+  # ============================================================
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: trading-api
+    ports:
+      - "8000:8000"
+    environment:
+      - BINANCE_API_KEY=${BINANCE_API_KEY}
+      - BINANCE_SECRET_KEY=${BINANCE_SECRET_KEY}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-trading}:${POSTGRES_PASSWORD:-trading_secret}@postgres:5432/trading
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+  redis_data:

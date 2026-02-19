@@ -136,15 +136,29 @@ class BybitClient:
         await self.connect()
         return self
     
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit."""
         await self.disconnect()
     
     async def connect(self):
         """Create aiohttp session."""
         if self._session is None:
+            # Force use of threaded resolver instead of aiodns (fixes Windows DNS issues)
+            try:
+                import aiodns
+                # If aiodns is installed, force using the threaded resolver
+                resolver = aiohttp.ThreadedResolver()
+            except ImportError:
+                # aiodns not installed, use default
+                resolver = aiohttp.DefaultResolver()
+            
+            connector = aiohttp.TCPConnector(
+                limit=100,
+                resolver=resolver
+            )
             self._session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=self.timeout)
+                timeout=aiohttp.ClientTimeout(total=self.timeout),
+                connector=connector
             )
             logger.debug("Bybit session created")
     

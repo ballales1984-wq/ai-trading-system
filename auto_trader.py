@@ -15,6 +15,9 @@ import threading
 import pandas as pd
 import numpy as np
 
+import asyncio
+import os
+
 import config
 from data_collector import DataCollector
 from technical_analysis import TechnicalAnalyzer
@@ -156,7 +159,116 @@ class AutoTradingBot:
         # History
         self.daily_stats = []
         
+        # Live broker (initialized on first use)
+        self._broker = None
+        self._broker_exchange = os.getenv('TRADING_EXCHANGE', 'binance')
+        
         logger.info(f"AutoTradingBot initialized (paper={paper_trading}, balance=${initial_balance})")
+    
+    # ==================== LIVE BROKER ====================
+    
+    def _get_broker(self):
+        """Get or create the live broker instance."""
+        if self._broker is not None:
+            return self._broker
+        
+        from src.production.broker_interface import BinanceBroker
+        
+        broker_config = {
+            'api_key': os.getenv('BINANCE_API_KEY', ''),
+            'api_secret': os.getenv('BINANCE_API_SECRET', ''),
+            'testnet': os.getenv('BINANCE_TESTNET', 'true').lower() == 'true',
+            'testnet_url': os.getenv(
+                'BINANCE_TESTNET_URL',
+                'https://testnet.binance.vision/api'
+            )
+        }
+        
+        self._broker = BinanceBroker(broker_config)
+        
+        # Connect synchronously
+        loop = asyncio.new_event_loop()
+        try:
+            connected = loop.run_until_complete(self._broker.connect())
+            if not connected:
+                logger.error("Failed to connect to live broker")
+                self._broker = None
+                return None
+        finally:
+            loop.close()
+        
+        logger.info(f"Live broker connected: {self._broker_exchange}")
+        return self._broker
+    
+    def _execute_live_order(
+        self,
+        symbol: str,
+        side: str,
+        quantity: float,
+        price: float = None
+    ) -> Optional[float]:
+        """
+        Execute a live order on the exchange.
+        
+        Args:
+            symbol: Trading pair (e.g. BTCUSDT)
+            side: 'BUY' or 'SELL'
+            quantity: Amount to trade
+            price: Limit price (None for market order)
+            
+        Returns:
+            Fill price if successful, None if failed
+        """
+        broker = self._get_broker()
+        if broker is None:
+            logger.error("No broker available for live trading")
+            return None
+        
+        from src.production.broker_interface import (
+            Order as BrokerOrder,
+            OrderSide,
+            OrderType,
+            TimeInForce
+        )
+        
+        order = BrokerOrder(
+            symbol=symbol,
+            side=OrderSide.BUY if side == 'BUY' else OrderSide.SELL,
+            order_type=OrderType.MARKET if price is None else OrderType.LIMIT,
+            quantity=quantity,
+            price=price,
+            time_in_force=TimeInForce.GTC
+        )
+        
+        loop = asyncio.new_event_loop()
+        try:
+            result = loop.run_until_complete(broker.place_order(order))
+            
+            if result.status.value == 'FILLED':
+                logger.info(
+                    f"Live order filled: {side} {quantity} {symbol} "
+                    f"@ {result.avg_fill_price:.2f} (fee: {result.commission:.4f})"
+                )
+                return result.avg_fill_price
+            elif result.status.value in ('OPEN', 'PARTIALLY_FILLED'):
+                logger.info(
+                    f"Live order placed (pending): {side} {quantity} {symbol} "
+                    f"ID={result.order_id}"
+                )
+                # For limit orders, return the requested price
+                return price or result.avg_fill_price
+            else:
+                logger.error(
+                    f"Live order rejected: {side} {quantity} {symbol} "
+                    f"status={result.status.value}"
+                )
+                return None
+                
+        except Exception as e:
+            logger.error(f"Live order execution failed: {e}")
+            return None
+        finally:
+            loop.close()
     
     # ==================== TRADING LOGIC ====================
     
@@ -252,8 +364,25 @@ class AutoTradingBot:
         
         # Execute trade
         if not self.paper_trading:
-            # Real trading would go here
-            pass
+            try:
+                fill_price = self._execute_live_order(
+                    symbol=signal.symbol,
+                    side='BUY',
+                    quantity=quantity,
+                    price=signal.current_price
+                )
+                if fill_price:
+                    trade.price = fill_price
+                    signal.current_price = fill_price
+                    position_value = fill_price * quantity
+                else:
+                    trade.status = 'failed'
+                    logger.error(f"❌ BUY failed for {signal.symbol}")
+                    return None
+            except Exception as e:
+                trade.status = 'failed'
+                logger.error(f"❌ BUY execution error for {signal.symbol}: {e}")
+                return None
         
         # Update portfolio
         self.portfolio.balance -= position_value
@@ -301,8 +430,28 @@ class AutoTradingBot:
         
         # Execute trade
         if not self.paper_trading:
-            # Real trading would go here
-            pass
+            try:
+                fill_price = self._execute_live_order(
+                    symbol=signal.symbol,
+                    side='SELL',
+                    quantity=position.quantity,
+                    price=signal.current_price
+                )
+                if fill_price:
+                    trade.price = fill_price
+                    sell_value = fill_price * position.quantity
+                    pnl = sell_value - cost_basis
+                    fees = sell_value * 0.001
+                    trade.pnl = pnl - fees
+                    trade.fees = fees
+                else:
+                    trade.status = 'failed'
+                    logger.error(f"❌ SELL failed for {signal.symbol}")
+                    return None
+            except Exception as e:
+                trade.status = 'failed'
+                logger.error(f"❌ SELL execution error for {signal.symbol}: {e}")
+                return None
         
         # Update portfolio
         self.portfolio.balance += (sell_value - fees)
