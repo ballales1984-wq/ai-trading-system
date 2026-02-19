@@ -143,31 +143,31 @@ app.include_router(
 
 app.include_router(
     orders.router,
-    prefix=settings.api_prefix,
+    prefix=f"{settings.api_prefix}/orders",
     tags=["Orders"]
 )
 
 app.include_router(
     portfolio.router,
-    prefix=settings.api_prefix,
+    prefix=f"{settings.api_prefix}/portfolio",
     tags=["Portfolio"]
 )
 
 app.include_router(
     strategy.router,
-    prefix=settings.api_prefix,
+    prefix=f"{settings.api_prefix}/strategy",
     tags=["Strategy"]
 )
 
 app.include_router(
     risk.router,
-    prefix=settings.api_prefix,
+    prefix=f"{settings.api_prefix}/risk",
     tags=["Risk"]
 )
 
 app.include_router(
     market.router,
-    prefix=settings.api_prefix,
+    prefix=f"{settings.api_prefix}/market",
     tags=["Market"]
 )
 
