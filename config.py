@@ -331,6 +331,8 @@ DECISION_SETTINGS: Dict[str, Any] = {
 NEWS_SETTINGS: Dict[str, Any] = {
     # News sources (API keys needed)
     'news_api_key': os.getenv('NEWS_API_KEY', ''),
+    'twitter_bearer_token': os.getenv('TWITTER_BEARER_TOKEN', ''),
+    'benzinga_api_key': os.getenv('BENZINGA_API_KEY', ''),
     
     # Keywords for different asset classes
     'crypto_keywords': ['bitcoin', 'ethereum', 'crypto', 'blockchain', 'defi'],
