@@ -226,3 +226,8 @@ class TestPortfolioOptimizer:
         from src.portfolio_optimizer import PortfolioOptimizer
         optimizer = PortfolioOptimizer()
         assert optimizer is not None
+
+
+if __name__ == "__main__":
+    import pytest
+    pytest.main([__file__, "-v"])

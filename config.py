@@ -458,3 +458,16 @@ SIMULATED_COMMODITIES: Dict[str, Dict[str, float]] = {
 
 # Price volatility for simulation
 SIMULATED_VOLATILITY: float = 0.02
+
+# ==================== TELEGRAM NOTIFICATIONS ====================
+TELEGRAM_ENABLED: bool = os.getenv('TELEGRAM_ENABLED', 'false').lower() == 'true'
+TELEGRAM_BOT_TOKEN: str = os.getenv('TELEGRAM_BOT_TOKEN', '')
+TELEGRAM_CHAT_ID: str = os.getenv('TELEGRAM_CHAT_ID', '')
+TELEGRAM_RATE_LIMIT: int = int(os.getenv('TELEGRAM_RATE_LIMIT', '5'))
+
+# Alert types
+TELEGRAM_ALERT_TRADES: bool = os.getenv('TELEGRAM_ALERT_TRADES', 'true').lower() == 'true'
+TELEGRAM_ALERT_RISK: bool = os.getenv('TELEGRAM_ALERT_RISK', 'true').lower() == 'true'
+TELEGRAM_ALERT_REGIME: bool = os.getenv('TELEGRAM_ALERT_REGIME', 'true').lower() == 'true'
+TELEGRAM_ALERT_PORTFOLIO: bool = os.getenv('TELEGRAM_ALERT_PORTFOLIO', 'false').lower() == 'true'
+TELEGRAM_HEARTBEAT_INTERVAL: int = int(os.getenv('TELEGRAM_HEARTBEAT_INTERVAL', '3600'))  # seconds

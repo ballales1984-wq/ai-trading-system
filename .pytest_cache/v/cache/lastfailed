@@ -40,5 +40,9 @@
   "test_core.py::test_risk_engine": true,
   "test_core.py::test_order_manager": true,
   "test_core.py::test_trading_engine": true,
-  "tests/test_hedgefund_dashboard.py": true
+  "tests/test_hedgefund_dashboard.py": true,
+  "tests/test_external_apis.py": true,
+  "tests/test_core_modules.py": true,
+  "tests/test_indicators.py": true,
+  "tests/test_utils.py": true
 }
