@@ -7,6 +7,7 @@ Experimental system for crypto + commodity-linked trading signals + auto trading
 
 import sys
 import io
+import os
 import argparse
 import logging
 from datetime import datetime
@@ -145,13 +146,27 @@ def run_dashboard_mode(args):
     print(f"\n🌐 http://localhost:{args.port}")
     print("Press Ctrl+C to stop\n")
     
-    try:
-        dashboard = TradingDashboard(debug=args.debug)
-        dashboard.run(host=args.host, port=args.port, debug=args.debug)
-    except ImportError as e:
-        print(f"❌ Error: {e}")
-        print("Install dash: pip install dash plotly\n")
-        print_dashboard_summary()
+    # Check if user wants API-integrated dashboard
+    use_api_dashboard = os.getenv('USE_API_DASHBOARD', 'false').lower() == 'true'
+    
+    if use_api_dashboard:
+        try:
+            from dashboard_api import app
+            print("Using API-integrated dashboard (connects to FastAPI)")
+            app.run_server(debug=args.debug, host=args.host, port=args.port)
+        except ImportError as e:
+            print(f"❌ Error: {e}")
+            print("Falling back to standard dashboard...")
+            use_api_dashboard = False
+    
+    if not use_api_dashboard:
+        try:
+            dashboard = TradingDashboard(debug=args.debug)
+            dashboard.run(host=args.host, port=args.port, debug=args.debug)
+        except ImportError as e:
+            print(f"❌ Error: {e}")
+            print("Install dash: pip install dash plotly\n")
+            print_dashboard_summary()
 
 
 def run_test_mode(args):
