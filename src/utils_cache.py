@@ -170,14 +170,60 @@ class DataCache:
     @staticmethod
     @cached(ttl=OHLCV_TTL, key_prefix="ohlcv")
     def get_ohlcv_cached(symbol: str, timeframe: str) -> Any:
-        """Placeholder - actual implementation would fetch data"""
-        pass
+        """Fetch OHLCV data with caching via Binance public API"""
+        import requests
+        interval_map = {
+            '1m': '1m', '5m': '5m', '15m': '15m', '1h': '1h',
+            '4h': '4h', '1d': '1d', '1w': '1w',
+        }
+        interval = interval_map.get(timeframe, '1h')
+        try:
+            resp = requests.get(
+                'https://api.binance.com/api/v3/klines',
+                params={'symbol': symbol.replace('/', ''), 'interval': interval, 'limit': 500},
+                timeout=10,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            return [
+                {
+                    'timestamp': k[0],
+                    'open': float(k[1]),
+                    'high': float(k[2]),
+                    'low': float(k[3]),
+                    'close': float(k[4]),
+                    'volume': float(k[5]),
+                }
+                for k in data
+            ]
+        except Exception as e:
+            logger.error(f"Failed to fetch OHLCV for {symbol}/{timeframe}: {e}")
+            return None
     
     @staticmethod
     @cached(ttl=TICKER_TTL, key_prefix="ticker")
     def get_ticker_cached(symbol: str) -> Any:
-        """Placeholder - actual implementation would fetch data"""
-        pass
+        """Fetch ticker data with caching via Binance public API"""
+        import requests
+        try:
+            resp = requests.get(
+                'https://api.binance.com/api/v3/ticker/24hr',
+                params={'symbol': symbol.replace('/', '')},
+                timeout=10,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            return {
+                'symbol': data.get('symbol'),
+                'last': float(data.get('lastPrice', 0)),
+                'bid': float(data.get('bidPrice', 0)),
+                'ask': float(data.get('askPrice', 0)),
+                'volume': float(data.get('volume', 0)),
+                'change_pct': float(data.get('priceChangePercent', 0)),
+            }
+        except Exception as e:
+            logger.error(f"Failed to fetch ticker for {symbol}: {e}")
+            return None
 
 
 # Cache for ML predictions
@@ -189,8 +235,17 @@ class MLPredictionCache:
     @staticmethod
     @cached(ttl=PREDICTION_TTL, key_prefix="ml_pred")
     def get_prediction_cached(symbol: str, features: Dict) -> Any:
-        """Get cached ML prediction"""
-        pass
+        """Get cached ML prediction — delegates to ml_predictor if available"""
+        try:
+            from ml_predictor import MLPredictor
+            predictor = MLPredictor()
+            return predictor.predict(symbol, features)
+        except ImportError:
+            logger.warning("ml_predictor not available, returning None")
+            return None
+        except Exception as e:
+            logger.error(f"ML prediction failed for {symbol}: {e}")
+            return None
 
 
 if __name__ == "__main__":

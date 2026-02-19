@@ -101,10 +101,44 @@ async def create_order(order: OrderCreate) -> OrderResponse:
     # Store order
     orders_db[order_id] = order_response
     
-    # In production, this would:
-    # 1. Validate with risk engine
-    # 2. Check portfolio constraints
-    # 3. Submit to execution engine
+    # Submit to execution engine
+    try:
+        from app.execution.broker_connector import create_broker_connector
+        from app.execution.broker_connector import BrokerOrder as BOrder
+        
+        connector = create_broker_connector(order.broker or 'paper')
+        connected = await connector.connect()
+        
+        if connected:
+            broker_order = BOrder(
+                order_id=order_id,
+                symbol=order.symbol,
+                side=order.side,
+                order_type=order.order_type,
+                quantity=order.quantity,
+                price=order.price,
+                stop_price=order.stop_price,
+                broker=order.broker or 'paper',
+            )
+            
+            result = await connector.place_order(broker_order)
+            
+            # Update order response with execution result
+            order_response.status = result.status if hasattr(result, 'status') else 'FILLED'
+            order_response.filled_quantity = getattr(result, 'filled_quantity', order.quantity)
+            order_response.average_price = getattr(result, 'average_price', order.price)
+            order_response.broker_order_id = getattr(result, 'broker_order_id', '')
+            order_response.updated_at = datetime.utcnow()
+            
+            orders_db[order_id] = order_response
+            
+            await connector.disconnect()
+        else:
+            order_response.status = 'REJECTED'
+            order_response.error = 'Failed to connect to broker'
+    except Exception as e:
+        logger.warning(f"Execution engine error (falling back to pending): {e}")
+        order_response.status = 'PENDING'
     
     return order_response
 

@@ -42,14 +42,59 @@ class ExchangeClient:
         self.testnet = testnet
         self.exchange = exchange
         
-        # Inizializza client Binance
-        if exchange.lower() == "binance":
+        # Inizializza client per l'exchange selezionato
+        self.client = None
+        exchange_lower = exchange.lower()
+        
+        if exchange_lower == "binance":
             if testnet:
                 self.client = Client(api_key, api_secret, testnet=True)
             else:
                 self.client = Client(api_key, api_secret)
+        elif exchange_lower == "bybit":
+            try:
+                from pybit.unified_trading import HTTP
+                self.client = HTTP(
+                    testnet=testnet,
+                    api_key=api_key,
+                    api_secret=api_secret
+                )
+            except ImportError:
+                logger.warning("pybit not installed. Install with: pip install pybit")
+                # Fallback: use ccxt
+                import ccxt
+                self.client = ccxt.bybit({
+                    'apiKey': api_key,
+                    'secret': api_secret,
+                    'sandbox': testnet,
+                })
+        elif exchange_lower == "okx":
+            try:
+                import ccxt
+                self.client = ccxt.okx({
+                    'apiKey': api_key,
+                    'secret': api_secret,
+                    'sandbox': testnet,
+                })
+            except ImportError:
+                logger.warning("ccxt not installed. Install with: pip install ccxt")
+                raise
         else:
-            raise NotImplementedError(f"Exchange {exchange} non ancora supportato")
+            # Generic ccxt fallback for any supported exchange
+            try:
+                import ccxt
+                exchange_class = getattr(ccxt, exchange_lower, None)
+                if exchange_class is None:
+                    raise ValueError(f"Exchange {exchange} not supported by ccxt")
+                self.client = exchange_class({
+                    'apiKey': api_key,
+                    'secret': api_secret,
+                    'sandbox': testnet,
+                })
+            except ImportError:
+                raise ImportError(
+                    f"Exchange {exchange} requires ccxt. Install with: pip install ccxt"
+                )
     
     # ======================
     # INFO BASE
