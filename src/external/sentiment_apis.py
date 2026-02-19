@@ -221,7 +221,13 @@ class BenzingaClient(BaseAPIClient):
 class TwitterSentimentClient(BaseAPIClient):
     """
     Twitter/X API v2 — social sentiment and trending topics.
-    Docs: https://developer.twitter.com/en/docs/twitter-api
+    Docs: https://docs.x.com/x-api/getting-started/introduction
+    
+    Endpoints:
+    - User lookup: /users/by/username/{username}
+    - Post lookup: /tweets/{id}
+    - Recent search: /tweets/search/recent (requires Basic tier)
+    - User's posts: /users/{id}/tweets
     """
 
     def __init__(self, bearer_token: str = ""):
@@ -229,7 +235,7 @@ class TwitterSentimentClient(BaseAPIClient):
             name="twitter",
             category=APICategory.SENTIMENT,
             api_key=bearer_token,
-            base_url="https://api.twitter.com/2",
+            base_url="https://api.x.com/2",
             rate_limit=RateLimitConfig(max_requests_per_minute=15, max_requests_per_second=1),
         )
 
@@ -286,14 +292,15 @@ class TwitterSentimentClient(BaseAPIClient):
         return records
 
     async def health_check(self) -> bool:
+        """Test connection using user lookup endpoint (free)."""
         if aiohttp is None or not self.api_key:
             return False
         try:
-            url = f"{self.base_url}/tweets/search/recent"
-            params = {"query": "test", "max_results": 10}
+            # Use user lookup - simpler endpoint for testing
+            url = f"{self.base_url}/users/by/username/xdevelopers"
             headers = {"Authorization": f"Bearer {self.api_key}"}
             async with aiohttp.ClientSession() as session:
-                async with session.get(url, params=params, headers=headers) as resp:
+                async with session.get(url, headers=headers) as resp:
                     return resp.status == 200
         except Exception:
             return False

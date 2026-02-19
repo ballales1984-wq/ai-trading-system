@@ -144,15 +144,23 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 
 | Funzionalità | Descrizione |
 |-------------|-------------|
-| Tweet search | Ricerca tweet per keyword |
+| User lookup | Cerca utente per username |
+| Tweet search | Ricerca tweet per keyword (Basic tier) |
 | User timeline | Tweet di utenti specifici |
 | Sentiment scoring | Score sentiment tweet |
-| Trending topics | Argomenti trending |
 
 **Environment Variables**:
 - `TWITTER_BEARER_TOKEN` - Bearer token OAuth 2.0
 
-**Rate Limits**: 15 richieste/15min (search), 900/15min (timeline)
+**Rate Limits**: 15 richieste/15min (search), 900/15min (user lookup)
+
+**Endpoint API v2**:
+- User lookup: `GET /users/by/username/{username}`
+- Post lookup: `GET /tweets/{id}`
+- Recent search: `GET /tweets/search/recent`
+- User's posts: `GET /users/{id}/tweets`
+
+**Docs**: https://docs.x.com/x-api/getting-started/introduction
 
 ---
 
