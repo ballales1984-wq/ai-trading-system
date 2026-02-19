@@ -2,18 +2,21 @@
 Configuration Settings for Crypto Commodity Trading System
 """
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
+from typing import Dict, List, Tuple, Any, Optional
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
 # ==================== PROJECT PATHS ====================
-PROJECT_ROOT = Path(__file__).parent
-DATA_DIR = PROJECT_ROOT / "data"
-LOGS_DIR = PROJECT_ROOT / "logs"
-CACHE_DIR = PROJECT_ROOT / "cache"
+PROJECT_ROOT: Path = Path(__file__).parent
+DATA_DIR: Path = PROJECT_ROOT / "data"
+LOGS_DIR: Path = PROJECT_ROOT / "logs"
+CACHE_DIR: Path = PROJECT_ROOT / "cache"
 
 # Create directories if they don't exist
 DATA_DIR.mkdir(exist_ok=True)
@@ -21,7 +24,7 @@ LOGS_DIR.mkdir(exist_ok=True)
 CACHE_DIR.mkdir(exist_ok=True)
 
 # ==================== CRYPTO CONFIGURATION ====================
-CRYPTO_SYMBOLS = {
+CRYPTO_SYMBOLS: Dict[str, str] = {
     # Major cryptocurrencies
     'BTC': 'BTC/USDT',
     'ETH': 'ETH/USDT',
@@ -49,7 +52,7 @@ CRYPTO_SYMBOLS = {
 }
 
 # Commodity-linked tokens (stablecoins backed by commodities)
-COMMODITY_TOKENS = {
+COMMODITY_TOKENS: Dict[str, Dict[str, str]] = {
     # Precious Metals
     'PAXG': {
         'symbol': 'PAXG/USDT',
@@ -121,7 +124,7 @@ COMMODITY_TOKENS = {
 
 # Commodities we track but may not have direct trading pairs
 # These are for simulation and tracking purposes
-TRACKED_COMMODITIES = {
+TRACKED_COMMODITIES: Dict[str, Dict[str, Any]] = {
     # Precious Metals
     'GOLD': {
         'name': 'Gold (XAU/USD)',
@@ -133,21 +136,21 @@ TRACKED_COMMODITIES = {
     'SILVER': {
         'name': 'Silver (XAG/USD)',
         'symbol': 'XAG',
-        'price_source': 'XAG/USDT',  # Might need simulation
+        'price_source': 'XAG/USDT',
         'category': 'precious_metal',
         'typical_range': (22, 28)
     },
     'PLATINUM': {
         'name': 'Platinum (XPT/USD)',
         'symbol': 'XPT',
-        'price_source': None,  # Simulation only
+        'price_source': None,
         'category': 'precious_metal',
         'typical_range': (900, 1100)
     },
     'PALLADIUM': {
         'name': 'Palladium (XPD/USD)',
         'symbol': 'XPD',
-        'price_source': None,  # Simulation only
+        'price_source': None,
         'category': 'precious_metal',
         'typical_range': (1000, 1400)
     },
@@ -162,7 +165,7 @@ TRACKED_COMMODITIES = {
     'BRENT_OIL': {
         'name': 'Brent Crude',
         'symbol': 'BZ',
-        'price_source': None,  # Simulation only
+        'price_source': None,
         'category': 'energy',
         'typical_range': (75, 95)
     },
@@ -177,21 +180,21 @@ TRACKED_COMMODITIES = {
     'WHEAT': {
         'name': 'Wheat',
         'symbol': 'ZW',
-        'price_source': None,  # Simulation only
+        'price_source': None,
         'category': 'agricultural',
         'typical_range': (5.5, 7.5)
     },
     'CORN': {
         'name': 'Corn',
         'symbol': 'ZC',
-        'price_source': None,  # Simulation only
+        'price_source': None,
         'category': 'agricultural',
         'typical_range': (4.5, 6.5)
     },
     'SOYBEANS': {
         'name': 'Soybeans',
         'symbol': 'ZS',
-        'price_source': None,  # Simulation only
+        'price_source': None,
         'category': 'agricultural',
         'typical_range': (11, 15)
     },
@@ -199,14 +202,14 @@ TRACKED_COMMODITIES = {
     'SP500': {
         'name': 'S&P 500',
         'symbol': 'SPX',
-        'price_source': None,  # Simulation only - could use 1000SHAKE/USDT or similar
+        'price_source': None,
         'category': 'index',
         'typical_range': (4500, 5500)
     },
     'NASDAQ': {
         'name': 'NASDAQ 100',
         'symbol': 'NDX',
-        'price_source': None,  # Simulation only
+        'price_source': None,
         'category': 'index',
         'typical_range': (15000, 19000)
     },
@@ -214,7 +217,7 @@ TRACKED_COMMODITIES = {
     'BTC_ETH': {
         'name': 'Bitcoin + Ethereum Index',
         'symbol': 'BTCETH',
-        'price_source': None,  # Calculated from BTC+ETH
+        'price_source': None,
         'category': 'crypto_index',
         'typical_range': (40000, 75000)
     },
@@ -222,18 +225,18 @@ TRACKED_COMMODITIES = {
 
 # ==================== EXCHANGE API CONFIGURATION ====================
 # Primary exchange for crypto data
-DEFAULT_EXCHANGE = 'binance'
+DEFAULT_EXCHANGE: str = 'binance'
 
 # Fallback exchanges
-FALLBACK_EXCHANGES = ['kucoin', 'bybit', 'okx']
+FALLBACK_EXCHANGES: List[str] = ['kucoin', 'bybit', 'okx']
 
 # API Rate limits
-RATE_LIMIT_REQUESTS = 10  # requests per minute
-RATE_LIMIT_SECONDS = 6    # seconds between requests
+RATE_LIMIT_REQUESTS: int = 10  # requests per minute
+RATE_LIMIT_SECONDS: int = 6    # seconds between requests
 
 # ==================== DATA COLLECTION ====================
 # Timeframes for analysis
-TIMEFRAMES = {
+TIMEFRAMES: Dict[str, str] = {
     '1m': '1 minute',
     '5m': '5 minutes', 
     '15m': '15 minutes',
@@ -244,16 +247,16 @@ TIMEFRAMES = {
 }
 
 # Default timeframe for analysis
-DEFAULT_TIMEFRAME = '1h'
+DEFAULT_TIMEFRAME: str = '1h'
 
 # Historical data limit (max candles to fetch)
-MAX_CANDLES = 500
+MAX_CANDLES: int = 500
 
 # Data refresh interval (seconds)
-REFRESH_INTERVAL = 60  # 1 minute
+REFRESH_INTERVAL: int = 60
 
 # ==================== TECHNICAL INDICATORS ====================
-INDICATOR_SETTINGS = {
+INDICATOR_SETTINGS: Dict[str, Any] = {
     # RSI
     'rsi_period': 14,
     'rsi_overbought': 70,
@@ -282,18 +285,18 @@ INDICATOR_SETTINGS = {
 }
 
 # ==================== DECISION ENGINE ====================
-DECISION_SETTINGS = {
+DECISION_SETTINGS: Dict[str, Any] = {
     # Signal generation thresholds
-    'min_signal_confidence': 0.55,  # Minimum confidence to generate signal
-    'strong_signal_threshold': 0.70,  # Threshold for strong signal
+    'min_signal_confidence': 0.55,
+    'strong_signal_threshold': 0.70,
     
     # Risk management
-    'max_position_size': 0.1,  # Max 10% of portfolio per position
-    'stop_loss_percent': 0.02,  # 2% stop loss
-    'take_profit_percent': 0.05,  # 5% take profit
+    'max_position_size': 0.1,
+    'stop_loss_percent': 0.02,
+    'take_profit_percent': 0.05,
     
     # Correlation thresholds
-    'correlation_lookback': 24,  # Hours to calculate correlation
+    'correlation_lookback': 24,
     'high_correlation': 0.7,
     'negative_correlation': -0.3,
     
@@ -308,13 +311,13 @@ DECISION_SETTINGS = {
     
     # ML Blackbox Agent settings
     'ml_enabled': True,
-    'ml_weight': 0.15,  # Weight for ML prediction in signal generation
-    'ml_confidence_weight': 0.30,  # Weight for ML confidence in final confidence
+    'ml_weight': 0.15,
+    'ml_confidence_weight': 0.30,
     'ml_model_path': 'models/ml_predictor.pkl',
 }
 
 # ==================== NEWS & SENTIMENT ====================
-NEWS_SETTINGS = {
+NEWS_SETTINGS: Dict[str, Any] = {
     # News sources (API keys needed)
     'news_api_key': os.getenv('NEWS_API_KEY', ''),
     
@@ -326,7 +329,7 @@ NEWS_SETTINGS = {
     'geopolitical_keywords': ['war', 'conflict', 'sanctions', 'election', 'fed rates'],
     
     # Sentiment scoring
-    'sentiment_period': 24,  # Hours to aggregate news
+    'sentiment_period': 24,
     
     # Sources priority
     'preferred_sources': [
@@ -336,7 +339,7 @@ NEWS_SETTINGS = {
 }
 
 # ==================== DASHBOARD ====================
-DASHBOARD_CONFIG = {
+DASHBOARD_CONFIG: Dict[str, Any] = {
     'host': '0.0.0.0',
     'port': 8050,
     'debug': False,
@@ -349,14 +352,14 @@ DASHBOARD_CONFIG = {
     
     # Charts
     'max_charts': 10,
-    'candlestick_range': 100,  # Number of candles to display
+    'candlestick_range': 100,
     
     # Correlation heatmap
     'correlation_assets': list(CRYPTO_SYMBOLS.keys()) + list(COMMODITY_TOKENS.keys()),
 }
 
 # ==================== LOGGING ====================
-LOGGING_CONFIG = {
+LOGGING_CONFIG: Dict[str, Any] = {
     'level': 'INFO',
     'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     'file': str(LOGS_DIR / 'trading_system.log'),
@@ -366,22 +369,22 @@ LOGGING_CONFIG = {
 
 # ==================== SIMULATION MODE ====================
 # If True, use simulated prices instead of real API calls
-SIMULATION_MODE = os.getenv('SIMULATION_MODE', 'true').lower() != 'false'  # Default to simulation
+SIMULATION_MODE: bool = os.getenv('SIMULATION_MODE', 'true').lower() != 'false'
 
 # ==================== BINANCE API CONFIGURATION ====================
 # Get your API keys from: https://www.binance.com/en/my/settings/api-management
-BINANCE_API_KEY = os.getenv('BINANCE_API_KEY', '')
-BINANCE_SECRET_KEY = os.getenv('BINANCE_SECRET_KEY', '')
+BINANCE_API_KEY: str = os.getenv('BINANCE_API_KEY', '')
+BINANCE_SECRET_KEY: str = os.getenv('BINANCE_SECRET_KEY', '')
 
 # Testnet (use for testing without real money)
-USE_BINANCE_TESTNET = os.getenv('USE_BINANCE_TESTNET', 'false').lower() == 'true'
+USE_BINANCE_TESTNET: bool = os.getenv('USE_BINANCE_TESTNET', 'false').lower() == 'true'
 
 # ==================== COINMARKETCAP API CONFIGURATION ====================
 # Get your API key from: https://coinmarketcap.com/api/
-COINMARKETCAP_API_KEY = os.getenv('COINMARKETCAP_API_KEY', '')
+COINMARKETCAP_API_KEY: str = os.getenv('COINMARKETCAP_API_KEY', '')
 
 # Simulated price ranges for testing
-SIMULATED_PRICES = {
+SIMULATED_PRICES: Dict[str, Tuple[float, float]] = {
     # Major cryptos
     'BTC/USDT': (40000, 70000),
     'ETH/USDT': (2000, 3500),
@@ -423,7 +426,7 @@ SIMULATED_PRICES = {
 }
 
 # Simulated commodities (not directly tradeable on Binance)
-SIMULATED_COMMODITIES = {
+SIMULATED_COMMODITIES: Dict[str, Dict[str, float]] = {
     'GOLD': {'price': 2000, 'volatility': 0.01},
     'SILVER': {'price': 25, 'volatility': 0.015},
     'PLATINUM': {'price': 1000, 'volatility': 0.012},
@@ -439,5 +442,4 @@ SIMULATED_COMMODITIES = {
 }
 
 # Price volatility for simulation
-SIMULATED_VOLATILITY = 0.02  # 2% random price movement
-
+SIMULATED_VOLATILITY: float = 0.02

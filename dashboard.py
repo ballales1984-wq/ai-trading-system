@@ -535,6 +535,48 @@ class TradingDashboard:
                              'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
                 ], style={'display': 'flex', 'gap': '20px', 'margin-bottom': '20px'}),
                 
+                # Charts Row 3: Advanced Analytics
+                html.Div([
+                    html.Div([
+                        html.H3("📈 Returns Distribution", style={'color': theme['text']}),
+                        dcc.Graph(id='returns-dist-chart', style={'height': '350px'}),
+                    ], style={'background': theme['card'], 'padding': '20px',
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
+                    
+                    html.Div([
+                        html.H3("📉 Drawdown Analysis", style={'color': theme['text']}),
+                        dcc.Graph(id='drawdown-chart', style={'height': '350px'}),
+                    ], style={'background': theme['card'], 'padding': '20px',
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
+                    
+                    html.Div([
+                        html.H3("📊 Rolling Volatility", style={'color': theme['text']}),
+                        dcc.Graph(id='volatility-chart', style={'height': '350px'}),
+                    ], style={'background': theme['card'], 'padding': '20px',
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
+                ], style={'display': 'flex', 'gap': '20px', 'margin-bottom': '20px'}),
+                
+                # Charts Row 4: Performance Metrics
+                html.Div([
+                    html.Div([
+                        html.H3("🎯 Performance KPIs", style={'color': theme['text']}),
+                        dcc.Graph(id='performance-chart', style={'height': '350px'}),
+                    ], style={'background': theme['card'], 'padding': '20px',
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
+                    
+                    html.Div([
+                        html.H3("💹 Rolling Sharpe Ratio", style={'color': theme['text']}),
+                        dcc.Graph(id='sharpe-chart', style={'height': '350px'}),
+                    ], style={'background': theme['card'], 'padding': '20px',
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
+                    
+                    html.Div([
+                        html.H3("🔄 Win Rate & Profit Factor", style={'color': theme['text']}),
+                        dcc.Graph(id='winrate-chart', style={'height': '350px'}),
+                    ], style={'background': theme['card'], 'padding': '20px',
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
+                ], style={'display': 'flex', 'gap': '20px', 'margin-bottom': '20px'}),
+                
                 # Row 3: Binance Trading Panel
                 html.Div([
                     html.Div([
@@ -1124,6 +1166,224 @@ class TradingDashboard:
                 return fig
             except Exception as e:
                 logger.error(f"Correlation error: {e}")
+                return go.Figure()
+        
+        # Returns Distribution Chart
+        @self.app.callback(
+            Output('returns-dist-chart', 'figure'),
+            [Input('refresh', 'n_intervals')]
+        )
+        def update_returns_dist(n):
+            try:
+                returns = self.data_provider.get_returns()['BTC']
+                if returns is None or len(returns) < 2:
+                    return go.Figure()
+                
+                fig = go.Figure()
+                fig.add_trace(go.Histogram(
+                    x=returns * 100,
+                    nbinsx=30,
+                    marker_color=self.theme['blue'],
+                    opacity=0.75,
+                    name='Returns'
+                ))
+                fig.add_vline(x=0, line_dash="dash", line_color=self.theme['text_muted'])
+                fig.add_vline(x=returns.mean() * 100, line_dash="dot", line_color=self.theme['green'], 
+                             annotation_text=f"Mean: {returns.mean()*100:.2f}%")
+                fig.update_layout(template='plotly_dark', height=350,
+                                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                                xaxis_title='Return %', yaxis_title='Frequency',
+                                showlegend=False)
+                return fig
+            except Exception as e:
+                logger.error(f"Returns distribution error: {e}")
+                return go.Figure()
+        
+        # Drawdown Chart
+        @self.app.callback(
+            Output('drawdown-chart', 'figure'),
+            [Input('refresh', 'n_intervals')]
+        )
+        def update_drawdown(n):
+            try:
+                returns = self.data_provider.get_returns()['BTC']
+                if returns is None or len(returns) < 2:
+                    return go.Figure()
+                
+                # Calculate cumulative returns and drawdown
+                cumulative = (1 + returns).cumprod()
+                running_max = cumulative.cummax()
+                drawdown = (cumulative - running_max) / running_max * 100
+                
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(
+                    x=drawdown.index, y=drawdown,
+                    fill='tozeroy',
+                    fillcolor='rgba(255, 77, 77, 0.3)',
+                    line=dict(color=self.theme['red'], width=1),
+                    name='Drawdown'
+                ))
+                fig.update_layout(template='plotly_dark', height=350,
+                                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                                xaxis_title='Date', yaxis_title='Drawdown %',
+                                yaxis=dict(range=[min(drawdown.min() * 1.2, -5), 0]))
+                return fig
+            except Exception as e:
+                logger.error(f"Drawdown error: {e}")
+                return go.Figure()
+        
+        # Rolling Volatility Chart
+        @self.app.callback(
+            Output('volatility-chart', 'figure'),
+            [Input('refresh', 'n_intervals')]
+        )
+        def update_volatility(n):
+            try:
+                returns = self.data_provider.get_returns()
+                if returns is None or len(returns) < 20:
+                    return go.Figure()
+                
+                # Calculate rolling volatility for each asset
+                fig = go.Figure()
+                colors = [self.theme['blue'], self.theme['purple'], self.theme['green'], 
+                         self.theme['orange'], self.theme['red']]
+                
+                for i, col in enumerate(returns.columns[:5]):
+                    rolling_vol = returns[col].rolling(20).std() * np.sqrt(252) * 100
+                    fig.add_trace(go.Scatter(
+                        x=rolling_vol.index, y=rolling_vol,
+                        mode='lines',
+                        line=dict(color=colors[i % len(colors)], width=2),
+                        name=col
+                    ))
+                
+                fig.update_layout(template='plotly_dark', height=350,
+                                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                                xaxis_title='Date', yaxis_title='Annualized Volatility %',
+                                legend=dict(orientation='h', y=1.1))
+                return fig
+            except Exception as e:
+                logger.error(f"Volatility error: {e}")
+                return go.Figure()
+        
+        # Performance KPIs Chart
+        @self.app.callback(
+            Output('performance-chart', 'figure'),
+            [Input('refresh', 'n_intervals')]
+        )
+        def update_performance(n):
+            try:
+                returns = self.data_provider.get_returns()['BTC']
+                if returns is None or len(returns) < 2:
+                    return go.Figure()
+                
+                # Calculate key metrics
+                annual_ret = ((1 + returns.mean()) ** 252 - 1) * 100
+                volatility = returns.std() * np.sqrt(252) * 100
+                sharpe = (annual_ret / volatility) if volatility > 0 else 0
+                
+                # Sortino ratio (downside deviation)
+                downside = returns[returns < 0]
+                downside_std = downside.std() * np.sqrt(252) if len(downside) > 0 else 0
+                sortino = (annual_ret / downside_std) if downside_std > 0 else 0
+                
+                # Max drawdown
+                cumulative = (1 + returns).cumprod()
+                running_max = cumulative.cummax()
+                max_dd = ((cumulative - running_max) / running_max).min() * 100
+                
+                metrics = ['Annual Return', 'Volatility', 'Sharpe Ratio', 'Sortino Ratio', 'Max Drawdown']
+                values = [annual_ret, volatility, sharpe, sortino, abs(max_dd)]
+                colors = [self.theme['green'] if v > 0 else self.theme['red'] if v < 0 else self.theme['text_muted'] 
+                         for v in [annual_ret, volatility, sharpe, sortino, max_dd]]
+                
+                fig = go.Figure()
+                fig.add_trace(go.Bar(x=metrics, y=values, marker_color=colors))
+                fig.update_layout(template='plotly_dark', height=350,
+                                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                                yaxis_title='Value')
+                return fig
+            except Exception as e:
+                logger.error(f"Performance error: {e}")
+                return go.Figure()
+        
+        # Rolling Sharpe Ratio Chart
+        @self.app.callback(
+            Output('sharpe-chart', 'figure'),
+            [Input('refresh', 'n_intervals')]
+        )
+        def update_sharpe(n):
+            try:
+                returns = self.data_provider.get_returns()['BTC']
+                if returns is None or len(returns) < 20:
+                    return go.Figure()
+                
+                # Calculate rolling Sharpe ratio (assuming 0% risk-free rate)
+                rolling_mean = returns.rolling(20).mean() * 252
+                rolling_std = returns.rolling(20).std() * np.sqrt(252)
+                rolling_sharpe = rolling_mean / rolling_std
+                
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(
+                    x=rolling_sharpe.index, y=rolling_sharpe,
+                    mode='lines',
+                    line=dict(color=self.theme['purple'], width=2),
+                    name='Rolling Sharpe'
+                ))
+                fig.add_hline(y=1, line_dash="dash", line_color=self.theme['green'], 
+                             annotation_text="Sharpe=1")
+                fig.add_hline(y=0, line_dash="dash", line_color=self.theme['text_muted'])
+                fig.update_layout(template='plotly_dark', height=350,
+                                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                                xaxis_title='Date', yaxis_title='Sharpe Ratio')
+                return fig
+            except Exception as e:
+                logger.error(f"Sharpe error: {e}")
+                return go.Figure()
+        
+        # Win Rate & Profit Factor Chart
+        @self.app.callback(
+            Output('winrate-chart', 'figure'),
+            [Input('refresh', 'n_intervals')]
+        )
+        def update_winrate(n):
+            try:
+                returns = self.data_provider.get_returns()['BTC']
+                if returns is None or len(returns) < 2:
+                    return go.Figure()
+                
+                # Calculate win rate and profit factor
+                wins = (returns > 0).sum()
+                losses = (returns < 0).sum()
+                total = wins + losses
+                win_rate = (wins / total * 100) if total > 0 else 0
+                
+                avg_win = returns[returns > 0].mean() if wins > 0 else 0
+                avg_loss = abs(returns[returns < 0].mean()) if losses > 0 else 0
+                profit_factor = (avg_win / avg_loss) if avg_loss > 0 else 0
+                
+                fig = go.Figure()
+                
+                # Win Rate gauge
+                fig.add_trace(go.Indicator(
+                    mode = "gauge+number",
+                    value = win_rate,
+                    title = {'text': "Win Rate %"},
+                    gauge = {
+                        'axis': {'range': [0, 100]},
+                        'bar': {'color': self.theme['green']},
+                        'steps': [
+                            {'range': [0, 50], 'color': self.theme['red']},
+                            {'range': [50, 100], 'color': self.theme['green']}
+                        ],
+                    }
+                ))
+                
+                fig.update_layout(template='plotly_dark', height=350,
+                                paper_bgcolor='rgba(0,0,0,0)')
+                return fig
+            except Exception as e:
+                logger.error(f"Win rate error: {e}")
                 return go.Figure()
     
     def _stat_card(self, title: str, value: str, color: str):

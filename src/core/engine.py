@@ -431,7 +431,7 @@ class TradingEngine:
             # Subscribe to state saved event
             self.event_bus.subscribe(
                 EventType.STATE_SAVED,
-                EventHandler(lambda e: logger.debug(f"Auto-saved: {e.data}"))
+                lambda e: logger.debug(f"Auto-saved: {e.data}")
             )
             
         except Exception as e:

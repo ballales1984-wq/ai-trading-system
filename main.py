@@ -5,12 +5,15 @@ Crypto Commodity Trading System - Main Entry Point
 Experimental system for crypto + commodity-linked trading signals + auto trading
 """
 
+from __future__ import annotations
+
 import sys
 import io
 import os
 import argparse
 import logging
 from datetime import datetime
+from typing import Optional, List, Dict, Any, Callable
 
 # Fix Unicode output on Windows
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
@@ -28,7 +31,8 @@ from trading_simulator import TradingSimulator
 from live_multi_asset import LiveMultiAssetTrader
 
 
-def setup_logging():
+def setup_logging() -> None:
+    """Configure logging for the application."""
     logging.basicConfig(
         level=getattr(logging, config.LOGGING_CONFIG['level']),
         format=config.LOGGING_CONFIG['format'],
@@ -36,7 +40,8 @@ def setup_logging():
     )
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
+    """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         description="Crypto Commodity Trading System"
     )
@@ -78,7 +83,8 @@ def parse_args():
     return parser.parse_args()
 
 
-def run_signals_mode(args):
+def run_signals_mode(args: argparse.Namespace) -> None:
+    """Generate trading signals for all assets."""
     print("\n" + "="*70)
     print("CRYPTO + COMMODITY TRADING SYSTEM")
     print("Generating Trading Signals")
@@ -104,7 +110,8 @@ def run_signals_mode(args):
     print(f"\n💾 Signals exported to: {output_file}")
 
 
-def run_analysis_mode(args):
+def run_analysis_mode(args: argparse.Namespace) -> None:
+    """Run detailed technical analysis on a symbol."""
     print("\n" + "="*70)
     print("DETAILED TECHNICAL ANALYSIS")
     print("="*70 + "\n")
@@ -139,7 +146,8 @@ def run_analysis_mode(args):
     print(f"   Fear/Greed: {sent['social_sentiment']['fear_greed_index']}")
 
 
-def run_dashboard_mode(args):
+def run_dashboard_mode(args: argparse.Namespace) -> None:
+    """Start the interactive dashboard."""
     print("\n" + "="*70)
     print("STARTING INTERACTIVE DASHBOARD")
     print("="*70)
@@ -169,7 +177,8 @@ def run_dashboard_mode(args):
             print_dashboard_summary()
 
 
-def run_test_mode(args):
+def run_test_mode(args: argparse.Namespace) -> None:
+    """Run system tests."""
     print("\n" + "="*70)
     print("RUNNING SYSTEM TESTS")
     print("="*70 + "\n")
@@ -231,7 +240,8 @@ def run_test_mode(args):
     print("="*70 + "\n")
 
 
-def run_backtest_mode(args):
+def run_backtest_mode(args: argparse.Namespace) -> None:
+    """Run backtest mode."""
     print("\n" + "="*70)
     print("BACKTEST MODE")
     print("="*70 + "\n")
@@ -258,7 +268,8 @@ def run_backtest_mode(args):
     print(f"\n💾 Saved to: {output_file}")
 
 
-def run_auto_mode(args):
+def run_auto_mode(args: argparse.Namespace) -> None:
+    """Run auto trading bot."""
     print("\n" + "="*70)
     print("AUTO TRADING BOT")
     print("="*70 + "\n")
@@ -287,8 +298,8 @@ def run_auto_mode(args):
         print(f"🎯 Win Rate: {bot.portfolio.get_win_rate():.1f}%")
 
 
-def run_simulate_mode(args):
-    """Run trading simulation"""
+def run_simulate_mode(args: argparse.Namespace) -> None:
+    """Run trading simulation."""
     from trading_simulator import TradingSimulator
     
     print("\n" + "="*70)
@@ -312,8 +323,8 @@ def run_simulate_mode(args):
         simulator._print_final_results()
 
 
-def run_portfolio_mode(args):
-    """Run portfolio control commands"""
+def run_portfolio_mode(args: argparse.Namespace) -> None:
+    """Run portfolio control commands."""
     from trading_simulator import TradingSimulator
     
     print("\n" + "="*70)
@@ -415,8 +426,8 @@ def run_portfolio_mode(args):
                       f"${t['price']:,.2f} | Qty: {t['quantity']:.4f} | P&L: ${t['pnl']:+,.2f}")
 
 
-def run_live_multi_asset_mode(args):
-    """Run live multi-asset trading"""
+def run_live_multi_asset_mode(args: argparse.Namespace) -> None:
+    """Run live multi-asset trading."""
     from live_multi_asset import LiveMultiAssetTrader
     import signal
     
@@ -449,7 +460,7 @@ def run_live_multi_asset_mode(args):
     )
     
     # Handle signals
-    def signal_handler(sig, frame):
+    def signal_handler(sig: int, frame: Any) -> None:
         print("\n🛑 Shutting down...")
         trader.stop()
         sys.exit(0)
@@ -461,7 +472,8 @@ def run_live_multi_asset_mode(args):
     trader.start()
 
 
-def main():
+def main() -> None:
+    """Main entry point."""
     args = parse_args()
     setup_logging()
     
@@ -498,133 +510,49 @@ def main():
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
 """)
-            
-            choice = input("👉 Select an option [0-9]: ").strip()
+            choice = input("Select option: ").strip()
             
             if choice == '1':
-                print("\n" + "="*50)
-                print("Generating Trading Signals...")
-                print("="*50)
                 run_signals_mode(args)
-                input("\n⏎ Press Enter to continue...")
-                
             elif choice == '2':
-                print("\n📈 ANALYSIS MODE")
-                symbol = input("   Enter symbol (e.g., BTC/USDT): ").strip().upper()
-                if symbol:
-                    args.symbol = symbol
-                    run_analysis_mode(args)
-                else:
-                    print("   ⚠️ Symbol required!")
-                input("\n⏎ Press Enter to continue...")
-                
+                run_analysis_mode(args)
             elif choice == '3':
-                print("\n📉 BACKTEST MODE")
-                try:
-                    days_input = input("   Days to backtest [30]: ").strip()
-                    balance_input = input("   Initial balance [10000]: ").strip()
-                    args.days = int(days_input) if days_input else 30
-                    args.balance = float(balance_input) if balance_input else 10000.0
-                except ValueError:
-                    print("   ⚠️ Invalid input, using defaults")
-                    args.days = 30
-                    args.balance = 10000.0
                 run_backtest_mode(args)
-                input("\n⏎ Press Enter to continue...")
-                
             elif choice == '4':
-                print("\n🎮 SIMULATION MODE")
-                try:
-                    duration_input = input("   Duration in seconds [60]: ").strip()
-                    balance_input = input("   Initial balance [10000]: ").strip()
-                    args.duration = int(duration_input) if duration_input else 60
-                    args.balance = float(balance_input) if balance_input else 10000.0
-                except ValueError:
-                    print("   ⚠️ Invalid input, using defaults")
-                    args.duration = 60
-                    args.balance = 10000.0
                 run_simulate_mode(args)
-                input("\n⏎ Press Enter to continue...")
-                
             elif choice == '5':
-                print("\n🤖 AUTO TRADING BOT")
-                balance_input = input("   Initial balance [10000]: ").strip()
-                try:
-                    args.balance = float(balance_input) if balance_input else 10000.0
-                except ValueError:
-                    args.balance = 10000.0
                 run_auto_mode(args)
-                input("\n⏎ Press Enter to continue...")
-                
             elif choice == '6':
-                print("\n💼 PORTFOLIO")
-                args.portfolio_action = 'check'
                 run_portfolio_mode(args)
-                input("\n⏎ Press Enter to continue...")
-                
             elif choice == '7':
-                print("\n🖥️ LAUNCHING DASHBOARD...")
-                print("   Opening browser at http://localhost:8050")
                 run_dashboard_mode(args)
-                
             elif choice == '8':
-                print("\n🔴 LIVE TRADING")
-                print("   ⚠️ WARNING: This will connect to live exchange!")
-                confirm = input("   Continue? (yes/no): ").strip().lower()
-                if confirm == 'yes':
-                    assets_input = input("   Assets (comma-separated) [BTCUSDT,ETHUSDT]: ").strip()
-                    args.assets = assets_input if assets_input else "BTCUSDT,ETHUSDT"
-                    run_live_multi_asset_mode(args)
-                else:
-                    print("   Cancelled.")
-                input("\n⏎ Press Enter to continue...")
-                
+                run_live_multi_asset_mode(args)
             elif choice == '9':
-                print("\n✅ RUNNING SYSTEM TESTS...")
                 run_test_mode(args)
-                input("\n⏎ Press Enter to continue...")
-                
             elif choice == '0':
-                print("\n" + "="*70)
-                print("👋 Goodbye! Thank you for using Quantum AI Trading System")
-                print("="*70 + "\n")
-                break
-                
+                print("Goodbye! 👋")
+                sys.exit(0)
             else:
-                print("\n⚠️ Invalid option! Please try again.")
-                input("\n⏎ Press Enter to continue...")
-        return
-    
-    try:
-        if args.dashboard or args.mode == 'dashboard':
-            run_dashboard_mode(args)
-        elif args.mode == 'signals':
-            run_signals_mode(args)
-        elif args.mode == 'analysis':
-            run_analysis_mode(args)
-        elif args.mode == 'test':
-            run_test_mode(args)
-        elif args.mode == 'backtest':
-            run_backtest_mode(args)
-        elif args.mode == 'auto':
-            run_auto_mode(args)
-        elif args.mode == 'simulate':
-            run_simulate_mode(args)
-        elif args.mode == 'portfolio':
-            run_portfolio_mode(args)
-        elif args.mode == 'live':
-            run_live_multi_asset_mode(args)
-        else:
-            print(f"Unknown mode: {args.mode}")
-            
-    except KeyboardInterrupt:
-        print("\n\n👋 Bye!")
-        sys.exit(0)
-    except Exception as e:
-        print(f"\n❌ Error: {e}")
-        sys.exit(1)
+                print("Invalid option. Please try again.")
+    else:
+        # Run specific mode
+        mode_handlers: Dict[str, Callable[[argparse.Namespace], None]] = {
+            'signals': run_signals_mode,
+            'analysis': run_analysis_mode,
+            'dashboard': run_dashboard_mode,
+            'test': run_test_mode,
+            'backtest': run_backtest_mode,
+            'auto': run_auto_mode,
+            'simulate': run_simulate_mode,
+            'portfolio': run_portfolio_mode,
+            'live': run_live_multi_asset_mode,
+        }
+        
+        handler = mode_handlers.get(args.mode)
+        if handler:
+            handler(args)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
-

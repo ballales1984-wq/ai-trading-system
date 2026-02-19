@@ -106,19 +106,20 @@ class EventBus:
         
         logger.info("Event bus initialized")
     
-    def subscribe(self, event_type: EventType, handler: EventHandler):
+    def subscribe(self, event_type: EventType, handler: Any):
         """
         Subscribe to an event type.
         
         Args:
             event_type: Type of event to subscribe to
-            handler: Event handler
+            handler: Event handler (EventHandler instance or callable)
         """
         if event_type not in self._subscribers:
             self._subscribers[event_type] = []
         
         self._subscribers[event_type].append(handler)
-        logger.debug(f"Subscribed {handler.__class__.__name__} to {event_type.value}")
+        handler_name = handler.__class__.__name__ if hasattr(handler, '__class__') else handler.__name__
+        logger.debug(f"Subscribed {handler_name} to {event_type.value}")
     
     def unsubscribe(self, event_type: EventType, handler: EventHandler):
         """
@@ -155,9 +156,17 @@ class EventBus:
         # Notify all handlers
         for handler in handlers:
             try:
-                await handler.handle(event)
+                # Check if handler is an EventHandler instance or a callable
+                if isinstance(handler, EventHandler):
+                    await handler.handle(event)
+                elif callable(handler):
+                    # Handle callable functions (e.g., lambdas)
+                    result = handler(event)
+                    if asyncio.iscoroutine(result):
+                        await result
             except Exception as e:
-                logger.error(f"Error in event handler {handler.__class__.__name__}: {e}")
+                handler_name = handler.__class__.__name__ if hasattr(handler, '__class__') else handler.__name__
+                logger.error(f"Error in event handler {handler_name}: {e}")
     
     async def publish_sync(self, event: Event):
         """Publish event synchronously."""
@@ -167,8 +176,16 @@ class EventBus:
         """Log event to file."""
         log_file = self._log_dir / f"events_{event.timestamp.strftime('%Y%m%d')}.jsonl"
         
+        def json_serializable(obj):
+            """Convert objects to JSON serializable format."""
+            if isinstance(obj, datetime):
+                return obj.isoformat()
+            elif hasattr(obj, '__dict__'):
+                return obj.__dict__
+            return str(obj)
+        
         with open(log_file, 'a') as f:
-            f.write(json.dumps(event.to_dict()) + '\n')
+            f.write(json.dumps(event.to_dict(), default=json_serializable) + '\n')
     
     def get_event_history(
         self,

@@ -1,4 +1,9 @@
 [
+  "test_core.py::test_order_manager",
+  "test_core.py::test_paper_broker",
+  "test_core.py::test_portfolio_manager",
+  "test_core.py::test_risk_engine",
+  "test_core.py::test_trading_engine",
   "tests/test_all_modules.py::TestConfig::test_config_loading",
   "tests/test_all_modules.py::TestConfig::test_crypto_symbols",
   "tests/test_all_modules.py::TestConfig::test_dashboard_config",

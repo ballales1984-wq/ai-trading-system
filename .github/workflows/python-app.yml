@@ -1,4 +1,4 @@
-name: AI Trading System CI
+name: AI Trading System CI/CD
 
 on:
   push:
@@ -7,22 +7,61 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  PYTHON_VERSION: '3.11'
+  PIP_CACHE_DIR: ~/.cache/pip
+
 jobs:
+  # ==========================================
+  # LINT & TYPE CHECK
+  # ==========================================
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install linting dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 mypy pylint ruff
+    
+    - name: Lint with ruff (fast)
+      run: |
+        ruff check . --output-format=github --select=E,F,W,C90
+    
+    - name: Run type checking with mypy
+      run: |
+        pip install pandas numpy scikit-learn
+        mypy src/ --ignore-missing-imports --no-error-summary || true
+    
+    - name: Check code complexity
+      run: |
+        pylint src/ --disable=all --enable=W0611,W0622,C0301,R0913,R0914 || true
+
+  # ==========================================
+  # TEST SUITE
+  # ==========================================
   test:
     runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python 3.11
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Cache pip packages
       uses: actions/cache@v4
       with:
-        path: ~/.cache/pip
+        path: ${{ env.PIP_CACHE_DIR }}
         key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
@@ -31,11 +70,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest pytest-cov
+        pip install pytest pytest-cov pytest-asyncio
     
     - name: Run tests with coverage
       run: |
-        pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
+        pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing --cov-branch
     
     - name: Upload coverage to Codecov
       if: success()
@@ -45,55 +84,140 @@ jobs:
         flags: unittests
         name: codecov-umbrella
 
-  lint:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8
-    
-    - name: Lint with flake8
-      run: |
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-  docker-build:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Build Docker image
-      run: docker build -t ai-trading-system:test .
-    
-    - name: Test Docker image
-      run: |
-        docker run -d --name test-app ai-trading-system:test
-        sleep 10
-        docker logs test-app
-        docker stop test-app
-
+  # ==========================================
+  # SECURITY SCANNING
+  # ==========================================
   security:
     runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python 3.11
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: ${{ env.PYTHON_VERSION }}
     
-    - name: Check for security vulnerabilities
+    - name: Check for known vulnerabilities with pip-audit
       run: |
-        pip install safety
-        safety check || true
+        pip install pip-audit
+        pip-audit -r requirements.txt || true
+    
+    - name: Run Bandit security scan
+      run: |
+        pip install bandit
+        bandit -r src/ -f json -o bandit-report.json || true
+        bandit -r src/ -f txt --severity-level medium || true
+    
+    - name: Check for secret leaks
+      uses: trufflesecurity/trufflehog@main
+      with:
+        base: ${{ github.event.repository.default_branch }}
+        head: HEAD
+
+  # ==========================================
+  # DOCKER BUILD & TEST
+  # ==========================================
+  docker:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: false
+        tags: ai-trading-system:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Test Docker image
+      run: |
+        docker build -t ai-trading-system:test .
+        docker run -d --name test-app ai-trading-system:test
+        sleep 10
+        docker logs test-app
+        docker stop test-app
+    
+    - name: Run smoke tests in container
+      run: |
+        docker run --rm ai-tradingc "import sys-system:test python -; sys.exit(0)" || exit 1
+
+  # ==========================================
+  # PERFORMANCE BENCHMARKS (optional)
+  # ==========================================
+  benchmark:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pytest-benchmark
+    
+    - name: Run benchmarks
+      run: |
+        pytest tests/ --benchmark-only --benchmark-json=benchmark.json || true
+    
+    - name: Store benchmark result
+      uses: benchmark-action/github-action-benchmark@v1
+      with:
+        tool: 'pytest'
+        output-file-path: benchmark.json
+        auto-push: false
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        alert-threshold: '150'
+        comment-on-alert: true
+
+  # ==========================================
+  # DEPLOYMENT (main branch only)
+  # ==========================================
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [docker, security]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ai-trading-system
+        tags: |
+          type=ref,event=branch
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: Build and push
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max

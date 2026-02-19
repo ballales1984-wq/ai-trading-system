@@ -1,44 +1,83 @@
-# Git
+# ============================================================
+# Docker Ignore - Production Optimization
+# ============================================================
+
+# Version control
 .git
 .gitignore
+.github
 
-# Python
-__pycache__/
+# Python cache
+__pycache__
 *.py[cod]
 *$py.class
 *.so
 .Python
-*.egg-info/
-dist/
-build/
+*.egg-info
+.pytest_cache
+.mypy_cache
+.ruff_cache
 
 # Virtual environments
-venv/
-env/
-.venv/
+venv
+.venv
+env
+ENV
 
 # IDE
-.vscode/
-.idea/
+.vscode
+.idea
 *.swp
 *.swo
+*~
 
-# Testing
-.pytest_cache/
+# Documentation
+*.md
+!README.md
+docs
+LICENSE
+
+# Test files
+tests
+test_*.py
+*_test.py
+pytest.ini
 .coverage
-htmlcov/
+htmlcov
 
-# Data files
-*.json
-*.csv
-*.db
-
-# Logs
+# Development files
+.env
+.env.local
+.env.*.local
 *.log
 
-# OS
+# Build artifacts
+dist
+build
+*.egg
+
+# Temporary files
+*.tmp
+*.bak
+*.temp
+.cache
+
+# OS files
 .DS_Store
 Thumbs.db
 
-# Cache
-cache/
+# Data files (will be mounted in production)
+data/*
+!data/.gitkeep
+
+# Database files
+*.db
+*.sqlite3
+
+# Jupyter notebooks
+*.ipynb
+.ipynb_checkpoints
+
+# CI/CD
+.github/workflows/*.yml
+!.github/workflows/python-app.yml
