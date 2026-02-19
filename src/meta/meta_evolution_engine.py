@@ -6,12 +6,15 @@ The highest level of the quant ecosystem: simultaneous evolution of
 RL agents, ML models, GP strategies, and market parameters.
 """
 
+import logging
 import random
 import numpy as np
 from typing import Dict, List, Tuple, Optional, Callable
 from dataclasses import dataclass, field
 import json
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -61,8 +64,8 @@ class HybridAgent:
                 rl_action, _ = self.rl_component.forward(state)
                 decisions.append(float(rl_action.numpy().flatten()[0]))
                 weights.append(self.weight_rl)
-            except:
-                pass
+            except Exception as e:
+                logger.warning(f"RL component error: {e}")
         
         # ML decision
         if self.ml_component is not None:
@@ -71,8 +74,8 @@ class HybridAgent:
                 ml_action = float(ml_pred) if isinstance(ml_pred, (int, float)) else 0.0
                 decisions.append(ml_action)
                 weights.append(self.weight_ml)
-            except:
-                pass
+            except Exception as e:
+                logger.warning(f"ML component error: {e}")
         
         # GP decision
         if self.gp_component is not None:
@@ -80,8 +83,8 @@ class HybridAgent:
                 gp_action = self.gp_component.evaluate(state)
                 decisions.append(float(gp_action))
                 weights.append(self.weight_gp)
-            except:
-                pass
+            except Exception as e:
+                logger.warning(f"GP component error: {e}")
         
         if not decisions:
             return 0.0
