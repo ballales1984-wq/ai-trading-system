@@ -60,3 +60,6 @@ passlib[bcrypt]==1.7.4
 SQLAlchemy==2.0.36
 psycopg2-binary==2.9.10
 alembic==1.14.1
+
+# Interactive Brokers (optional)
+# ib_insync==0.9.86

@@ -43,7 +43,7 @@ DA FARE:      ░░░░░░░░░░░░░░░░░░░░░░
 |---|-----------|------|-----------|
 | 11 | ✅ **Database Layer** | `app/database/` | 12 modelli SQLAlchemy + Repository pattern |
 | 12 | ✅ **Portfolio Performance** | `app/portfolio/` | performance.py + optimization.py (Markowitz, Risk Parity, etc.) |
-| 13 | ⏳ **Connettore Interactive Brokers** | `app/execution/connectors/` | Non implementato (richiede IB Gateway) |
+| 13 | ✅ **Connettore Interactive Brokers** | `app/execution/connectors/ib_connector.py` | Implementato con ib_insync (stocks, futures, forex, options) |
 | 14 | ✅ **Connettore Bybit** | `app/execution/broker_connector.py` | BybitConnector con API V5 |
 | 15 | ✅ **Cache Utils** | `src/utils_cache.py` | OHLCV, ticker, ML prediction con Binance API |
 | 16 | ✅ **Base Strategy** | `app/strategies/base_strategy.py` | Abstract — MomentumStrategy, MeanReversionStrategy implementati |
