@@ -295,6 +295,75 @@ class StateManager:
                 )
             """)
             
+            # Signals table - ML signals history
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS signals (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    symbol TEXT,
+                    signal_type TEXT,
+                    confidence REAL,
+                    source TEXT,
+                    timestamp TEXT
+                )
+            """)
+            
+            # Price history table - OHLCV for backtesting
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS price_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    symbol TEXT,
+                    timestamp TEXT,
+                    open REAL,
+                    high REAL,
+                    low REAL,
+                    close REAL,
+                    volume REAL,
+                    UNIQUE(symbol, timestamp)
+                )
+            """)
+            
+            # Model performance table - Track ML model accuracy
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS model_performance (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    model_id TEXT,
+                    accuracy REAL,
+                    precision REAL,
+                    recall REAL,
+                    f1 REAL,
+                    confusion_matrix TEXT,
+                    timestamp TEXT
+                )
+            """)
+            
+            # Backtest results table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS backtest_results (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    strategy TEXT,
+                    initial_balance REAL,
+                    final_balance REAL,
+                    total_return REAL,
+                    total_trades INTEGER,
+                    winning_trades INTEGER,
+                    losing_trades INTEGER,
+                    win_rate REAL,
+                    max_drawdown REAL,
+                    sharpe_ratio REAL,
+                    timestamp TEXT
+                )
+            """)
+            
+            # Create indexes for better query performance
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_signals_symbol ON signals(symbol)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_signals_timestamp ON signals(timestamp)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_price_history_symbol ON price_history(symbol)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_price_history_timestamp ON price_history(timestamp)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_model_performance_model ON model_performance(model_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_backtest_strategy ON backtest_results(strategy)")
+            
+            conn.commit()
+            
 # Event
     
     # Portfolio methods
@@ -628,3 +697,241 @@ class StateManager:
             'positions': [p.to_dict() for p in positions],
             'orders': [o.to_dict() for o in orders]
         }
+    
+    # ========================================
+    # SIGNALS methods
+    # ========================================
+    def save_signal(self, signal: SignalState):
+        """Save ML signal."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO signals (symbol, signal_type, confidence, source, timestamp)
+                VALUES (?, ?, ?, ?, ?)
+            """, (
+                signal.symbol,
+                signal.signal_type,
+                signal.confidence,
+                signal.source,
+                signal.timestamp.isoformat()
+            ))
+            conn.commit()
+    
+    def get_signals(self, symbol: Optional[str] = None, limit: int = 100) -> List[SignalState]:
+        """Get signal history."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            if symbol:
+                cursor.execute("""
+                    SELECT * FROM signals WHERE symbol = ? ORDER BY timestamp DESC LIMIT ?
+                """, (symbol, limit))
+            else:
+                cursor.execute("SELECT * FROM signals ORDER BY timestamp DESC LIMIT ?", (limit,))
+            
+            return [
+                SignalState(
+                    symbol=row['symbol'],
+                    signal_type=row['signal_type'],
+                    confidence=row['confidence'],
+                    source=row['source'],
+                    timestamp=datetime.fromisoformat(row['timestamp'])
+                )
+                for row in cursor.fetchall()
+            ]
+    
+    # ========================================
+    # PRICE HISTORY methods
+    # ========================================
+    def save_price_history(self, price: PriceHistoryState):
+        """Save price history entry."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT OR REPLACE INTO price_history 
+                (symbol, timestamp, open, high, low, close, volume)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                price.symbol,
+                price.timestamp.isoformat(),
+                price.open,
+                price.high,
+                price.low,
+                price.close,
+                price.volume
+            ))
+            conn.commit()
+    
+    def save_price_history_batch(self, prices: List[PriceHistoryState]):
+        """Save multiple price history entries."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            for price in prices:
+                cursor.execute("""
+                    INSERT OR REPLACE INTO price_history 
+                    (symbol, timestamp, open, high, low, close, volume)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    price.symbol,
+                    price.timestamp.isoformat(),
+                    price.open,
+                    price.high,
+                    price.low,
+                    price.close,
+                    price.volume
+                ))
+            conn.commit()
+    
+    def get_price_history(self, symbol: str, limit: int = 500) -> List[PriceHistoryState]:
+        """Get price history for a symbol."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT * FROM price_history 
+                WHERE symbol = ? 
+                ORDER BY timestamp DESC LIMIT ?
+            """, (symbol, limit))
+            
+            return [
+                PriceHistoryState(
+                    symbol=row['symbol'],
+                    timestamp=datetime.fromisoformat(row['timestamp']),
+                    open=row['open'],
+                    high=row['high'],
+                    low=row['low'],
+                    close=row['close'],
+                    volume=row['volume']
+                )
+                for row in cursor.fetchall()
+            ]
+    
+    # ========================================
+    # MODEL PERFORMANCE methods
+    # ========================================
+    def save_model_performance(self, perf: ModelPerformanceState):
+        """Save model performance metrics."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO model_performance 
+                (model_id, accuracy, precision, recall, f1, confusion_matrix, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                perf.model_id,
+                perf.accuracy,
+                perf.precision,
+                perf.recall,
+                perf.f1,
+                perf.confusion_matrix,
+                perf.timestamp.isoformat()
+            ))
+            conn.commit()
+    
+    def get_model_performance(self, model_id: str, limit: int = 100) -> List[ModelPerformanceState]:
+        """Get model performance history."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT * FROM model_performance 
+                WHERE model_id = ? 
+                ORDER BY timestamp DESC LIMIT ?
+            """, (model_id, limit))
+            
+            return [
+                ModelPerformanceState(
+                    model_id=row['model_id'],
+                    accuracy=row['accuracy'],
+                    precision=row['precision'],
+                    recall=row['recall'],
+                    f1=row['f1'],
+                    confusion_matrix=row['confusion_matrix'],
+                    timestamp=datetime.fromisoformat(row['timestamp'])
+                )
+                for row in cursor.fetchall()
+            ]
+    
+    # ========================================
+    # BACKTEST RESULTS methods
+    # ========================================
+    def save_backtest_result(self, result: BacktestResultState):
+        """Save backtest result."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO backtest_results 
+                (strategy, initial_balance, final_balance, total_return, 
+                 total_trades, winning_trades, losing_trades, win_rate, 
+                 max_drawdown, sharpe_ratio, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                result.strategy,
+                result.initial_balance,
+                result.final_balance,
+                result.total_return,
+                result.total_trades,
+                result.winning_trades,
+                result.losing_trades,
+                result.win_rate,
+                result.max_drawdown,
+                result.sharpe_ratio,
+                result.timestamp.isoformat()
+            ))
+            conn.commit()
+    
+    def get_backtest_results(self, strategy: Optional[str] = None, limit: int = 50) -> List[BacktestResultState]:
+        """Get backtest results."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            if strategy:
+                cursor.execute("""
+                    SELECT * FROM backtest_results 
+                    WHERE strategy = ? 
+                    ORDER BY timestamp DESC LIMIT ?
+                """, (strategy, limit))
+            else:
+                cursor.execute("SELECT * FROM backtest_results ORDER BY timestamp DESC LIMIT ?", (limit,))
+            
+            return [
+                BacktestResultState(
+                    strategy=row['strategy'],
+                    initial_balance=row['initial_balance'],
+                    final_balance=row['final_balance'],
+                    total_return=row['total_return'],
+                    total_trades=row['total_trades'],
+                    winning_trades=row['winning_trades'],
+                    losing_trades=row['losing_trades'],
+                    win_rate=row['win_rate'],
+                    max_drawdown=row['max_drawdown'],
+                    sharpe_ratio=row['sharpe_ratio'],
+                    timestamp=datetime.fromisoformat(row['timestamp'])
+                )
+                for row in cursor.fetchall()
+            ]
+    
+    def get_best_backtest_result(self, strategy: str) -> Optional[BacktestResultState]:
+        """Get best backtest result for a strategy (by total_return)."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT * FROM backtest_results 
+                WHERE strategy = ? 
+                ORDER BY total_return DESC LIMIT 1
+            """, (strategy,))
+            
+            row = cursor.fetchone()
+            if row:
+                return BacktestResultState(
+                    strategy=row['strategy'],
+                    initial_balance=row['initial_balance'],
+                    final_balance=row['final_balance'],
+                    total_return=row['total_return'],
+                    total_trades=row['total_trades'],
+                    winning_trades=row['winning_trades'],
+                    losing_trades=row['losing_trades'],
+                    win_rate=row['win_rate'],
+                    max_drawdown=row['max_drawdown'],
+                    sharpe_ratio=row['sharpe_ratio'],
+                    timestamp=datetime.fromisoformat(row['timestamp'])
+                )
+        return None
