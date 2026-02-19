@@ -846,7 +846,7 @@ class PurgedWalkForward:
             test_start = train_end + purge_size
             test_end = min(test_start + test_size, n)
             
-            if train_end_ embargoed - train_start < 50 or test_end - test_start < 10:
+            if train_end_embargoed - train_start < 50 or test_end - test_start < 10:
                 continue
             
             X_train = X[train_start:train_end_embargoed]
