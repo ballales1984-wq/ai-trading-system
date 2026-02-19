@@ -394,6 +394,10 @@ USE_BINANCE_TESTNET: bool = os.getenv('USE_BINANCE_TESTNET', 'false').lower() ==
 # Get your API key from: https://coinmarketcap.com/api/
 COINMARKETCAP_API_KEY: str = os.getenv('COINMARKETCAP_API_KEY', '')
 
+# ==================== EIA API CONFIGURATION ====================
+# Get your API key from: https://www.eia.gov/opendata/
+EIA_API_KEY: str = os.getenv('EIA_API_KEY', 'dx4gm4LcTfp9bYfmMmTd5ADkfjfT1W1rIkK6l6jH')
+
 # Simulated price ranges for testing
 SIMULATED_PRICES: Dict[str, Tuple[float, float]] = {
     # Major cryptos

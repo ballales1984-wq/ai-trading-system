@@ -15,7 +15,7 @@ from sqlalchemy import desc, func, and_
 from app.database.models import (
     PriceRecord, MacroEvent, NaturalEvent, NewsRecord,
     InnovationRecord, OrderRecord, TradeRecord, PositionRecord,
-    PortfolioSnapshot, SignalRecord, SourceWeight
+    PortfolioSnapshot, SignalRecord, SourceWeight, EnergyRecord
 )
 
 logger = logging.getLogger(__name__)
@@ -414,6 +414,46 @@ class SourceWeightRepository(BaseRepository):
         return {r.source_name: r.weight for r in records}
 
 
+class EnergyRepository(BaseRepository):
+    """Repository for energy data (EIA)."""
+
+    def save_energy(self, record: EnergyRecord) -> EnergyRecord:
+        self.session.add(record)
+        self.commit()
+        return record
+
+    def save_energy_bulk(self, records: List[EnergyRecord]):
+        self.session.bulk_save_objects(records)
+        self.commit()
+
+    def get_energy_data(
+        self,
+        energy_type: Optional[str] = None,
+        product_name: Optional[str] = None,
+        start: Optional[datetime] = None,
+        end: Optional[datetime] = None,
+        limit: int = 100,
+    ) -> List[EnergyRecord]:
+        query = self.session.query(EnergyRecord)
+        if energy_type:
+            query = query.filter_by(energy_type=energy_type)
+        if product_name:
+            query = query.filter_by(product_name=product_name)
+        if start:
+            query = query.filter(EnergyRecord.timestamp >= start)
+        if end:
+            query = query.filter(EnergyRecord.timestamp <= end)
+        return query.order_by(desc(EnergyRecord.timestamp)).limit(limit).all()
+
+    def get_latest_energy(self, energy_type: str) -> Optional[EnergyRecord]:
+        return (
+            self.session.query(EnergyRecord)
+            .filter_by(energy_type=energy_type)
+            .order_by(desc(EnergyRecord.timestamp))
+            .first()
+        )
+
+
 # ============================================================================
 # UNIFIED REPOSITORY
 # ============================================================================
@@ -439,6 +479,7 @@ class TradingRepository:
         self.portfolio = PortfolioRepository(session)
         self.signals = SignalRepository(session)
         self.source_weights = SourceWeightRepository(session)
+        self.energy = EnergyRepository(session)
 
     def close(self):
         """Close the session."""

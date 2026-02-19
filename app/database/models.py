@@ -239,6 +239,25 @@ class SignalRecord(Base):
     result_pnl = Column(Float, nullable=True)
 
 
+class EnergyRecord(Base):
+    """Energy commodity data from EIA (oil, gas, etc.)."""
+    __tablename__ = "energy_records"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    timestamp = Column(DateTime, nullable=False, index=True)
+    energy_type = Column(String(50), nullable=False)  # crude_oil, natural_gas, etc.
+    product_name = Column(String(100), nullable=True)  # WTI, Brent, Henry Hub, etc.
+    value = Column(Float, nullable=False)
+    unit = Column(String(20), nullable=True)  # USD/barrel, USD/MMBtu, etc.
+    area = Column(String(50), nullable=True)  # US, OPEC, Europe, etc.
+    source = Column(String(30), default="eia")
+    metadata_json = Column(JSON, nullable=True)
+
+    __table_args__ = (
+        Index("ix_energy_type_ts", "energy_type", "timestamp"),
+    )
+
+
 class SourceWeight(Base):
     """API source reliability weights (reinforcement learning)."""
     __tablename__ = "source_weights"

@@ -7,9 +7,13 @@ REST API for market data and price feeds.
 from datetime import datetime, timedelta
 from typing import List, Optional
 import random
+import os
+import logging
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter()
@@ -221,3 +225,110 @@ async def get_index_price(symbol: str) -> dict:
         "mark_price": base_price * 1.0001,
         "last_update": datetime.utcnow().isoformat(),
     }
+
+
+# ============================================================================
+# COINMARKETCAP ENDPOINTS
+# ============================================================================
+
+def _get_cmc_client():
+    """Lazy-load CoinMarketCap client."""
+    try:
+        from src.external.coinmarketcap_client import CoinMarketCapClient
+        api_key = os.getenv("COINMARKETCAP_API_KEY", "")
+        if not api_key:
+            return None
+        return CoinMarketCapClient(api_key=api_key)
+    except ImportError:
+        logger.warning("CoinMarketCap client not available")
+        return None
+
+
+@router.get("/cmc/global")
+async def get_cmc_global_metrics() -> dict:
+    """
+    Get global crypto market metrics from CoinMarketCap.
+    Returns BTC dominance, total market cap, active cryptos, etc.
+    """
+    client = _get_cmc_client()
+    if not client:
+        raise HTTPException(status_code=503, detail="CoinMarketCap API not configured")
+    
+    try:
+        metrics = await client.get_global_metrics()
+        return {
+            "source": "coinmarketcap",
+            "timestamp": datetime.utcnow().isoformat(),
+            "data": metrics,
+        }
+    except Exception as e:
+        logger.error(f"CMC global metrics error: {e}")
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@router.get("/cmc/quote/{symbol}")
+async def get_cmc_quote(symbol: str) -> dict:
+    """
+    Get real-time quote for a cryptocurrency from CoinMarketCap.
+    """
+    client = _get_cmc_client()
+    if not client:
+        raise HTTPException(status_code=503, detail="CoinMarketCap API not configured")
+    
+    try:
+        quote = await client.get_quote(symbol.upper())
+        return {
+            "source": "coinmarketcap",
+            "symbol": symbol.upper(),
+            "timestamp": datetime.utcnow().isoformat(),
+            "data": quote,
+        }
+    except Exception as e:
+        logger.error(f"CMC quote error for {symbol}: {e}")
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@router.get("/cmc/sentiment")
+async def get_cmc_market_sentiment() -> dict:
+    """
+    Get market sentiment proxy from CoinMarketCap data.
+    Uses BTC dominance, volume ratios, and market momentum.
+    """
+    client = _get_cmc_client()
+    if not client:
+        raise HTTPException(status_code=503, detail="CoinMarketCap API not configured")
+    
+    try:
+        sentiment = await client.get_market_sentiment_proxy()
+        return {
+            "source": "coinmarketcap",
+            "timestamp": datetime.utcnow().isoformat(),
+            "data": sentiment,
+        }
+    except Exception as e:
+        logger.error(f"CMC sentiment error: {e}")
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@router.get("/cmc/top")
+async def get_cmc_top_cryptos(
+    limit: int = Query(20, ge=1, le=100),
+) -> dict:
+    """
+    Get top cryptocurrencies by market cap from CoinMarketCap.
+    """
+    client = _get_cmc_client()
+    if not client:
+        raise HTTPException(status_code=503, detail="CoinMarketCap API not configured")
+    
+    try:
+        listings = await client.get_listings(limit=limit)
+        return {
+            "source": "coinmarketcap",
+            "timestamp": datetime.utcnow().isoformat(),
+            "count": len(listings) if isinstance(listings, list) else 0,
+            "data": listings,
+        }
+    except Exception as e:
+        logger.error(f"CMC top cryptos error: {e}")
+        raise HTTPException(status_code=502, detail=str(e))

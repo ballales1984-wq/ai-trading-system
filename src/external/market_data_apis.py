@@ -384,12 +384,109 @@ class QuandlClient(BaseAPIClient):
 
 
 # ---------------------------------------------------------------------------
+# CoinMarketCap API Client
+# ---------------------------------------------------------------------------
+
+class CoinMarketCapClient(BaseAPIClient):
+    """
+    CoinMarketCap Pro API for crypto market data, rankings, and global metrics.
+    Docs: https://coinmarketcap.com/api/documentation/v1/
+    """
+
+    def __init__(self, api_key: str = ""):
+        super().__init__(
+            name="coinmarketcap",
+            category=APICategory.MARKET_DATA,
+            api_key=api_key,
+            base_url="https://pro-api.coinmarketcap.com",
+            rate_limit=RateLimitConfig(
+                max_requests_per_minute=30,
+                max_requests_per_second=1,
+            ),
+        )
+
+    async def fetch(self, **kwargs) -> List[NormalizedRecord]:
+        symbol = kwargs.get("symbol", "BTC")
+        limit = kwargs.get("limit", 100)
+
+        records: List[NormalizedRecord] = []
+        if not self.api_key:
+            logger.warning("CoinMarketCap API key not set")
+            return records
+
+        # Get listings
+        listings_url = f"{self.base_url}/v1/cryptocurrency/listings/latest"
+        params = {"limit": limit, "convert": "USD"}
+
+        if aiohttp is None:
+            logger.warning("aiohttp not installed — skipping CoinMarketCap fetch")
+            return records
+
+        headers = {"X-CMC_PRO_API_KEY": self.api_key}
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(listings_url, params=params, headers=headers) as resp:
+                    if resp.status != 200:
+                        logger.error(f"CoinMarketCap HTTP {resp.status}")
+                        return records
+                    data = await resp.json()
+
+            if "data" not in data:
+                return records
+
+            for coin in data.get("data", []):
+                quote = coin.get("quote", {}).get("USD", {})
+                ts = datetime.now(timezone.utc)
+
+                records.append(
+                    NormalizedRecord(
+                        timestamp=ts,
+                        category=APICategory.MARKET_DATA,
+                        source_api="coinmarketcap",
+                        data_type="market_data",
+                        payload={
+                            "asset": coin.get("symbol"),
+                            "name": coin.get("name"),
+                            "rank": coin.get("cmc_rank"),
+                            "price": quote.get("price"),
+                            "volume_24h": quote.get("volume_24h"),
+                            "market_cap": quote.get("market_cap"),
+                            "percent_change_24h": quote.get("percent_change_24h"),
+                            "percent_change_7d": quote.get("percent_change_7d"),
+                        },
+                        quality=DataQuality.HIGH,
+                    )
+                )
+        except Exception as e:
+            logger.error(f"CoinMarketCap fetch error: {e}")
+
+        return records
+
+    async def health_check(self) -> bool:
+        if aiohttp is None or not self.api_key:
+            return False
+        try:
+            headers = {"X-CMC_PRO_API_KEY": self.api_key}
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{self.base_url}/v1/cryptocurrency/map",
+                    params={"limit": 1},
+                    headers=headers
+                ) as resp:
+                    return resp.status == 200
+        except Exception:
+            return False
+
+
+# ---------------------------------------------------------------------------
 # Factory helpers
 # ---------------------------------------------------------------------------
 
 def create_market_data_clients(
     binance_key: str = "",
     coingecko_key: str = "",
+    coinmarketcap_key: str = "",
     alpha_vantage_key: str = "",
     quandl_key: str = "",
     binance_testnet: bool = False,
@@ -398,6 +495,8 @@ def create_market_data_clients(
     clients: List[BaseAPIClient] = []
     clients.append(BinanceMarketClient(api_key=binance_key, testnet=binance_testnet))
     clients.append(CoinGeckoClient(api_key=coingecko_key))
+    if coinmarketcap_key:
+        clients.append(CoinMarketCapClient(api_key=coinmarketcap_key))
     if alpha_vantage_key:
         clients.append(AlphaVantageClient(api_key=alpha_vantage_key))
     if quandl_key:
@@ -410,6 +509,7 @@ def create_market_data_clients_from_env() -> List[BaseAPIClient]:
     return create_market_data_clients(
         binance_key=os.getenv("BINANCE_API_KEY", ""),
         coingecko_key=os.getenv("COINGECKO_API_KEY", ""),
+        coinmarketcap_key=os.getenv("COINMARKETCAP_API_KEY", ""),
         alpha_vantage_key=os.getenv("ALPHA_VANTAGE_API_KEY", ""),
         quandl_key=os.getenv("QUANDL_API_KEY", ""),
         binance_testnet=os.getenv("BINANCE_TESTNET", "false").lower() == "true",

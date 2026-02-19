@@ -40,6 +40,7 @@ from .market_data_apis import (
     AlphaVantageClient,
     BinanceMarketClient,
     CoinGeckoClient,
+    CoinMarketCapClient,
     QuandlClient,
     create_market_data_clients,
     create_market_data_clients_from_env,

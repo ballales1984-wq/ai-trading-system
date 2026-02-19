@@ -100,6 +100,18 @@ class DataCollector:
         if CCXT_AVAILABLE and not self.simulation:
             self._init_exchange()
         
+        # Initialize CoinMarketCap client for enriched market data
+        self._cmc_client = None
+        try:
+            from src.external.coinmarketcap_client import CoinMarketCapClient
+            self._cmc_client = CoinMarketCapClient()
+            if self._cmc_client.test_connection():
+                logger.info("CoinMarketCap API available for data enrichment")
+            else:
+                self._cmc_client = None
+        except Exception:
+            pass
+        
         logger.info(f"DataCollector initialized (simulation={simulation}, exchange={exchange})")
     
     def _init_exchange(self):
@@ -250,6 +262,21 @@ class DataCollector:
                 high_24h = current_price
                 low_24h = current_price
         
+        market_cap = 0
+        
+        # Enrich with CoinMarketCap data if available
+        if self._cmc_client:
+            try:
+                coin_sym = symbol.replace('USDT', '').replace('/', '').replace('USD', '')
+                cmc_data = self._cmc_client.get_quote(coin_sym)
+                if cmc_data:
+                    market_cap = cmc_data.get('market_cap', 0) or 0
+                    # Use CMC price if exchange price unavailable
+                    if current_price == 0 and cmc_data.get('price'):
+                        current_price = cmc_data['price']
+            except Exception as e:
+                logger.debug(f"CMC enrichment failed for {symbol}: {e}")
+        
         return MarketData(
             symbol=symbol,
             name=name or symbol,
@@ -259,7 +286,7 @@ class DataCollector:
             volume_24h=volume,
             high_24h=high_24h,
             low_24h=low_24h,
-            market_cap=0  # Not always available
+            market_cap=market_cap
         )
     
     def fetch_multiple_markets(self, symbols: List[str]) -> Dict[str, MarketData]:

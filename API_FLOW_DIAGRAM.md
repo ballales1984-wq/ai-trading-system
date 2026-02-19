@@ -238,6 +238,7 @@ Step 10: Feedback Loop
 |---|---|---|
 | API Registry | [`src/external/api_registry.py`](src/external/api_registry.py) | Central API factory & dispatcher |
 | Market Data APIs | [`src/external/market_data_apis.py`](src/external/market_data_apis.py) | Binance, CoinGecko, Alpha Vantage, Quandl |
+| CoinMarketCap Client | [`src/external/coinmarketcap_client.py`](src/external/coinmarketcap_client.py) | CMC Pro API: quotes, global metrics, sentiment proxy |
 | Sentiment APIs | [`src/external/sentiment_apis.py`](src/external/sentiment_apis.py) | NewsAPI, Benzinga, Twitter, GDELT |
 | Macro Event APIs | [`src/external/macro_event_apis.py`](src/external/macro_event_apis.py) | Trading Economics, EconPulse, Investing.com |
 | Natural Event APIs | [`src/external/natural_event_apis.py`](src/external/natural_event_apis.py) | Open-Meteo, Climate TRACE, USGS |
@@ -251,6 +252,7 @@ Step 10: Feedback Loop
 | Execution | [`src/execution.py`](src/execution.py) | Order routing |
 | Portfolio | [`src/portfolio_optimizer.py`](src/portfolio_optimizer.py) | Allocation optimization |
 | Core Engine | [`src/core/engine.py`](src/core/engine.py) | Main trading engine |
+| Market API Routes | [`app/api/routes/market.py`](app/api/routes/market.py) | REST endpoints incl. CMC global/quote/sentiment/top |
 
 ---
 

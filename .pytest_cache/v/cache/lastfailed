@@ -39,5 +39,6 @@
   "test_core.py::test_portfolio_manager": true,
   "test_core.py::test_risk_engine": true,
   "test_core.py::test_order_manager": true,
-  "test_core.py::test_trading_engine": true
+  "test_core.py::test_trading_engine": true,
+  "tests/test_hedgefund_dashboard.py": true
 }

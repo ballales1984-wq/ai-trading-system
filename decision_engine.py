@@ -169,6 +169,20 @@ class DecisionEngine:
         self._external_natural_cache = {}    # region -> {data, timestamp}
         self._external_cache_ttl = 300       # 5 minutes
         
+        # CoinMarketCap client for global market context
+        self._cmc_client = None
+        self._cmc_cache = {}  # key -> {data, timestamp}
+        try:
+            from src.external.coinmarketcap_client import CoinMarketCapClient
+            self._cmc_client = CoinMarketCapClient()
+            if self._cmc_client.test_connection():
+                logger.info("CoinMarketCap API connected")
+            else:
+                logger.warning("CoinMarketCap API key invalid or not set")
+                self._cmc_client = None
+        except Exception as e:
+            logger.warning(f"CoinMarketCap client not available: {e}")
+        
         # Monte Carlo simulation results cache
         self._mc_cache = {}  # symbol -> {results, timestamp}
         
@@ -745,6 +759,76 @@ class DecisionEngine:
             logger.warning(f"Natural events fetch failed: {e}")
             return {'events': [], 'avg_intensity': 0.0}
     
+    def fetch_cmc_market_context(self, symbol: str = '') -> Dict:
+        """
+        Fetch global crypto market context from CoinMarketCap.
+        Used in Monte Carlo Level 2+ for market-wide drift/volatility adjustments.
+        
+        Returns:
+            dict with btc_dominance, market_sentiment, volume_ratio,
+            coin-specific data (rank, market_cap_dominance, percent changes)
+        """
+        if not self._cmc_client:
+            return {
+                'btc_dominance': 0.0, 'sentiment': 'neutral', 'sentiment_score': 0.0,
+                'volume_ratio': 0.0, 'coin_data': None,
+            }
+        
+        now = datetime.now().timestamp()
+        cache_key = f'cmc_{symbol}'
+        cached = self._cmc_cache.get(cache_key)
+        if cached and (now - cached['timestamp']) < self._external_cache_ttl:
+            return cached['data']
+        
+        try:
+            # Global metrics
+            global_data = self._cmc_client.get_global_metrics()
+            sentiment_data = self._cmc_client.get_market_sentiment_proxy()
+            
+            result = {
+                'btc_dominance': global_data.get('btc_dominance', 0.0),
+                'eth_dominance': global_data.get('eth_dominance', 0.0),
+                'total_market_cap': global_data.get('total_market_cap', 0.0),
+                'total_volume_24h': global_data.get('total_volume_24h', 0.0),
+                'active_cryptos': global_data.get('active_cryptocurrencies', 0),
+                'defi_volume_24h': global_data.get('defi_volume_24h', 0.0),
+                'stablecoin_volume_24h': global_data.get('stablecoin_volume_24h', 0.0),
+                'sentiment': sentiment_data.get('sentiment', 'neutral'),
+                'sentiment_score': (sentiment_data.get('score', 50) - 50) / 50,  # normalize to -1..1
+                'volume_ratio': sentiment_data.get('total_volume_24h', 0) / max(sentiment_data.get('total_market_cap', 1), 1),
+                'coin_data': None,
+            }
+            
+            # Coin-specific data
+            if symbol:
+                coin_sym = symbol.replace('USDT', '').replace('/', '').replace('USD', '')
+                coin_data = self._cmc_client.get_quote(coin_sym)
+                if coin_data:
+                    result['coin_data'] = {
+                        'rank': coin_data.get('rank'),
+                        'market_cap_dominance': coin_data.get('market_cap_dominance', 0),
+                        'percent_change_1h': coin_data.get('percent_change_1h', 0),
+                        'percent_change_24h': coin_data.get('percent_change_24h', 0),
+                        'percent_change_7d': coin_data.get('percent_change_7d', 0),
+                        'percent_change_30d': coin_data.get('percent_change_30d', 0),
+                        'volume_24h': coin_data.get('volume_24h', 0),
+                    }
+            
+            self._cmc_cache[cache_key] = {'data': result, 'timestamp': now}
+            logger.info(
+                f"CMC context: sentiment={result['sentiment']}, "
+                f"BTC dom={result['btc_dominance']:.1f}%%, "
+                f"market cap=${result['total_market_cap']/1e12:.2f}T"
+            )
+            return result
+            
+        except Exception as e:
+            logger.warning(f"CMC market context fetch failed: {e}")
+            return {
+                'btc_dominance': 0.0, 'sentiment': 'neutral', 'sentiment_score': 0.0,
+                'volume_ratio': 0.0, 'coin_data': None,
+            }
+    
     # ==================== MONTE CARLO SIMULATION ENGINE ====================
     
     def run_monte_carlo(self, symbol: str, df: pd.DataFrame,
@@ -802,15 +886,30 @@ class DecisionEngine:
                 'level': 1,
             }
         
-        # ---- Level 2: Conditional Monte Carlo (events + sentiment) ----
+        # ---- Level 2: Conditional Monte Carlo (events + sentiment + CMC market context) ----
         ext_sentiment = self.fetch_external_sentiment(symbol)
         macro_events = self.fetch_external_macro_events()
+        cmc_context = self.fetch_cmc_market_context(symbol)
         
         sentiment_adj = ext_sentiment['score'] * 0.002  # sentiment drift adjustment
         event_vol_adj = 1.0 + macro_events['avg_impact'] * 0.3  # volatility increase near events
         
-        sigma_l2 = sigma * event_vol_adj
-        mu_l2 = mu + sentiment_adj
+        # CMC market context adjustments
+        cmc_sentiment_adj = cmc_context['sentiment_score'] * 0.001  # global market mood
+        cmc_vol_adj = 1.0
+        if cmc_context['volume_ratio'] > 0.08:  # high volume = higher volatility
+            cmc_vol_adj = 1.1
+        elif cmc_context['volume_ratio'] < 0.03:  # low volume = lower volatility
+            cmc_vol_adj = 0.9
+        
+        # Coin-specific momentum from CMC
+        coin_momentum_adj = 0.0
+        if cmc_context.get('coin_data'):
+            pct_7d = cmc_context['coin_data'].get('percent_change_7d', 0) or 0
+            coin_momentum_adj = pct_7d / 100 * 0.001  # small drift from 7d trend
+        
+        sigma_l2 = sigma * event_vol_adj * cmc_vol_adj
+        mu_l2 = mu + sentiment_adj + cmc_sentiment_adj + coin_momentum_adj
         
         for t in range(1, n_days):
             z = np.random.standard_normal(n_simulations)
@@ -826,6 +925,8 @@ class DecisionEngine:
                 'var_95': float(np.percentile(final_prices_l2 / current_price - 1, 5)),
                 'sentiment_impact': float(sentiment_adj),
                 'event_vol_multiplier': float(event_vol_adj),
+                'cmc_sentiment': cmc_context['sentiment'],
+                'cmc_btc_dominance': cmc_context['btc_dominance'],
                 'confidence': 0.45,
                 'level': 2,
             }
