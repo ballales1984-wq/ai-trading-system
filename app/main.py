@@ -11,6 +11,7 @@ from typing import AsyncGenerator
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
@@ -92,6 +93,30 @@ async def log_requests(request: Request, call_next):
     
     logger.info(f"Response: {response.status_code}")
     return response
+
+
+# Validation error handler
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle validation errors with detailed messages."""
+    errors = []
+    for error in exc.errors():
+        errors.append({
+            "field": ".".join(str(loc) for loc in error.get("loc", [])),
+            "message": error.get("msg"),
+            "type": error.get("type"),
+        })
+    
+    logger.warning(f"Validation error on {request.url.path}: {errors}")
+    
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": errors,
+            "path": str(request.url.path),
+            "method": request.method,
+        }
+    )
 
 
 # Exception handler

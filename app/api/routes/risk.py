@@ -4,11 +4,11 @@ Risk Management Routes
 REST API for institutional risk management.
 """
 
-from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import List, Dict, Any
+from uuid import uuid4
 import numpy as np
 
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
 
 
@@ -54,6 +54,14 @@ class RiskLimit(BaseModel):
     limit_percentage: float
     is_breached: bool
     severity: str
+
+
+class OrderRiskCheckRequest(BaseModel):
+    """Request model for order risk check."""
+    symbol: str = Field(..., description="Trading symbol (e.g., BTCUSDT)")
+    side: str = Field(..., description="Order side: BUY or SELL")
+    quantity: float = Field(..., gt=0, description="Order quantity")
+    price: float = Field(..., gt=0, description="Order price")
 
 
 class OrderRiskCheck(BaseModel):
@@ -170,19 +178,14 @@ async def get_position_risks() -> List[PositionRisk]:
 
 
 @router.post("/check_order", response_model=OrderRiskCheck)
-async def check_order_risk(
-    symbol: str,
-    side: str,
-    quantity: float,
-    price: float,
-) -> OrderRiskCheck:
+async def check_order_risk(request: OrderRiskCheckRequest) -> OrderRiskCheck:
     """
     Check if an order passes risk limits before execution.
     
     This is the heart of the risk engine - every order must be validated.
     """
     order_id = str(uuid4())
-    market_value = quantity * price
+    market_value = request.quantity * request.price
     
     # Calculate risk metrics
     risk_score = min(100, (market_value / 100000) * 50)
@@ -210,10 +213,10 @@ async def check_order_risk(
     
     return OrderRiskCheck(
         order_id=order_id,
-        symbol=symbol,
-        side=side,
-        quantity=quantity,
-        price=price,
+        symbol=request.symbol,
+        side=request.side,
+        quantity=request.quantity,
+        price=request.price,
         estimated_impact=estimated_impact,
         risk_score=risk_score,
         approved=approved,
