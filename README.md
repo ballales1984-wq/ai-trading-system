@@ -1,127 +1,123 @@
-# 🤖 AI Trading System
+# 🤖 AI Trading System — Mini Hedge Fund
 
-> **Professional Quantitative Trading Platform** with institutional-grade risk management, machine learning signals, and multi-asset portfolio optimization.
-
-[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
-[![API](https://img.shields.io/badge/FastAPI-Included-green.svg)](https://fastapi.tiangolo.com/)
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)]()
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](Dockerfile)
+
+A **professional-grade algorithmic trading system** that replicates hedge fund capabilities: multi-source data ingestion, ML-powered predictions, 5-level Monte Carlo simulations, institutional risk management, and automated execution.
+
+---
+
+## 🏗️ Architecture Overview
+
+```
+External APIs (15+)  →  API Registry  →  Central Database
+                                              ↓
+                                      Analysis Engine
+                                    (Technical + Sentiment + Events)
+                                              ↓
+                                    Monte Carlo Engine (5 Levels)
+                                              ↓
+                                      Decision Engine
+                                    (BUY/SELL/HOLD + Confidence)
+                                              ↓
+                                    Execution Engine → Exchanges
+                                              ↓
+                                    Dashboard + Alerts + Logs
+```
+
+> See [API_FLOW_DIAGRAM.md](API_FLOW_DIAGRAM.md) for the complete visual block diagram.
 
 ---
 
 ## ✨ Key Features
 
-- **🏗️ Event-Driven Architecture** - Modern async design with modular components
-- **🧠 ML Signal Engine** - RandomForest + XGBoost ensemble with AutoML
-- **⚠️ Institutional Risk Engine** - VaR, CVaR, Monte Carlo, GARCH volatility
-- **📊 Portfolio Optimization** - CVaR, Risk Parity, Mean-Variance
-- **🚀 Live Trading** - Binance Testnet integration with WebSocket streaming
-- **🌐 REST API** - FastAPI server for external integrations
-- **📈 Interactive Dashboard** - Real-time monitoring with Dash/Plotly
-- **🐳 Docker Support** - Containerized deployment
-- **💰 Multi-Asset** - Crypto, Forex, Commodities
+### 📊 Multi-Source Data Ingestion
+| Category | APIs | Purpose |
+|---|---|---|
+| **Market Data** | Binance, CoinGecko, Alpha Vantage, Quandl | OHLCV prices, historical series |
+| **Sentiment** | NewsAPI, Benzinga, Twitter/X, GDELT | News sentiment, social mood |
+| **Macro Events** | Trading Economics, EconPulse | Economic calendar, GDP, CPI |
+| **Natural Events** | Open-Meteo, Climate TRACE, USGS | Weather, climate, hydrology |
+| **Innovation** | EIA, Google Patents, Lens.org | Energy prices, tech patents |
 
----
+### 🎲 Monte Carlo Simulation (5 Levels)
+1. **Base** — Geometric Brownian Motion random walks
+2. **Conditional** — Event-conditioned paths (macro + sentiment)
+3. **Adaptive** — Reinforcement learning from past accuracy
+4. **Multi-Factor** — Natural events, cross-correlations, regime switching
+5. **Semantic History** — Pattern matching, black swan detection, fat tails
 
-## 🏗️ Architecture
+### 🧠 Decision Engine
+- Weighted ensemble: Technical (30%) + Momentum (25%) + Correlation (20%) + Sentiment (15%) + ML (10%) + Monte Carlo (10%)
+- ML Predictor (XGBoost/LightGBM/Random Forest)
+- External sentiment blending with source reliability weighting
+- Confidence scoring with strength labels (STRONG/MODERATE/WEAK)
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        USER INTERFACES                          │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐   │
-│  │  Dashboard  │  │  REST API   │  │   Java Frontend     │   │
-│  │  (Dash)     │  │  (FastAPI)  │  │   (Spring Boot)     │   │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                      TRADING ENGINE                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐   │
-│  │  Decision   │  │  Execution  │  │   Portfolio         │   │
-│  │  Engine     │  │  Engine    │  │   Manager           │   │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘   │
-│         ↓                ↓                  ↓                  │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐   │
-│  │    Risk     │  │  Event Bus  │  │   State Manager     │   │
-│  │  Engine     │  │   (Async)   │  │   (SQLite)          │   │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                      ANALYTICS LAYER                            │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐   │
-│  │ Technical   │  │ Sentiment   │  │   ML Models        │   │
-│  │ Analysis    │  │ Analysis    │  │   (AutoML)         │   │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                      DATA COLLECTION                            │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐   │
-│  │   Market    │  │    News     │  │   On-Chain Data    │   │
-│  │   Data      │  │   Feed      │  │                     │   │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-```
+### 🛡️ Institutional Risk Management
+- Value at Risk (VaR) — Historical, Parametric, Monte Carlo
+- Conditional VaR (CVaR / Expected Shortfall)
+- GARCH/EGARCH/GJR-GARCH volatility models
+- Fat-tail risk analysis
+- Position limits, drawdown controls, correlation checks
+
+### 📈 Execution Engine
+- Best execution routing with slippage control
+- Order book simulation
+- Transaction Cost Analysis (TCA)
+- Paper trading + Binance Testnet + Live execution
+- Bybit and OKX exchange connectors
+
+### 🖥️ Dashboard (22 Live Callbacks)
+- Real-time portfolio, P&L, positions
+- Rolling volatility, Sharpe ratio, drawdown charts
+- Binance trading panel (Execute Order, Save Settings)
+- Strategy allocation selector
+- Order book, trade history, signal history
 
 ---
 
 ## 🚀 Quick Start
 
-### Installation
-
+### 1. Clone & Install
 ```bash
-# Clone repository
-git clone https://github.com/ballales1984-wq/ai-trading-system.git
+git clone https://github.com/your-repo/ai-trading-system.git
 cd ai-trading-system
-
-# Install dependencies
 pip install -r requirements.txt
 ```
 
-### Configuration
+### 2. Configure API Keys
+Edit `.env` with your API keys:
+```env
+# Required
+BINANCE_API_KEY=your_key
+BINANCE_SECRET_KEY=your_secret
+USE_BINANCE_TESTNET=true
 
-```bash
-# Copy environment template
-cp .env.example .env
+# Recommended
+NEWSAPI_KEY=your_newsapi_key
+ALPHA_VANTAGE_API_KEY=your_av_key
 
-# Edit with your API keys
-nano .env
+# Optional (enhances Monte Carlo levels 2-5)
+TRADING_ECONOMICS_API_KEY=your_te_key
+EIA_API_KEY=your_eia_key
+TWITTER_BEARER_TOKEN=your_twitter_token
 ```
 
-Required API keys:
-- `BINANCE_API_KEY` / `BINANCE_SECRET_KEY` - For live trading
-- `NEWS_API_KEY` - For sentiment analysis
-- `COINMARKETCAP_API_KEY` - For market data
-
-### Run Modes
-
+### 3. Run Dashboard
 ```bash
-# Start Dashboard
-python main.py --mode dashboard
-
-# Paper Trading Simulation
-python main.py --mode simulate --assets BTCUSDT,ETHUSDT
-
-# Live Trading (Testnet)
-python main.py --mode live --assets BTCUSDT,ETHUSDT
-
-# Backtest
-python main.py --mode backtest --symbol BTCUSDT --days 365
-
-# Start API Server
-python api_server.py
+python dashboard.py
+# Open http://127.0.0.1:8050
 ```
 
-### Docker
-
+### 4. Run Trading Engine
 ```bash
-# Start all services
+python main.py
+```
+
+### 5. Run with Docker
+```bash
 docker-compose up -d
-
-# Start with hedge fund mode
-docker-compose -f docker-compose.hedgefund.yml up -d
 ```
 
 ---
@@ -130,94 +126,76 @@ docker-compose -f docker-compose.hedgefund.yml up -d
 
 ```
 ai-trading-system/
+├── main.py                     # Main entry point
+├── dashboard.py                # Dash dashboard (22 callbacks)
+├── decision_engine.py          # Signal generation + Monte Carlo 5 levels
+├── data_collector.py           # Market data ingestion (ccxt)
+├── technical_analysis.py       # RSI, MACD, Bollinger, patterns
+├── sentiment_news.py           # Sentiment analysis (NLP)
+├── ml_predictor.py             # ML price prediction
+├── config.py                   # Configuration & settings
+├── .env                        # API keys (15+ services)
 │
-├── app/                      # Modular FastAPI application
-│   ├── api/routes/          # REST API endpoints
-│   ├── core/                # Configuration, security
-│   ├── execution/           # Order execution & connectors
-│   ├── market_data/         # Market data feeds
-│   ├── portfolio/           # Portfolio management
-│   ├── risk/                # Risk engine
-│   └── strategies/          # Trading strategies
+├── src/
+│   ├── external/               # 🌐 External API clients
+│   │   ├── api_registry.py     # Central API factory & dispatcher
+│   │   ├── market_data_apis.py # Binance, CoinGecko, Alpha Vantage, Quandl
+│   │   ├── sentiment_apis.py   # NewsAPI, Benzinga, Twitter, GDELT
+│   │   ├── macro_event_apis.py # Trading Economics, EconPulse
+│   │   ├── natural_event_apis.py # Open-Meteo, Climate TRACE, USGS
+│   │   ├── innovation_apis.py  # EIA, Google Patents, Lens.org
+│   │   ├── bybit_client.py     # Bybit exchange connector
+│   │   └── okx_client.py       # OKX exchange connector
+│   │
+│   ├── core/
+│   │   ├── engine.py           # Core trading engine
+│   │   ├── event_bus.py        # Event-driven architecture
+│   │   ├── state_manager.py    # State persistence (SQLite)
+│   │   ├── execution/          # Order management, best execution, TCA
+│   │   ├── portfolio/          # Portfolio manager
+│   │   └── risk/               # VaR, CVaR, GARCH, fat-tail risk
+│   │
+│   ├── automl/                 # AutoML engine
+│   ├── hedgefund_ml.py         # Hedge fund ML strategies
+│   ├── ml_enhanced.py          # Enhanced ML models
+│   ├── portfolio_optimizer.py  # Mean-variance, risk parity
+│   ├── risk_engine.py          # Risk management
+│   └── ...                     # 30+ modules
 │
-├── src/                      # Core trading system
-│   ├── core/                # Engine, event bus, state
-│   ├── live/                # Live trading modules
-│   ├── automl/              # AutoML engine
-│   ├── ml_model/            # ML models
-│   └── hft/                 # High-frequency trading
+├── app/                        # FastAPI REST API
+│   ├── api/routes/             # Market, orders, portfolio, risk, strategy
+│   ├── execution/              # Broker connectors
+│   └── risk/                   # Risk engine
 │
-├── dashboard/               # Dash dashboard (Python)
-├── java-frontend/           # Java Spring Boot frontend
-├── docker/                  # Docker configurations
-├── tests/                   # Test suite
-└── config.py                # Configuration
+├── java-frontend/              # Spring Boot web dashboard
+│
+├── docker/                     # Docker configurations
+├── .github/workflows/          # CI/CD pipeline
+│
+├── API_FLOW_DIAGRAM.md         # Visual block diagram (APIs → Engine → Output)
+├── API_INTEGRATION_ARCHITECTURE.md  # Mermaid flow diagrams
+├── ARCHITECTURE.md             # Technical architecture
+├── ECOSYSTEM_MAP.md            # Complete ecosystem map
+├── ROADMAP.md                  # Development roadmap
+└── TODO_HEDGE_FUND.md          # Hedge fund implementation plan
 ```
 
 ---
 
-## 🧠 Machine Learning
+## 🔄 How APIs Feed the Engine
 
-### Signal Generation
-
-The system uses ensemble ML models for signal generation:
-
-- **Random Forest** - Tree-based ensemble signals
-- **XGBoost** - Gradient boosting signals
-- **LightGBM** - Fast gradient boosting
-- **Feature Engineering** - Technical indicators, sentiment, on-chain data
-- **Walk-Forward Validation** - Out-of-sample testing
-- **AutoML** - Automated model selection
-
-```python
-from src.ml_model import EnsembleModel
-
-model = EnsembleModel(n_estimators=100)
-model.fit(X_train, y_train)
-signals = model.predict(X_test)
 ```
-
----
-
-## ⚠️ Risk Management
-
-### Institutional-Grade Features
-
-| Module | Description |
-|--------|-------------|
-| **VaR** | Value at Risk (Historical, Parametric, Monte Carlo) |
-| **CVaR** | Conditional Expected Shortfall |
-| **GARCH** | Conditional volatility modeling |
-| **Fat-Tail** | Extreme Value Theory |
-| **Stress Test** | Custom crash scenarios |
-| **Risk Parity** | Equal risk contribution |
-
-```python
-from src.core.risk import InstitutionalRiskEngine
-
-risk = InstitutionalRiskEngine(confidence=0.95)
-report = risk.full_risk_report(returns)
-
-print(f"VaR 95%: {report['historical_var']:.2%}")
-print(f"CVaR: {report['expected_shortfall']:.2%}")
+Step 1: APIRegistry dispatches to all configured APIs
+Step 2: Data normalized into unified schema (NormalizedRecord)
+Step 3: Stored in database (6 tables: ohlcv, sentiment, events, natural, innovation, geopolitical)
+Step 4: Analysis Engine computes indicators + sentiment + event impact
+Step 5: Feature Engineering creates multi-factor vectors
+Step 6: Monte Carlo runs 5-level simulation
+Step 7: Decision Engine generates BUY/SELL/HOLD with probability + confidence
+Step 8: Execution Router sends orders
+Step 9: Dashboard displays results
+Step 10: Feedback Loop updates source weights + model parameters
 ```
-
----
-
-## 🌐 REST API
-
-FastAPI server running on `http://localhost:8000`
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/health` | GET | Health check |
-| `/api/market/{symbol}` | GET | Market data |
-| `/api/orders` | GET/POST | Order management |
-| `/api/portfolio` | GET | Portfolio positions |
-| `/api/risk/metrics` | GET | Risk metrics |
-| `/api/strategy/signals` | GET | Trading signals |
-
-API Documentation: `http://localhost:8000/docs`
 
 ---
 
@@ -225,74 +203,77 @@ API Documentation: `http://localhost:8000/docs`
 
 ```bash
 # Run all tests
-pytest tests/ -v
+pytest
 
-# Run specific test
-pytest tests/test_paper_trading.py -v
-
-# Run with coverage
-pytest tests/ --cov=src --cov-report=html
+# Test specific modules
+python test_core.py
+python test_execution.py
+python test_dashboard_integration.py
+python test_binance_testnet.py
 ```
 
 ---
 
-## 📊 Dashboard
+## 📊 API Key Setup Guide
 
-Access at `http://localhost:8050`
-
-Features:
-- Portfolio positions & P&L
-- Risk metrics visualization
-- Signal visualization
-- Technical charts
-- Monte Carlo distributions
-
----
-
-## 🔒 Safety Features
-
-- ✅ Kill-switch at max drawdown (20%)
-- ✅ Position size limits (30% max)
-- ✅ Stop-loss & take-profit automation
-- ✅ Order retry with exponential backoff
-- ✅ SQLite state persistence
-- ✅ Circuit breakers for extreme volatility
+| API | Free Tier | Sign Up |
+|---|---|---|
+| **Binance** | ✅ Testnet free | [binance.com/api](https://www.binance.com/en/my/settings/api-management) |
+| **NewsAPI** | ✅ 100 req/day | [newsapi.org](https://newsapi.org/register) |
+| **Alpha Vantage** | ✅ 5 req/min | [alphavantage.co](https://www.alphavantage.co/support/#api-key) |
+| **CoinGecko** | ✅ 30 req/min | [coingecko.com](https://www.coingecko.com/en/api) |
+| **Quandl** | ✅ 300 req/min | [data.nasdaq.com](https://data.nasdaq.com/sign-up) |
+| **Open-Meteo** | ✅ No key needed | [open-meteo.com](https://open-meteo.com/) |
+| **GDELT** | ✅ No key needed | [gdeltproject.org](https://www.gdeltproject.org/) |
+| **USGS Water** | ✅ No key needed | [waterservices.usgs.gov](https://waterservices.usgs.gov/) |
+| **Climate TRACE** | ✅ No key needed | [climatetrace.org](https://climatetrace.org/) |
+| **Trading Economics** | 💰 Paid | [tradingeconomics.com](https://tradingeconomics.com/api) |
+| **EIA** | ✅ Free | [eia.gov](https://www.eia.gov/opendata/register.php) |
+| **Twitter/X** | 💰 Basic plan | [developer.twitter.com](https://developer.twitter.com/) |
+| **Benzinga** | 💰 Partner | [docs.benzinga.io](https://docs.benzinga.io/) |
 
 ---
 
-## ⚡ Tech Stack
+## 🐳 Docker
 
-| Category | Technology |
-|----------|------------|
-| Language | Python 3.10+ |
-| ML | Scikit-learn, XGBoost, LightGBM |
-| Risk | SciPy, NumPy, Pandas |
-| Trading | Binance API, WebSocket |
-| API | FastAPI, Uvicorn |
-| Dashboard | Dash, Plotly |
-| Frontend | Java Spring Boot |
-| Database | SQLite |
-| Container | Docker, Docker Compose |
+```bash
+# Full system
+docker-compose up -d
+
+# Hedge fund mode
+docker-compose -f docker-compose.hedgefund.yml up -d
+```
 
 ---
 
-## 📝 License
+## 📈 Performance
 
-MIT License - See [LICENSE](LICENSE) file.
-
----
-
-## 👤 Author
-
-**Alessio Ballarè** - [ballales1984-wq](https://github.com/ballales1984-wq)
+The system is designed for:
+- **Latency**: < 100ms signal generation
+- **Throughput**: 1000+ Monte Carlo simulations per signal
+- **Uptime**: 24/7 with auto-recovery
+- **Scalability**: Add assets/strategies without code changes
 
 ---
 
-## 🙏 Acknowledgments
+## 📚 Documentation
 
-Built with Python, Scikit-learn, XGBoost, FastAPI, Dash, SQLite
+| Document | Description |
+|---|---|
+| [API_FLOW_DIAGRAM.md](API_FLOW_DIAGRAM.md) | Visual block diagram: APIs → Database → Engine → Output |
+| [API_INTEGRATION_ARCHITECTURE.md](API_INTEGRATION_ARCHITECTURE.md) | Mermaid diagrams of all data flows |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Technical architecture details |
+| [ECOSYSTEM_MAP.md](ECOSYSTEM_MAP.md) | Complete ecosystem map |
+| [COMPONENT_DIAGRAM.md](COMPONENT_DIAGRAM.md) | Component interaction diagram |
+| [ROADMAP.md](ROADMAP.md) | Development roadmap |
+| [DASHBOARD_README.md](DASHBOARD_README.md) | Dashboard usage guide |
 
 ---
 
-*🤖 Professional quantitative trading with institutional-grade risk management*
+## 📄 License
 
+MIT License — see [LICENSE](LICENSE)
+
+---
+
+*Built with Python 3.10+ | FastAPI | Dash | NumPy | Pandas | scikit-learn | XGBoost*

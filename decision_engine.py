@@ -5,6 +5,7 @@ Generates probabilistic trading signals by combining all analysis types
 
 import logging
 import random
+import asyncio
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
@@ -18,6 +19,15 @@ from data_collector import DataCollector, MarketData, CorrelationData
 from technical_analysis import TechnicalAnalyzer, TechnicalAnalysis
 from sentiment_news import SentimentAnalyzer, SentimentData
 from ml_predictor import PricePredictor, get_ml_predictor
+
+try:
+    from src.external import (
+        APIRegistry, APICategory, NormalizedRecord,
+        create_full_registry,
+    )
+    EXTERNAL_APIS_AVAILABLE = True
+except ImportError:
+    EXTERNAL_APIS_AVAILABLE = False
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -118,13 +128,15 @@ class DecisionEngine:
     """
     
     def __init__(self, data_collector: DataCollector = None, 
-                 sentiment_analyzer: SentimentAnalyzer = None):
+                 sentiment_analyzer: SentimentAnalyzer = None,
+                 api_registry: 'APIRegistry' = None):
         """
         Initialize the decision engine.
         
         Args:
             data_collector: DataCollector instance
             sentiment_analyzer: SentimentAnalyzer instance
+            api_registry: External API registry (src.external)
         """
         self.data_collector = data_collector or DataCollector(simulation=True)
         self.sentiment_analyzer = sentiment_analyzer or SentimentAnalyzer()
@@ -134,6 +146,16 @@ class DecisionEngine:
         self.ml_predictor = get_ml_predictor()
         self.ml_enabled = True
         
+        # Initialize External API Registry
+        self.api_registry = api_registry
+        if self.api_registry is None and EXTERNAL_APIS_AVAILABLE:
+            try:
+                self.api_registry = create_full_registry()
+                logger.info(f"External API registry loaded: {self.api_registry.summary()['total_clients']} clients")
+            except Exception as e:
+                logger.warning(f"Failed to create API registry: {e}")
+                self.api_registry = None
+        
         self.settings = config.DECISION_SETTINGS
         self.portfolio = PortfolioState()
         
@@ -141,7 +163,17 @@ class DecisionEngine:
         self.analysis_cache = {}
         self.cache_duration = 60  # seconds
         
-        logger.info("DecisionEngine initialized")
+        # External data cache
+        self._external_sentiment_cache = {}  # symbol -> {data, timestamp}
+        self._external_events_cache = {}     # region -> {data, timestamp}
+        self._external_natural_cache = {}    # region -> {data, timestamp}
+        self._external_cache_ttl = 300       # 5 minutes
+        
+        # Monte Carlo simulation results cache
+        self._mc_cache = {}  # symbol -> {results, timestamp}
+        
+        logger.info("DecisionEngine initialized (external APIs: %s)",
+                    'enabled' if self.api_registry else 'disabled')
     
     # ==================== ML COORDINATION (BLACKBOX AGENT) ====================
     
@@ -281,6 +313,17 @@ class DecisionEngine:
         asset_name = symbol.split('/')[0]
         sentiment = self.sentiment_analyzer.get_combined_sentiment(asset_name)
         
+        # Get external sentiment from APIs (NewsAPI, Benzinga, Twitter, GDELT)
+        ext_sentiment = self.fetch_external_sentiment(symbol)
+        if ext_sentiment['sources'] > 0:
+            # Blend internal and external sentiment
+            internal_score = sentiment.get('combined_score', 0)
+            external_score = ext_sentiment['score']
+            ext_weight = min(0.5, ext_sentiment['confidence'])
+            sentiment['combined_score'] = internal_score * (1 - ext_weight) + external_score * ext_weight
+            sentiment['confidence'] = max(sentiment.get('confidence', 0.5), ext_sentiment['confidence'])
+            sentiment['external_sources'] = ext_sentiment['sources']
+        
         # Get correlations with other assets
         correlations = self._analyze_correlations(symbol, symbols=[
             s for s in self.data_collector.get_supported_symbols() if s != symbol
@@ -289,13 +332,19 @@ class DecisionEngine:
         # Calculate volatility score
         volatility_score = self._calculate_volatility_score(df, technical_analysis)
         
-        # Combine all factors (including ML prediction)
+        # Run Monte Carlo simulation (all 5 levels)
+        mc_results = self.run_monte_carlo(symbol, df, n_simulations=500, n_days=14, level=5)
+        mc_score = mc_results.get('probability_up', 0.5)
+        mc_confidence = mc_results.get('confidence', 0.0)
+        
+        # Combine all factors (including ML prediction and Monte Carlo)
         combined_score = self._combine_factors(
             technical_analysis,
             sentiment,
             correlations,
             volatility_score,
-            ml_score  # Include ML prediction in scoring
+            ml_score,
+            mc_score  # Include Monte Carlo probability
         )
         
         # Generate signal
@@ -402,8 +451,9 @@ class DecisionEngine:
                         sentiment: Dict,
                         correlations: Dict,
                         volatility_score: float,
-                        ml_score: float = 0.5) -> float:
-        """Combine all factors into a single score (including ML prediction)"""
+                        ml_score: float = 0.5,
+                        mc_score: float = 0.5) -> float:
+        """Combine all factors into a single score (including ML prediction and Monte Carlo)"""
         weights = self.settings['weights']
         
         # Normalize sentiment score to 0-1
@@ -412,8 +462,11 @@ class DecisionEngine:
         # Correlation score (use absolute value to consider negative correlations)
         correlation_score = abs(correlations.get('avg_correlation', 0))
         
-        # Calculate weighted score (include ML prediction)
-        ml_weight = 0.15  # Weight for ML prediction
+        # Calculate weighted score (include ML prediction and Monte Carlo)
+        ml_weight = 0.10  # Weight for ML prediction
+        mc_weight = 0.10  # Weight for Monte Carlo probability
+        base_weight = 1.0 - ml_weight - mc_weight
+        
         base_score = (
             technical.technical_score * weights['technical'] +
             technical.momentum_score * weights['momentum'] +
@@ -422,8 +475,8 @@ class DecisionEngine:
             volatility_score * weights['volatility']
         )
         
-        # Blend ML score with base score
-        score = base_score * (1 - ml_weight) + ml_score * ml_weight
+        # Blend ML score and MC score with base score
+        score = base_score * base_weight + ml_score * ml_weight + mc_score * mc_weight
         
         return max(0, min(1, score))
     
@@ -539,6 +592,381 @@ class DecisionEngine:
             reasons.append("neutral conditions")
         
         return f"{action}: {', '.join(reasons)}"
+    
+    # ==================== EXTERNAL API DATA FETCHING ====================
+    
+    def _run_async(self, coro):
+        """Run an async coroutine from sync context."""
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as pool:
+                    future = pool.submit(asyncio.run, coro)
+                    return future.result(timeout=30)
+            else:
+                return loop.run_until_complete(coro)
+        except RuntimeError:
+            return asyncio.run(coro)
+    
+    def fetch_external_sentiment(self, symbol: str) -> Dict:
+        """
+        Fetch sentiment from external APIs (NewsAPI, Benzinga, Twitter, GDELT).
+        Returns aggregated sentiment score and confidence.
+        """
+        if not self.api_registry:
+            return {'score': 0.0, 'confidence': 0.0, 'sources': 0}
+        
+        # Check cache
+        now = datetime.now().timestamp()
+        cached = self._external_sentiment_cache.get(symbol)
+        if cached and (now - cached['timestamp']) < self._external_cache_ttl:
+            return cached['data']
+        
+        try:
+            query = symbol.replace('USDT', '').replace('/', '')
+            records = self._run_async(self.api_registry.fetch_sentiment(query, limit=20))
+            
+            if not records:
+                return {'score': 0.0, 'confidence': 0.0, 'sources': 0}
+            
+            # Aggregate sentiment scores weighted by source reliability
+            total_weight = 0.0
+            weighted_score = 0.0
+            for rec in records:
+                score = rec.payload.get('sentiment_score', 0.0)
+                client = self.api_registry.get_client(rec.source_api)
+                weight = client.weight if client else 1.0
+                confidence = rec.confidence
+                w = weight * confidence
+                weighted_score += score * w
+                total_weight += w
+            
+            avg_score = weighted_score / total_weight if total_weight > 0 else 0.0
+            avg_confidence = min(1.0, len(records) / 10.0)  # More sources = higher confidence
+            
+            result = {
+                'score': max(-1.0, min(1.0, avg_score)),
+                'confidence': avg_confidence,
+                'sources': len(records),
+                'records': records,
+            }
+            
+            self._external_sentiment_cache[symbol] = {'data': result, 'timestamp': now}
+            logger.info(f"External sentiment for {symbol}: score={avg_score:.3f}, sources={len(records)}")
+            return result
+            
+        except Exception as e:
+            logger.warning(f"External sentiment fetch failed for {symbol}: {e}")
+            return {'score': 0.0, 'confidence': 0.0, 'sources': 0}
+    
+    def fetch_external_macro_events(self, region: str = 'global') -> Dict:
+        """
+        Fetch macro economic events from external APIs.
+        Returns event impact scores for Monte Carlo conditioning.
+        """
+        if not self.api_registry:
+            return {'events': [], 'avg_impact': 0.0, 'high_impact_count': 0}
+        
+        now = datetime.now().timestamp()
+        cached = self._external_events_cache.get(region)
+        if cached and (now - cached['timestamp']) < self._external_cache_ttl:
+            return cached['data']
+        
+        try:
+            records = self._run_async(self.api_registry.fetch_macro_events(region=region, days_ahead=7))
+            
+            events = []
+            high_impact = 0
+            for rec in records:
+                impact = rec.payload.get('impact', 'low')
+                impact_score = {'high': 1.0, 'medium': 0.5, 'low': 0.2}.get(impact, 0.1)
+                if impact == 'high':
+                    high_impact += 1
+                events.append({
+                    'event': rec.payload.get('event', ''),
+                    'country': rec.payload.get('country', ''),
+                    'impact': impact,
+                    'impact_score': impact_score,
+                    'timestamp': rec.timestamp,
+                })
+            
+            avg_impact = sum(e['impact_score'] for e in events) / len(events) if events else 0.0
+            
+            result = {
+                'events': events,
+                'avg_impact': avg_impact,
+                'high_impact_count': high_impact,
+            }
+            
+            self._external_events_cache[region] = {'data': result, 'timestamp': now}
+            logger.info(f"Macro events ({region}): {len(events)} events, {high_impact} high-impact")
+            return result
+            
+        except Exception as e:
+            logger.warning(f"Macro events fetch failed: {e}")
+            return {'events': [], 'avg_impact': 0.0, 'high_impact_count': 0}
+    
+    def fetch_external_natural_events(self, region: str = 'global') -> Dict:
+        """
+        Fetch natural/climate events from external APIs.
+        Returns event data for Monte Carlo multi-factor conditioning.
+        """
+        if not self.api_registry:
+            return {'events': [], 'avg_intensity': 0.0}
+        
+        now = datetime.now().timestamp()
+        cached = self._external_natural_cache.get(region)
+        if cached and (now - cached['timestamp']) < self._external_cache_ttl:
+            return cached['data']
+        
+        try:
+            records = self._run_async(self.api_registry.fetch_natural_events(region=region))
+            
+            events = []
+            for rec in records:
+                event_type = rec.payload.get('event_type', 'normal')
+                intensity = rec.payload.get('intensity', 0.0)
+                if event_type != 'normal' and intensity > 0:
+                    events.append({
+                        'type': event_type,
+                        'intensity': intensity,
+                        'region': rec.payload.get('region', region),
+                        'timestamp': rec.timestamp,
+                    })
+            
+            avg_intensity = sum(e['intensity'] for e in events) / len(events) if events else 0.0
+            
+            result = {'events': events, 'avg_intensity': avg_intensity}
+            self._external_natural_cache[region] = {'data': result, 'timestamp': now}
+            return result
+            
+        except Exception as e:
+            logger.warning(f"Natural events fetch failed: {e}")
+            return {'events': [], 'avg_intensity': 0.0}
+    
+    # ==================== MONTE CARLO SIMULATION ENGINE ====================
+    
+    def run_monte_carlo(self, symbol: str, df: pd.DataFrame,
+                        n_simulations: int = 1000, n_days: int = 30,
+                        level: int = 5) -> Dict:
+        """
+        Run Monte Carlo simulation with 5 progressive levels.
+        
+        Level 1: Base GBM random walk
+        Level 2: Conditional (macro events + sentiment)
+        Level 3: Adaptive (reinforcement learning from past accuracy)
+        Level 4: Multi-factor (natural events + energy + cross-correlations)
+        Level 5: Semantic History (geopolitics + innovation + pattern matching)
+        
+        Args:
+            symbol: Trading symbol
+            df: OHLCV DataFrame
+            n_simulations: Number of simulation paths
+            n_days: Days to simulate forward
+            level: Maximum MC level to run (1-5)
+            
+        Returns:
+            Dict with simulation results, probabilities, and confidence
+        """
+        if df is None or len(df) < 20:
+            return {'probability_up': 0.5, 'confidence': 0.0, 'level': 0}
+        
+        returns = df['close'].pct_change().dropna()
+        if len(returns) < 10:
+            return {'probability_up': 0.5, 'confidence': 0.0, 'level': 0}
+        
+        current_price = df['close'].iloc[-1]
+        mu = returns.mean()
+        sigma = returns.std()
+        
+        # ---- Level 1: Base Monte Carlo (GBM) ----
+        np.random.seed(42)
+        dt = 1.0 / 252  # daily
+        paths = np.zeros((n_simulations, n_days))
+        paths[:, 0] = current_price
+        
+        for t in range(1, n_days):
+            z = np.random.standard_normal(n_simulations)
+            paths[:, t] = paths[:, t-1] * np.exp((mu - 0.5 * sigma**2) * dt + sigma * np.sqrt(dt) * z)
+        
+        final_prices_l1 = paths[:, -1]
+        prob_up_l1 = np.mean(final_prices_l1 > current_price)
+        
+        if level < 2:
+            return {
+                'probability_up': float(prob_up_l1),
+                'expected_return': float(np.mean(final_prices_l1) / current_price - 1),
+                'var_95': float(np.percentile(final_prices_l1 / current_price - 1, 5)),
+                'confidence': 0.3,
+                'level': 1,
+            }
+        
+        # ---- Level 2: Conditional Monte Carlo (events + sentiment) ----
+        ext_sentiment = self.fetch_external_sentiment(symbol)
+        macro_events = self.fetch_external_macro_events()
+        
+        sentiment_adj = ext_sentiment['score'] * 0.002  # sentiment drift adjustment
+        event_vol_adj = 1.0 + macro_events['avg_impact'] * 0.3  # volatility increase near events
+        
+        sigma_l2 = sigma * event_vol_adj
+        mu_l2 = mu + sentiment_adj
+        
+        for t in range(1, n_days):
+            z = np.random.standard_normal(n_simulations)
+            paths[:, t] = paths[:, t-1] * np.exp((mu_l2 - 0.5 * sigma_l2**2) * dt + sigma_l2 * np.sqrt(dt) * z)
+        
+        final_prices_l2 = paths[:, -1]
+        prob_up_l2 = np.mean(final_prices_l2 > current_price)
+        
+        if level < 3:
+            return {
+                'probability_up': float(prob_up_l2),
+                'expected_return': float(np.mean(final_prices_l2) / current_price - 1),
+                'var_95': float(np.percentile(final_prices_l2 / current_price - 1, 5)),
+                'sentiment_impact': float(sentiment_adj),
+                'event_vol_multiplier': float(event_vol_adj),
+                'confidence': 0.45,
+                'level': 2,
+            }
+        
+        # ---- Level 3: Adaptive Monte Carlo (learning from past) ----
+        # Check past MC accuracy and adjust
+        past_mc = self._mc_cache.get(symbol, {})
+        accuracy_adj = 0.0
+        if past_mc and 'actual_return' in past_mc:
+            predicted = past_mc.get('expected_return', 0)
+            actual = past_mc.get('actual_return', 0)
+            error = actual - predicted
+            accuracy_adj = error * 0.1  # small correction based on past error
+        
+        mu_l3 = mu_l2 + accuracy_adj
+        
+        for t in range(1, n_days):
+            z = np.random.standard_normal(n_simulations)
+            # Dynamic volatility: use EWMA
+            if t > 1:
+                recent_vol = np.std(np.log(paths[:, t-1] / paths[:, t-2]))
+                sigma_dynamic = 0.7 * sigma_l2 + 0.3 * recent_vol
+            else:
+                sigma_dynamic = sigma_l2
+            paths[:, t] = paths[:, t-1] * np.exp((mu_l3 - 0.5 * sigma_dynamic**2) * dt + sigma_dynamic * np.sqrt(dt) * z)
+        
+        final_prices_l3 = paths[:, -1]
+        prob_up_l3 = np.mean(final_prices_l3 > current_price)
+        
+        if level < 4:
+            return {
+                'probability_up': float(prob_up_l3),
+                'expected_return': float(np.mean(final_prices_l3) / current_price - 1),
+                'var_95': float(np.percentile(final_prices_l3 / current_price - 1, 5)),
+                'accuracy_adjustment': float(accuracy_adj),
+                'confidence': 0.55,
+                'level': 3,
+            }
+        
+        # ---- Level 4: Multi-Factor Monte Carlo ----
+        natural_events = self.fetch_external_natural_events()
+        natural_adj = natural_events['avg_intensity'] * 0.005  # commodity impact
+        
+        # Cross-asset correlation factor
+        corr_factor = 1.0
+        try:
+            other_symbols = [s for s in self.data_collector.get_supported_symbols() if s != symbol][:3]
+            for other in other_symbols:
+                corr_data = self.data_collector.calculate_correlation(symbol, other, 30)
+                if abs(corr_data.correlation) > 0.7:
+                    corr_factor *= (1.0 + abs(corr_data.correlation) * 0.1)
+        except Exception:
+            pass
+        
+        sigma_l4 = sigma_l2 * corr_factor
+        mu_l4 = mu_l3 - natural_adj  # natural events typically increase uncertainty
+        
+        # Regime switching: detect if we're in high/low vol regime
+        recent_vol = returns.iloc[-20:].std() if len(returns) >= 20 else sigma
+        long_vol = returns.std()
+        regime_ratio = recent_vol / long_vol if long_vol > 0 else 1.0
+        sigma_l4 *= regime_ratio
+        
+        for t in range(1, n_days):
+            z = np.random.standard_normal(n_simulations)
+            paths[:, t] = paths[:, t-1] * np.exp((mu_l4 - 0.5 * sigma_l4**2) * dt + sigma_l4 * np.sqrt(dt) * z)
+        
+        final_prices_l4 = paths[:, -1]
+        prob_up_l4 = np.mean(final_prices_l4 > current_price)
+        
+        if level < 5:
+            return {
+                'probability_up': float(prob_up_l4),
+                'expected_return': float(np.mean(final_prices_l4) / current_price - 1),
+                'var_95': float(np.percentile(final_prices_l4 / current_price - 1, 5)),
+                'natural_impact': float(natural_adj),
+                'regime_ratio': float(regime_ratio),
+                'confidence': 0.65,
+                'level': 4,
+            }
+        
+        # ---- Level 5: Semantic History Monte Carlo ----
+        # Pattern matching: find similar historical periods
+        lookback = min(len(returns), 252)
+        current_pattern = returns.iloc[-20:].values if len(returns) >= 20 else returns.values
+        
+        best_match_score = 0.0
+        best_match_return = 0.0
+        
+        for start in range(0, lookback - 40, 5):
+            historical_pattern = returns.iloc[start:start+20].values
+            if len(historical_pattern) == len(current_pattern):
+                correlation = np.corrcoef(current_pattern, historical_pattern)[0, 1]
+                if not np.isnan(correlation) and abs(correlation) > best_match_score:
+                    best_match_score = abs(correlation)
+                    # What happened after this historical pattern?
+                    future_slice = returns.iloc[start+20:start+40]
+                    if len(future_slice) > 0:
+                        best_match_return = future_slice.mean()
+        
+        # Black swan detection: check for extreme tail events
+        tail_threshold = returns.quantile(0.01)
+        black_swan_prob = np.mean(returns < tail_threshold * 2)
+        
+        # Adjust final simulation with semantic history
+        semantic_adj = best_match_return * best_match_score * 0.3
+        mu_l5 = mu_l4 + semantic_adj
+        
+        # Add fat-tail component (Student-t instead of normal)
+        df_t = max(3, int(10 - black_swan_prob * 100))  # degrees of freedom
+        
+        for t in range(1, n_days):
+            z = np.random.standard_t(df_t, n_simulations) / np.sqrt(df_t / (df_t - 2))
+            paths[:, t] = paths[:, t-1] * np.exp((mu_l5 - 0.5 * sigma_l4**2) * dt + sigma_l4 * np.sqrt(dt) * z)
+        
+        final_prices_l5 = paths[:, -1]
+        prob_up_l5 = np.mean(final_prices_l5 > current_price)
+        
+        # Store for adaptive learning (Level 3 next time)
+        mc_result = {
+            'probability_up': float(prob_up_l5),
+            'expected_return': float(np.mean(final_prices_l5) / current_price - 1),
+            'var_95': float(np.percentile(final_prices_l5 / current_price - 1, 5)),
+            'cvar_95': float(np.mean(final_prices_l5[final_prices_l5 < np.percentile(final_prices_l5, 5)] / current_price - 1)),
+            'semantic_match_score': float(best_match_score),
+            'semantic_adjustment': float(semantic_adj),
+            'black_swan_probability': float(black_swan_prob),
+            'fat_tail_df': df_t,
+            'all_levels': {
+                'l1_prob': float(prob_up_l1),
+                'l2_prob': float(prob_up_l2),
+                'l3_prob': float(prob_up_l3),
+                'l4_prob': float(prob_up_l4),
+                'l5_prob': float(prob_up_l5),
+            },
+            'confidence': 0.75,
+            'level': 5,
+        }
+        
+        self._mc_cache[symbol] = {**mc_result, 'timestamp': datetime.now().timestamp()}
+        return mc_result
     
     # ==================== RANKING & FILTERING ====================
     

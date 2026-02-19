@@ -296,12 +296,13 @@ class TradingDaemon:
 class DataProvider:
     """Cached data provider with real-time market data"""
     
-    def __init__(self):
+    def __init__(self, simulation: bool = True):
         self._cache: Dict = {}
         self._cache_time: Dict = {}
         self._cache_ttl = 10
-        # Initialize real data collector
-        self._collector = DataCollector()
+        self._simulation = simulation
+        # Initialize data collector with simulation mode for dashboard
+        self._collector = DataCollector(simulation=simulation)
     
     def _is_cache_valid(self, key: str) -> bool:
         if key not in self._cache or key not in self._cache_time:
@@ -351,18 +352,30 @@ class DataProvider:
         """Generate returns for multiple assets (from real data or fallback)"""
         assets = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP']
         returns_dict = {}
+        base_prices = {'BTC': 50000, 'ETH': 3000, 'BNB': 400, 'SOL': 100, 'XRP': 0.6}
+        
+        # Use common date index for all assets
+        common_dates = pd.date_range(end=datetime.now(), periods=100, freq='1h')
         
         for asset in assets:
             try:
                 df = self._collector.fetch_ohlcv(f'{asset}USDT', '1h', 100)
-                if df is not None and not df.empty:
-                    returns_dict[asset] = df['close'].pct_change().dropna()
+                if df is not None and not df.empty and 'close' in df.columns and len(df) > 1:
+                    # Use the dates from the dataframe
+                    returns = df['close'].pct_change().dropna()
+                    # Truncate to match common_dates length
+                    returns_dict[asset] = returns.iloc[:99].values
                 else:
-                    returns_dict[asset] = pd.Series(np.random.randn(100) * 0.02)
-            except:
-                returns_dict[asset] = pd.Series(np.random.randn(100) * 0.02)
+                    raise ValueError("No data")
+            except Exception as e:
+                # Fallback to sample data
+                np.random.seed(hash(asset) % 2**32)
+                returns = np.random.randn(99) * 0.02
+                returns_dict[asset] = returns
         
-        return pd.DataFrame(returns_dict)
+        # Create DataFrame with common index
+        result = pd.DataFrame(returns_dict, index=common_dates[:99])
+        return result.fillna(0)
 
 
 # ==================== MAIN DASHBOARD ====================
@@ -376,7 +389,7 @@ class TradingDashboard:
         self.port = port
         
         # Initialize components
-        self.data_provider = DataProvider()
+        self.data_provider = DataProvider(simulation=True)
         self.trading_daemon = TradingDaemon()
         self.risk_engine = RiskEngine()
         self.volatility_model = VolatilityModel()
@@ -407,6 +420,8 @@ class TradingDashboard:
             'red': '#f85149',
             'blue': '#58a6ff',
             'purple': '#a371f7',
+            'orange': '#d29922',
+            'yellow': '#e3b341',
         }
         
         self.theme = theme
@@ -631,6 +646,7 @@ class TradingDashboard:
                                               'border': 'none', 'padding': '12px 24px',
                                               'border-radius': '6px', 'cursor': 'pointer',
                                               'width': '100%', 'font-weight': 'bold'}),
+                            html.Div(id='order-result', style={'margin-top': '10px', 'padding': '8px'}),
                         ], style={'padding': '20px'}),
                     ], style={'background': theme['card'], 'padding': '20px',
                              'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
@@ -670,6 +686,7 @@ class TradingDashboard:
                                               'border': 'none', 'padding': '10px 20px',
                                               'border-radius': '6px', 'cursor': 'pointer',
                                               'width': '100%', 'font-weight': 'bold'}),
+                            html.Div(id='settings-result', style={'margin-top': '10px', 'padding': '8px'}),
                         ], style={'padding': '20px'}),
                     ], style={'background': theme['card'], 'padding': '20px',
                              'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
@@ -1250,12 +1267,14 @@ class TradingDashboard:
                 
                 for i, col in enumerate(returns.columns[:5]):
                     rolling_vol = returns[col].rolling(20).std() * np.sqrt(252) * 100
-                    fig.add_trace(go.Scatter(
-                        x=rolling_vol.index, y=rolling_vol,
-                        mode='lines',
-                        line=dict(color=colors[i % len(colors)], width=2),
-                        name=col
-                    ))
+                    rolling_vol = rolling_vol.dropna()
+                    if len(rolling_vol) > 0:
+                        fig.add_trace(go.Scatter(
+                            x=rolling_vol.index, y=rolling_vol,
+                            mode='lines',
+                            line=dict(color=colors[i % len(colors)], width=2),
+                            name=col
+                        ))
                 
                 fig.update_layout(template='plotly_dark', height=350,
                                 paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
@@ -1385,6 +1404,164 @@ class TradingDashboard:
             except Exception as e:
                 logger.error(f"Win rate error: {e}")
                 return go.Figure()
+        
+        # Execute Order callback
+        @self.app.callback(
+            Output('order-result', 'children'),
+            [Input('execute-order-btn', 'n_clicks')],
+            [State('symbol-selector', 'value'),
+             State('order-type', 'value'),
+             State('order-side', 'value'),
+             State('order-quantity', 'value')],
+            prevent_initial_call=True
+        )
+        def execute_order(n_clicks, symbol, order_type, side, quantity):
+            if not n_clicks:
+                return ""
+            try:
+                # Validate inputs
+                if not symbol or not order_type or not side:
+                    return html.Div("⚠️ Please fill all fields",
+                                   style={'color': self.theme['orange']})
+                if not quantity or quantity <= 0:
+                    return html.Div("⚠️ Invalid quantity",
+                                   style={'color': self.theme['orange']})
+                
+                # Try to execute via trading daemon
+                order_info = {
+                    'symbol': symbol,
+                    'type': order_type,
+                    'side': side,
+                    'quantity': float(quantity),
+                    'timestamp': datetime.now().strftime('%H:%M:%S'),
+                }
+                
+                # Attempt real execution through data_provider's collector
+                executed = False
+                try:
+                    if hasattr(self.data_provider, '_collector') and self.data_provider._collector:
+                        collector = self.data_provider._collector
+                        if hasattr(collector, 'client') and collector.client:
+                            result = collector.client.create_order(
+                                symbol=symbol,
+                                side=side,
+                                type=order_type,
+                                quantity=float(quantity)
+                            )
+                            order_info['order_id'] = result.get('orderId', 'N/A')
+                            order_info['status'] = result.get('status', 'FILLED')
+                            executed = True
+                except Exception as ex:
+                    logger.warning(f"Real order failed, using paper: {ex}")
+                
+                if not executed:
+                    # Paper trading fallback
+                    order_info['order_id'] = f"PAPER-{n_clicks:04d}"
+                    order_info['status'] = 'PAPER_FILLED'
+                
+                # Store in trading daemon history
+                if hasattr(self, 'trading_daemon') and hasattr(self.trading_daemon, '_trades'):
+                    self.trading_daemon._trades.append(order_info)
+                
+                status_color = self.theme['green'] if 'FILLED' in order_info['status'] else self.theme['orange']
+                return html.Div([
+                    html.Span(f"✅ {order_info['status']} ", style={'color': status_color, 'font-weight': 'bold'}),
+                    html.Span(f"{side} {quantity} {symbol} @ {order_type}", style={'color': self.theme['text']}),
+                    html.Br(),
+                    html.Span(f"ID: {order_info['order_id']}", style={'color': self.theme['text_muted'], 'font-size': '11px'}),
+                ])
+            except Exception as e:
+                logger.error(f"Order execution error: {e}")
+                return html.Div(f"❌ Error: {str(e)}", style={'color': self.theme['red']})
+        
+        # Save Settings callback
+        @self.app.callback(
+            Output('settings-result', 'children'),
+            [Input('save-settings-btn', 'n_clicks')],
+            [State('max-drawdown-input', 'value'),
+             State('stoploss-input', 'value'),
+             State('takeprofit-input', 'value'),
+             State('max-position-input', 'value'),
+             State('initial-balance-input', 'value')],
+            prevent_initial_call=True
+        )
+        def save_settings(n_clicks, max_dd, sl, tp, max_pos, balance):
+            if not n_clicks:
+                return ""
+            try:
+                settings = {
+                    'max_drawdown_pct': max_dd or 20,
+                    'stop_loss_atr': sl or 2,
+                    'take_profit_atr': tp or 3,
+                    'max_position_pct': max_pos or 30,
+                    'initial_balance': balance or 10000,
+                }
+                
+                # Apply to trading daemon
+                if hasattr(self, 'trading_daemon'):
+                    for key, val in settings.items():
+                        if hasattr(self.trading_daemon, key):
+                            setattr(self.trading_daemon, key, val)
+                
+                # Apply to risk engine
+                if hasattr(self, 'risk_engine'):
+                    if hasattr(self.risk_engine, 'max_drawdown'):
+                        self.risk_engine.max_drawdown = max_dd / 100.0
+                
+                logger.info(f"Settings saved: {settings}")
+                return html.Div([
+                    html.Span("✅ Settings saved! ", style={'color': self.theme['green'], 'font-weight': 'bold'}),
+                    html.Span(f"DD:{max_dd}% SL:{sl}x TP:{tp}x Pos:{max_pos}% Bal:${balance:,.0f}",
+                             style={'color': self.theme['text_muted'], 'font-size': '11px'}),
+                ])
+            except Exception as e:
+                logger.error(f"Save settings error: {e}")
+                return html.Div(f"❌ Error: {str(e)}", style={'color': self.theme['red']})
+        
+        # Strategy Allocation / Current Settings display
+        @self.app.callback(
+            Output('current-settings', 'children'),
+            [Input('allocation-strategy', 'value'),
+             Input('timeframe-selector', 'value')]
+        )
+        def update_current_settings(strategy, timeframe):
+            try:
+                strategy_labels = {
+                    'equal_weight': 'Equal Weight',
+                    'volatility_parity': 'Volatility Parity',
+                    'risk_parity': 'Risk Parity',
+                    'momentum': 'Momentum',
+                }
+                timeframe_labels = {
+                    '1m': '1 Minute', '5m': '5 Minutes', '15m': '15 Minutes',
+                    '1h': '1 Hour', '4h': '4 Hours', '1d': '1 Day',
+                }
+                
+                # Apply strategy to trading daemon
+                if hasattr(self, 'trading_daemon'):
+                    if hasattr(self.trading_daemon, 'allocation_strategy'):
+                        self.trading_daemon.allocation_strategy = strategy
+                    if hasattr(self.trading_daemon, 'timeframe'):
+                        self.trading_daemon.timeframe = timeframe
+                
+                return html.Div([
+                    html.Div([
+                        html.Span("📋 Active: ", style={'color': self.theme['text_muted']}),
+                        html.Span(strategy_labels.get(strategy, strategy),
+                                 style={'color': self.theme['blue'], 'font-weight': 'bold'}),
+                    ]),
+                    html.Div([
+                        html.Span("⏱️ Timeframe: ", style={'color': self.theme['text_muted']}),
+                        html.Span(timeframe_labels.get(timeframe, timeframe),
+                                 style={'color': self.theme['purple'], 'font-weight': 'bold'}),
+                    ], style={'margin-top': '5px'}),
+                    html.Div([
+                        html.Span("🟢 Status: ", style={'color': self.theme['text_muted']}),
+                        html.Span("Active", style={'color': self.theme['green']}),
+                    ], style={'margin-top': '5px'}),
+                ])
+            except Exception as e:
+                return html.Div(f"Error: {str(e)}", style={'color': self.theme['red']})
     
     def _stat_card(self, title: str, value: str, color: str):
         return html.Div([
