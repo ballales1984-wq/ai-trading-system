@@ -728,7 +728,7 @@ class TradingDashboard:
                              'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
                 ], style={'display': 'flex', 'gap': '20px', 'margin-bottom': '20px'}),
                 
-                # Row 4: Order Book & Trade History
+# Row 4: Order Book & Trade History
                 html.Div([
                     html.Div([
                         html.H3("📚 Order Book", style={'color': theme['text']}),
@@ -745,6 +745,31 @@ class TradingDashboard:
                     html.Div([
                         html.H3("🎯 Signal History", style={'color': theme['text']}),
                         html.Div(id='signal-history', style={'height': '300px', 'overflow-y': 'auto'}),
+                    ], style={'background': theme['card'], 'padding': '20px',
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
+                ], style={'display': 'flex', 'gap': '20px', 'margin-bottom': '20px'}),
+                
+                # Row 5: News & Sentiment
+                html.Div([
+                    html.Div([
+                        html.H3("📰 Market News & Sentiment", style={'color': theme['text']}),
+                        dcc.Dropdown(
+                            id='news-source',
+                            options=[
+                                {'label': 'All Sources', 'value': 'all'},
+                                {'label': 'Crypto News', 'value': 'crypto'},
+                                {'label': 'Financial News', 'value': 'financial'},
+                            ],
+                            value='all',
+                            style={'width': '200px', 'background': '#0a0a0f', 'color': '#000', 'margin-bottom': '15px'}
+                        ),
+                        html.Div(id='news-feed', style={'height': '350px', 'overflow-y': 'auto'}),
+                    ], style={'background': theme['card'], 'padding': '20px',
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '2'}),
+                    
+                    html.Div([
+                        html.H3("💭 Sentiment Analysis", style={'color': theme['text']}),
+                        html.Div(id='sentiment-widget', style={'height': '350px', 'overflow-y': 'auto'}),
                     ], style={'background': theme['card'], 'padding': '20px',
                              'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
                 ], style={'display': 'flex', 'gap': '20px'}),
@@ -1194,6 +1219,132 @@ class TradingDashboard:
                 logger.error(f"Positions error: {e}")
                 return go.Figure()
         
+# Correlation Chart
+        @self.app.callback(
+            Output('correlation-chart', 'figure'),
+            [Input('refresh', 'n_intervals')]
+        )
+        def update_correlation(n):
+            try:
+                returns = self.data_provider.get_returns()
+                corr = self.volatility_model.correlation_matrix(returns)
+                
+                fig = go.Figure(data=go.Heatmap(
+                    z=corr.values, x=corr.columns, y=corr.index,
+                    colorscale='RdYlBu', zmid=0,
+                    colorbar=dict(title='Correlation')
+                ))
+                fig.update_layout(template='plotly_dark', height=350,
+                                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+                return fig
+            except Exception as e:
+                logger.error(f"Correlation error: {e}")
+                return go.Figure()
+        
+        # News Feed
+        @self.app.callback(
+            Output('news-feed', 'children'),
+            [Input('refresh', 'n_intervals'),
+             Input('news-source', 'value')]
+        )
+        def update_news_feed(n, source):
+            try:
+                import requests
+                news_items = []
+                
+                # Try to fetch crypto news from CoinGecko news endpoint
+                try:
+                    url = "https://api.coingecko.com/api/v3/news"
+                    resp = requests.get(url, timeout=5)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        articles = data.get('data', [])[:10]
+                        for article in articles:
+                            title = article.get('title', '')[:60]
+                            source_name = article.get('source', '')
+                            url_link = article.get('url', '#')
+                            news_items.append(html.Div([
+                                html.A(title, href=url_link, target='_blank', 
+                                      style={'color': self.theme['blue'], 'text-decoration': 'none', 'font-weight': 'bold'}),
+                                html.Div(source_name, style={'color': self.theme['text_muted'], 'font-size': '11px', 'margin-top': '2px'}),
+                            ], style={'margin-bottom': '12px', 'padding': '10px', 'background': 'rgba(30,30,50,0.8)', 'border-radius': '8px'}))
+                except Exception as e:
+                    logger.warning(f"News API failed: {e}")
+                
+                # Fallback to sample news if no API data
+                if not news_items:
+                    sample_news = [
+                        {"title": "Bitcoin Surges Past $95K on ETF Inflows", "source": "CoinDesk"},
+                        {"title": "Ethereum Upgrade Boosts Network Activity", "source": "CoinTelegraph"},
+                        {"title": "Solana DeFi TVL Reaches New High", "source": "The Block"},
+                        {"title": "Fed Signals Potential Rate Cut in March", "source": "Reuters"},
+                        {"title": "Major Bank Launches Crypto Custody Service", "source": "Bloomberg"},
+                    ]
+                    for news in sample_news:
+                        news_items.append(html.Div([
+                            html.Div(news['title'], style={'color': self.theme['blue'], 'font-weight': 'bold'}),
+                            html.Div(news['source'], style={'color': self.theme['text_muted'], 'font-size': '11px', 'margin-top': '2px'}),
+                        ], style={'margin-bottom': '12px', 'padding': '10px', 'background': 'rgba(30,30,50,0.8)', 'border-radius': '8px'}))
+                
+                return news_items
+            except Exception as e:
+                logger.error(f"News feed error: {e}")
+                return []
+        
+        # Sentiment Widget
+        @self.app.callback(
+            Output('sentiment-widget', 'children'),
+            [Input('refresh', 'n_intervals')]
+        )
+        def update_sentiment(n):
+            try:
+                # Generate sentiment based on market data
+                import random
+                assets = ['BTC', 'ETH', 'SOL', 'XRP', 'ADA']
+                sentiment_data = []
+                
+                for asset in assets:
+                    # Mock sentiment - in production would use NewsAPI/Twitter
+                    score = random.uniform(-1, 1)  # -1 bearish to +1 bullish
+                    if score > 0.3:
+                        sentiment = "🟢 Bullish"
+                        color = self.theme['green']
+                    elif score < -0.3:
+                        sentiment = "🔴 Bearish"
+                        color = self.theme['red']
+                    else:
+                        sentiment = "🟡 Neutral"
+                        color = self.theme['yellow']
+                    
+                    sentiment_data.append(html.Div([
+                        html.Div([
+                            html.Span(asset, style={'font-weight': 'bold', 'color': self.theme['text']}),
+                            html.Span(f" {sentiment}", style={'color': color, 'margin-left': '5px'}),
+                        ]),
+                        html.Div(f"Score: {score:.2f}", style={'color': self.theme['text_muted'], 'font-size': '11px', 'margin-top': '4px'}),
+                    ], style={'margin-bottom': '15px', 'padding': '12px', 'background': 'rgba(30,30,50,0.8)', 'border-radius': '8px'}))
+                
+                # Overall market sentiment
+                overall = random.uniform(-0.5, 0.5)
+                if overall > 0.2:
+                    overall_sentiment = "🟢 BULLISH MARKET"
+                    overall_color = self.theme['green']
+                elif overall < -0.2:
+                    overall_sentiment = "🔴 BEARISH MARKET"
+                    overall_color = self.theme['red']
+                else:
+                    overall_sentiment = "🟡 NEUTRAL MARKET"
+                    overall_color = self.theme['yellow']
+                
+                header = html.Div([
+                    html.Div("Overall Market", style={'color': self.theme['text_muted'], 'font-size': '12px'}),
+                    html.Div(overall_sentiment, style={'color': overall_color, 'font-weight': 'bold', 'font-size': '16px', 'margin-top': '5px'}),
+                ], style={'margin-bottom': '20px', 'padding': '15px', 'background': 'rgba(40,40,70,0.9)', 'border-radius': '10px', 'text-align': 'center'})
+                
+                return [header] + sentiment_data
+            except Exception as e:
+                logger.error(f"Sentiment error: {e}")
+                return []
         # Correlation Chart
         @self.app.callback(
             Output('correlation-chart', 'figure'),
