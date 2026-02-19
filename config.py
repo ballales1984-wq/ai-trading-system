@@ -331,6 +331,8 @@ DECISION_SETTINGS: Dict[str, Any] = {
 NEWS_SETTINGS: Dict[str, Any] = {
     # News sources (API keys needed)
     'news_api_key': os.getenv('NEWS_API_KEY', ''),
+    'twitter_bearer_token': os.getenv('TWITTER_BEARER_TOKEN', ''),
+    'benzinga_api_key': os.getenv('BENZINGA_API_KEY', ''),
     
     # Keywords for different asset classes
     'crypto_keywords': ['bitcoin', 'ethereum', 'crypto', 'blockchain', 'defi'],
@@ -396,7 +398,11 @@ COINMARKETCAP_API_KEY: str = os.getenv('COINMARKETCAP_API_KEY', '')
 
 # ==================== EIA API CONFIGURATION ====================
 # Get your API key from: https://www.eia.gov/opendata/
-EIA_API_KEY: str = os.getenv('EIA_API_KEY', 'dx4gm4LcTfp9bYfmMmTd5ADkfjfT1W1rIkK6l6jH')
+EIA_API_KEY: str = os.getenv('EIA_API_KEY', '')
+
+# ==================== BENZINGA API CONFIGURATION ====================
+# Get your API key from: https://docs.benzinga.io/
+BENZINGA_API_KEY: str = os.getenv('BENZINGA_API_KEY', '')
 
 # Simulated price ranges for testing
 SIMULATED_PRICES: Dict[str, Tuple[float, float]] = {

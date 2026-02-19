@@ -5,6 +5,7 @@ Test script for the core trading system components.
 
 import asyncio
 import sys
+import pytest
 
 # Test imports
 print("=" * 50)
@@ -22,6 +23,7 @@ except Exception as e:
     sys.exit(1)
 
 
+@pytest.mark.asyncio
 async def test_paper_broker():
     """Test paper broker."""
     print("\n" + "=" * 50)
@@ -44,6 +46,7 @@ async def test_paper_broker():
     return True
 
 
+@pytest.mark.asyncio
 async def test_portfolio_manager():
     """Test portfolio manager."""
     print("\n" + "=" * 50)
@@ -70,6 +73,7 @@ async def test_portfolio_manager():
     return True
 
 
+@pytest.mark.asyncio
 async def test_risk_engine():
     """Test risk engine."""
     print("\n" + "=" * 50)
@@ -115,6 +119,7 @@ async def test_risk_engine():
     return True
 
 
+@pytest.mark.asyncio
 async def test_order_manager():
     """Test order manager."""
     print("\n" + "=" * 50)
@@ -151,6 +156,8 @@ async def test_order_manager():
     return True
 
 
+@pytest.mark.asyncio
+@pytest.mark.asyncio
 async def test_trading_engine():
     """Test trading engine."""
     print("\n" + "=" * 50)
