@@ -486,8 +486,11 @@ class OrderManager:
         history = self.order_history[-limit:]
         
         if symbol:
-            # Filter by symbol (would need to store in history)
-            pass
+            # Filter by symbol from stored order history
+            history = [
+                h for h in history
+                if h.get('symbol', '') == symbol
+            ]
         
         return history
     
