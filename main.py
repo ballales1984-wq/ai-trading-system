@@ -42,8 +42,8 @@ def parse_args():
     
     parser.add_argument(
         '--mode', '-m',
-        choices=['signals', 'analysis', 'dashboard', 'test', 'auto', 'backtest', 'simulate', 'portfolio', 'live'],
-        default='signals',
+        choices=['signals', 'analysis', 'dashboard', 'test', 'auto', 'backtest', 'simulate', 'portfolio', 'live', 'menu'],
+        default='menu',
         help='Execution mode'
     )
     
@@ -56,7 +56,11 @@ def parse_args():
     parser.add_argument('--take-profit', type=float, help='Set take-profit percentage')
     parser.add_argument('--position-size', type=float, help='Set position size percentage')
     parser.add_argument('--exchange', '-e', type=str, default='binance')
-    parser.add_argument('--simulation', '-sim', action='store_true', default=True)
+    # Simulation mode - default from config, can be overridden with --simulation or --no-simulation
+    parser.add_argument('--simulation', '-sim', action='store_true', default=None,
+                        help='Use simulation mode (default: based on config.py)')
+    parser.add_argument('--no-simulation', dest='simulation', action='store_false',
+                        help='Use real API data (ignores config)')
     parser.add_argument('--dashboard', '-d', action='store_true')
     parser.add_argument('--host', type=str, default='0.0.0.0')
     parser.add_argument('--port', '-p', type=int, default=8050)
@@ -445,6 +449,136 @@ def run_live_multi_asset_mode(args):
 def main():
     args = parse_args()
     setup_logging()
+    
+    # Determine simulation mode: use args value if provided, otherwise use config
+    if args.simulation is None:
+        # Use config.py default
+        args.simulation = config.SIMULATION_MODE
+    
+    print(f"\n>>> SIMULATION MODE: {args.simulation}")
+    
+    # Default to menu mode if no specific mode is requested
+    if args.mode == 'menu' or len(sys.argv) == 1:
+        # Menu mode - inline implementation
+        while True:
+            print("\n" + "="*70)
+            print("🚀 QUANTUM AI TRADING SYSTEM - MAIN MENU")
+            print("="*70)
+            print("""
+╔═══════════════════════════════════════════════════════════════════╗
+║                     AVAILABLE OPTIONS                            ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  [1] 📊 SIGNALS          Generate trading signals for all assets ║
+║  [2] 📈 ANALYSIS         Detailed technical analysis             ║
+║  [3] 📉 BACKTEST         Run backtest with historical data       ║
+║  [4] 🎮 SIMULATE         Run trading simulation                 ║
+║  [5] 🤖 AUTO TRADE       Start auto trading bot (paper)         ║
+║  [6] 💼 PORTFOLIO        Check portfolio status                  ║
+║  [7] 🖥️  DASHBOARD        Launch interactive dashboard           ║
+║  [8] 🔴 LIVE TRADING     Start live multi-asset trading          ║
+║  [9] ✅ TEST             Run system tests                        ║
+║                                                                   ║
+║  [0] ❌ EXIT             Exit the program                        ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+""")
+            
+            choice = input("👉 Select an option [0-9]: ").strip()
+            
+            if choice == '1':
+                print("\n" + "="*50)
+                print("Generating Trading Signals...")
+                print("="*50)
+                run_signals_mode(args)
+                input("\n⏎ Press Enter to continue...")
+                
+            elif choice == '2':
+                print("\n📈 ANALYSIS MODE")
+                symbol = input("   Enter symbol (e.g., BTC/USDT): ").strip().upper()
+                if symbol:
+                    args.symbol = symbol
+                    run_analysis_mode(args)
+                else:
+                    print("   ⚠️ Symbol required!")
+                input("\n⏎ Press Enter to continue...")
+                
+            elif choice == '3':
+                print("\n📉 BACKTEST MODE")
+                try:
+                    days_input = input("   Days to backtest [30]: ").strip()
+                    balance_input = input("   Initial balance [10000]: ").strip()
+                    args.days = int(days_input) if days_input else 30
+                    args.balance = float(balance_input) if balance_input else 10000.0
+                except ValueError:
+                    print("   ⚠️ Invalid input, using defaults")
+                    args.days = 30
+                    args.balance = 10000.0
+                run_backtest_mode(args)
+                input("\n⏎ Press Enter to continue...")
+                
+            elif choice == '4':
+                print("\n🎮 SIMULATION MODE")
+                try:
+                    duration_input = input("   Duration in seconds [60]: ").strip()
+                    balance_input = input("   Initial balance [10000]: ").strip()
+                    args.duration = int(duration_input) if duration_input else 60
+                    args.balance = float(balance_input) if balance_input else 10000.0
+                except ValueError:
+                    print("   ⚠️ Invalid input, using defaults")
+                    args.duration = 60
+                    args.balance = 10000.0
+                run_simulate_mode(args)
+                input("\n⏎ Press Enter to continue...")
+                
+            elif choice == '5':
+                print("\n🤖 AUTO TRADING BOT")
+                balance_input = input("   Initial balance [10000]: ").strip()
+                try:
+                    args.balance = float(balance_input) if balance_input else 10000.0
+                except ValueError:
+                    args.balance = 10000.0
+                run_auto_mode(args)
+                input("\n⏎ Press Enter to continue...")
+                
+            elif choice == '6':
+                print("\n💼 PORTFOLIO")
+                args.portfolio_action = 'check'
+                run_portfolio_mode(args)
+                input("\n⏎ Press Enter to continue...")
+                
+            elif choice == '7':
+                print("\n🖥️ LAUNCHING DASHBOARD...")
+                print("   Opening browser at http://localhost:8050")
+                run_dashboard_mode(args)
+                
+            elif choice == '8':
+                print("\n🔴 LIVE TRADING")
+                print("   ⚠️ WARNING: This will connect to live exchange!")
+                confirm = input("   Continue? (yes/no): ").strip().lower()
+                if confirm == 'yes':
+                    assets_input = input("   Assets (comma-separated) [BTCUSDT,ETHUSDT]: ").strip()
+                    args.assets = assets_input if assets_input else "BTCUSDT,ETHUSDT"
+                    run_live_multi_asset_mode(args)
+                else:
+                    print("   Cancelled.")
+                input("\n⏎ Press Enter to continue...")
+                
+            elif choice == '9':
+                print("\n✅ RUNNING SYSTEM TESTS...")
+                run_test_mode(args)
+                input("\n⏎ Press Enter to continue...")
+                
+            elif choice == '0':
+                print("\n" + "="*70)
+                print("👋 Goodbye! Thank you for using Quantum AI Trading System")
+                print("="*70 + "\n")
+                break
+                
+            else:
+                print("\n⚠️ Invalid option! Please try again.")
+                input("\n⏎ Press Enter to continue...")
+        return
     
     try:
         if args.dashboard or args.mode == 'dashboard':

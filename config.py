@@ -376,6 +376,10 @@ BINANCE_SECRET_KEY = os.getenv('BINANCE_SECRET_KEY', '')
 # Testnet (use for testing without real money)
 USE_BINANCE_TESTNET = os.getenv('USE_BINANCE_TESTNET', 'false').lower() == 'true'
 
+# ==================== COINMARKETCAP API CONFIGURATION ====================
+# Get your API key from: https://coinmarketcap.com/api/
+COINMARKETCAP_API_KEY = os.getenv('COINMARKETCAP_API_KEY', '')
+
 # Simulated price ranges for testing
 SIMULATED_PRICES = {
     # Major cryptos

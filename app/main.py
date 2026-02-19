@@ -1,0 +1,182 @@
+"""
+Main FastAPI Application
+=======================
+Hedge Fund Trading System API.
+"""
+
+import asyncio
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from app.core.config import settings
+from app.core.logging import setup_logging, get_logger
+from app.api.routes import health, orders, portfolio, strategy, risk, market
+
+
+# Setup logging
+setup_logging()
+logger = get_logger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator:
+    """Application lifespan manager."""
+    # Startup
+    logger.info(f"Starting {settings.app_name} v{settings.app_version}")
+    logger.info(f"Environment: {settings.environment}")
+    
+    # Initialize services
+    await _initialize_services()
+    
+    yield
+    
+    # Shutdown
+    logger.info("Shutting down application")
+    await _shutdown_services()
+
+
+async def _initialize_services():
+    """Initialize application services."""
+    # Initialize database connection
+    # Initialize broker connections
+    # Start background tasks
+    logger.info("Services initialized")
+
+
+async def _shutdown_services():
+    """Cleanup on shutdown."""
+    logger.info("Services stopped")
+
+
+# Create FastAPI app
+app = FastAPI(
+    title=settings.app_name,
+    version=settings.app_version,
+    description="""
+    ## Hedge Fund Trading System
+    
+    Professional-grade trading platform with:
+    - Multi-asset support (crypto, forex, stocks, futures)
+    - Multi-strategy execution
+    - Institutional risk management (VaR, CVaR, Monte Carlo)
+    - Real-time portfolio tracking
+    - Paper trading and live trading modes
+    """,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    lifespan=lifespan
+)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# Request logging middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Log all incoming requests."""
+    logger.info(f"Request: {request.method} {request.url.path}")
+    
+    response = await call_next(request)
+    
+    logger.info(f"Response: {response.status_code}")
+    return response
+
+
+# Exception handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Handle uncaught exceptions."""
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+    
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal server error",
+            "path": str(request.url)
+        }
+    )
+
+
+# Include routers
+app.include_router(
+    health.router,
+    prefix=settings.api_prefix,
+    tags=["Health"]
+)
+
+app.include_router(
+    orders.router,
+    prefix=settings.api_prefix,
+    tags=["Orders"]
+)
+
+app.include_router(
+    portfolio.router,
+    prefix=settings.api_prefix,
+    tags=["Portfolio"]
+)
+
+app.include_router(
+    strategy.router,
+    prefix=settings.api_prefix,
+    tags=["Strategy"]
+)
+
+app.include_router(
+    risk.router,
+    prefix=settings.api_prefix,
+    tags=["Risk"]
+)
+
+app.include_router(
+    market.router,
+    prefix=settings.api_prefix,
+    tags=["Market"]
+)
+
+
+# Root endpoint
+@app.get("/")
+async def root():
+    """Root endpoint."""
+    return {
+        "name": settings.app_name,
+        "version": settings.app_version,
+        "status": "running",
+        "docs": "/docs"
+    }
+
+
+# Health check
+@app.get("/health")
+async def health_check():
+    """Health check endpoint."""
+    return {
+        "status": "healthy",
+        "version": settings.app_version,
+        "environment": settings.environment
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=settings.debug
+    )
+

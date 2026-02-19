@@ -1,0 +1,12 @@
+{
+  "id": "20260218_225841",
+  "title": "Merge coordination",
+  "description": "Merge Agent2 changes with main branch using git rebase or merge",
+  "priority": "medium",
+  "status": "pending",
+  "created_by": "Agent1",
+  "created_at": "2026-02-18T22:58:41.923862",
+  "files": [],
+  "depends_on": [],
+  "tags": []
+}
