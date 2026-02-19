@@ -18,6 +18,7 @@ from src.core.event_bus import (
     EventHandler,
     SignalEventHandler,
     RiskEventHandler,
+    CallbackEventHandler,
     create_event
 )
 

@@ -1,53 +1,32 @@
-# TODO - Crypto Commodity Trading System
+# TODO: Add Missing Database Tables
 
-## Completed ✅
+## Task: Enhance SQLite Database with Additional Tables
 
-- [x] Project structure setup
-- [x] Configuration module (config.py)
-- [x] Data collector module with simulated data
-- [x] Technical analysis module (RSI, EMA, Bollinger, MACD, etc.)
-- [x] Sentiment/news analysis module
-- [x] Decision engine with probabilistic signals
-- [x] Dashboard module (Plotly/Dash ready)
-- [x] Main entry point with CLI
-- [x] Testing and validation
-- [x] Enable real Binance data mode
-- [x] Added ADX and VWAP indicators
+### Current Tables (Already Exist):
+- portfolio ✅
+- positions ✅
+- orders ✅
+- models ✅
+- trades ✅
+- event_log ✅
 
-## Next Steps (Optional Enhancements)
+### New Tables to Add:
+1. [ ] **signals** - Store ML signals history
+   - symbol, signal_type, confidence, timestamp, source
+   
+2. [ ] **price_history** - Store OHLCV data for backtesting
+   - symbol, timestamp, open, high, low, close, volume
+   
+3. [ ] **model_performance** - Track ML model accuracy over time
+   - model_id, accuracy, precision, recall, f1, timestamp
+   
+4. [ ] **backtest_results** - Store backtest results
+   - strategy, initial_balance, final_balance, total_return, trades, win_rate, timestamp
 
-- [ ] Install full dependencies: `pip install dash plotly ccxt`
-- [ ] Add API keys to .env for real data
-- [ ] Connect to live exchange data
-- [ ] Add NewsAPI key for real news
-- [ ] Backtest with historical data
-- [ ] Add machine learning models for predictions
+### Files to Modify:
+- src/core/state_manager.py - Add new table schemas and methods
 
-## Running the System
-
-```bash
-# Console signals (real data if API keys configured)
-venv\Scripts\python.exe main.py --mode signals
-
-# Test mode
-venv\Scripts\python.exe main.py --mode test
-
-# Dashboard (requires dash/plotly)
-venv\Scripts\python.exe main.py --mode dashboard
-
-# Analysis mode
-venv\Scripts\python.exe main.py --mode analysis --symbol BTC/USDT
-```
-
-## Configuration
-
-Copy `.env.example` to `.env` and add your API keys:
-
-```bash
-# Binance (get from binance.com)
-BINANCE_API_KEY=your_key
-BINANCE_SECRET_KEY=your_secret
-
-# News (get from newsapi.org)
-NEWS_API_KEY=your_key
-```
+### Implementation Steps:
+1. Add new table schemas in `_init_database()` method
+2. Add new data classes for each table
+3. Add CRUD methods for each new table

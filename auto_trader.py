@@ -477,13 +477,12 @@ class AutoTradingBot:
         symbols_to_close = []
         
         for symbol, position in self.portfolio.positions.items():
-            # Get current price
-            current_price = self.data_collector.fetch_current_price(symbol)
+            # Use the current price from position (already updated by simulation)
+            # This ensures backtest uses simulated prices consistently
+            current_price = position.current_price
             
-            if current_price is None:
+            if current_price is None or current_price == 0:
                 continue
-            
-            position.current_price = current_price
             
             # Calculate unrealized PnL
             position.unrealized_pnl = (
@@ -592,7 +591,7 @@ class AutoTradingBot:
             
             # Simulate some random outcomes
             for signal in signals:
-                if random.random() < 0.3:  # 30% chance to trade
+                if random.random() < 0.5:  # 50% chance to trade
                     if signal.action == 'BUY' and len(self.portfolio.positions) < self.max_positions:
                         self._simulate_buy(signal)
                     elif signal.action == 'SELL' and signal.symbol in self.portfolio.positions:
@@ -647,9 +646,11 @@ class AutoTradingBot:
     
     def _simulate_price_changes(self):
         """Simulate price changes for backtest"""
+        # Use lower volatility for more realistic simulation
+        # 0.5% std dev is more realistic for hourly crypto moves
         for position in self.portfolio.positions.values():
-            # Random price change between -3% and +3%
-            change = random.gauss(0, 0.02)
+            # Random price change between -1.5% and +1.5% (realistic range)
+            change = random.gauss(0, 0.005)
             position.current_price *= (1 + change)
             position.unrealized_pnl = (
                 (position.current_price - position.entry_price) * position.quantity

@@ -20,6 +20,13 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
+def json_serializer(obj):
+    """JSON serializer for objects not serializable by default."""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
+
 class EventType(Enum):
     """Event types in the trading system."""
     # Market events
@@ -106,20 +113,19 @@ class EventBus:
         
         logger.info("Event bus initialized")
     
-    def subscribe(self, event_type: EventType, handler: Any):
+    def subscribe(self, event_type: EventType, handler: EventHandler):
         """
         Subscribe to an event type.
         
         Args:
             event_type: Type of event to subscribe to
-            handler: Event handler (EventHandler instance or callable)
+            handler: Event handler
         """
         if event_type not in self._subscribers:
             self._subscribers[event_type] = []
         
         self._subscribers[event_type].append(handler)
-        handler_name = handler.__class__.__name__ if hasattr(handler, '__class__') else handler.__name__
-        logger.debug(f"Subscribed {handler_name} to {event_type.value}")
+        logger.debug(f"Subscribed {handler.__class__.__name__} to {event_type.value}")
     
     def unsubscribe(self, event_type: EventType, handler: EventHandler):
         """
@@ -156,17 +162,9 @@ class EventBus:
         # Notify all handlers
         for handler in handlers:
             try:
-                # Check if handler is an EventHandler instance or a callable
-                if isinstance(handler, EventHandler):
-                    await handler.handle(event)
-                elif callable(handler):
-                    # Handle callable functions (e.g., lambdas)
-                    result = handler(event)
-                    if asyncio.iscoroutine(result):
-                        await result
+                await handler.handle(event)
             except Exception as e:
-                handler_name = handler.__class__.__name__ if hasattr(handler, '__class__') else handler.__name__
-                logger.error(f"Error in event handler {handler_name}: {e}")
+                logger.error(f"Error in event handler {handler.__class__.__name__}: {e}")
     
     async def publish_sync(self, event: Event):
         """Publish event synchronously."""
@@ -176,16 +174,8 @@ class EventBus:
         """Log event to file."""
         log_file = self._log_dir / f"events_{event.timestamp.strftime('%Y%m%d')}.jsonl"
         
-        def json_serializable(obj):
-            """Convert objects to JSON serializable format."""
-            if isinstance(obj, datetime):
-                return obj.isoformat()
-            elif hasattr(obj, '__dict__'):
-                return obj.__dict__
-            return str(obj)
-        
         with open(log_file, 'a') as f:
-            f.write(json.dumps(event.to_dict(), default=json_serializable) + '\n')
+            f.write(json.dumps(event.to_dict(), default=json_serializer) + '\n')
     
     def get_event_history(
         self,
@@ -263,6 +253,21 @@ class RiskEventHandler(EventHandler):
             await self.on_alert(event.data)
         elif event.event_type == EventType.EMERGENCY_EXIT and self.on_emergency:
             await self.on_emergency(event.data)
+
+
+class CallbackEventHandler(EventHandler):
+    """Generic handler that wraps a callback function."""
+    
+    def __init__(self, callback: Callable):
+        """Initialize handler with callback."""
+        self.callback = callback
+    
+    async def handle(self, event: Event):
+        """Handle event by calling the callback."""
+        if asyncio.iscoroutinefunction(self.callback):
+            await self.callback(event)
+        else:
+            self.callback(event)
 
 
 def create_event(event_type: EventType, data: Dict[str, Any], source: str = "system") -> Event:

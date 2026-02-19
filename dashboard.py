@@ -237,11 +237,25 @@ class TradingDaemon:
                     self.state.total_trades = 1
                     self.state.winrate = 100 if pnl_change > 0 else 0
                 
-                # Mock positions
+                # Expanded portfolio with more crypto assets
+                # Using mock data for demonstration - in production, connect to live exchange
+                import random
                 self._positions = {
-                    'BTC': {'size': np.random.randint(-1, 2), 'entry': 50000},
-                    'ETH': {'size': np.random.randint(-2, 3), 'entry': 3000},
-                    'BNB': {'size': np.random.randint(-1, 2), 'entry': 400}
+                    'BTC': {'size': random.randint(-1, 2), 'entry': 67000},
+                    'ETH': {'size': random.randint(-2, 3), 'entry': 3200},
+                    'BNB': {'size': random.randint(-1, 2), 'entry': 620},
+                    'SOL': {'size': random.randint(-3, 4), 'entry': 175},
+                    'XRP': {'size': random.randint(-10, 15), 'entry': 2.45},
+                    'ADA': {'size': random.randint(-100, 150), 'entry': 0.92},
+                    'DOGE': {'size': random.randint(-500, 800), 'entry': 0.31},
+                    'AVAX': {'size': random.randint(-5, 8), 'entry': 36},
+                    'DOT': {'size': random.randint(-10, 15), 'entry': 7.2},
+                    'MATIC': {'size': random.randint(-50, 80), 'entry': 0.43},
+                    'LINK': {'size': random.randint(-5, 8), 'entry': 21},
+                    'ATOM': {'size': random.randint(-10, 15), 'entry': 9.2},
+                    'UNI': {'size': random.randint(-10, 15), 'entry': 11.5},
+                    'LTC': {'size': random.randint(-2, 3), 'entry': 102},
+                    'ETC': {'size': random.randint(-5, 8), 'entry': 27},
                 }
                 self.state.open_positions = sum(1 for p in self._positions.values() if p['size'] != 0)
     
@@ -296,13 +310,12 @@ class TradingDaemon:
 class DataProvider:
     """Cached data provider with real-time market data"""
     
-    def __init__(self, simulation: bool = True):
+    def __init__(self):
         self._cache: Dict = {}
         self._cache_time: Dict = {}
         self._cache_ttl = 10
-        self._simulation = simulation
-        # Initialize data collector with simulation mode for dashboard
-        self._collector = DataCollector(simulation=simulation)
+        # Initialize real data collector
+        self._collector = DataCollector()
     
     def _is_cache_valid(self, key: str) -> bool:
         if key not in self._cache or key not in self._cache_time:
@@ -352,30 +365,18 @@ class DataProvider:
         """Generate returns for multiple assets (from real data or fallback)"""
         assets = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP']
         returns_dict = {}
-        base_prices = {'BTC': 50000, 'ETH': 3000, 'BNB': 400, 'SOL': 100, 'XRP': 0.6}
-        
-        # Use common date index for all assets
-        common_dates = pd.date_range(end=datetime.now(), periods=100, freq='1h')
         
         for asset in assets:
             try:
                 df = self._collector.fetch_ohlcv(f'{asset}USDT', '1h', 100)
-                if df is not None and not df.empty and 'close' in df.columns and len(df) > 1:
-                    # Use the dates from the dataframe
-                    returns = df['close'].pct_change().dropna()
-                    # Truncate to match common_dates length
-                    returns_dict[asset] = returns.iloc[:99].values
+                if df is not None and not df.empty:
+                    returns_dict[asset] = df['close'].pct_change().dropna()
                 else:
-                    raise ValueError("No data")
-            except Exception as e:
-                # Fallback to sample data
-                np.random.seed(hash(asset) % 2**32)
-                returns = np.random.randn(99) * 0.02
-                returns_dict[asset] = returns
+                    returns_dict[asset] = pd.Series(np.random.randn(100) * 0.02)
+            except:
+                returns_dict[asset] = pd.Series(np.random.randn(100) * 0.02)
         
-        # Create DataFrame with common index
-        result = pd.DataFrame(returns_dict, index=common_dates[:99])
-        return result.fillna(0)
+        return pd.DataFrame(returns_dict)
 
 
 # ==================== MAIN DASHBOARD ====================
@@ -389,7 +390,7 @@ class TradingDashboard:
         self.port = port
         
         # Initialize components
-        self.data_provider = DataProvider(simulation=True)
+        self.data_provider = DataProvider()
         self.trading_daemon = TradingDaemon()
         self.risk_engine = RiskEngine()
         self.volatility_model = VolatilityModel()
@@ -399,7 +400,7 @@ class TradingDashboard:
         # Initialize Dash
         self.app = Dash(
             __name__,
-            title="Quantum AI Trading System v2.0",
+            title="Quantum AI Trading Dashboard",
             update_title=None,
             suppress_callback_exceptions=True
         )
@@ -410,28 +411,46 @@ class TradingDashboard:
         logger.info("Production TradingDashboard initialized")
     
     def _build_layout(self):
+        # Enhanced cyberpunk/neon theme with improved visuals
         theme = {
-            'background': '#0a0a0f',
-            'card': 'rgba(22, 27, 34, 0.8)',
-            'border': '#30363d',
-            'text': '#e6edf3',
-            'text_muted': '#8b949e',
-            'green': '#3fb950',
-            'red': '#f85149',
-            'blue': '#58a6ff',
-            'purple': '#a371f7',
-            'orange': '#d29922',
-            'yellow': '#e3b341',
+            'background': '#0d0d12',
+            'card': 'linear-gradient(135deg, rgba(20, 20, 35, 0.95) 0%, rgba(30, 30, 50, 0.9) 100%)',
+            'border': '#2d2d44',
+            'text': '#ffffff',
+            'text_muted': '#9ca3af',
+            'green': '#00ff88',
+            'red': '#ff4757',
+            'blue': '#00d4ff',
+            'purple': '#a855f7',
+            'orange': '#ff9500',
+            'yellow': '#ffd60a',
+            'cyan': '#00f5ff',
+            'pink': '#ff6b9d',
+            'gradient': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        }
+        
+        # Enhanced card style with shadows and larger padding
+        card_style = {
+            'background': theme['card'],
+            'padding': '25px',
+            'border-radius': '16px',
+            'border': f"1px solid {theme['border']}",
+            'box-shadow': '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
+            'backdrop-filter': 'blur(10px)',
         }
         
         self.theme = theme
         
         self.app.layout = html.Div([
-            # Header
+            # Header with gradient background
             html.Div([
                 html.Div([
                     html.H1("🚀 Quantum AI Trading System", 
-                            style={'margin': '0', 'color': theme['text'], 'font-size': '28px'}),
+                            style={'margin': '0', 'color': '#ffffff', 'font-size': '32px', 
+                                   'text-shadow': '0 0 20px rgba(102, 126, 234, 0.8)',
+                                   'background': '-webkit-linear-gradient(45deg, #00ff88, #00d4ff)',
+                                   '-webkit-background-clip': 'text',
+                                   '-webkit-text-fill-color': 'transparent'}),
                     html.P("Production Trading Dashboard",
                           style={'margin': '5px 0 0 0', 'color': theme['text_muted']}),
                 ], style={'flex': '1'}),
@@ -497,37 +516,34 @@ class TradingDashboard:
             
             # Main Content
             html.Div([
-                # Stats Row
+                # Stats Row - Enhanced with larger cards
                 html.Div(id='stats-row', style={
                     'display': 'grid',
                     'grid-template-columns': 'repeat(5, 1fr)',
-                    'gap': '20px',
-                    'margin-bottom': '20px'
+                    'gap': '25px',
+                    'margin-bottom': '25px'
                 }),
                 
-                # Live Market Ticker Row
+                # Live Market Ticker Row - Larger cards
                 html.Div([
                     html.Div([
-                        html.H3(" Live Market Prices", style={'color': self.theme['text']}),
-                        html.Div(id='market-ticker', style={'display': 'flex', 'gap': '20px', 'flex-wrap': 'wrap'}),
-                    ], style={'background': theme['card'], 'padding': '20px', 
-                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'width': '100%'}),
-                ], style={'margin-bottom': '20px'}),
+                        html.H3("📊 Live Market Prices", style={'color': self.theme['text'], 'font-size': '20px'}),
+                        html.Div(id='market-ticker', style={'display': 'flex', 'gap': '25px', 'flex-wrap': 'wrap'}),
+                    ], style={**card_style, 'width': '100%', 'margin-bottom': '25px'}),
+                ]),
                 
-                # Charts Row 1: Price & Portfolio
+                # Charts Row 1: Price & Portfolio - Larger charts
                 html.Div([
                     html.Div([
-                        html.H3("📈 Price Chart", style={'color': theme['text']}),
-                        dcc.Graph(id='price-chart', style={'height': '400px'}),
-                    ], style={'background': theme['card'], 'padding': '20px', 
-                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '2'}),
+                        html.H3("📈 Price Chart", style={'color': theme['text'], 'font-size': '20px'}),
+                        dcc.Graph(id='price-chart', style={'height': '500px'}),
+                    ], style={**card_style, 'flex': '2'}),
                     
                     html.Div([
-                        html.H3("💰 Portfolio Equity", style={'color': theme['text']}),
-                        dcc.Graph(id='portfolio-chart', style={'height': '400px'}),
-                    ], style={'background': theme['card'], 'padding': '20px',
-                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
-                ], style={'display': 'flex', 'gap': '20px', 'margin-bottom': '20px'}),
+                        html.H3("💰 Portfolio Equity", style={'color': theme['text'], 'font-size': '20px'}),
+                        dcc.Graph(id='portfolio-chart', style={'height': '500px'}),
+                    ], style={**card_style, 'flex': '1'}),
+                ], style={'display': 'flex', 'gap': '25px', 'margin-bottom': '25px'}),
                 
                 # Charts Row 2: Risk & Positions
                 html.Div([
@@ -550,48 +566,6 @@ class TradingDashboard:
                              'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
                 ], style={'display': 'flex', 'gap': '20px', 'margin-bottom': '20px'}),
                 
-                # Charts Row 3: Advanced Analytics
-                html.Div([
-                    html.Div([
-                        html.H3("📈 Returns Distribution", style={'color': theme['text']}),
-                        dcc.Graph(id='returns-dist-chart', style={'height': '350px'}),
-                    ], style={'background': theme['card'], 'padding': '20px',
-                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
-                    
-                    html.Div([
-                        html.H3("📉 Drawdown Analysis", style={'color': theme['text']}),
-                        dcc.Graph(id='drawdown-chart', style={'height': '350px'}),
-                    ], style={'background': theme['card'], 'padding': '20px',
-                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
-                    
-                    html.Div([
-                        html.H3("📊 Rolling Volatility", style={'color': theme['text']}),
-                        dcc.Graph(id='volatility-chart', style={'height': '350px'}),
-                    ], style={'background': theme['card'], 'padding': '20px',
-                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
-                ], style={'display': 'flex', 'gap': '20px', 'margin-bottom': '20px'}),
-                
-                # Charts Row 4: Performance Metrics
-                html.Div([
-                    html.Div([
-                        html.H3("🎯 Performance KPIs", style={'color': theme['text']}),
-                        dcc.Graph(id='performance-chart', style={'height': '350px'}),
-                    ], style={'background': theme['card'], 'padding': '20px',
-                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
-                    
-                    html.Div([
-                        html.H3("💹 Rolling Sharpe Ratio", style={'color': theme['text']}),
-                        dcc.Graph(id='sharpe-chart', style={'height': '350px'}),
-                    ], style={'background': theme['card'], 'padding': '20px',
-                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
-                    
-                    html.Div([
-                        html.H3("🔄 Win Rate & Profit Factor", style={'color': theme['text']}),
-                        dcc.Graph(id='winrate-chart', style={'height': '350px'}),
-                    ], style={'background': theme['card'], 'padding': '20px',
-                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
-                ], style={'display': 'flex', 'gap': '20px', 'margin-bottom': '20px'}),
-                
                 # Row 3: Binance Trading Panel
                 html.Div([
                     html.Div([
@@ -602,11 +576,36 @@ class TradingDashboard:
                                 dcc.Dropdown(
                                     id='symbol-selector',
                                     options=[
-                                        {'label': 'BTC/USDT', 'value': 'BTCUSDT'},
-                                        {'label': 'ETH/USDT', 'value': 'ETHUSDT'},
-                                        {'label': 'BNB/USDT', 'value': 'BNBUSDT'},
-                                        {'label': 'SOL/USDT', 'value': 'SOLUSDT'},
-                                        {'label': 'XRP/USDT', 'value': 'XRPUSDT'},
+                                        {'label': 'BTC/USDT - Bitcoin', 'value': 'BTCUSDT'},
+                                        {'label': 'ETH/USDT - Ethereum', 'value': 'ETHUSDT'},
+                                        {'label': 'BNB/USDT - BNB', 'value': 'BNBUSDT'},
+                                        {'label': 'SOL/USDT - Solana', 'value': 'SOLUSDT'},
+                                        {'label': 'XRP/USDT - Ripple', 'value': 'XRPUSDT'},
+                                        {'label': 'ADA/USDT - Cardano', 'value': 'ADAUSDT'},
+                                        {'label': 'DOGE/USDT - Dogecoin', 'value': 'DOGEUSDT'},
+                                        {'label': 'AVAX/USDT - Avalanche', 'value': 'AVAXUSDT'},
+                                        {'label': 'DOT/USDT - Polkadot', 'value': 'DOTUSDT'},
+                                        {'label': 'MATIC/USDT - Polygon', 'value': 'MATICUSDT'},
+                                        {'label': 'LINK/USDT - Chainlink', 'value': 'LINKUSDT'},
+                                        {'label': 'ATOM/USDT - Cosmos', 'value': 'ATOMUSDT'},
+                                        {'label': 'UNI/USDT - Uniswap', 'value': 'UNIUSDT'},
+                                        {'label': 'LTC/USDT - Litecoin', 'value': 'LTCUSDT'},
+                                        {'label': 'ETC/USDT - Ethereum Classic', 'value': 'ETCUSDT'},
+                                        {'label': 'XLM/USDT - Stellar', 'value': 'XLMUSDT'},
+                                        {'label': 'NEAR/USDT - Near', 'value': 'NEARUSDT'},
+                                        {'label': 'APT/USDT - Aptos', 'value': 'APTUSDT'},
+                                        {'label': 'ARB/USDT - Arbitrum', 'value': 'ARBUSDT'},
+                                        {'label': 'OP/USDT - Optimism', 'value': 'OPUSDT'},
+                                        {'label': 'INJ/USDT - Injective', 'value': 'INJUSDT'},
+                                        {'label': 'SUI/USDT - Sui', 'value': 'SUIUSDT'},
+                                        {'label': 'PEPE/USDT - Pepe', 'value': 'PEPEUSDT'},
+                                        {'label': 'SHIB/USDT - Shiba Inu', 'value': 'SHIBUSDT'},
+                                        {'label': 'TRX/USDT - TRON', 'value': 'TRXUSDT'},
+                                        {'label': 'FIL/USDT - Filecoin', 'value': 'FILUSDT'},
+                                        {'label': 'HBAR/USDT - Hedera', 'value': 'HBARUSDT'},
+                                        {'label': 'VET/USDT - VeChain', 'value': 'VETUSDT'},
+                                        {'label': 'ALGO/USDT - Algorand', 'value': 'ALGOUSDT'},
+                                        {'label': 'FTM/USDT - Fantom', 'value': 'FTMUSDT'},
                                     ],
                                     value='BTCUSDT',
                                     style={'background': theme['card'], 'color': '#000'}
@@ -646,7 +645,6 @@ class TradingDashboard:
                                               'border': 'none', 'padding': '12px 24px',
                                               'border-radius': '6px', 'cursor': 'pointer',
                                               'width': '100%', 'font-weight': 'bold'}),
-                            html.Div(id='order-result', style={'margin-top': '10px', 'padding': '8px'}),
                         ], style={'padding': '20px'}),
                     ], style={'background': theme['card'], 'padding': '20px',
                              'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
@@ -686,7 +684,6 @@ class TradingDashboard:
                                               'border': 'none', 'padding': '10px 20px',
                                               'border-radius': '6px', 'cursor': 'pointer',
                                               'width': '100%', 'font-weight': 'bold'}),
-                            html.Div(id='settings-result', style={'margin-top': '10px', 'padding': '8px'}),
                         ], style={'padding': '20px'}),
                     ], style={'background': theme['card'], 'padding': '20px',
                              'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
@@ -818,69 +815,103 @@ class TradingDashboard:
         def update_market_ticker(n):
             try:
                 import requests
-                prices = {}
-                symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT']
+                ticker_items = []
                 
+                # Crypto emoji icons
+                CRYPTO_ICONS = {
+                    'BTC': '₿', 'ETH': 'Ξ', 'BNB': 'B', 'SOL': 'S', 'XRP': 'X',
+                    'ADA': 'A', 'DOGE': 'Ð', 'AVAX': 'A', 'DOT': '●', 'MATIC': 'M',
+                    'LINK': '⬡', 'ATOM': '⚛', 'UNI': 'U', 'LTC': 'Ł', 'ETC': 'Ξ',
+                    'XLM': '✦', 'NEAR': 'N', 'APT': 'A', 'ARB': 'A', 'OP': 'O',
+                    'INJ': 'I', 'SUI': 'S', 'SEI': 'S', 'TIA': 'T', 'FIL': 'F',
+                }
+                
+                # Extended list of crypto assets
+                symbols = [
+                    'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT',
+                    'ADAUSDT', 'DOGEUSDT', 'AVAXUSDT', 'DOTUSDT', 'MATICUSDT',
+                    'LINKUSDT', 'ATOMUSDT', 'UNIUSDT', 'LTCUSDT', 'ETCUSDT',
+                    'XLMUSDT', 'NEARUSDT', 'APTUSDT', 'ARBUSDT', 'OPUSDT',
+                    'INJUSDT', 'SUIUSDT', 'SEIUSDT', 'TIAUSDT', 'FILUSDT'
+                ]
+                
+                # Use Binance 24hr ticker API for real price and change
                 for symbol in symbols:
                     try:
-                        url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}"
-                        resp = requests.get(url, timeout=2)
+                        url = f"https://api.binance.com/api/v3/ticker/24hr?symbol={symbol}"
+                        resp = requests.get(url, timeout=3)
                         if resp.status_code == 200:
                             data = resp.json()
-                            prices[symbol] = float(data['price'])
-                    except:
-                        pass
+                            price = float(data['lastPrice'])
+                            change_pct = float(data['priceChangePercent'])
+                            
+                            base = symbol.replace('USDT', '')
+                            icon = CRYPTO_ICONS.get(base, '')
+                            
+                            # Build ticker card with icon and big symbol
+                            ticker_items.append(html.Div([
+                                html.Div([
+                                    html.Span(icon, style={'font-size': '20px', 'margin-right': '5px'}),
+                                    html.Span(base, style={
+                                        'font-weight': 'bold', 
+                                        'font-size': '22px',
+                                        'font-family': 'Arial Black, sans-serif',
+                                    })
+                                ], style={'margin-bottom': '8px'}),
+                                html.Div(f"${price:,.2f}", style={
+                                    'color': '#ffffff', 'font-size': '15px', 'font-weight': 'bold'
+                                }),
+                                html.Div(f"{change_pct:+.2f}%", style={
+                                    'color': '#00ff88' if change_pct >= 0 else '#ff4757', 
+                                    'font-size': '14px', 
+                                    'font-weight': 'bold',
+                                    'margin-top': '5px'
+                                }),
+                            ], style={
+                                'background': 'linear-gradient(145deg, #1e1e30 0%, #2a2a4a 100%)',
+                                'padding': '16px',
+                                'border-radius': '14px',
+                                'min-width': '115px',
+                                'text-align': 'center',
+                                'border': '2px solid #00ff88' if change_pct >= 0 else '2px solid #ff4757',
+                                'box-shadow': '0 6px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+                            }))
+                    except Exception as e:
+                        logger.warning(f"Failed to fetch {symbol}: {e}")
+                        continue
                 
-                ticker_items = []
-                base_prices = {'BTCUSDT': 95000, 'ETHUSDT': 3200, 'BNBUSDT': 650, 'SOLUSDT': 180, 'XRPUSDT': 2.5}
-                
-                for symbol, price in prices.items() if prices else base_prices.items():
-                    base = base_prices.get(symbol, price)
-                    change = ((price - base) / base) * 100
-                    color = self.theme['green'] if change >= 0 else self.theme['red']
-                    
-                    ticker_items.append(html.Div([
-                        html.Div(symbol.replace('USDT', '/USDT'), style={
-                            'font-weight': 'bold', 'color': self.theme['text'], 'font-size': '14px'
-                        }),
-                        html.Div(f"${price:,.2f}", style={
-                            'color': self.theme['text'], 'font-size': '16px', 'font-weight': 'bold'
-                        }),
-                        html.Div(f"{change:+.2f}%", style={
-                            'color': color, 'font-size': '12px'
-                        }),
-                    ], style={
-                        'background': self.theme['card'],
-                        'padding': '15px',
-                        'border-radius': '8px',
-                        'min-width': '120px',
-                        'text-align': 'center',
-                        'border': f"1px solid {self.theme['border']}"
-                    }))
-                
-                if not prices:
-                    for symbol, base in base_prices.items():
-                        change = (symbol == 'BTCUSDT') * 0.5 - 0.2
+                # Fallback: show mock data if API fails
+                if not ticker_items:
+                    base_prices = {
+                        'BTC': 95000, 'ETH': 3200, 'BNB': 650, 'SOL': 180, 'XRP': 2.5,
+                        'ADA': 0.95, 'DOGE': 0.32, 'AVAX': 38, 'DOT': 7.5, 'MATIC': 0.45,
+                        'LINK': 22, 'ATOM': 9.5, 'UNI': 12, 'LTC': 105, 'ETC': 28,
+                        'XLM': 0.12, 'NEAR': 5.5, 'APT': 9, 'ARB': 1.1, 'OP': 2.8
+                    }
+                    for symbol, price in base_prices.items():
+                        change = np.random.uniform(-5, 5)
                         color = self.theme['green'] if change >= 0 else self.theme['red']
                         ticker_items.append(html.Div([
-                            html.Div(symbol.replace('USDT', '/USDT'), style={
-                                'font-weight': 'bold', 'color': self.theme['text'], 'font-size': '14px'
+                            html.Div(symbol, style={
+                                'font-weight': 'bold', 'color': '#ffffff', 'font-size': '14px'
                             }),
-                            html.Div(f"${base:,.2f}", style={
-                                'color': self.theme['text'], 'font-size': '16px', 'font-weight': 'bold'
+                            html.Div(f"${price:,.2f}", style={
+                                'color': '#ffffff', 'font-size': '16px', 'font-weight': 'bold'
                             }),
                             html.Div(f"{change:+.2f}%", style={
                                 'color': color, 'font-size': '12px'
                             }),
                         ], style={
-                            'background': self.theme['card'],
+                            'background': 'rgba(40, 40, 60, 0.9)',
                             'padding': '15px',
-                            'border-radius': '8px',
+                            'border-radius': '10px',
                             'min-width': '120px',
                             'text-align': 'center',
-                            'border': f"1px solid {self.theme['border']}"
+                            'border': f"1px solid {self.theme['border']}",
+                            'box-shadow': '0 2px 8px rgba(0,0,0,0.3)'
                         }))
                 
+                logger.info(f"Ticker updated: {len(ticker_items)} symbols")
                 return ticker_items
             except Exception as e:
                 logger.error(f"Ticker error: {e}")
@@ -1184,384 +1215,6 @@ class TradingDashboard:
             except Exception as e:
                 logger.error(f"Correlation error: {e}")
                 return go.Figure()
-        
-        # Returns Distribution Chart
-        @self.app.callback(
-            Output('returns-dist-chart', 'figure'),
-            [Input('refresh', 'n_intervals')]
-        )
-        def update_returns_dist(n):
-            try:
-                returns = self.data_provider.get_returns()['BTC']
-                if returns is None or len(returns) < 2:
-                    return go.Figure()
-                
-                fig = go.Figure()
-                fig.add_trace(go.Histogram(
-                    x=returns * 100,
-                    nbinsx=30,
-                    marker_color=self.theme['blue'],
-                    opacity=0.75,
-                    name='Returns'
-                ))
-                fig.add_vline(x=0, line_dash="dash", line_color=self.theme['text_muted'])
-                fig.add_vline(x=returns.mean() * 100, line_dash="dot", line_color=self.theme['green'], 
-                             annotation_text=f"Mean: {returns.mean()*100:.2f}%")
-                fig.update_layout(template='plotly_dark', height=350,
-                                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                                xaxis_title='Return %', yaxis_title='Frequency',
-                                showlegend=False)
-                return fig
-            except Exception as e:
-                logger.error(f"Returns distribution error: {e}")
-                return go.Figure()
-        
-        # Drawdown Chart
-        @self.app.callback(
-            Output('drawdown-chart', 'figure'),
-            [Input('refresh', 'n_intervals')]
-        )
-        def update_drawdown(n):
-            try:
-                returns = self.data_provider.get_returns()['BTC']
-                if returns is None or len(returns) < 2:
-                    return go.Figure()
-                
-                # Calculate cumulative returns and drawdown
-                cumulative = (1 + returns).cumprod()
-                running_max = cumulative.cummax()
-                drawdown = (cumulative - running_max) / running_max * 100
-                
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(
-                    x=drawdown.index, y=drawdown,
-                    fill='tozeroy',
-                    fillcolor='rgba(255, 77, 77, 0.3)',
-                    line=dict(color=self.theme['red'], width=1),
-                    name='Drawdown'
-                ))
-                fig.update_layout(template='plotly_dark', height=350,
-                                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                                xaxis_title='Date', yaxis_title='Drawdown %',
-                                yaxis=dict(range=[min(drawdown.min() * 1.2, -5), 0]))
-                return fig
-            except Exception as e:
-                logger.error(f"Drawdown error: {e}")
-                return go.Figure()
-        
-        # Rolling Volatility Chart
-        @self.app.callback(
-            Output('volatility-chart', 'figure'),
-            [Input('refresh', 'n_intervals')]
-        )
-        def update_volatility(n):
-            try:
-                returns = self.data_provider.get_returns()
-                if returns is None or len(returns) < 20:
-                    return go.Figure()
-                
-                # Calculate rolling volatility for each asset
-                fig = go.Figure()
-                colors = [self.theme['blue'], self.theme['purple'], self.theme['green'], 
-                         self.theme['orange'], self.theme['red']]
-                
-                for i, col in enumerate(returns.columns[:5]):
-                    rolling_vol = returns[col].rolling(20).std() * np.sqrt(252) * 100
-                    rolling_vol = rolling_vol.dropna()
-                    if len(rolling_vol) > 0:
-                        fig.add_trace(go.Scatter(
-                            x=rolling_vol.index, y=rolling_vol,
-                            mode='lines',
-                            line=dict(color=colors[i % len(colors)], width=2),
-                            name=col
-                        ))
-                
-                fig.update_layout(template='plotly_dark', height=350,
-                                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                                xaxis_title='Date', yaxis_title='Annualized Volatility %',
-                                legend=dict(orientation='h', y=1.1))
-                return fig
-            except Exception as e:
-                logger.error(f"Volatility error: {e}")
-                return go.Figure()
-        
-        # Performance KPIs Chart
-        @self.app.callback(
-            Output('performance-chart', 'figure'),
-            [Input('refresh', 'n_intervals')]
-        )
-        def update_performance(n):
-            try:
-                returns = self.data_provider.get_returns()['BTC']
-                if returns is None or len(returns) < 2:
-                    return go.Figure()
-                
-                # Calculate key metrics
-                annual_ret = ((1 + returns.mean()) ** 252 - 1) * 100
-                volatility = returns.std() * np.sqrt(252) * 100
-                sharpe = (annual_ret / volatility) if volatility > 0 else 0
-                
-                # Sortino ratio (downside deviation)
-                downside = returns[returns < 0]
-                downside_std = downside.std() * np.sqrt(252) if len(downside) > 0 else 0
-                sortino = (annual_ret / downside_std) if downside_std > 0 else 0
-                
-                # Max drawdown
-                cumulative = (1 + returns).cumprod()
-                running_max = cumulative.cummax()
-                max_dd = ((cumulative - running_max) / running_max).min() * 100
-                
-                metrics = ['Annual Return', 'Volatility', 'Sharpe Ratio', 'Sortino Ratio', 'Max Drawdown']
-                values = [annual_ret, volatility, sharpe, sortino, abs(max_dd)]
-                colors = [self.theme['green'] if v > 0 else self.theme['red'] if v < 0 else self.theme['text_muted'] 
-                         for v in [annual_ret, volatility, sharpe, sortino, max_dd]]
-                
-                fig = go.Figure()
-                fig.add_trace(go.Bar(x=metrics, y=values, marker_color=colors))
-                fig.update_layout(template='plotly_dark', height=350,
-                                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                                yaxis_title='Value')
-                return fig
-            except Exception as e:
-                logger.error(f"Performance error: {e}")
-                return go.Figure()
-        
-        # Rolling Sharpe Ratio Chart
-        @self.app.callback(
-            Output('sharpe-chart', 'figure'),
-            [Input('refresh', 'n_intervals')]
-        )
-        def update_sharpe(n):
-            try:
-                returns = self.data_provider.get_returns()['BTC']
-                if returns is None or len(returns) < 20:
-                    return go.Figure()
-                
-                # Calculate rolling Sharpe ratio (assuming 0% risk-free rate)
-                rolling_mean = returns.rolling(20).mean() * 252
-                rolling_std = returns.rolling(20).std() * np.sqrt(252)
-                rolling_sharpe = rolling_mean / rolling_std
-                
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(
-                    x=rolling_sharpe.index, y=rolling_sharpe,
-                    mode='lines',
-                    line=dict(color=self.theme['purple'], width=2),
-                    name='Rolling Sharpe'
-                ))
-                fig.add_hline(y=1, line_dash="dash", line_color=self.theme['green'], 
-                             annotation_text="Sharpe=1")
-                fig.add_hline(y=0, line_dash="dash", line_color=self.theme['text_muted'])
-                fig.update_layout(template='plotly_dark', height=350,
-                                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                                xaxis_title='Date', yaxis_title='Sharpe Ratio')
-                return fig
-            except Exception as e:
-                logger.error(f"Sharpe error: {e}")
-                return go.Figure()
-        
-        # Win Rate & Profit Factor Chart
-        @self.app.callback(
-            Output('winrate-chart', 'figure'),
-            [Input('refresh', 'n_intervals')]
-        )
-        def update_winrate(n):
-            try:
-                returns = self.data_provider.get_returns()['BTC']
-                if returns is None or len(returns) < 2:
-                    return go.Figure()
-                
-                # Calculate win rate and profit factor
-                wins = (returns > 0).sum()
-                losses = (returns < 0).sum()
-                total = wins + losses
-                win_rate = (wins / total * 100) if total > 0 else 0
-                
-                avg_win = returns[returns > 0].mean() if wins > 0 else 0
-                avg_loss = abs(returns[returns < 0].mean()) if losses > 0 else 0
-                profit_factor = (avg_win / avg_loss) if avg_loss > 0 else 0
-                
-                fig = go.Figure()
-                
-                # Win Rate gauge
-                fig.add_trace(go.Indicator(
-                    mode = "gauge+number",
-                    value = win_rate,
-                    title = {'text': "Win Rate %"},
-                    gauge = {
-                        'axis': {'range': [0, 100]},
-                        'bar': {'color': self.theme['green']},
-                        'steps': [
-                            {'range': [0, 50], 'color': self.theme['red']},
-                            {'range': [50, 100], 'color': self.theme['green']}
-                        ],
-                    }
-                ))
-                
-                fig.update_layout(template='plotly_dark', height=350,
-                                paper_bgcolor='rgba(0,0,0,0)')
-                return fig
-            except Exception as e:
-                logger.error(f"Win rate error: {e}")
-                return go.Figure()
-        
-        # Execute Order callback
-        @self.app.callback(
-            Output('order-result', 'children'),
-            [Input('execute-order-btn', 'n_clicks')],
-            [State('symbol-selector', 'value'),
-             State('order-type', 'value'),
-             State('order-side', 'value'),
-             State('order-quantity', 'value')],
-            prevent_initial_call=True
-        )
-        def execute_order(n_clicks, symbol, order_type, side, quantity):
-            if not n_clicks:
-                return ""
-            try:
-                # Validate inputs
-                if not symbol or not order_type or not side:
-                    return html.Div("⚠️ Please fill all fields",
-                                   style={'color': self.theme['orange']})
-                if not quantity or quantity <= 0:
-                    return html.Div("⚠️ Invalid quantity",
-                                   style={'color': self.theme['orange']})
-                
-                # Try to execute via trading daemon
-                order_info = {
-                    'symbol': symbol,
-                    'type': order_type,
-                    'side': side,
-                    'quantity': float(quantity),
-                    'timestamp': datetime.now().strftime('%H:%M:%S'),
-                }
-                
-                # Attempt real execution through data_provider's collector
-                executed = False
-                try:
-                    if hasattr(self.data_provider, '_collector') and self.data_provider._collector:
-                        collector = self.data_provider._collector
-                        if hasattr(collector, 'client') and collector.client:
-                            result = collector.client.create_order(
-                                symbol=symbol,
-                                side=side,
-                                type=order_type,
-                                quantity=float(quantity)
-                            )
-                            order_info['order_id'] = result.get('orderId', 'N/A')
-                            order_info['status'] = result.get('status', 'FILLED')
-                            executed = True
-                except Exception as ex:
-                    logger.warning(f"Real order failed, using paper: {ex}")
-                
-                if not executed:
-                    # Paper trading fallback
-                    order_info['order_id'] = f"PAPER-{n_clicks:04d}"
-                    order_info['status'] = 'PAPER_FILLED'
-                
-                # Store in trading daemon history
-                if hasattr(self, 'trading_daemon') and hasattr(self.trading_daemon, '_trades'):
-                    self.trading_daemon._trades.append(order_info)
-                
-                status_color = self.theme['green'] if 'FILLED' in order_info['status'] else self.theme['orange']
-                return html.Div([
-                    html.Span(f"✅ {order_info['status']} ", style={'color': status_color, 'font-weight': 'bold'}),
-                    html.Span(f"{side} {quantity} {symbol} @ {order_type}", style={'color': self.theme['text']}),
-                    html.Br(),
-                    html.Span(f"ID: {order_info['order_id']}", style={'color': self.theme['text_muted'], 'font-size': '11px'}),
-                ])
-            except Exception as e:
-                logger.error(f"Order execution error: {e}")
-                return html.Div(f"❌ Error: {str(e)}", style={'color': self.theme['red']})
-        
-        # Save Settings callback
-        @self.app.callback(
-            Output('settings-result', 'children'),
-            [Input('save-settings-btn', 'n_clicks')],
-            [State('max-drawdown-input', 'value'),
-             State('stoploss-input', 'value'),
-             State('takeprofit-input', 'value'),
-             State('max-position-input', 'value'),
-             State('initial-balance-input', 'value')],
-            prevent_initial_call=True
-        )
-        def save_settings(n_clicks, max_dd, sl, tp, max_pos, balance):
-            if not n_clicks:
-                return ""
-            try:
-                settings = {
-                    'max_drawdown_pct': max_dd or 20,
-                    'stop_loss_atr': sl or 2,
-                    'take_profit_atr': tp or 3,
-                    'max_position_pct': max_pos or 30,
-                    'initial_balance': balance or 10000,
-                }
-                
-                # Apply to trading daemon
-                if hasattr(self, 'trading_daemon'):
-                    for key, val in settings.items():
-                        if hasattr(self.trading_daemon, key):
-                            setattr(self.trading_daemon, key, val)
-                
-                # Apply to risk engine
-                if hasattr(self, 'risk_engine'):
-                    if hasattr(self.risk_engine, 'max_drawdown'):
-                        self.risk_engine.max_drawdown = max_dd / 100.0
-                
-                logger.info(f"Settings saved: {settings}")
-                return html.Div([
-                    html.Span("✅ Settings saved! ", style={'color': self.theme['green'], 'font-weight': 'bold'}),
-                    html.Span(f"DD:{max_dd}% SL:{sl}x TP:{tp}x Pos:{max_pos}% Bal:${balance:,.0f}",
-                             style={'color': self.theme['text_muted'], 'font-size': '11px'}),
-                ])
-            except Exception as e:
-                logger.error(f"Save settings error: {e}")
-                return html.Div(f"❌ Error: {str(e)}", style={'color': self.theme['red']})
-        
-        # Strategy Allocation / Current Settings display
-        @self.app.callback(
-            Output('current-settings', 'children'),
-            [Input('allocation-strategy', 'value'),
-             Input('timeframe-selector', 'value')]
-        )
-        def update_current_settings(strategy, timeframe):
-            try:
-                strategy_labels = {
-                    'equal_weight': 'Equal Weight',
-                    'volatility_parity': 'Volatility Parity',
-                    'risk_parity': 'Risk Parity',
-                    'momentum': 'Momentum',
-                }
-                timeframe_labels = {
-                    '1m': '1 Minute', '5m': '5 Minutes', '15m': '15 Minutes',
-                    '1h': '1 Hour', '4h': '4 Hours', '1d': '1 Day',
-                }
-                
-                # Apply strategy to trading daemon
-                if hasattr(self, 'trading_daemon'):
-                    if hasattr(self.trading_daemon, 'allocation_strategy'):
-                        self.trading_daemon.allocation_strategy = strategy
-                    if hasattr(self.trading_daemon, 'timeframe'):
-                        self.trading_daemon.timeframe = timeframe
-                
-                return html.Div([
-                    html.Div([
-                        html.Span("📋 Active: ", style={'color': self.theme['text_muted']}),
-                        html.Span(strategy_labels.get(strategy, strategy),
-                                 style={'color': self.theme['blue'], 'font-weight': 'bold'}),
-                    ]),
-                    html.Div([
-                        html.Span("⏱️ Timeframe: ", style={'color': self.theme['text_muted']}),
-                        html.Span(timeframe_labels.get(timeframe, timeframe),
-                                 style={'color': self.theme['purple'], 'font-weight': 'bold'}),
-                    ], style={'margin-top': '5px'}),
-                    html.Div([
-                        html.Span("🟢 Status: ", style={'color': self.theme['text_muted']}),
-                        html.Span("Active", style={'color': self.theme['green']}),
-                    ], style={'margin-top': '5px'}),
-                ])
-            except Exception as e:
-                return html.Div(f"Error: {str(e)}", style={'color': self.theme['red']})
     
     def _stat_card(self, title: str, value: str, color: str):
         return html.Div([
