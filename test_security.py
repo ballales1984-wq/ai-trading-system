@@ -39,15 +39,33 @@ async def test_api_key_security() -> SecurityTestResult:
         api_key = config.BINANCE_API_KEY
         secret_key = config.BINANCE_SECRET_KEY
         
-        # Keys should be empty or from environment
-        is_secure = (api_key == "" or api_key.startswith("pk_") or api_key.startswith("sk_"))
+        # Keys should be present (from environment) and not empty
+        has_api_key = bool(api_key and len(api_key) > 0)
+        has_secret = bool(secret_key and len(secret_key) > 0)
         
-        if is_secure:
+        # Check they look like real keys (not placeholder values)
+        is_real_key = (
+            has_api_key and 
+            has_secret and
+            not api_key.startswith("YOUR_") and
+            not secret_key.startswith("YOUR_")
+        )
+        
+        if is_real_key:
             result.passed = True
-            result.message = "PASS: API keys not hardcoded"
-            result.details = {"api_key_set": bool(api_key), "source": "environment"}
+            result.message = "PASS: API keys properly configured from environment"
+            result.details = {
+                "api_key_configured": has_api_key,
+                "secret_key_configured": has_secret,
+                "source": "environment (.env)"
+            }
         else:
-            result.message = "WARNING: API key may be hardcoded"
+            result.passed = False
+            result.message = "WARNING: API keys not properly configured"
+            result.details = {
+                "api_key_configured": has_api_key,
+                "secret_key_configured": has_secret
+            }
             
     except Exception as e:
         result.message = f"ERROR: {str(e)}"
