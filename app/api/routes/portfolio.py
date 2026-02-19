@@ -72,6 +72,18 @@ class PerformanceMetrics(BaseModel):
     num_losing_trades: int
 
 
+class HistoryEntry(BaseModel):
+    """Portfolio history entry."""
+    date: str
+    value: float
+    daily_return: float
+
+
+class PortfolioHistory(BaseModel):
+    """Portfolio history response."""
+    history: List[HistoryEntry]
+
+
 # ============================================================================
 # IN-MEMORY PORTFOLIO STORE
 # ============================================================================
@@ -242,14 +254,20 @@ async def get_allocation() -> dict:
     }
 
 
-@router.get("/history")
+@router.get("/history", response_model=PortfolioHistory)
 async def get_portfolio_history(
-    days: int = Query(30, ge=1, le=365, description="Number of days"),
-) -> dict:
+    days: int = Query(default=30, ge=1, le=365, description="Number of days to retrieve history"),
+) -> PortfolioHistory:
     """
     Get portfolio value history.
+    
+    Returns historical portfolio values for the specified number of days.
+    Default is 30 days if not specified.
     """
     import random
+    
+    # Ensure days is within valid range
+    days = max(1, min(365, days))
     
     history = []
     base_value = 1000000.0
@@ -259,10 +277,10 @@ async def get_portfolio_history(
         daily_return = random.uniform(-0.02, 0.025)
         base_value *= (1 + daily_return)
         
-        history.append({
-            "date": date,
-            "value": base_value,
-            "daily_return": daily_return * 100,
-        })
+        history.append(HistoryEntry(
+            date=date,
+            value=base_value,
+            daily_return=daily_return * 100,
+        ))
     
-    return {"history": history}
+    return PortfolioHistory(history=history)
