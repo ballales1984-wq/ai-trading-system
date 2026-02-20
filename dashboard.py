@@ -649,6 +649,30 @@ class TradingDashboard:
                     ], style={'background': theme['card'], 'padding': '20px',
                              'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
                     
+                    # Trading Economics Widget
+                    html.Div([
+                        html.H3("🌍 Economic Calendar", style={'color': theme['text'], 'margin-bottom': '15px'}),
+                        html.Iframe(
+                            srcDoc='''
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <style>
+                                    body { margin: 0; padding: 0; background: transparent; }
+                                    .te-embed { width: 100%; height: 600px; }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="te-embed" data-widget="cl-pro"></div>
+                                <script src="https://embed.tradingeconomics.com/widget.js"></script>
+                            </body>
+                            </html>
+                            ''',
+                            style={'width': '100%', 'height': '600px', 'border': 'none', 'border-radius': '8px'}
+                        ),
+                    ], style={'background': theme['card'], 'padding': '20px',
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
+                    
                     html.Div([
                         html.H3("⚙️ Trading Settings", style={'color': theme['text']}),
                         html.Div([
