@@ -83,6 +83,16 @@ from .innovation_apis import (
     create_innovation_clients_from_env,
 )
 
+# -- Weather --
+from .weather_api import (
+    MeteomaticsClient,
+    MockMeteomaticsClient,
+    WeatherParameter,
+    WeatherLocation,
+    WeatherImpactScorer,
+    create_weather_client,
+)
+
 
 # ---------------------------------------------------------------------------
 # Convenience: create a fully-populated registry
@@ -136,6 +146,15 @@ def create_full_registry() -> APIRegistry:
     for client in create_innovation_clients_from_env():
         registry.register(client)
 
+    # Weather (use mock if no credentials)
+    import os
+    weather_client = create_weather_client(
+        username=os.getenv("METEOMATICS_USERNAME", ""),
+        password=os.getenv("METEOMATICS_PASSWORD", ""),
+        use_mock=not bool(os.getenv("METEOMATICS_USERNAME")),
+    )
+    registry.register(weather_client)
+
     return registry
 
 
@@ -187,6 +206,13 @@ __all__ = [
     "LensOrgClient",
     "create_innovation_clients",
     "create_innovation_clients_from_env",
+    # Weather
+    "MeteomaticsClient",
+    "MockMeteomaticsClient",
+    "WeatherParameter",
+    "WeatherLocation",
+    "WeatherImpactScorer",
+    "create_weather_client",
     # Full registry
     "create_full_registry",
 ]

@@ -1,0 +1,194 @@
+# infra/k8s/hpa-storage.yaml
+# AI Trading System - HPA and Storage
+# ====================================
+
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ai-trading-hpa
+  labels:
+    app: ai-trading-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ai-trading-system
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 2
+          periodSeconds: 15
+      selectPolicy: Max
+
+---
+# HPA for API Server
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ai-trading-api-hpa
+  labels:
+    app: ai-trading-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ai-trading-api
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+
+---
+# Persistent Volume Claim for Data
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: trading-data-pvc
+  labels:
+    app: ai-trading-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard  # Adjust based on your cluster
+
+---
+# Persistent Volume Claim for Models
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: trading-models-pvc
+  labels:
+    app: ai-trading-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+
+---
+# Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ai-trading-pdb
+  labels:
+    app: ai-trading-system
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: ai-trading-system
+
+---
+# Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ai-trading-network-policy
+  labels:
+    app: ai-trading-system
+spec:
+  podSelector:
+    matchLabels:
+      app: ai-trading-system
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: default
+        - podSelector:
+            matchLabels:
+              app: nginx-ingress
+      ports:
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 8050
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443  # HTTPS for external APIs
+        - protocol: TCP
+          port: 6379  # Redis
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+
+---
+# Priority Class
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: trading-high-priority
+value: 1000000
+globalDefault: false
+description: "High priority for trading system pods"
+
+---
+# Pod Security Policy (if enabled in cluster)
+# apiVersion: policy/v1beta1
+# kind: PodSecurityPolicy
+# metadata:
+#   name: ai-trading-psp
+# spec:
+#   privileged: false
+#   allowPrivilegeEscalation: false
+#   runAsUser:
+#     rule: MustRunAsNonRoot
+#   seLinux:
+#     rule: RunAsAny
+#   fsGroup:
+#     rule: RunAsAny
+#   volumes:
+#     - 'configMap'
+#     - 'emptyDir'
+#     - 'persistentVolumeClaim'
+#     - 'secret'

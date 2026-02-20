@@ -1,0 +1,123 @@
+# infra/k8s/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trading-config
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+data:
+  # Application Settings
+  APP_NAME: "ai-trading-system"
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+  DEBUG: "false"
+  
+  # Trading Settings
+  TRADING_MODE: "paper"  # paper, live
+  USE_TESTNET: "true"
+  DEFAULT_SYMBOLS: "BTCUSDT,ETHUSDT,BNBUSDT"
+  
+  # Risk Management
+  MAX_POSITION_SIZE: "0.1"
+  MAX_DAILY_LOSS: "0.05"
+  MAX_DRAWDOWN: "0.10"
+  VAR_CONFIDENCE: "0.95"
+  
+  # Monte Carlo Settings
+  MC_PATHS: "1000"
+  MC_STEPS: "50"
+  MC_TIME_HORIZON: "1.0"
+  
+  # Strategy Settings
+  STRATEGY_MOMENTUM_PERIOD: "10"
+  STRATEGY_MOMENTUM_THRESHOLD: "0.02"
+  STRATEGY_MEANREVERSION_LOOKBACK: "20"
+  STRATEGY_MEANREVERSION_ZSCORE: "2.0"
+  
+  # Agent Settings
+  MARKET_DATA_INTERVAL: "5"
+  MONTE_CARLO_INTERVAL: "30"
+  RISK_CHECK_INTERVAL: "60"
+  
+  # Database Settings
+  DB_POOL_SIZE: "10"
+  DB_MAX_OVERFLOW: "20"
+  
+  # Redis Settings
+  REDIS_MAX_CONNECTIONS: "50"
+  
+  # API Settings
+  API_RATE_LIMIT: "100"
+  API_TIMEOUT: "30"
+  
+  # Monitoring
+  METRICS_ENABLED: "true"
+  METRICS_PORT: "9090"
+  TRACING_ENABLED: "true"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trading-strategies
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+data:
+  strategies.yaml: |
+    strategies:
+      momentum:
+        enabled: true
+        weight: 0.4
+        params:
+          momentum_period: 10
+          momentum_threshold: 0.02
+          volume_factor: 1.5
+          
+      mean_reversion:
+        enabled: true
+        weight: 0.3
+        params:
+          lookback_period: 20
+          entry_z_score: 2.0
+          exit_z_score: 0.5
+          
+      trend_following:
+        enabled: true
+        weight: 0.3
+        params:
+          ma_fast: 10
+          ma_slow: 30
+          adx_threshold: 25
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trading-risk-config
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+data:
+  risk_config.yaml: |
+    risk_limits:
+      max_position_value: 100000
+      max_leverage: 3
+      max_correlation: 0.7
+      
+    var_settings:
+      confidence_levels: [0.90, 0.95, 0.99]
+      lookback_days: 30
+      method: "historical"
+      
+    position_limits:
+      BTCUSDT:
+        max_size: 1.0
+        max_notional: 50000
+      ETHUSDT:
+        max_size: 10.0
+        max_notional: 30000
+        
+    alert_thresholds:
+      var_breach: 0.05
+      drawdown_breach: 0.10
+      leverage_breach: 2.5

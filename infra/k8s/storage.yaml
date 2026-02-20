@@ -1,0 +1,48 @@
+# infra/k8s/storage.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: trading-data-pvc
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    type: data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: trading-models-pvc
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    type: models
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: trading-logs-pvc
+  namespace: ai-trading
+  labels:
+    app: ai-trading-system
+    type: logs
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
