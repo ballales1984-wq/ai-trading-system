@@ -1,0 +1,59 @@
+version: "3.9"
+
+services:
+  trading-system:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.production
+    container_name: ai_trading_stable
+    env_file:
+      - .env
+    ports:
+      - "8050:8050"   # Dashboard
+      - "8000:8000"   # API
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/trading_db
+      - REDIS_URL=redis://redis:6379
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_stable
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+  postgres:
+    image: timescale/timescaledb:latest-pg14
+    container_name: postgres_stable
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: trading_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+volumes:
+  pgdata:
+  redisdata:
