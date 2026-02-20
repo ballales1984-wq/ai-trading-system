@@ -61,6 +61,17 @@ class TradingSignal:
     volatility_score: float = 0.5
     ml_score: float = 0.5  # ML prediction score (blackbox agent)
     
+    # NEW: 5-Question Framework Scores
+    what_score: float = 0.5      # Question 1: What to buy/sell
+    why_score: float = 0.5       # Question 2: Reason score (0.6*Macro + 0.4*Sentiment)
+    how_much_score: float = 0.5  # Question 3: Position size
+    when_score: float = 0.5      # Question 4: Timing score (Monte Carlo)
+    risk_score: float = 0.5      # Question 5: Risk check score
+    
+    # Macro and Sentiment breakdown for Question 2
+    macro_score: float = 0.5     # Macro economic score
+    reason_sentiment_score: float = 0.5  # Sentiment for reason calculation
+    
     # Metadata
     timestamp: datetime = field(default_factory=datetime.now)
     timeframe: str = "1h"
@@ -69,6 +80,8 @@ class TradingSignal:
     # Risk metrics
     position_size: float = 0.0
     risk_percent: float = 0.0
+    var_95: float = 0.0          # Value at Risk 95%
+    cvar_95: float = 0.0         # Conditional VaR 95%
     
     def to_dict(self) -> Dict:
         """Convert to dictionary"""
@@ -1070,6 +1083,506 @@ class DecisionEngine:
         return mc_result
     
     # ==================== RANKING & FILTERING ====================
+    
+    # ==================== 5-QUESTION DECISION FRAMEWORK ====================
+    
+    def answer_what(self, symbol: str, df: pd.DataFrame = None) -> Dict:
+        """
+        QUESTION 1: cosa compro/vendo (What to buy/sell)
+        
+        Uses ML prediction + technical analysis to determine:
+        - Direction: BUY/SELL/HOLD
+        - What score: confidence in the direction
+        
+        Args:
+            symbol: Trading symbol
+            df: OHLCV DataFrame (optional, will fetch if not provided)
+            
+        Returns:
+            Dict with 'action', 'what_score', 'ml_direction', 'technical_direction'
+        """
+        # Get market data
+        market_data = self.data_collector.fetch_market_data(symbol)
+        if market_data.current_price <= 0:
+            return {'action': 'HOLD', 'what_score': 0.0, 'reason': 'Invalid price'}
+        
+        # Get data if not provided
+        if df is None:
+            df = self.data_collector.fetch_ohlcv(symbol, config.DEFAULT_TIMEFRAME, 100)
+        
+        if df is None or df.empty:
+            return {'action': 'HOLD', 'what_score': 0.0, 'reason': 'No data available'}
+        
+        # Get technical analysis
+        technical_analysis = self.technical_analyzer.analyze(df, symbol)
+        
+        # Get ML prediction
+        ml_score = 0.5
+        ml_direction = 0
+        if self.is_ml_ready():
+            try:
+                prediction = self.ml_predictor.predict(df)
+                if prediction:
+                    ml_direction = prediction.get('prediction', 0)  # -1, 0, or 1
+                    ml_score = (ml_direction + 1) / 2  # Convert -1,0,1 to 0,0.5,1
+            except Exception as e:
+                logger.warning(f"ML prediction failed for {symbol}: {e}")
+        
+        # Combine ML + Technical for "What" score
+        # Technical score: 0-1 (1 = bullish)
+        tech_score = technical_analysis.technical_score
+        
+        # Weighted combination: 60% ML, 40% Technical
+        what_score = ml_score * 0.6 + tech_score * 0.4
+        
+        # Determine action based on what_score
+        if what_score >= 0.65:
+            action = 'BUY'
+        elif what_score <= 0.35:
+            action = 'SELL'
+        else:
+            action = 'HOLD'
+        
+        return {
+            'action': action,
+            'what_score': what_score,
+            'ml_direction': ml_direction,
+            'ml_score': ml_score,
+            'technical_direction': technical_analysis.trend,
+            'technical_score': tech_score,
+            'current_price': market_data.current_price
+        }
+    
+    def answer_why(self, symbol: str, df: pd.DataFrame = None) -> Dict:
+        """
+        QUESTION 2: perché (Why)
+        
+        Calculates Reason Score = 0.6 * Macro Score + 0.4 * Sentiment Score
+        
+        Args:
+            symbol: Trading symbol
+            df: OHLCV DataFrame (optional)
+            
+        Returns:
+            Dict with 'why_score', 'macro_score', 'sentiment_score', 'reason'
+        """
+        # Get macro score from external APIs
+        macro_events = self.fetch_external_macro_events()
+        
+        # Convert event impacts to macro score (-1 to 1)
+        # More high-impact events = more uncertainty = lower macro score
+        if macro_events['high_impact_count'] > 3:
+            macro_score = -0.3  # High uncertainty
+        elif macro_events['high_impact_count'] > 1:
+            macro_score = 0.0   # Neutral
+        else:
+            # Positive macro environment
+            macro_score = 0.3 + (1 - macro_events['avg_impact']) * 0.4
+        
+        # Get sentiment from external APIs
+        ext_sentiment = self.fetch_external_sentiment(symbol)
+        sentiment_score = ext_sentiment.get('score', 0.0)  # Already -1 to 1
+        
+        # If no external sentiment, use internal
+        if ext_sentiment.get('sources', 0) == 0:
+            asset_name = symbol.split('/')[0]
+            internal_sentiment = self.sentiment_analyzer.get_combined_sentiment(asset_name)
+            sentiment_score = internal_sentiment.get('combined_score', 0.0)
+        
+        # Calculate Reason Score: 0.6*Macro + 0.4*Sentiment
+        # Convert to 0-1 scale
+        raw_why_score = 0.6 * macro_score + 0.4 * sentiment_score
+        why_score = (raw_why_score + 1) / 2  # Convert -1,1 to 0,1
+        
+        # Generate explanation
+        macro_str = "positive" if macro_score > 0.2 else "negative" if macro_score < -0.2 else "neutral"
+        sentiment_str = "positive" if sentiment_score > 0.2 else "negative" if sentiment_score < -0.2 else "neutral"
+        
+        return {
+            'why_score': why_score,
+            'macro_score': macro_score,  # Keep raw -1 to 1 for display
+            'sentiment_score': sentiment_score,  # Keep raw -1 to 1
+            'macro_confidence': 1 - macro_events['avg_impact'],
+            'sentiment_confidence': ext_sentiment.get('confidence', 0.5),
+            'reason': f"Macro: {macro_str}, Sentiment: {sentiment_str}"
+        }
+    
+    def answer_how_much(self, symbol: str, why_score: float, 
+                       current_price: float = None) -> Dict:
+        """
+        QUESTION 3: quanto (How much)
+        
+        Calculates position size: trade_size = max_position * reason_score
+        
+        Args:
+            symbol: Trading symbol
+            why_score: Reason score from Question 2 (0-1)
+            current_price: Current price (optional, will fetch if not provided)
+            
+        Returns:
+            Dict with 'how_much_score', 'position_size', 'position_value'
+        """
+        if current_price is None:
+            market_data = self.data_collector.fetch_market_data(symbol)
+            current_price = market_data.current_price
+        
+        # Get max position from settings
+        max_position_pct = self.settings['max_position_size']
+        
+        # Calculate position size based on reason score
+        # Higher reason score = larger position
+        how_much_score = why_score  # Use reason score directly
+        position_size = max_position_pct * how_much_score
+        
+        # Calculate actual position value
+        position_value = position_size * self.portfolio.total_value if hasattr(self.portfolio, 'total_value') else position_size * 10000
+        
+        return {
+            'how_much_score': how_much_score,
+            'position_size': position_size,
+            'position_value': position_value,
+            'position_units': position_value / current_price if current_price > 0 else 0,
+            'max_position_pct': max_position_pct
+        }
+    
+    def answer_when(self, symbol: str, df: pd.DataFrame = None) -> Dict:
+        """
+        QUESTION 4: quando (When - timing)
+        
+        Uses Monte Carlo simulations to determine optimal timing.
+        
+        Args:
+            symbol: Trading symbol
+            df: OHLCV DataFrame (optional)
+            
+        Returns:
+            Dict with 'when_score', 'probability_up', 'confidence'
+        """
+        # Get data if not provided
+        if df is None:
+            df = self.data_collector.fetch_ohlcv(symbol, config.DEFAULT_TIMEFRAME, 100)
+        
+        if df is None or df.empty:
+            return {'when_score': 0.5, 'probability_up': 0.5, 'confidence': 0.0}
+        
+        # Run Monte Carlo simulation (Level 5 for best timing)
+        mc_results = self.run_monte_carlo(symbol, df, n_simulations=500, n_days=14, level=5)
+        
+        probability_up = mc_results.get('probability_up', 0.5)
+        confidence = mc_results.get('confidence', 0.5)
+        
+        # When score is the probability of going up
+        when_score = probability_up
+        
+        return {
+            'when_score': when_score,
+            'probability_up': probability_up,
+            'confidence': confidence,
+            'mc_level': mc_results.get('level', 0),
+            'var_95': mc_results.get('var_95', 0.0),
+            'cvar_95': mc_results.get('cvar_95', 0.0)
+        }
+    
+    def answer_risk(self, symbol: str, action: str, position_size: float,
+                   current_price: float, when_score: float = 0.5) -> Dict:
+        """
+        QUESTION 5: controllo rischio (Risk control)
+        
+        Performs risk checks: VaR/CVaR, position limits, drawdown limits.
+        
+        Args:
+            symbol: Trading symbol
+            action: BUY/SELL/HOLD
+            position_size: Position size as percentage (0-1)
+            current_price: Current asset price
+            when_score: Timing score from Question 4
+            
+        Returns:
+            Dict with 'risk_score', 'passed', 'reason', 'var_95', 'cvar_95'
+        """
+        # Calculate VaR (Value at Risk) 95%
+        # Using simplified historical VaR
+        returns_std = 0.02  # Default 2% daily std
+        try:
+            df = self.data_collector.fetch_ohlcv(symbol, config.DEFAULT_TIMEFRAME, 100)
+            if df is not None and len(df) > 20:
+                returns = df['close'].pct_change().dropna()
+                returns_std = returns.std() if len(returns) > 0 else 0.02
+        except:
+            pass
+        
+        # VaR 95% = 1.65 * std * position_value
+        position_value = position_size * (self.portfolio.total_value if hasattr(self.portfolio, 'total_value') else 10000)
+        var_95 = 1.65 * returns_std * position_value
+        
+        # CVaR 95% = 2.0 * std * position_value (worse case)
+        cvar_95 = 2.0 * returns_std * position_value
+        
+        # Risk checks
+        checks_passed = True
+        risk_reasons = []
+        
+        # Check 1: Position size limit
+        max_position = self.settings['max_position_size']
+        if position_size > max_position:
+            checks_passed = False
+            risk_reasons.append(f"Position size {position_size:.1%} exceeds max {max_position:.1%}")
+        
+        # Check 2: VaR limit (max 5% of portfolio)
+        max_var_pct = 0.05
+        var_pct = var_95 / (self.portfolio.total_value if hasattr(self.portfolio, 'total_value') else 10000)
+        if var_pct > max_var_pct:
+            checks_passed = False
+            risk_reasons.append(f"VaR {var_pct:.1%} exceeds max {max_var_pct:.1%}")
+        
+        # Check 3: Timing score (don't trade if timing is poor)
+        if when_score < 0.4:
+            checks_passed = False
+            risk_reasons.append(f"Timing score {when_score:.1%} too low (<40%)")
+        
+        # Check 4: Daily loss limit
+        if hasattr(self.portfolio, 'daily_pnl'):
+            daily_loss_pct = abs(self.portfolio.daily_pnl) / (self.portfolio.total_value if hasattr(self.portfolio, 'total_value') else 10000)
+            if daily_loss_pct > 0.05:  # 5% daily loss limit
+                checks_passed = False
+                risk_reasons.append(f"Daily loss {daily_loss_pct:.1%} exceeds 5% limit")
+        
+        # Calculate risk score (0-1, higher = safer)
+        # Start with 0.5, adjust based on checks
+        risk_score = 0.5
+        
+        # Adjust by position size (smaller = safer)
+        risk_score -= (position_size / max_position) * 0.2 if max_position > 0 else 0
+        
+        # Adjust by VaR (lower = safer)
+        risk_score += (1 - min(1, var_pct / max_var_pct)) * 0.3 if max_var_pct > 0 else 0
+        
+        # Adjust by timing (higher = safer)
+        risk_score += when_score * 0.2
+        
+        risk_score = max(0, min(1, risk_score))
+        
+        return {
+            'risk_score': risk_score,
+            'passed': checks_passed,
+            'reason': '; '.join(risk_reasons) if risk_reasons else 'All checks passed',
+            'var_95': var_95,
+            'cvar_95': cvar_95,
+            'var_pct': var_pct
+        }
+    
+    def unified_decision(self, symbol: str) -> Dict:
+        """
+        Unified decision flow combining all 5 questions.
+        
+        Executes the complete decision pipeline:
+        1. What to buy/sell (ML + Technical)
+        2. Why (Macro + Sentiment: 0.6*Macro + 0.4*Sentiment)
+        3. How much (Position sizing: max_pos * reason_score)
+        4. When (Monte Carlo timing)
+        5. Risk control (VaR/CVaR, limits)
+        
+        Args:
+            symbol: Trading symbol
+            
+        Returns:
+            Dict with complete decision results
+        """
+        logger.info(f"🔄 Processing unified decision for {symbol}")
+        
+        # Get market data
+        market_data = self.data_collector.fetch_market_data(symbol)
+        if market_data.current_price <= 0:
+            return {'error': 'Invalid price', 'action': 'HOLD'}
+        
+        # Get OHLCV data
+        df = self.data_collector.fetch_ohlcv(symbol, config.DEFAULT_TIMEFRAME, 100)
+        
+        # Question 1: What
+        what_result = self.answer_what(symbol, df)
+        logger.info(f"Q1 (What): {what_result.get('action')} - score: {what_result.get('what_score', 0):.2f}")
+        
+        action = what_result.get('action', 'HOLD')
+        
+        if action == 'HOLD':
+            return {
+                'symbol': symbol,
+                'action': 'HOLD',
+                'reason': 'What score indicates HOLD',
+                'what_score': what_result.get('what_score', 0),
+                'prices': {
+                    'current': market_data.current_price,
+                    'entry': market_data.current_price,
+                    'stop_loss': 0,
+                    'take_profit': 0
+                }
+            }
+        
+        # Question 2: Why
+        why_result = self.answer_why(symbol, df)
+        logger.info(f"Q2 (Why): score={why_result.get('why_score', 0):.2f}, {why_result.get('reason', '')}")
+        
+        # Question 3: How much
+        how_much_result = self.answer_how_much(symbol, why_result.get('why_score', 0.5), market_data.current_price)
+        logger.info(f"Q3 (How much): position={how_much_result.get('position_size', 0):.1%}")
+        
+        # Question 4: When
+        when_result = self.answer_when(symbol, df)
+        logger.info(f"Q4 (When): score={when_result.get('when_score', 0):.2f}, prob_up={when_result.get('probability_up', 0):.1%}")
+        
+        # Question 5: Risk
+        risk_result = self.answer_risk(
+            symbol, 
+            action, 
+            how_much_result.get('position_size', 0),
+            market_data.current_price,
+            when_result.get('when_score', 0.5)
+        )
+        logger.info(f"Q5 (Risk): {'PASSED' if risk_result.get('passed') else 'FAILED'} - {risk_result.get('reason', '')}")
+        
+        # Final decision
+        if not risk_result.get('passed'):
+            return {
+                'symbol': symbol,
+                'action': 'HOLD',
+                'reason': f"Risk check failed: {risk_result.get('reason', 'Unknown')}",
+                'risk_score': risk_result.get('risk_score', 0),
+                'prices': {
+                    'current': market_data.current_price
+                },
+                'decision_flow': {
+                    'what': what_result,
+                    'why': why_result,
+                    'how_much': how_much_result,
+                    'when': when_result,
+                    'risk': risk_result
+                }
+            }
+        
+        # Calculate final confidence
+        # Weighted combination: What(25%) + Why(25%) + When(25%) + Risk(25%)
+        final_confidence = (
+            what_result.get('what_score', 0.5) * 0.25 +
+            why_result.get('why_score', 0.5) * 0.25 +
+            when_result.get('when_score', 0.5) * 0.25 +
+            risk_result.get('risk_score', 0.5) * 0.25
+        )
+        
+        # Calculate price levels
+        stop_loss_pct = self.settings['stop_loss_percent']
+        take_profit_pct = self.settings['take_profit_percent']
+        
+        if action == 'BUY':
+            entry_price = market_data.current_price
+            stop_loss = entry_price * (1 - stop_loss_pct)
+            take_profit = entry_price * (1 + take_profit_pct)
+        else:  # SELL
+            entry_price = market_data.current_price
+            stop_loss = entry_price * (1 + stop_loss_pct)
+            take_profit = entry_price * (1 - take_profit_pct)
+        
+        # Risk/Reward ratio
+        risk_reward = (take_profit - entry_price) / (entry_price - stop_loss) if stop_loss > 0 else 0
+        
+        return {
+            'symbol': symbol,
+            'action': action,
+            'confidence': final_confidence,
+            'strength': 'STRONG' if final_confidence >= 0.7 else 'MODERATE' if final_confidence >= 0.55 else 'WEAK',
+            'reason': f"What: {action}, {why_result.get('reason', '')}, When: {when_result.get('probability_up', 0):.0%} prob up",
+            'position_size': how_much_result.get('position_size', 0),
+            'prices': {
+                'current': market_data.current_price,
+                'entry': entry_price,
+                'stop_loss': stop_loss,
+                'take_profit': take_profit,
+                'risk_reward': risk_reward
+            },
+            'scores': {
+                'what': what_result.get('what_score', 0),
+                'why': why_result.get('why_score', 0),
+                'how_much': how_much_result.get('how_much_score', 0),
+                'when': when_result.get('when_score', 0),
+                'risk': risk_result.get('risk_score', 0)
+            },
+            'risk_metrics': {
+                'var_95': risk_result.get('var_95', 0),
+                'cvar_95': risk_result.get('cvar_95', 0)
+            },
+            'decision_flow': {
+                'what': what_result,
+                'why': why_result,
+                'how_much': how_much_result,
+                'when': when_result,
+                'risk': risk_result
+            }
+        }
+    
+    def generate_signals_5q(self, symbols: List[str] = None) -> List[TradingSignal]:
+        """
+        Generate trading signals using the 5-Question framework.
+        
+        Args:
+            symbols: List of trading symbols (uses config defaults if None)
+            
+        Returns:
+            List of TradingSignal objects
+        """
+        if symbols is None:
+            symbols = self.data_collector.get_supported_symbols()
+        
+        signals = []
+        
+        for symbol in symbols:
+            try:
+                decision = self.unified_decision(symbol)
+                
+                if decision.get('action') == 'HOLD':
+                    continue
+                
+                # Create TradingSignal from decision
+                asset_type = 'crypto' if symbol in config.CRYPTO_SYMBOLS.values() else 'commodity'
+                
+                signal = TradingSignal(
+                    symbol=symbol,
+                    asset_type=asset_type,
+                    action=decision.get('action', 'HOLD'),
+                    confidence=decision.get('confidence', 0.5),
+                    strength=decision.get('strength', 'WEAK'),
+                    current_price=decision['prices']['current'],
+                    entry_price=decision['prices'].get('entry', 0),
+                    stop_loss=decision['prices'].get('stop_loss', 0),
+                    take_profit=decision['prices'].get('take_profit', 0),
+                    risk_reward_ratio=decision['prices'].get('risk_reward', 0),
+                    
+                    # 5-Question scores
+                    what_score=decision['scores'].get('what', 0.5),
+                    why_score=decision['scores'].get('why', 0.5),
+                    how_much_score=decision['scores'].get('how_much', 0.5),
+                    when_score=decision['scores'].get('when', 0.5),
+                    risk_score=decision['scores'].get('risk', 0.5),
+                    
+                    # Macro/Sentiment breakdown for Question 2
+                    macro_score=decision['decision_flow']['why'].get('macro_score', 0.5),
+                    reason_sentiment_score=decision['decision_flow']['why'].get('sentiment_score', 0.5),
+                    
+                    # Risk metrics
+                    position_size=decision.get('position_size', 0),
+                    var_95=decision['risk_metrics'].get('var_95', 0),
+                    cvar_95=decision['risk_metrics'].get('cvar_95', 0),
+                    
+                    reason=decision.get('reason', '')
+                )
+                
+                signals.append(signal)
+                
+            except Exception as e:
+                logger.error(f"Error generating 5Q signal for {symbol}: {e}")
+        
+        # Sort by confidence
+        signals.sort(key=lambda x: x.confidence, reverse=True)
+        
+        return signals
     
     def rank_signals(self, signals: List[TradingSignal]) -> List[TradingSignal]:
         """

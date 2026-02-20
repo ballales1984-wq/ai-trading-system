@@ -244,7 +244,18 @@ class TradingEngine:
                     if pos.quantity != 0:
                         side = 'SELL' if pos.quantity > 0 else 'BUY'
                         # Create closing order
-                        pass
+                        try:
+                            from src.core.execution.broker_interface import Order, OrderSide, OrderType
+                            close_order = Order(
+                                symbol=pos.symbol,
+                                side=OrderSide.SELL if pos.quantity > 0 else OrderSide.BUY,
+                                order_type=OrderType.MARKET,
+                                quantity=abs(pos.quantity)
+                            )
+                            await self.broker.place_order(close_order)
+                            logger.info(f"Closed position: {pos.symbol} x {abs(pos.quantity)}")
+                        except Exception as e:
+                            logger.error(f"Failed to close position {pos.symbol}: {e}")
             
             # Save final state
             await self._save_state()
@@ -295,10 +306,28 @@ class TradingEngine:
         while self.state == EngineState.RUNNING:
             try:
                 if self.signal_generator:
-                    # Get market data
-                    # Generate signals
-                    # Publish signal events
-                    pass
+                    # Get market data from broker
+                    if self.broker:
+                        symbols = self.signal_generator.get_symbols() if hasattr(self.signal_generator, 'get_symbols') else []
+                        for symbol in symbols:
+                            try:
+                                ticker = await self.broker.get_ticker(symbol)
+                                # Generate signals for each symbol
+                                signal = self.signal_generator.generate_signal(
+                                    symbol=symbol,
+                                    price=ticker.price,
+                                    volume=ticker.volume
+                                )
+                                if signal:
+                                    # Publish signal events
+                                    await self.event_bus.publish(create_event(
+                                        EventType.SIGNAL_GENERATED,
+                                        signal,
+                                        'signal_generator'
+                                    ))
+                                    self.stats['signals_processed'] += 1
+                            except Exception as e:
+                                logger.warning(f"Error processing {symbol}: {e}")
                 
                 await asyncio.sleep(1)  # Process every second
                 
@@ -476,8 +505,26 @@ class TradingEngine:
             # Execute order
             if self.broker and action in ['BUY', 'SELL']:
                 # Place order through broker
-                # This would call self.broker.place_order()
-                pass
+                try:
+                    from src.core.execution.broker_interface import Order, OrderSide, OrderType
+                    order = Order(
+                        symbol=symbol,
+                        side=OrderSide.BUY if action == 'BUY' else OrderSide.SELL,
+                        order_type=OrderType.MARKET,
+                        quantity=quantity or 1.0
+                    )
+                    result = await self.broker.place_order(order)
+                    self.stats['orders_placed'] += 1
+                    logger.info(f"Order placed: {symbol} {action} x {quantity}")
+                    
+                    await self.event_bus.publish(create_event(
+                        EventType.ORDER_PLACED,
+                        {'order_id': result.order_id, 'symbol': symbol, 'action': action},
+                        'engine'
+                    ))
+                except Exception as e:
+                    logger.error(f"Failed to place order: {e}")
+                    self.stats['orders_rejected'] += 1
             
             # Publish executed event
             await self.event_bus.publish(create_event(

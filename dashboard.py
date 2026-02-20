@@ -476,7 +476,7 @@ class TradingDashboard:
                     dcc.Dropdown(
                         id='assets-selector',
                         options=[
-{'label': 'BTC, ETH, SOL', 'value': 'BTC,ETH,SOL'},
+                            {'label': 'BTC, ETH, SOL', 'value': 'BTC,ETH,SOL'},
                             {'label': 'BTC, ETH', 'value': 'BTC,ETH'},
                             {'label': 'All Major', 'value': 'BTC,ETH,BNB,SOL,XRP,ADA,DOT,AVAX'},
                             {'label': 'Top 10', 'value': 'BTC,ETH,BNB,XRP,SOL,ADA,DOT,AVAX,MATIC,LINK'},
@@ -1347,8 +1347,9 @@ class TradingDashboard:
                 return []
         # Correlation Chart
         @self.app.callback(
-            Output('correlation-chart', 'figure'),
-            [Input('refresh', 'n_intervals')]
+            Output('correlation-chart', 'figure', allow_duplicate=True),
+            [Input('refresh', 'n_intervals')],
+            prevent_initial_call=True
         )
         def update_correlation(n):
             try:

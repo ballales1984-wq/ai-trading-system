@@ -35,6 +35,7 @@ class APICategory(Enum):
     NATURAL_EVENTS = "natural_events"
     GEOPOLITICS = "geopolitics"
     INNOVATION = "innovation"
+    WEATHER = "weather"
 
 
 class DataQuality(Enum):
@@ -284,6 +285,24 @@ class APIRegistry:
         return await self.fetch_category(
             APICategory.INNOVATION,
             sector=sector,
+        )
+
+    async def fetch_weather(
+        self,
+        location: str = "52.520551,13.461804",  # Berlin default
+        parameters: str = "t_2m:C,precip_1h:mm,wind_speed_10m:ms",
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        interval: str = "PT1H",
+    ) -> List[NormalizedRecord]:
+        """Fetch weather data for a location and time range."""
+        return await self.fetch_category(
+            APICategory.WEATHER,
+            location=location,
+            parameters=parameters,
+            start_time=start_time,
+            end_time=end_time,
+            interval=interval,
         )
 
     # -- weight management (reinforcement learning) --

@@ -11,9 +11,24 @@ import time
 import logging
 from typing import Optional, Dict, Any, List
 
-from binance.client import Client
-from binance.enums import SIDE_BUY, SIDE_SELL, ORDER_TYPE_MARKET, ORDER_TYPE_LIMIT
-from binance.exceptions import BinanceAPIException
+# Optional imports for exchange connectivity
+try:
+    from binance.client import Client
+    from binance.enums import SIDE_BUY, SIDE_SELL, ORDER_TYPE_MARKET, ORDER_TYPE_LIMIT
+    from binance.exceptions import BinanceAPIException
+    BINANCE_AVAILABLE = True
+except ImportError:
+    BINANCE_AVAILABLE = False
+    # Define placeholders for when binance is not installed
+    SIDE_BUY = "BUY"
+    SIDE_SELL = "SELL"
+    ORDER_TYPE_MARKET = "MARKET"
+    ORDER_TYPE_LIMIT = "LIMIT"
+    class BinanceAPIException(Exception):
+        pass
+    class Client:
+        def __init__(self, *args, **kwargs):
+            raise ImportError("binance package not installed. Install with: pip install python-binance")
 
 logger = logging.getLogger(__name__)
 
@@ -606,3 +621,293 @@ if __name__ == "__main__":
         print(f"📊 BTCUSDT: ${price}")
     else:
         print("❌ API Key non valida")
+
+
+# ======================
+# ROUTER PER MULTI-ASSET
+# ======================
+
+class BaseRouter:
+    """
+    Classe base per i router degli exchange.
+    Fornisce un'interfaccia comune per l'esecuzione degli ordini.
+    """
+    
+    def __init__(self, portfolio, testnet: bool = True):
+        """
+        Inizializza il router.
+        
+        Args:
+            portfolio: Istanza del portafoglio
+            testnet: Usa testnet per i test
+        """
+        self.portfolio = portfolio
+        self.testnet = testnet
+        self.client = None
+    
+    def place_order(self, asset: str, side: str, quantity: float) -> Optional[Dict[str, Any]]:
+        """
+        Esegue un ordine. Da implementare nelle sottoclassi.
+        
+        Args:
+            asset: Simbolo dell'asset (es. BTCUSDT)
+            side: "BUY" o "SELL"
+            quantity: Quantità da tradare
+            
+        Returns:
+            Risultato dell'ordine o None
+        """
+        raise NotImplementedError("Subclasses must implement place_order")
+    
+    def get_symbol(self, asset: str) -> str:
+        """
+        Converte il simbolo dell'asset nel formato dell'exchange.
+        
+        Args:
+            asset: Simbolo dell'asset (es. BTC, ETH)
+            
+        Returns:
+            Simbolo nel formato dell'exchange (es. BTCUSDT)
+        """
+        # Se già nel formato corretto, ritorna così
+        if "USDT" in asset:
+            return asset
+        return f"{asset}USDT"
+
+
+class BinanceRouter(BaseRouter):
+    """
+    Router per l'exchange Binance.
+    """
+    
+    def __init__(self, portfolio, testnet: bool = True, api_key: str = None, api_secret: str = None):
+        """
+        Inizializza il router Binance.
+        
+        Args:
+            portfolio: Istanza del portafoglio
+            testnet: Usa testnet per i test
+            api_key: API key (opzionale, usa env vars se non fornita)
+            api_secret: API secret (opzionale, usa env vars se non fornita)
+        """
+        super().__init__(portfolio, testnet)
+        
+        # Usa API key da environment se non fornite
+        import os
+        self.api_key = api_key or os.getenv("BINANCE_API_KEY", "")
+        self.api_secret = api_secret or os.getenv("BINANCE_API_SECRET", "")
+        
+        if self.api_key and self.api_secret:
+            self.client = Client(self.api_key, self.api_secret, testnet=testnet)
+        else:
+            logger.warning("Binance API keys not configured. Router will operate in simulation mode.")
+            self.client = None
+    
+    def place_order(self, asset: str, side: str, quantity: float) -> Optional[Dict[str, Any]]:
+        """
+        Esegue un ordine su Binance.
+        
+        Args:
+            asset: Simbolo dell'asset
+            side: "BUY" o "SELL"
+            quantity: Quantità da tradare
+            
+        Returns:
+            Risultato dell'ordine o None
+        """
+        symbol = self.get_symbol(asset)
+        
+        if self.client is None:
+            # Modalità simulazione
+            logger.info(f"[SIMULATION] Binance: {side} {quantity} {symbol}")
+            return {"status": "SIMULATED", "symbol": symbol, "side": side, "quantity": quantity}
+        
+        try:
+            order = self.client.create_order(
+                symbol=symbol,
+                side=SIDE_BUY if side == "BUY" else SIDE_SELL,
+                type=ORDER_TYPE_MARKET,
+                quoteOrderQty=quantity if side == "BUY" else None,
+                quantity=quantity if side == "SELL" else None
+            )
+            logger.info(f"✅ Binance order executed: {side} {quantity} {symbol}")
+            return order
+        except BinanceAPIException as e:
+            logger.error(f"❌ Binance order failed: {e}")
+            return None
+
+
+class BybitRouter(BaseRouter):
+    """
+    Router per l'exchange Bybit.
+    """
+    
+    def __init__(self, portfolio, testnet: bool = True, api_key: str = None, api_secret: str = None):
+        """
+        Inizializza il router Bybit.
+        
+        Args:
+            portfolio: Istanza del portafoglio
+            testnet: Usa testnet per i test
+            api_key: API key (opzionale)
+            api_secret: API secret (opzionale)
+        """
+        super().__init__(portfolio, testnet)
+        
+        import os
+        self.api_key = api_key or os.getenv("BYBIT_API_KEY", "")
+        self.api_secret = api_secret or os.getenv("BYBIT_API_SECRET", "")
+        
+        if self.api_key and self.api_secret:
+            try:
+                from pybit.unified_trading import HTTP
+                self.client = HTTP(
+                    testnet=testnet,
+                    api_key=self.api_key,
+                    api_secret=self.api_secret
+                )
+            except ImportError:
+                logger.warning("pybit not installed. Using ccxt fallback.")
+                try:
+                    import ccxt
+                    self.client = ccxt.bybit({
+                        'apiKey': self.api_key,
+                        'secret': self.api_secret,
+                        'sandbox': testnet,
+                    })
+                except ImportError:
+                    logger.error("ccxt not installed. Router will operate in simulation mode.")
+                    self.client = None
+        else:
+            logger.warning("Bybit API keys not configured. Router will operate in simulation mode.")
+            self.client = None
+    
+    def place_order(self, asset: str, side: str, quantity: float) -> Optional[Dict[str, Any]]:
+        """
+        Esegue un ordine su Bybit.
+        
+        Args:
+            asset: Simbolo dell'asset
+            side: "BUY" o "SELL"
+            quantity: Quantità da tradare
+            
+        Returns:
+            Risultato dell'ordine o None
+        """
+        symbol = self.get_symbol(asset)
+        
+        if self.client is None:
+            # Modalità simulazione
+            logger.info(f"[SIMULATION] Bybit: {side} {quantity} {symbol}")
+            return {"status": "SIMULATED", "symbol": symbol, "side": side, "quantity": quantity}
+        
+        try:
+            # Pybit format
+            if hasattr(self.client, 'place_order'):
+                order = self.client.place_order(
+                    category="spot",
+                    symbol=symbol,
+                    side=side.capitalize(),
+                    orderType="Market",
+                    qty=quantity
+                )
+            else:
+                # CCXT format
+                order = self.client.create_market_order(
+                    symbol=symbol,
+                    side=side.lower(),
+                    amount=quantity
+                )
+            logger.info(f"✅ Bybit order executed: {side} {quantity} {symbol}")
+            return order
+        except Exception as e:
+            logger.error(f"❌ Bybit order failed: {e}")
+            return None
+
+
+class OKXRouter(BaseRouter):
+    """
+    Router per l'exchange OKX.
+    """
+    
+    def __init__(self, portfolio, testnet: bool = True, api_key: str = None, api_secret: str = None, passphrase: str = None):
+        """
+        Inizializza il router OKX.
+        
+        Args:
+            portfolio: Istanza del portafoglio
+            testnet: Usa testnet per i test
+            api_key: API key (opzionale)
+            api_secret: API secret (opzionale)
+            passphrase: Passphrase API (opzionale)
+        """
+        super().__init__(portfolio, testnet)
+        
+        import os
+        self.api_key = api_key or os.getenv("OKX_API_KEY", "")
+        self.api_secret = api_secret or os.getenv("OKX_API_SECRET", "")
+        self.passphrase = passphrase or os.getenv("OKX_PASSPHRASE", "")
+        
+        if self.api_key and self.api_secret and self.passphrase:
+            try:
+                import ccxt
+                self.client = ccxt.okx({
+                    'apiKey': self.api_key,
+                    'secret': self.api_secret,
+                    'password': self.passphrase,
+                    'sandbox': testnet,
+                })
+            except ImportError:
+                logger.error("ccxt not installed. Router will operate in simulation mode.")
+                self.client = None
+        else:
+            logger.warning("OKX API keys not configured. Router will operate in simulation mode.")
+            self.client = None
+    
+    def place_order(self, asset: str, side: str, quantity: float) -> Optional[Dict[str, Any]]:
+        """
+        Esegue un ordine su OKX.
+        
+        Args:
+            asset: Simbolo dell'asset
+            side: "BUY" o "SELL"
+            quantity: Quantità da tradare
+            
+        Returns:
+            Risultato dell'ordine o None
+        """
+        # OKX usa formato diverso (BTC-USDT)
+        symbol = self.get_symbol(asset).replace("USDT", "-USDT")
+        
+        if self.client is None:
+            # Modalità simulazione
+            logger.info(f"[SIMULATION] OKX: {side} {quantity} {symbol}")
+            return {"status": "SIMULATED", "symbol": symbol, "side": side, "quantity": quantity}
+        
+        try:
+            order = self.client.create_market_order(
+                symbol=symbol,
+                side=side.lower(),
+                amount=quantity
+            )
+            logger.info(f"✅ OKX order executed: {side} {quantity} {symbol}")
+            return order
+        except Exception as e:
+            logger.error(f"❌ OKX order failed: {e}")
+            return None
+    
+    def get_symbol(self, asset: str) -> str:
+        """
+        Converte il simbolo dell'asset nel formato OKX.
+        
+        Args:
+            asset: Simbolo dell'asset (es. BTC, ETH)
+            
+        Returns:
+            Simbolo nel formato OKX (es. BTC-USDT)
+        """
+        if "-" in asset:
+            return asset
+        if "USDT" in asset:
+            return asset.replace("USDT", "-USDT")
+        return f"{asset}-USDT"
