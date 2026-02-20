@@ -29,6 +29,13 @@ try:
 except ImportError:
     EXTERNAL_APIS_AVAILABLE = False
 
+# HMM Regime Detection
+try:
+    from src.hmm_regime import HMMRegimeDetector, RegimeAwareSignalGenerator, get_regime_score
+    HMM_AVAILABLE = True
+except ImportError:
+    HMM_AVAILABLE = False
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -60,6 +67,8 @@ class TradingSignal:
     correlation_score: float = 0.5
     volatility_score: float = 0.5
     ml_score: float = 0.5  # ML prediction score (blackbox agent)
+    regime_score: float = 0.5  # HMM regime detection score (-1 bear to +1 bull)
+    regime_name: str = "Unknown"  # Bull, Bear, Sideways
     
     # NEW: 5-Question Framework Scores
     what_score: float = 0.5      # Question 1: What to buy/sell
@@ -199,8 +208,21 @@ class DecisionEngine:
         # Monte Carlo simulation results cache
         self._mc_cache = {}  # symbol -> {results, timestamp}
         
-        logger.info("DecisionEngine initialized (external APIs: %s)",
-                    'enabled' if self.api_registry else 'disabled')
+        # HMM Regime Detector
+        self._hmm_detector = None
+        self._hmm_cache = {}  # symbol -> {regime_result, timestamp}
+        self._hmm_cache_ttl = 3600  # 1 hour
+        if HMM_AVAILABLE:
+            try:
+                self._hmm_detector = HMMRegimeDetector(n_regimes=3)
+                self._regime_generator = RegimeAwareSignalGenerator(regime_detector=self._hmm_detector)
+                logger.info("HMM Regime Detector initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize HMM Regime Detector: {e}")
+        
+        logger.info("DecisionEngine initialized (external APIs: %s, HMM: %s)",
+                    'enabled' if self.api_registry else 'disabled',
+                    'enabled' if self._hmm_detector else 'disabled')
     
     # ==================== ML COORDINATION (BLACKBOX AGENT) ====================
     
@@ -359,6 +381,26 @@ class DecisionEngine:
         # Calculate volatility score
         volatility_score = self._calculate_volatility_score(df, technical_analysis)
         
+        # Get HMM Regime Detection
+        regime_score = 0.0
+        regime_name = "Unknown"
+        if self._hmm_detector and len(df) > 50:
+            try:
+                returns = df['close'].pct_change().dropna().values
+                volatility = returns.rolling(20).std().dropna().values if hasattr(returns, 'rolling') else None
+                
+                # Fit if not already fitted
+                if not self._hmm_detector.is_fitted:
+                    self._hmm_detector.fit(returns[-100:], volatility[-100:] if volatility is not None else None)
+                
+                # Predict current regime
+                regime_result = self._hmm_detector.predict(returns, volatility)
+                regime_score = get_regime_score(regime_result)
+                regime_name = regime_result.current_regime.regime_name
+                logger.info(f"HMM Regime for {symbol}: {regime_name}, score={regime_score:.2f}")
+            except Exception as e:
+                logger.warning(f"HMM regime detection failed for {symbol}: {e}")
+        
         # Run Monte Carlo simulation (all 5 levels)
         mc_results = self.run_monte_carlo(symbol, df, n_simulations=500, n_days=14, level=5)
         mc_score = mc_results.get('probability_up', 0.5)
@@ -398,6 +440,8 @@ class DecisionEngine:
             correlation_score=correlations.get('avg_correlation', 0.5),
             volatility_score=volatility_score,
             ml_score=ml_score,  # Blackbox agent prediction score
+            regime_score=regime_score,  # HMM regime score
+            regime_name=regime_name,  # HMM regime name
             reason=self._generate_reason(technical_analysis, sentiment, action)
         )
         
