@@ -1,8 +1,9 @@
 # 🤖 AI Trading System — Mini Hedge Fund
 
-[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](Dockerfile)
+[![Tests](https://img.shields.io/badge/Tests-205+-green.svg)](tests/)
 
 A **professional-grade algorithmic trading system** that replicates hedge fund capabilities: multi-source data ingestion, ML-powered predictions, 5-level Monte Carlo simulations, institutional risk management, and automated execution.
 
@@ -16,14 +17,14 @@ External APIs (18+)  →  API Registry  →  Central Database
                                       Analysis Engine
                                     (Technical + Sentiment + Events)
                                               ↓
-                                    Monte Carlo Engine (5 Levels)
+                                      Monte Carlo Engine (5 Levels)
                                               ↓
-                                    Decision Engine
-                                    (BUY/SELL/HOLD + Confidence)
+                                      Decision Engine
+                                      (BUY/SELL/HOLD + Confidence)
                                               ↓
-                                    Execution Engine → Exchanges
+                                      Execution Engine → Exchanges
                                               ↓
-                                    Dashboard + Alerts + Logs
+                                      Dashboard + Alerts + Logs
 ```
 
 > See [API_FLOW_DIAGRAM.md](API_FLOW_DIAGRAM.md) for the complete visual block diagram.
@@ -77,11 +78,31 @@ External APIs (18+)  →  API Registry  →  Central Database
 
 ---
 
+## 🆕 Recent Updates (v2.0)
+
+### New Features
+- **HMM Regime Detection** — Hidden Markov Models for market regime identification
+- **SQLAlchemy Database Layer** — Modern ORM with Alembic migrations
+- **Enhanced ML Stack** — XGBoost, LightGBM, SHAP explainability
+- **Deep Learning Ready** — PyTorch + Transformers for NLP sentiment
+- **Redis Cache** — Hot data caching for improved performance
+- **Twitter/X Integration** — Real-time social sentiment via Tweepy
+
+### New Dependencies
+| Category | Libraries |
+|----------|-----------|
+| ML/DL | xgboost, lightgbm, shap, hmmlearn, torch, transformers |
+| Database | SQLAlchemy, psycopg, psycopg2-binary, alembic, redis |
+| APIs | tweepy, ccxt |
+| Broker | ib_insync (Interactive Brokers) |
+
+---
+
 ## 🚀 Quick Start
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/your-repo/ai-trading-system.git
+git clone https://github.com/ballales1984-wq/ai-trading-system.git
 cd ai-trading-system
 pip install -r requirements.txt
 ```
@@ -156,16 +177,21 @@ ai-trading-system/
 │   │   └── risk/               # VaR, CVaR, GARCH, fat-tail risk
 │   │
 │   ├── automl/                 # AutoML engine
+│   ├── strategy/               # Trading strategies
 │   ├── hedgefund_ml.py         # Hedge fund ML strategies
 │   ├── ml_enhanced.py          # Enhanced ML models
 │   ├── portfolio_optimizer.py  # Mean-variance, risk parity
 │   ├── risk_engine.py          # Risk management
-│   └── ...                     # 30+ modules
+│   ├── hmm_regime.py           # HMM regime detection (NEW)
+│   ├── database_sqlalchemy.py  # SQLAlchemy ORM layer (NEW)
+│   └── ...                     # 40+ modules
 │
 ├── app/                        # FastAPI REST API
 │   ├── api/routes/             # Market, orders, portfolio, risk, strategy
 │   ├── execution/              # Broker connectors
 │   └── risk/                   # Risk engine
+│
+├── migrations/                 # Alembic database migrations (NEW)
 │
 ├── java-frontend/              # Spring Boot web dashboard
 │
@@ -202,14 +228,18 @@ Step 10: Feedback Loop updates source weights + model parameters
 ## 🧪 Testing
 
 ```bash
-# Run all tests
+# Run all tests (205 tests)
 pytest
+
+# Run with coverage
+pytest --cov=src --cov=app
 
 # Test specific modules
 python test_core.py
 python test_execution.py
 python test_dashboard_integration.py
 python test_binance_testnet.py
+python test_hmm_regime.py
 ```
 
 ---
@@ -276,4 +306,4 @@ MIT License — see [LICENSE](LICENSE)
 
 ---
 
-*Built with Python 3.10+ | FastAPI | Dash | NumPy | Pandas | scikit-learn | XGBoost*
+*Built with Python 3.11+ | FastAPI | Dash | NumPy | Pandas | scikit-learn | XGBoost | LightGBM | PyTorch*
