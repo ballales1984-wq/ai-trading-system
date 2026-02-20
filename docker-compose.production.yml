@@ -1,0 +1,357 @@
+# ============================================================
+# AI Trading System - Production Docker Compose
+# ============================================================
+# Full production stack with:
+# - PostgreSQL with TimescaleDB
+# - Redis for caching
+# - Prometheus for metrics
+# - Grafana for dashboards
+# - ELK Stack for logging (optional)
+# - Nginx reverse proxy
+#
+# Usage:
+#   docker-compose -f docker-compose.production.yml up -d
+
+version: '3.8'
+
+networks:
+  trading-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  elasticsearch_data:
+    driver: local
+  kibana_data:
+    driver: local
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "100m"
+    max-file: "5"
+    labels: "service,environment"
+
+x-healthcheck-defaults: &healthcheck-defaults
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 30s
+
+services:
+  # ============================================================
+  # DATABASE LAYER
+  # ============================================================
+  
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: trading-postgres
+    environment:
+      POSTGRES_DB: trading
+      POSTGRES_USER: ${POSTGRES_USER:-trading}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-trading_secret_change_me}
+      # Performance tuning
+      POSTGRES_MAX_CONNECTIONS: 200
+      POSTGRES_SHARED_BUFFERS: 256MB
+      POSTGRES_WORK_MEM: 16MB
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db:/docker-entrypoint-initdb.d:ro
+    networks:
+      - trading-network
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-trading} -d trading"]
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  redis:
+    image: redis:7-alpine
+    container_name: trading-redis
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1000
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - trading-network
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "redis-cli", "ping"]
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 600M
+        reservations:
+          memory: 256M
+
+  # ============================================================
+  # APPLICATION LAYER
+  # ============================================================
+  
+  trading-system:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.production
+      target: production
+      args:
+        - BUILD_DATE=${BUILD_DATE:-}
+        - VERSION=${VERSION:-2.0}
+    image: ai-trading-system:${VERSION:-latest}
+    container_name: ai-trading-system
+    ports:
+      - "${DASHBOARD_PORT:-8050}:8050"
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-trading}:${POSTGRES_PASSWORD:-trading_secret_change_me}@postgres:5432/trading
+      REDIS_URL: redis://redis:6379/0
+      
+      # API Keys (from .env)
+      BINANCE_API_KEY: ${BINANCE_API_KEY:-}
+      BINANCE_SECRET_KEY: ${BINANCE_SECRET_KEY:-}
+      NEWS_API_KEY: ${NEWS_API_KEY:-}
+      
+      # Application settings
+      ENVIRONMENT: production
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SIMULATION_MODE: ${SIMULATION_MODE:-true}
+      
+      # Security
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      
+      # Features
+      ENABLE_METRICS: "true"
+      ENABLE_TRACING: "true"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./cache:/app/cache
+      - ./models:/app/models
+    networks:
+      - trading-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "curl", "-f", "http://localhost:8050/health"]
+      start_period: 60s
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+      replicas: 1
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.production
+      target: api
+    image: ai-trading-api:${VERSION:-latest}
+    container_name: trading-api
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-trading}:${POSTGRES_PASSWORD:-trading_secret_change_me}@postgres:5432/trading
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      ENVIRONMENT: production
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    networks:
+      - trading-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+      replicas: 2
+
+  # ============================================================
+  # MONITORING LAYER
+  # ============================================================
+  
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: trading-prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - trading-network
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: trading-grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - trading-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+  # ============================================================
+  # LOGGING LAYER (Optional - uncomment if needed)
+  # ============================================================
+  
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+  #   container_name: trading-elasticsearch
+  #   environment:
+  #     - discovery.type=single-node
+  #     - xpack.security.enabled=false
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #   ports:
+  #     - "9200:9200"
+  #   volumes:
+  #     - elasticsearch_data:/usr/share/elasticsearch/data
+  #   networks:
+  #     - trading-network
+  #   restart: unless-stopped
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 1G
+
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:8.11.1
+  #   container_name: trading-kibana
+  #   environment:
+  #     ELASTICSEARCH_HOSTS: '["http://elasticsearch:9200"]'
+  #   ports:
+  #     - "5601:5601"
+  #   networks:
+  #     - trading-network
+  #   depends_on:
+  #     - elasticsearch
+  #   restart: unless-stopped
+
+  # ============================================================
+  # REVERSE PROXY
+  # ============================================================
+  
+  nginx:
+    image: nginx:alpine
+    container_name: trading-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - trading-network
+    depends_on:
+      - trading-system
+      - api
+      - grafana
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+
+  # ============================================================
+  # BACKUP SERVICE
+  # ============================================================
+  
+  backup:
+    image: prodrigestivill/postgres-backup-local:latest
+    container_name: trading-backup
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: trading
+      POSTGRES_USER: ${POSTGRES_USER:-trading}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-trading_secret_change_me}
+      SCHEDULE: "@daily"
+      BACKUP_KEEP_DAYS: 7
+      BACKUP_KEEP_WEEKS: 4
+      BACKUP_KEEP_MONTHS: 6
+    volumes:
+      - ./backups:/backups
+    networks:
+      - trading-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    logging: *default-logging

@@ -1,0 +1,151 @@
+# ============================================================
+# AI Trading System - Production Dockerfile
+# ============================================================
+# Multi-stage build for optimized production image
+# 
+# Build: docker build -f docker/Dockerfile.production -t ai-trading-system:prod .
+# Run:   docker run -p 8050:8050 ai-trading-system:prod
+
+# ------------------------------------
+# Stage 1: Builder
+# ------------------------------------
+FROM python:3.11-slim-bookworm AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip wheel setuptools && \
+    pip install --no-cache-dir -r requirements.txt
+
+# ------------------------------------
+# Stage 2: Production
+# ------------------------------------
+FROM python:3.11-slim-bookworm AS production
+
+# Labels for container metadata
+LABEL maintainer="AI Trading System"
+LABEL version="2.0"
+LABEL description="Production-grade AI Trading System"
+
+# Create non-root user for security
+RUN groupadd --gid 1000 appgroup && \
+    useradd --uid 1000 --gid appgroup --shell /bin/bash --create-home appuser
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONPATH=/app \
+    # Production settings
+    ENVIRONMENT=production \
+    LOG_LEVEL=INFO \
+    # Disable Python output buffering
+    PYTHONFAULTHANDLER=1
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Set working directory
+WORKDIR /app
+
+# Create necessary directories with proper ownership
+RUN mkdir -p /app/data /app/logs /app/cache /app/models /app/tmp && \
+    chown -R appuser:appgroup /app
+
+# Copy application code
+COPY --chown=appuser:appgroup . .
+
+# Switch to non-root user
+USER appuser
+
+# Expose ports
+# Dashboard: 8050
+# API Server: 8000
+# Metrics: 9090
+EXPOSE 8050 8000 9090
+
+# Health check with proper endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8050/health || curl -f http://localhost:8000/api/v1/health || exit 1
+
+# Run the application
+# Default to dashboard mode
+CMD ["python", "main.py", "--mode", "dashboard", "--host", "0.0.0.0"]
+
+# ------------------------------------
+# Stage 3: API Server
+# ------------------------------------
+FROM production AS api
+
+# Expose API port
+EXPOSE 8000
+
+# Health check for API
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8000/api/v1/health || exit 1
+
+# Run API server
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+
+# ------------------------------------
+# Stage 4: Development (optional)
+# ------------------------------------
+FROM production AS development
+
+# Install development dependencies
+RUN pip install --no-cache-dir \
+    pytest \
+    pytest-cov \
+    pytest-asyncio \
+    pytest-benchmark \
+    ipython \
+    black \
+    flake8 \
+    mypy \
+    ruff \
+    pre-commit
+
+# Switch back to root for development
+USER root
+
+# Install dev tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    vim \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+USER appuser
+
+# Default to test mode in dev
+CMD ["python", "main.py", "--mode", "test"]
+
+# ------------------------------------
+# Stage 5: Testing
+# ------------------------------------
+FROM development AS testing
+
+# Copy test files
+COPY --chown=appuser:appgroup tests/ /app/tests/
+COPY --chown=appuser:appgroup pytest.ini /app/
+
+# Run tests
+CMD ["pytest", "tests/", "-v", "--cov=src", "--cov-report=term-missing"]
