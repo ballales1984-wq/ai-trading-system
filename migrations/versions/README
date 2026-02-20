@@ -1,0 +1,30 @@
+# Alembic Migration Versions
+
+This directory contains migration scripts for the AI Trading System database.
+
+## Usage
+
+### Create a new migration
+```bash
+alembic revision --autogenerate -m "description of changes"
+```
+
+### Apply migrations
+```bash
+alembic upgrade head
+```
+
+### Rollback one migration
+```bash
+alembic downgrade -1
+```
+
+### View migration history
+```bash
+alembic history
+```
+
+### View current version
+```bash
+alembic current
+```
