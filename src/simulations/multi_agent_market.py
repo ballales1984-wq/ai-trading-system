@@ -497,7 +497,7 @@ class MultiAgentMarket:
         
         # Random walk for fundamental price
         drift = 0.0001
-        shock = random.normal(0, 0.001)
+        shock = np.random.normal(0, 0.001)
         self.current_price *= (1 + drift + shock)
         
         # Get orderbook state

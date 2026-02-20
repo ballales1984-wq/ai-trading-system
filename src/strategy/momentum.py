@@ -350,3 +350,63 @@ class MomentumStrategy(BaseStrategy):
             f"threshold={self.momentum_threshold}, "
             f"volume_factor={self.volume_factor}"
         )
+    
+    # Additional properties and methods for test compatibility
+    @property
+    def lookback_period(self) -> int:
+        """Get lookback period (alias for momentum_period)."""
+        return self.momentum_period
+    
+    def get_required_data(self) -> list:
+        """
+        Get required data keys for this strategy.
+        
+        Returns:
+            List of required data keys
+        """
+        return ["prices", "volumes", "highs", "lows"]
+    
+    def _calculate_volume_ratio(self, volumes: np.ndarray) -> float:
+        """
+        Calculate volume ratio (current vs average).
+        
+        Args:
+            volumes: Volume array
+            
+        Returns:
+            Volume ratio
+        """
+        if len(volumes) < self.momentum_period:
+            return 1.0
+        
+        avg_volume = np.mean(volumes[-self.momentum_period:-1])
+        current_volume = volumes[-1]
+        
+        if avg_volume == 0:
+            return 1.0
+        
+        return current_volume / avg_volume
+    
+    def _calculate_ma_signal(self, prices: np.ndarray) -> float:
+        """
+        Calculate MA signal (fast MA - slow MA).
+        
+        Args:
+            prices: Price array
+            
+        Returns:
+            MA signal value
+        """
+        fast_period = min(10, len(prices) // 2)
+        slow_period = min(30, len(prices) - 1)
+        
+        if len(prices) < slow_period:
+            return 0.0
+        
+        fast_ma = np.mean(prices[-fast_period:])
+        slow_ma = np.mean(prices[-slow_period:])
+        
+        if slow_ma == 0:
+            return 0.0
+        
+        return (fast_ma - slow_ma) / slow_ma

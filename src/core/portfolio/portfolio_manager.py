@@ -170,6 +170,9 @@ class PortfolioManager:
         self.total_commission = 0.0
         self.realized_pnl = 0.0
         
+        # Total equity (balance + unrealized PnL)
+        self.total_equity = initial_balance
+        
         logger.info(f"Portfolio manager initialized: balance={initial_balance}")
     
     def get_position(self, symbol: str) -> Optional[Position]:

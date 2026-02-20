@@ -315,3 +315,119 @@ class BaseStrategy(ABC):
         """Update multiple parameters."""
         self._params.update(params)
         logger.info(f"Strategy '{self.name}' params updated: {params}")
+    
+    # Additional properties and methods for test compatibility
+    @property
+    def max_position_size(self) -> float:
+        """Get max position size."""
+        return self._max_position_size
+    
+    @property
+    def stop_loss_pct(self) -> float:
+        """Get stop loss percentage."""
+        return self._params.get("stop_loss_pct", 0.02)
+    
+    @property
+    def take_profit_pct(self) -> float:
+        """Get take profit percentage."""
+        return self._params.get("take_profit_pct", 0.04)
+    
+    @property
+    def is_active(self) -> bool:
+        """Check if strategy is active (alias for enabled)."""
+        return self._enabled
+    
+    def start(self):
+        """Start the strategy (alias for enable)."""
+        self.enable()
+    
+    def stop(self):
+        """Stop the strategy (alias for disable)."""
+        self.disable()
+    
+    def calculate_position_size(
+        self,
+        price: float,
+        portfolio_value: float,
+        risk_per_trade: float = 0.02
+    ) -> float:
+        """
+        Calculate position size based on risk parameters.
+        
+        Args:
+            price: Current price
+            portfolio_value: Total portfolio value
+            risk_per_trade: Risk per trade as fraction
+            
+        Returns:
+            Position size in units
+        """
+        risk_amount = portfolio_value * risk_per_trade
+        max_position_value = portfolio_value * self._max_position_size
+        position_size = min(risk_amount / price, max_position_value / price)
+        return position_size
+    
+    def calculate_stop_loss(self, price: float, signal_type: SignalType) -> float:
+        """
+        Calculate stop loss price.
+        
+        Args:
+            price: Entry price
+            signal_type: Type of signal
+            
+        Returns:
+            Stop loss price
+        """
+        if signal_type in [SignalType.BUY, SignalType.CLOSE_SHORT]:
+            return price * (1 - self.stop_loss_pct)
+        else:
+            return price * (1 + self.stop_loss_pct)
+    
+    def calculate_take_profit(self, price: float, signal_type: SignalType) -> float:
+        """
+        Calculate take profit price.
+        
+        Args:
+            price: Entry price
+            signal_type: Type of signal
+            
+        Returns:
+            Take profit price
+        """
+        if signal_type in [SignalType.BUY, SignalType.CLOSE_SHORT]:
+            return price * (1 + self.take_profit_pct)
+        else:
+            return price * (1 - self.take_profit_pct)
+    
+    def determine_strength(self, confidence: float) -> SignalStrength:
+        """
+        Determine signal strength based on confidence (alias for classify_strength).
+        
+        Args:
+            confidence: Signal confidence (0-1)
+            
+        Returns:
+            SignalStrength enum value
+        """
+        return self.classify_strength(confidence)
+    
+    def update_metrics(self, pnl: float, is_win: bool = None):
+        """
+        Update strategy metrics.
+        
+        Args:
+            pnl: Profit/loss from trade
+            is_win: Whether trade was profitable (auto-detected if None)
+        """
+        if is_win is None:
+            is_win = pnl > 0
+        
+        if is_win:
+            self._signals_profitable += 1
+        
+        logger.debug(f"Strategy '{self.name}' metrics updated: pnl={pnl}, win={is_win}")
+    
+    @property
+    def metrics(self) -> Dict[str, Any]:
+        """Get strategy metrics."""
+        return self.get_performance()

@@ -29,10 +29,12 @@ class Individual:
     fitness: Optional[float] = None
     generation: int = 0
     history: List[float] = field(default_factory=list)
+    id: str = field(default_factory=lambda: f"ind_{random.randint(10000, 99999)}")
     
     def to_dict(self) -> Dict:
         """Convert to dictionary."""
         return {
+            "id": self.id,
             "params": self.params,
             "fitness": self.fitness,
             "generation": self.generation,
