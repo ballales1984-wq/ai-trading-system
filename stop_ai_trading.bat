@@ -1,25 +1,32 @@
 @echo off
 REM ============================================
 REM AI Trading System - Stop Script
-REM Ferma tutti i container
 REM ============================================
 
-title Ferma AI Trading System
+title AI Trading System - Stop
 
 echo.
-echo  ================================================
-echo   FERMA AI TRADING SYSTEM
-echo  ================================================
+echo ================================================
+echo    AI TRADING SYSTEM - STOPPING CONTAINERS
+echo ================================================
 echo.
 
-cd /d %~dp0
+REM Check if Docker is running
+docker info >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] Docker is not running.
+    pause
+    exit /b 1
+)
 
-echo Fermando i container...
+echo Stopping all containers...
 docker-compose -f docker-compose.stable.yml down
 
 echo.
-echo  ================================================
-echo   Sistema fermato
-echo  ================================================
+echo ================================================
+echo    ALL CONTAINERS STOPPED
+echo ================================================
+echo.
+echo To start again, run: start_ai_trading.bat
 echo.
 pause
