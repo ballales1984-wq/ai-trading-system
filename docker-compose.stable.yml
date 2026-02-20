@@ -1,247 +1,321 @@
-# =============================================================================
-# AI Trading System - Stable Docker Compose
-# =============================================================================
-# Version: stable-v1.0.0
-# RAM Limit: 4 GB total
-# ROM Limit: 3 GB total
-# =============================================================================
+version: "3.9"
+
+# ============================================================
+# AI Trading System - STABLE Production Configuration
+# ============================================================
+# Version: 1.0.0-stable
+# 
+# Resource Limits:
+#   RAM: 4 GB total (2G trading + 1G db + 512M redis + 512M dashboard)
+#   ROM: 3 GB total (1.5G db + 500M logs + 300M ml_temp + 300M redis + 200M models + 200M cache)
+#
+# Usage:
+#   Build: docker-compose -f docker-compose.stable.yml build
+#   Start: docker-compose -f docker-compose.stable.yml up -d
+#   Stop:  docker-compose -f docker-compose.stable.yml down
+#   Logs:  docker-compose -f docker-compose.stable.yml logs -f
+#
+# Prerequisites:
+#   - .env file with API keys and credentials
+#   - Docker Engine 20.10+
+#   - Docker Compose 2.0+
 
 services:
-  # ---------------------------------------------------------------------------
-  # Main Trading System (Python + FastAPI)
-  # ---------------------------------------------------------------------------
+  # ============================================
+  # TRADING ENGINE + ML (2 GB RAM, 500 MB ROM)
+  # Monte Carlo, ML Predictor, Decision Engine
+  # ============================================
   trading-system:
     build:
       context: .
-      dockerfile: docker/Dockerfile.production
+      dockerfile: docker/Dockerfile.stable
+      target: production
     image: ai-trading-system:stable
-    container_name: ai-trading-system
-    mem_limit: 1500m          # 1.5 GB RAM - main app
-    mem_reservation: 512m
-    cpus: 2.0
+    container_name: ai_trading_engine
+    env_file:
+      - .env
     environment:
-      - ENVIRONMENT=production
-      - PYTHONUNBUFFERED=1
-      - MAX_RAM_GB=2
+      - PYTHONPATH=/app
+      - MAX_RAM_MB=2048
       - MAX_ROM_GB=3
-    volumes:
-      - ./logs:/app/logs
-      - ./ml_temp:/app/ml_temp
-      - ./cache:/app/cache
-      - ./data:/app/data
+      - LOG_LEVEL=INFO
+      - SERVICE_NAME=trading-engine
     ports:
-      - "8000:8000"      # API
-      - "8888:8888"      # Dashboard
-    depends_on:
-      - postgres
-      - redis
+      - "8000:8000"   # API
     restart: unless-stopped
-    networks:
-      - trading-net
+    mem_limit: 2g
+    mem_reservation: 1g
+    memswap_limit: 2g
+    cpus: 2.0
+    cpu_shares: 1024
+    volumes:
+      - ml_temp:/app/ml_temp
+      - logs:/app/logs
+      - models:/app/models
+      - cache:/app/cache
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-
-  # ---------------------------------------------------------------------------
-  # PostgreSQL Database (TimescaleDB)
-  # ---------------------------------------------------------------------------
-  postgres:
-    image: timescale/timescaledb:latest-pg15
-    container_name: trading-postgres
-    mem_limit: 1024m          # 1 GB RAM - database
-    mem_reservation: 512m
-    cpus: 1.5
-    environment:
-      - POSTGRES_USER=trading
-      - POSTGRES_PASSWORD=trading_pass
-      - POSTGRES_DB=trading_db
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    restart: unless-stopped
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
     networks:
-      - trading-net
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U trading"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - trading_net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
 
-  # ---------------------------------------------------------------------------
-  # Redis Cache
-  # ---------------------------------------------------------------------------
-  redis:
-    image: redis:7.2-alpine
-    container_name: trading-redis
-    mem_limit: 512m            # 512 MB RAM - cache
-    mem_reservation: 256m
-    cpus: 0.5
-    command: redis-server --maxmemory 400mb --maxmemory-policy allkeys-lru
-    volumes:
-      - redisdata:/data
-    ports:
-      - "6379:6379"
-    restart: unless-stopped
-    networks:
-      - trading-net
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-
-  # ---------------------------------------------------------------------------
-  # Dashboard (Frontend)
-  # ---------------------------------------------------------------------------
+  # ============================================
+  # DASHBOARD (512 MB RAM, 200 MB ROM)
+  # Dash + Real-time Graphs
+  # ============================================
   dashboard:
     build:
       context: .
-      dockerfile: docker/Dockerfile.api
-    image: ai-trading-dashboard:stable
-    container_name: trading-dashboard
-    mem_limit: 512m            # 512 MB RAM - dashboard
-    mem_reservation: 256m
-    cpus: 1.0
+      dockerfile: docker/Dockerfile.stable
+      target: production
+    image: ai-trading-system:stable
+    container_name: ai_trading_dashboard
+    env_file:
+      - .env
     environment:
-      - API_URL=http://trading-system:8000
-      - REDIS_URL=redis://redis:6379
-    volumes:
-      - dashboard-data:/app/data
+      - PYTHONPATH=/app
+      - MAX_RAM_MB=512
+      - LOG_LEVEL=INFO
+      - SERVICE_NAME=dashboard
     ports:
-      - "3000:3000"
+      - "8050:8050"   # Dashboard
+    restart: unless-stopped
+    mem_limit: 512m
+    mem_reservation: 256m
+    memswap_limit: 512m
+    cpus: 1.0
+    cpu_shares: 512
+    volumes:
+      - logs:/app/logs:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8050"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "30m"
+        max-file: "2"
+    networks:
+      - trading_net
     depends_on:
       - trading-system
-      - redis
-    restart: unless-stopped
-    networks:
-      - trading-net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    command: ["python", "main.py", "--mode", "dashboard", "--host", "0.0.0.0"]
 
-  # ---------------------------------------------------------------------------
-  # Prometheus Metrics
-  # ---------------------------------------------------------------------------
-  prometheus:
-    image: prom/prometheus:v2.48.0
-    container_name: trading-prometheus
-    mem_limit: 256m            # 256 MB RAM - metrics
-    mem_reservation: 128m
-    cpus: 0.5
-    volumes:
-      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus-data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=7d'
-      - '--web.enable-lifecycle'
+  # ============================================
+  # DATABASE - TimescaleDB (1 GB RAM, 1.5 GB ROM)
+  # Price history, portfolio, events
+  # ============================================
+  postgres:
+    image: timescale/timescaledb:2.13.1-pg14
+    container_name: ai_trading_db
+    environment:
+      POSTGRES_USER: ${DB_USER:-trading}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-trading_secret}
+      POSTGRES_DB: ${DB_NAME:-trading_db}
+      PGDATA: /var/lib/postgresql/data/pgdata
+      # Performance tuning for 1GB RAM
+      POSTGRES_MAX_CONNECTIONS: "50"
+      POSTGRES_SHARED_BUFFERS: "256MB"
+      POSTGRES_EFFECTIVE_CACHE_SIZE: "768MB"
     ports:
-      - "9090:9090"
+      - "5432:5432"
     restart: unless-stopped
+    mem_limit: 1g
+    mem_reservation: 512m
+    memswap_limit: 1g
+    cpus: 1.0
+    cpu_shares: 512
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-trading} -d ${DB_NAME:-trading_db}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "30m"
+        max-file: "2"
     networks:
-      - trading-net
+      - trading_net
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
 
-  # ---------------------------------------------------------------------------
-  # Nginx Reverse Proxy
-  # ---------------------------------------------------------------------------
-  nginx:
-    image: nginx:1.25-alpine
-    container_name: trading-nginx
-    mem_limit: 128m            # 128 MB RAM - proxy
+  # ============================================
+  # REDIS CACHE (512 MB RAM, 300 MB ROM)
+  # Hot data cache, session storage
+  # ============================================
+  redis:
+    image: redis:7.2.3-alpine
+    container_name: ai_trading_redis
+    command: >
+      redis-server
+      --maxmemory 400mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1000
+      --appendonly yes
+      --appendfsync everysec
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    mem_limit: 512m
+    mem_reservation: 256m
+    memswap_limit: 512m
+    cpus: 0.5
+    cpu_shares: 256
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "2"
+    networks:
+      - trading_net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ============================================
+  # RESOURCE MONITOR (Optional)
+  # Monitors RAM/ROM usage
+  # ============================================
+  resource-monitor:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.stable
+      target: production
+    image: ai-trading-system:stable
+    container_name: ai_trading_monitor
+    environment:
+      - MAX_RAM_MB=128
+      - SERVICE_NAME=resource-monitor
+    restart: unless-stopped
+    mem_limit: 128m
     mem_reservation: 64m
-    cpus: 0.5
     volumes:
-      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - nginx-data:/var/log/nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - trading-system
-      - dashboard
-    restart: unless-stopped
+      - pgdata:/mnt/pgdata:ro
+      - ml_temp:/mnt/ml_temp:ro
+      - logs:/mnt/logs:ro
+      - models:/mnt/models:ro
+      - redisdata:/mnt/redisdata:ro
     networks:
-      - trading-net
+      - trading_net
+    command: >
+      python /app/scripts/resource_monitor.py
+      --watch
+      --interval 300
+    profiles:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
 
-# =============================================================================
-# Networks
-# =============================================================================
-networks:
-  trading-net:
-    driver: bridge
-
-# =============================================================================
-# Volumes (ROM Management)
-# =============================================================================
+# ============================================
+# VOLUMES - ROM Allocation
+# Total: ~3 GB
+# ============================================
 volumes:
-  # Database - estimated 1 GB
   pgdata:
+    # Database: 1.5 GB max
     driver: local
     driver_opts:
       type: none
-      o: size=1G
+      o: bind
+      device: ${PWD:-.}/data/pgdata
 
-  # Redis cache - estimated 500 MB
   redisdata:
+    # Cache: 300 MB max
     driver: local
     driver_opts:
       type: none
-      o: size=500M
+      o: bind
+      device: ${PWD:-.}/data/redisdata
 
-  # ML temp files - estimated 500 MB
   ml_temp:
+    # ML temp files: 300 MB max
     driver: local
     driver_opts:
       type: none
-      o: size=500M
+      o: bind
+      device: ${PWD:-.}/data/ml_temp
 
-  # Application logs - estimated 200 MB
+  models:
+    # ML models: 200 MB max
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD:-.}/data/models
+
   logs:
+    # Logs: 500 MB max
     driver: local
     driver_opts:
       type: none
-      o: size=200M
+      o: bind
+      device: ${PWD:-.}/data/logs
 
-  # Dashboard data - estimated 100 MB
-  dashboard-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: size=100M
-
-  # Prometheus metrics - estimated 300 MB
-  prometheus-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: size=300M
-
-  # Nginx logs
-  nginx-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: size=100M
-
-  # General cache
   cache:
+    # Application cache: 200 MB max
     driver: local
     driver_opts:
       type: none
-      o: size=200M
+      o: bind
+      device: ${PWD:-.}/data/cache
 
-  # General data
-  data:
-    driver: local
-    driver_opts:
-      type: none
-      o: size=100M
-
-# =============================================================================
-# Total Resources
-# =============================================================================
-# RAM: 1500 + 1024 + 512 + 512 + 256 + 128 = 3932 MB (~3.8 GB) ✓
-# ROM: 1 + 0.5 + 0.5 + 0.2 + 0.1 + 0.3 + 0.1 + 0.2 + 0.1 = 3.0 GB ✓
-# =============================================================================
-
+# ============================================
+# NETWORKS
+# ============================================
+networks:
+  trading_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16

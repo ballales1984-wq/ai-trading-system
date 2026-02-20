@@ -1,0 +1,127 @@
+# ============================================================
+# AI Trading System - STABLE Production Dockerfile
+# ============================================================
+# Version: 1.0.0-stable
+# Python: 3.11.5 (PINNED - do not change)
+# 
+# Build: docker build -t ai-trading-system:stable -f docker/Dockerfile.stable .
+# Run:   docker run -p 8050:8050 ai-trading-system:stable
+
+# ------------------------------------
+# Stage 1: Builder
+# ------------------------------------
+FROM python:3.11.5-slim-bookworm AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    libta-lib0-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Upgrade pip and install wheel
+RUN pip install --no-cache-dir --upgrade pip==23.3.2 wheel==0.42.0 setuptools==69.0.3
+
+# Install Python dependencies from stable requirements
+COPY requirements.stable.txt .
+RUN pip install --no-cache-dir -r requirements.stable.txt
+
+# ------------------------------------
+# Stage 2: Production
+# ------------------------------------
+FROM python:3.11.5-slim-bookworm AS production
+
+# Labels for container registry
+LABEL maintainer="AI Trading System"
+LABEL version="1.0.0-stable"
+LABEL description="AI Trading System - Stable Production Build"
+LABEL python.version="3.11.5"
+
+# Create non-root user for security
+RUN groupadd --gid 1000 appgroup && \
+    useradd --uid 1000 --gid appgroup --shell /bin/bash --create-home appuser
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONHASHSEED=random \
+    PYTHONDONTWRITEBYTECODE=1 \
+    # Application paths
+    APP_HOME=/app \
+    # Resource limits (can be overridden)
+    MAX_RAM_MB=2048 \
+    MAX_ROM_GB=3
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Set working directory
+WORKDIR ${APP_HOME}
+
+# Create necessary directories with proper ownership
+RUN mkdir -p ${APP_HOME}/data \
+    ${APP_HOME}/logs \
+    ${APP_HOME}/cache \
+    ${APP_HOME}/models \
+    ${APP_HOME}/ml_temp \
+    ${APP_HOME}/scripts && \
+    chown -R appuser:appgroup ${APP_HOME}
+
+# Copy application code
+COPY --chown=appuser:appgroup . .
+
+# Copy resource monitor script
+COPY scripts/resource_monitor.py ${APP_HOME}/scripts/
+
+# Switch to non-root user
+USER appuser
+
+# Expose ports
+# Dashboard: 8050
+# API Server: 8000
+EXPOSE 8050 8000
+
+# Health check with resource monitoring
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8050/', timeout=5)" || exit 1
+
+# Run the application
+# Default to dashboard mode
+CMD ["python", "main.py", "--mode", "dashboard", "--host", "0.0.0.0"]
+
+# ------------------------------------
+# Stage 3: API Server (alternative)
+# ------------------------------------
+FROM production AS api
+
+# Override for API mode
+CMD ["python", "main.py", "--mode", "api", "--host", "0.0.0.0", "--port", "8000"]
+
+# ------------------------------------
+# Stage 4: Development (optional)
+# ------------------------------------
+FROM production AS development
+
+# Install development dependencies
+RUN pip install --no-cache-dir pytest==7.4.3 pytest-cov==4.1.0 ipython black==23.12.1 flake8==6.1.0 mypy==1.7.1
+
+# Switch back to root for development
+USER root
+
+# Install dev tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    vim \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+USER appuser
+
+# Default to test mode in dev
+CMD ["python", "main.py", "--mode", "test"]

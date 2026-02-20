@@ -1,0 +1,2 @@
+id,timestamp,asset,trade_type,quantity,price,commission,profit_loss,balance_after,status,notes,tags
+TRD-20260220-00002,2026-02-20T20:14:30.038621,SOL,BUY,10.0,100.0,1.0,0.0,8999.0,CLOSED,,[]

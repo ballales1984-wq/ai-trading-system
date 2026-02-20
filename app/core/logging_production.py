@@ -479,17 +479,18 @@ class TradingLogger:
         self,
         level: int,
         message: str,
-        category: Optional[LogCategory] = None,
+        log_category: Optional[LogCategory] = None,
         event_type: Optional[str] = None,
         **kwargs: Any
     ) -> None:
         """Internal logging method with context."""
+        extra_data = {**self._context, **kwargs}
         extra = {
-            'extra': {**self._context, **kwargs},
-            'category': (category or self.category).value,
+            'extra': extra_data,
+            'log_category': (log_category or self.category).value,
             'event_type': event_type
         }
-        self.logger.log(level, message, **extra)
+        self.logger.log(level, message, extra=extra)
     
     # Standard log methods
     def debug(self, message: str, **kwargs: Any) -> None:
@@ -581,7 +582,7 @@ class TradingLogger:
         self.info(
             f"Signal: {strategy} -> {action} {symbol} ({confidence:.2%})",
             event_type="signal",
-            category=LogCategory.TRADING,
+            log_category=LogCategory.TRADING,
             strategy=strategy,
             symbol=symbol,
             action=action,
@@ -601,7 +602,7 @@ class TradingLogger:
         self._log(
             level,
             f"Risk violation: {limit_type} = {current_value:.4f} (limit: {limit_value:.4f})",
-            category=LogCategory.RISK,
+            log_category=LogCategory.RISK,
             event_type="risk_violation",
             limit_type=limit_type,
             current_value=current_value,
@@ -667,7 +668,7 @@ class TradingLogger:
         self._log(
             level,
             f"API call: {method} {endpoint} -> {status_code} ({duration_ms:.0f}ms)",
-            category=LogCategory.API,
+            log_category=LogCategory.API,
             event_type="api_call",
             api_name=api_name,
             endpoint=endpoint,
@@ -687,7 +688,7 @@ class TradingLogger:
         """Log performance metric."""
         self.info(
             f"Performance: {metric_name} = {value}{unit}",
-            category=LogCategory.PERFORMANCE,
+            log_category=LogCategory.PERFORMANCE,
             event_type="metric",
             metric_name=metric_name,
             metric_value=value,
@@ -705,7 +706,7 @@ class TradingLogger:
         """Log audit event for compliance."""
         self.info(
             f"Audit: {action} on {resource_type}/{resource_id}",
-            category=LogCategory.AUDIT,
+            log_category=LogCategory.AUDIT,
             event_type="audit",
             action=action,
             resource_type=resource_type,

@@ -316,6 +316,13 @@ class TestHardenedRiskEngine:
     
     def test_order_risk_check_approved(self, risk_engine, sample_portfolio):
         """Test order risk check approval."""
+        # Reset circuit breakers to ensure they don't interfere with the test
+        from app.risk.hardened_risk_engine import CircuitState
+        for breaker in risk_engine.circuit_breakers.values():
+            breaker.state = CircuitState.CLOSED
+        for switch in risk_engine.kill_switches.values():
+            switch.is_active = False
+        
         result = risk_engine.check_order_risk(
             symbol="ETHUSDT",
             side="BUY",
@@ -329,6 +336,13 @@ class TestHardenedRiskEngine:
     
     def test_order_risk_check_rejected_position_size(self, risk_engine, sample_portfolio):
         """Test order rejection due to position size."""
+        # Reset circuit breakers to ensure they don't interfere with the test
+        from app.risk.hardened_risk_engine import CircuitState
+        for breaker in risk_engine.circuit_breakers.values():
+            breaker.state = CircuitState.CLOSED
+        for switch in risk_engine.kill_switches.values():
+            switch.is_active = False
+        
         # Try to buy 20% of portfolio (exceeds 10% limit)
         result = risk_engine.check_order_risk(
             symbol="ETHUSDT",
