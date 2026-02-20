@@ -31,10 +31,16 @@ def event_bus():
 @pytest.fixture
 def state_manager():
     """Create state manager instance."""
-    tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
-    sm = StateManager(snapshot_path=tmp_file.name)
+    tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
+    sm = StateManager(db_path=tmp_file.name)
     yield sm
-    os.unlink(tmp_file.name)
+    # Close any connections before deleting
+    import gc
+    gc.collect()
+    try:
+        os.unlink(tmp_file.name)
+    except PermissionError:
+        pass  # File will be cleaned up by OS
 
 
 @pytest.fixture
@@ -112,27 +118,52 @@ class TestStateManager:
         """Test state manager creation."""
         assert state_manager is not None
     
-    def test_state_manager_set_get(self, state_manager):
-        """Test set and get operations."""
-        state_manager.set("test_key", "test_value")
-        assert state_manager.get("test_key") == "test_value"
+    def test_state_manager_portfolio(self, state_manager):
+        """Test portfolio state operations."""
+        from src.core.state_manager import PortfolioState
+        portfolio = PortfolioState(
+            total_equity=100000.0,
+            available_balance=50000.0,
+            unrealized_pnl=1000.0,
+            realized_pnl=500.0
+        )
+        state_manager.save_portfolio_state(portfolio)
+        loaded = state_manager.get_latest_portfolio_state()
+        assert loaded is not None
+        assert loaded.total_equity == 100000.0
     
-    def test_state_manager_default(self, state_manager):
-        """Test default value."""
-        assert state_manager.get("nonexistent", "default") == "default"
+    def test_state_manager_position(self, state_manager):
+        """Test position operations."""
+        from src.core.state_manager import PositionState
+        position = PositionState(
+            symbol="BTCUSDT",
+            quantity=0.1,
+            entry_price=50000.0,
+            current_price=51000.0,
+            unrealized_pnl=100.0,
+            realized_pnl=0.0
+        )
+        state_manager.save_position(position)
+        loaded = state_manager.get_position("BTCUSDT")
+        assert loaded is not None
+        assert loaded.symbol == "BTCUSDT"
     
-    def test_state_manager_snapshot(self, state_manager):
-        """Test snapshot and load."""
-        state_manager.set("key1", "value1")
-        state_manager.set("key2", 123)
-        state_manager.snapshot()
-        
-        # Create new state manager with same file
-        sm2 = StateManager(snapshot_path=state_manager.snapshot_path)
-        sm2.load_snapshot()
-        
-        assert sm2.get("key1") == "value1"
-        assert sm2.get("key2") == 123
+    def test_state_manager_price_history(self, state_manager):
+        """Test price history operations."""
+        from datetime import datetime
+        from src.core.state_manager import PriceHistoryState
+        price = PriceHistoryState(
+            symbol="BTCUSDT",
+            timestamp=datetime.now(),
+            open=50000.0,
+            high=51000.0,
+            low=49000.0,
+            close=50500.0,
+            volume=1000.0
+        )
+        state_manager.save_price_history(price)
+        history = state_manager.get_price_history("BTCUSDT", limit=10)
+        assert len(history) >= 1
 
 
 # Test BaseAgent
@@ -429,8 +460,19 @@ class TestAgentIntegration:
             config={"symbols": ["BTCUSDT"], "interval_sec": 0.1}
         )
         
-        # Set up price in state for MC agent
-        state_manager.set("MarketDataAgent:price:BTCUSDT", 42000.0)
+        # Set up price history for MC agent
+        from datetime import datetime
+        from src.core.state_manager import PriceHistoryState
+        price = PriceHistoryState(
+            symbol="BTCUSDT",
+            timestamp=datetime.now(),
+            open=42000.0,
+            high=42500.0,
+            low=41500.0,
+            close=42000.0,
+            volume=1000.0
+        )
+        state_manager.save_price_history(price)
         
         # Start agents
         await market_agent.start()

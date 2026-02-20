@@ -437,7 +437,37 @@ class MonteCarloAgent(BaseAgent):
     
     def _get_cross_asset_correlation(self, symbol: str) -> Optional[float]:
         """Get correlation with other tracked assets."""
-        # Placeholder for correlation calculation
+        # Get price history for symbol
+        symbol_history = self._get_price_history(symbol)
+        if len(symbol_history) < 30:
+            return None
+        
+        # Calculate symbol returns
+        symbol_returns = np.diff(np.log(symbol_history[-30:]))
+        
+        # Check correlation with other tracked assets
+        correlations = []
+        
+        for other_symbol in self._price_history:
+            if other_symbol == symbol:
+                continue
+            
+            other_history = self._get_price_history(other_symbol)
+            if len(other_history) < 30:
+                continue
+            
+            other_returns = np.diff(np.log(other_history[-30:]))
+            
+            if len(other_returns) == len(symbol_returns):
+                # Calculate correlation
+                corr = np.corrcoef(symbol_returns, other_returns)[0, 1]
+                if not np.isnan(corr):
+                    correlations.append(corr)
+        
+        if correlations:
+            # Return average absolute correlation
+            return np.mean(np.abs(correlations))
+        
         return None
     
     def _apply_correlation(
@@ -446,12 +476,89 @@ class MonteCarloAgent(BaseAgent):
         correlation: float
     ) -> np.ndarray:
         """Apply correlation adjustment to paths."""
-        # Placeholder for correlation application
+        # Adjust paths based on market correlation
+        # Higher correlation = more likely to follow market direction
+        # Lower correlation = more independent movement
+        
+        if correlation <= 0:
+            return paths
+        
+        # Apply correlation as a dampening factor on extreme moves
+        # This makes highly correlated assets move more together
+        mean_path = np.mean(paths, axis=0)
+        
+        for i in range(paths.shape[0]):
+            # Blend individual path with mean path based on correlation
+            paths[i] = paths[i] * (1 - correlation * 0.3) + mean_path * correlation * 0.3
+        
         return paths
     
     def _detect_black_swan(self, symbol: str) -> float:
         """Detect probability of black swan event."""
-        # Placeholder for black swan detection
+        history = self._get_price_history(symbol)
+        
+        if len(history) < 60:
+            return 0.0
+        
+        # Calculate various risk indicators
+        returns = np.diff(np.log(history[-60:]))
+        
+        # 1. Volatility spike detection
+        recent_vol = np.std(returns[-10:])
+        historical_vol = np.std(returns[:-10])
+        vol_ratio = recent_vol / historical_vol if historical_vol > 0 else 1.0
+        
+        # 2. Extreme return detection
+        max_return = np.max(np.abs(returns[-10:]))
+        historical_max = np.percentile(np.abs(returns[:-10]), 95)
+        extreme_ratio = max_return / historical_max if historical_max > 0 else 1.0
+        
+        # 3. Trend acceleration
+        recent_trend = np.mean(returns[-5:])
+        longer_trend = np.mean(returns[-20:-5])
+        trend_acceleration = abs(recent_trend - longer_trend)
+        
+        # 4. Skewness of returns
+        from scipy import stats
+        skewness = stats.skew(returns[-20:])
+        
+        # Calculate black swan probability
+        black_swan_prob = 0.0
+        
+        # High volatility ratio increases probability
+        if vol_ratio > 2.0:
+            black_swan_prob += 0.2
+        elif vol_ratio > 1.5:
+            black_swan_prob += 0.1
+        
+        # Extreme returns increase probability
+        if extreme_ratio > 2.0:
+            black_swan_prob += 0.2
+        elif extreme_ratio > 1.5:
+            black_swan_prob += 0.1
+        
+        # Trend acceleration increases probability
+        if trend_acceleration > 0.02:
+            black_swan_prob += 0.15
+        
+        # Negative skewness (fat left tail) increases probability
+        if skewness < -0.5:
+            black_swan_prob += 0.15
+        elif skewness < -0.3:
+            black_swan_prob += 0.1
+        
+        # Check for VIX-like indicator if available
+        vix_prob = self._check_volatility_index(symbol)
+        black_swan_prob += vix_prob
+        
+        return min(black_swan_prob, 0.5)  # Cap at 50%
+    
+    def _check_volatility_index(self, symbol: str) -> float:
+        """Check volatility index for black swan signals."""
+        # For crypto, check funding rates and liquidation levels
+        # For stocks, check VIX
+        
+        # Placeholder - in production, would fetch VIX or funding rates
         return 0.0
     
     def _add_fat_tails(
@@ -480,8 +587,42 @@ class MonteCarloAgent(BaseAgent):
         current_price: float
     ) -> List[Dict]:
         """Match current price action to historical patterns."""
-        # Placeholder for pattern matching
-        return []
+        history = self._get_price_history(symbol)
+        
+        if len(history) < 100:
+            return []
+        
+        patterns = []
+        
+        # Get recent price action (last 20 bars)
+        recent = history[-20:]
+        recent_normalized = (recent - np.mean(recent)) / np.std(recent) if np.std(recent) > 0 else recent
+        
+        # Slide through history looking for similar patterns
+        for i in range(20, len(history) - 20, 5):
+            window = history[i-20:i]
+            window_normalized = (window - np.mean(window)) / np.std(window) if np.std(window) > 0 else window
+            
+            # Calculate similarity (correlation)
+            if len(window_normalized) == len(recent_normalized):
+                correlation = np.corrcoef(recent_normalized, window_normalized)[0, 1]
+                
+                if not np.isnan(correlation) and correlation > 0.7:
+                    # Found similar pattern
+                    future_returns = (history[i:i+20] - history[i]) / history[i]
+                    
+                    patterns.append({
+                        'similarity': correlation,
+                        'future_return_mean': float(np.mean(future_returns)),
+                        'future_return_std': float(np.std(future_returns)),
+                        'future_max': float(np.max(future_returns)),
+                        'future_min': float(np.min(future_returns)),
+                        'position': i,
+                    })
+        
+        # Sort by similarity and return top patterns
+        patterns.sort(key=lambda x: x['similarity'], reverse=True)
+        return patterns[:5]
     
     def _apply_pattern_adjustment(
         self,
@@ -489,7 +630,39 @@ class MonteCarloAgent(BaseAgent):
         patterns: List[Dict]
     ) -> np.ndarray:
         """Apply pattern-based adjustment to paths."""
-        # Placeholder for pattern adjustment
+        if not patterns:
+            return paths
+        
+        # Calculate weighted average of pattern outcomes
+        total_weight = sum(p['similarity'] for p in patterns)
+        
+        if total_weight == 0:
+            return paths
+        
+        weighted_return = sum(
+            p['future_return_mean'] * p['similarity'] / total_weight
+            for p in patterns
+        )
+        
+        weighted_std = sum(
+            p['future_return_std'] * p['similarity'] / total_weight
+            for p in patterns
+        )
+        
+        # Adjust paths based on historical patterns
+        # Blend random simulation with pattern-based expectation
+        pattern_adjustment = 0.3  # 30% weight to pattern
+        
+        for i in range(paths.shape[0]):
+            # Calculate current path return
+            path_return = (paths[i, -1] - paths[i, 0]) / paths[i, 0]
+            
+            # Blend with pattern expectation
+            adjusted_return = path_return * (1 - pattern_adjustment) + weighted_return * pattern_adjustment
+            
+            # Apply adjustment
+            paths[i, -1] = paths[i, 0] * (1 + adjusted_return)
+        
         return paths
     
     def _calculate_statistics(
