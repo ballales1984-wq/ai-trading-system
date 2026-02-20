@@ -45,11 +45,29 @@ class TradingSignal:
     strategy: str
     metadata: Dict[str, Any] = field(default_factory=dict)
     
+    # Backward compatibility: support both 'action' and 'signal_type'
+    def __post_init__(self):
+        """Handle backward compatibility for action parameter."""
+        # If signal_type is None but we have action metadata, use that
+        if self.signal_type is None and 'action' in self.metadata:
+            self.signal_type = self.metadata['action']
+    
+    @property
+    def action(self) -> SignalType:
+        """Backward compatible action property."""
+        return self.signal_type
+    
+    @action.setter
+    def action(self, value: SignalType):
+        """Backward compatible action setter."""
+        self.signal_type = value
+    
     def to_dict(self) -> Dict:
         """Convert to dictionary."""
         return {
             "symbol": self.symbol,
-            "signal_type": self.signal_type.value,
+            "signal_type": self.signal_type.value if self.signal_type else None,
+            "action": self.signal_type.value if self.signal_type else None,  # Backward compatibility
             "strength": self.strength.value,
             "confidence": self.confidence,
             "price": self.price,

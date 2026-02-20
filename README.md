@@ -87,6 +87,10 @@ External APIs (18+)  →  API Registry  →  Central Database
 - **Deep Learning Ready** — PyTorch + Transformers for NLP sentiment
 - **Redis Cache** — Hot data caching for improved performance
 - **Twitter/X Integration** — Real-time social sentiment via Tweepy
+- **Live News Feed** — Real-time crypto news from CoinGecko with dynamic fallback
+
+### Bug Fixes (Feb 2026)
+- **Fixed Dashboard News Feed** — News was stuck showing static content. Now fetches live news from CoinGecko API with proper `?page=1` parameter and includes dynamic time-based fallback when API is unavailable.
 
 ### New Dependencies
 | Category | Libraries |

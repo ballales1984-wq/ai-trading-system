@@ -935,3 +935,69 @@ class StateManager:
                     timestamp=datetime.fromisoformat(row['timestamp'])
                 )
         return None
+    
+    # ========================================
+    # BACKWARD COMPATIBILITY ADAPTERS
+    # Simple key-value store for test compatibility
+    # ========================================
+    
+    def _ensure_kv_table(self):
+        """Ensure key-value store table exists."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS kv_store (
+                    key TEXT PRIMARY KEY,
+                    value TEXT,
+                    updated_at TEXT
+                )
+            """)
+            conn.commit()
+    
+    def _set_state(self, key: str, value: Any):
+        """Internal method to set state value."""
+        self._ensure_kv_table()
+        serialized = json.dumps(value, default=json_serializer)
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT OR REPLACE INTO kv_store (key, value, updated_at)
+                VALUES (?, ?, ?)
+            """, (key, serialized, datetime.now().isoformat()))
+            conn.commit()
+    
+    def _get_state(self, key: str) -> Any:
+        """Internal method to get state value."""
+        self._ensure_kv_table()
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT value FROM kv_store WHERE key = ?", (key,))
+            row = cursor.fetchone()
+            if row:
+                return json.loads(row['value'])
+        return None
+    
+    def set(self, key: str, value: Any):
+        """
+        Set a value in the state store.
+        
+        Args:
+            key: The key to store
+            value: The value to store
+        """
+        self._set_state(key, value)
+        logger.debug(f"State set: {key}")
+    
+    def get(self, key: str, default: Any = None) -> Any:
+        """
+        Get a value from the state store.
+        
+        Args:
+            key: The key to retrieve
+            default: Default value if key not found
+            
+        Returns:
+            The stored value or default
+        """
+        value = self._get_state(key)
+        return value if value is not None else default

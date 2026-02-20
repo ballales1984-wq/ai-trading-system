@@ -18,6 +18,26 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
+def create_param_ranges(**kwargs) -> Dict[str, Tuple]:
+    """
+    Create parameter ranges dictionary for evolution config.
+    
+    Usage:
+        param_ranges = create_param_ranges(
+            rsi_period=(5, 30, 'int'),
+            rsi_threshold=(20, 80, 'int'),
+            stop_loss=(0.01, 0.05, 'float'),
+        )
+    
+    Args:
+        **kwargs: Parameter names mapped to (min, max, type) tuples
+        
+    Returns:
+        Dictionary of parameter ranges
+    """
+    return kwargs
+
+
 @dataclass
 class Individual:
     """
@@ -64,6 +84,28 @@ class EvolutionConfig:
     early_stopping: int = 3
     n_jobs: int = 1
     seed: Optional[int] = None
+    # Backward compatibility: support param_ranges dict
+    param_ranges: Optional[Dict[str, Tuple]] = None
+    
+    def __post_init__(self):
+        """Handle backward compatibility for param_ranges."""
+        # If param_ranges is provided, convert to param_space format via set_param_space
+        # This is handled by the EvolutionEngine when it processes the config
+        pass
+    
+    def set_param_space(self, param_name: str, param_min: float, param_max: float, param_type: str = "float"):
+        """
+        Define parameter search space (backward compatibility method).
+        
+        Args:
+            param_name: Parameter name
+            param_min: Minimum value
+            param_max: Maximum value
+            param_type: Parameter type ('float', 'int', 'choice')
+        """
+        if self.param_ranges is None:
+            self.param_ranges = {}
+        self.param_ranges[param_name] = (param_min, param_max, param_type)
 
 
 class EvolutionEngine:
@@ -130,6 +172,13 @@ class EvolutionEngine:
         """
         self._param_space[param_name] = (param_min, param_max, param_type)
     
+    def _load_param_ranges_from_config(self):
+        """Load param_ranges from config for backward compatibility."""
+        if self.config.param_ranges:
+            for param_name, (min_val, max_val, param_type) in self.config.param_ranges.items():
+                if param_name not in self._param_space:
+                    self._param_space[param_name] = (min_val, max_val, param_type)
+    
     def set_param_choices(self, param_name: str, choices: List[Any]):
         """
         Define parameter choices for categorical parameters.
@@ -147,6 +196,9 @@ class EvolutionEngine:
         Returns:
             List of individuals
         """
+        # Load param_ranges from config for backward compatibility
+        self._load_param_ranges_from_config()
+        
         self.population = []
         
         for _ in range(self.config.population_size):
