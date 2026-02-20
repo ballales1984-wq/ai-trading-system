@@ -14,11 +14,16 @@ Strategies:
 
 from src.strategy.base_strategy import (
     BaseStrategy,
-    Signal,
-    SignalAction,
+    TradingSignal,
+    SignalType,
     SignalStrength,
-    StrategyMetrics,
+    StrategyContext,
 )
+
+# Aliases for backwards compatibility
+Signal = TradingSignal
+SignalAction = SignalType
+
 from src.strategy.momentum import MomentumStrategy
 
 # Optional import for mean reversion
@@ -29,10 +34,12 @@ except ImportError:
 
 __all__ = [
     "BaseStrategy",
+    "TradingSignal",
     "Signal",
+    "SignalType",
     "SignalAction",
     "SignalStrength",
-    "StrategyMetrics",
+    "StrategyContext",
     "MomentumStrategy",
     "MeanReversionStrategy",
 ]

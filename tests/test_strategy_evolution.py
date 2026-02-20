@@ -12,17 +12,16 @@ from unittest.mock import Mock
 
 from src.strategy.base_strategy import (
     BaseStrategy,
-    Signal,
-    SignalAction,
+    TradingSignal as Signal,  # Alias for backwards compatibility
+    SignalType as SignalAction,  # Alias for backwards compatibility
     SignalStrength,
-    StrategyMetrics,
+    StrategyContext,
 )
 from src.strategy.momentum import MomentumStrategy
 from src.automl.evolution import (
     EvolutionEngine,
     EvolutionConfig,
     Individual,
-    create_param_ranges,
 )
 
 

@@ -11,7 +11,7 @@ from datetime import datetime
 
 from src.strategy.base_strategy import (
     BaseStrategy,
-    TradingSignal,
+    TradingSignal as Signal,  # Alias for backwards compatibility
     SignalType,
     SignalStrength,
     StrategyContext,
