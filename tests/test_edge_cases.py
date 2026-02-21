@@ -27,28 +27,51 @@ class TestEdgeCasesRiskEngine:
     
     @pytest.fixture
     def empty_portfolio(self):
-        """Create empty portfolio."""
-        return {
-            'total_value': 0.0,
-            'cash': 0.0,
-            'positions': {},
-            'unrealized_pnl': 0.0,
-            'realized_pnl': 0.0
-        }
+        """Create empty portfolio as Portfolio dataclass."""
+        from app.risk.hardened_risk_engine import Portfolio, Position
+        return Portfolio(
+            positions=[],
+            cash=0.0,
+            total_value=0.0,
+            initial_capital=100000.0
+        )
     
     @pytest.fixture
     def large_portfolio(self):
-        """Create large portfolio for stress testing."""
-        return {
-            'total_value': 10_000_000.0,  # 10 million
-            'cash': 5_000_000.0,
-            'positions': {
-                'BTCUSDT': {'quantity': 100.0, 'value': 4_000_000.0},
-                'ETHUSDT': {'quantity': 1000.0, 'value': 2_000_000.0},
-            },
-            'unrealized_pnl': 500_000.0,
-            'realized_pnl': 200_000.0
-        }
+        """Create large portfolio for stress testing as Portfolio dataclass."""
+        from app.risk.hardened_risk_engine import Portfolio, Position
+        positions = [
+            Position(
+                symbol='BTCUSDT',
+                side='LONG',
+                quantity=100.0,
+                entry_price=40000.0,
+                current_price=40000.0,
+                market_value=4_000_000.0,
+                unrealized_pnl=0.0,
+                leverage=1.0,
+                sector='crypto',
+                asset_class='crypto'
+            ),
+            Position(
+                symbol='ETHUSDT',
+                side='LONG',
+                quantity=1000.0,
+                entry_price=2000.0,
+                current_price=2000.0,
+                market_value=2_000_000.0,
+                unrealized_pnl=0.0,
+                leverage=1.0,
+                sector='crypto',
+                asset_class='crypto'
+            ),
+        ]
+        return Portfolio(
+            positions=positions,
+            cash=5_000_000.0,
+            total_value=10_000_000.0,
+            initial_capital=10_000_000.0
+        )
     
     def test_empty_portfolio_risk_check(self, risk_engine, empty_portfolio):
         """Test risk check with empty portfolio."""
@@ -131,10 +154,19 @@ class TestEdgeCasesOrderManager:
     """Edge case tests for Order Manager."""
     
     @pytest.fixture
-    def order_manager(self):
-        """Create order manager instance."""
+    def mock_broker(self):
+        """Create mock broker for order manager."""
+        broker = Mock()
+        broker.place_order = Mock(return_value={'status': 'filled', 'order_id': 'test-123'})
+        broker.cancel_order = Mock(return_value=True)
+        broker.get_order_status = Mock(return_value={'status': 'filled'})
+        return broker
+    
+    @pytest.fixture
+    def order_manager(self, mock_broker):
+        """Create order manager instance with mock broker."""
         from src.core.execution.order_manager import OrderManager
-        manager = OrderManager()
+        manager = OrderManager(broker=mock_broker)
         return manager
     
     def test_duplicate_order_id(self, order_manager):
