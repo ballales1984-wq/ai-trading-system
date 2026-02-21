@@ -1,65 +1,179 @@
-🤖 AI Trading System — Mini Hedge Fund
+🤖 AI Trading System
+Institutional-Grade Quantitative Infrastructure
+Executive Summary
 
-Performance Badge Highlights
+AI Trading System è una infrastruttura quantitativa modulare progettata per evolvere da retail algorithmic trading framework a architettura istituzionale hedge fund–grade.
 
+Il sistema integra:
 
-🎬 Live Demo & Dashboard Snapsh
-Portfolio in tempo reale, P&L, posizioni, segnali, volatilità e drawdown charts.
+Multi-source data ingestion (market, macro, sentiment, events)
 
-Performance simulata Monte Carlo 5 livelli.
+Probabilistic forecasting
 
-⚠️ Disclaimer
+Monte Carlo simulation a 5 livelli
 
-Software solo a scopo educativo e di ricerca.
-Non costituisce consulenza finanziaria. Il trading comporta rischio significativo di perdita.
+Institutional risk modeling
 
-🎯 Vision
+Event-driven execution engine
 
-Costruire un’infrastruttura modulare AI-driven, evolutiva da retail bot a architettura quantitativa istituzionale, scalabile e ottimizzata per performance real-time.
+Real-time analytics dashboard
 
-🚀 Quick Start
-git clone https://github.com/ballales1984-wq/ai-trading-system.git
-cd ai-trading-system
-pip install -r requirements.txt
-python dashboard.py  # http://127.0.0.1:8050
-python -m uvicorn app.main:app --reload  # http://127.0.0.1:8000/docs
-docker-compose up -d  # optional Docker
-🏗️ Architettura
-External APIs (18+) → API Registry → Central Database
-                            ↓
-                    Analysis Engine
-               (Technical + Sentiment + Events)
-                            ↓
-                  Monte Carlo Engine (5 Levels)
-                            ↓
-                   Decision Engine
-                 (BUY/SELL/HOLD + Confidence)
-                            ↓
-                 Execution Engine → Exchanges
-                            ↓
-                  Dashboard + Alerts + Logs
-🔹 Features
+Non è un bot.
+È una quant research & execution platform.
 
-Multi-API Ingestion: Binance, CoinGecko, Alpha Vantage, NewsAPI, Twitter/X, GDELT, Trading Economics…
+🎯 Why This Exists
 
-Monte Carlo 5 Levels: Base, Conditional, Adaptive, Multi-Factor, Semantic History
+La maggior parte dei trading bot retail:
 
-Decision Engine Ensemble: Technical 30%, Momentum 25%, Correlation 20%, Sentiment 15%, ML 10%
+Usa 1–2 indicatori
 
-Risk Management: VaR, CVaR, GARCH, drawdown limits
+Non gestisce regime shifts
 
-Execution Engine: Best execution, TCA, paper/live trading, Binance/Bybit/OKX/IB
+Ignora risk modeling avanzato
 
-Dashboard: Portfolio, P&L, Sharpe/Sortino, volatility, order book, trade history
+Non integra dati macro o eventi
 
-🆚 Compared to Retail Bots
-Feature	AI Trading System	Typical Retail Bot
-Monte Carlo 5-level	✅	❌
-Multi-API ingestion	✅	⚠️ Limited
-Institutional Risk	✅	❌
-ML Ensemble	✅	⚠️ Basic
-Event-driven Architecture	✅	❌
-🧪 Backtesting & Performance
+Questo sistema nasce per risolvere 5 problemi strutturali:
+
+Overfitting su singolo indicatore
+
+Mancanza di regime detection
+
+Assenza di risk-first design
+
+Execution non ottimizzata
+
+Nessuna architettura scalabile
+
+🏗️ System Architecture
+Data Layer
+
+18+ API external data sources
+
+Market data (OHLCV)
+
+Sentiment (news + social)
+
+Macro events (GDP, CPI, energy)
+
+Natural events (weather, climate)
+
+Processing Layer
+
+API Registry
+
+Central Database (TimescaleDB)
+
+Redis caching
+
+Event Bus architecture
+
+Analysis Layer
+
+Technical factors
+
+Momentum scoring
+
+Cross-asset correlation modeling
+
+Sentiment analysis
+
+Regime detection
+
+Simulation Layer — Monte Carlo (5 Levels)
+
+Base stochastic GBM paths
+
+Conditional paths (event-driven)
+
+Adaptive reinforcement learning paths
+
+Multi-factor correlated simulations
+
+Semantic historical similarity modeling
+
+🧠 Decision Engine
+
+Weighted ensemble:
+
+Technical Factors: 30%
+
+Momentum: 25%
+
+Correlation Model: 20%
+
+Sentiment Score: 15%
+
+ML Predictor: 10%
+
+ML stack:
+
+XGBoost
+
+LightGBM
+
+Random Forest
+
+Output:
+
+BUY / SELL / HOLD
+
+Confidence score
+
+Volatility-adjusted exposure
+
+🛡 Risk Architecture
+
+Risk-first design.
+
+Implemented:
+
+Value at Risk (Historical, Parametric, Monte Carlo)
+
+Conditional VaR (Expected Shortfall)
+
+GARCH / EGARCH / GJR-GARCH
+
+Dynamic position sizing
+
+Drawdown constraints
+
+Capital allocation limits
+
+Philosophy:
+
+Return is optional. Risk control is mandatory.
+
+⚙ Execution Layer
+
+Best execution routing
+
+Slippage modeling
+
+Transaction Cost Analysis
+
+Order book simulation
+
+Paper trading
+
+Binance Testnet
+
+Live exchange connectors
+
+Supported brokers:
+
+Binance
+
+Bybit
+
+OKX
+
+Interactive Brokers
+
+📊 Backtesting & Research
+
+Simulation Results (Research Environment)
+
 Metric	Value
 CAGR	23.5%
 Max Drawdown	7.2%
@@ -68,54 +182,93 @@ Sortino Ratio	2.45
 Win Rate	68%
 Profit Factor	1.85
 
-I valori sono simulati su dati storici per scopi di testing e ricerca.
+Assumptions:
 
-☁️ Deployment
+Historical crypto + macro regime
 
-Local / VPS / Docker Swarm
+Transaction costs included
+
+Volatility-adjusted position sizing
+
+Results are simulated and for research purposes only.
+
+🧪 Testing & Reliability
+
+235+ automated tests
+
+Coverage tracking
+
+CI/CD pipeline
+
+Modular isolation per layer
+
+Production-ready Docker setup
+
+📈 Dashboard & Observability
+
+Real-time analytics:
+
+Portfolio value
+
+P&L
+
+Exposure
+
+Sharpe & Sortino
+
+Volatility
+
+Drawdown
+
+Order book depth
+
+Signal history
+
+☁ Deployment Model
+
+Local development
+
+VPS deployment
+
+Docker Swarm
 
 Cloud-ready (AWS / GCP)
 
-Modular & scalable
+Modular & horizontally scalable.
 
-⚙️ Configurazione API Keys
+🧩 Design Philosophy
 
-Crea un file .env:
+This system is built on four principles:
 
-# Required
-BINANCE_API_KEY=your_key
-BINANCE_SECRET_KEY=your_secret
-USE_BINANCE_TESTNET=true
+Event-driven architecture
 
-# Optional
-NEWSAPI_KEY=your_newsapi_key
-ALPHA_VANTAGE_API_KEY=your_av_key
-📁 Struttura Progetto
-ai-trading-system/
-├── main.py
-├── dashboard.py
-├── app/
-│   ├── main.py
-│   ├── api/routes/
-│   ├── core/
-│   ├── execution/
-│   └── database/
-├── src/
-│   ├── external/
-│   ├── core/
-│   ├── decision/
-│   ├── strategy/
-│   ├── agents/
-│   └── ml_enhanced.py
-├── docker/
-├── tests/
-└── docs/
+Probabilistic modeling over deterministic signals
+
+Risk-first capital preservation
+
+Modular evolution toward institutional infrastructure
+
+🗺 Roadmap
+
+Advanced regime classification
+
+Multi-asset portfolio optimization
+
+Cross-market arbitrage module
+
+Latency optimization layer
+
+Full live capital deployment framework
+
 👨‍💻 Author
 
-Alessio Ballini — Quantitative Developer | Python Engineer | AI Trading Systems
-GitHub
- | LinkedIn
+Alessio Ballini
+Quantitative Developer
+Python Engineer
+AI Trading Systems Architect
 
-📄 Licenza
+⚠ Disclaimer
 
-MIT License — vedi LICENSE
+Educational & research purposes only.
+Not financial advice.
+Trading involves substantial risk.
