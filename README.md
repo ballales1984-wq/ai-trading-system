@@ -235,6 +235,17 @@ ai-trading-system/
 │   ├── ml_enhanced.py        # ML models
 │   └── research/             # Research modules
 │
+├── frontend/                 # React Frontend (Dashboard)
+│   ├── src/
+│   │   ├── pages/           # Dashboard pages
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── Portfolio.tsx
+│   │   │   ├── Market.tsx
+│   │   │   └── Orders.tsx
+│   │   ├── components/      # UI components
+│   │   └── services/        # API client
+│   └── vite.config.ts       # Vite configuration
+│
 ├── docker/                   # Docker configuration
 │   ├── Dockerfile.production
 │   └── nginx/
@@ -245,8 +256,11 @@ ai-trading-system/
 │   └── ...
 │
 └── docs/                     # Documentation
-    ├── API_DOCS.md
-    └── ARCHITECTURE.md
+    ├── API_DOCS.md           # API documentation
+    ├── ARCHITECTURE.md       # System architecture
+    ├── GUIDA_ITALIANA.md     # Italian user guide
+    ├── GUIDA_ROUTING.md      # Routing system guide
+    └── SYSTEM_ARCHITECTURE.md # System architecture overview
 ```
 
 ---
