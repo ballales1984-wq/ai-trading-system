@@ -469,29 +469,82 @@ def update_dashboard(n):
     order_count = str(order_stats['total'])
     success_rate = f"{order_stats['success_rate']:.1f}%"
     
-    return total_value, total_return, order_count, success_rate, signals, orders, portfolio_state
+    # Clean signals data to ensure it's JSON serializable
+    clean_signals = []
+    for sig in (signals if signals else []):
+        if isinstance(sig, dict):
+            clean_sig = {}
+            for k, v in sig.items():
+                # Handle NaN/Inf values that can't be serialized
+                if isinstance(v, float):
+                    import math
+                    if math.isnan(v) or math.isinf(v):
+                        clean_sig[k] = 0.0
+                    else:
+                        clean_sig[k] = v
+                else:
+                    clean_sig[k] = v
+            clean_signals.append(clean_sig)
+    
+    return total_value, total_return, order_count, success_rate, clean_signals, orders, portfolio_state
 
 
 @app.callback(Output('signals-chart', 'figure'), [Input('signals-data', 'data')])
 def update_signals_chart(signals):
-    if not signals:
-        return go.Figure()
-    
-    df = pd.DataFrame(signals)
-    
-    fig = px.bar(
-        df, x='asset', y='adjusted_confidence',
-        color='final_signal',
-        color_discrete_map={'BUY': '#3fb950', 'SELL': '#f85149', 'HOLD': '#8b949e'},
-        title='Signal Confidence by Asset'
-    )
-    
-    fig.update_layout(
-        template='plotly_dark', paper_bgcolor='transparent',
-        plot_bgcolor='transparent', font=dict(color=THEME['text']),
-        height=300, yaxis_title='Confidence'
-    )
-    return fig
+    try:
+        if not signals:
+            fig = go.Figure()
+            fig.update_layout(
+                template='plotly_dark', paper_bgcolor='transparent',
+                plot_bgcolor='transparent', title='No signals available'
+            )
+            return fig
+        
+        # Ensure signals is a list
+        if not isinstance(signals, list):
+            signals = [signals] if signals else []
+        
+        # Filter valid signals
+        valid_signals = []
+        for s in signals:
+            if isinstance(s, dict) and 'asset' in s and 'adjusted_confidence' in s:
+                signal_copy = s.copy()
+                if 'final_signal' not in signal_copy or signal_copy['final_signal'] is None:
+                    signal_copy['final_signal'] = 'HOLD'
+                signal_copy['final_signal'] = str(signal_copy['final_signal']).upper()
+                valid_signals.append(signal_copy)
+        
+        if not valid_signals:
+            fig = go.Figure()
+            fig.update_layout(
+                template='plotly_dark', paper_bgcolor='transparent',
+                plot_bgcolor='transparent', title='No valid signals'
+            )
+            return fig
+        
+        df = pd.DataFrame(valid_signals)
+        
+        fig = px.bar(
+            df, x='asset', y='adjusted_confidence',
+            color='final_signal',
+            color_discrete_map={'BUY': '#3fb950', 'SELL': '#f85149', 'HOLD': '#8b949e'},
+            title='Signal Confidence by Asset'
+        )
+        
+        fig.update_layout(
+            template='plotly_dark', paper_bgcolor='transparent',
+            plot_bgcolor='transparent', font=dict(color=THEME['text']),
+            height=300, yaxis_title='Confidence'
+        )
+        return fig
+    except Exception as e:
+        logger.error(f"Error in signals chart: {e}")
+        fig = go.Figure()
+        fig.update_layout(
+            template='plotly_dark', paper_bgcolor='transparent',
+            plot_bgcolor='transparent', title='Error loading signals'
+        )
+        return fig
 
 
 @app.callback(Output('portfolio-chart', 'figure'), [Input('portfolio-data', 'data')])

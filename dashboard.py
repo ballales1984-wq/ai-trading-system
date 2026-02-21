@@ -19,6 +19,7 @@ Architecture:
 
 import json
 import logging
+import os
 import threading
 import time
 from datetime import datetime
@@ -402,8 +403,110 @@ class TradingDashboard:
             __name__,
             title="Quantum AI Trading Dashboard",
             update_title=None,
-            suppress_callback_exceptions=True
+            suppress_callback_exceptions=True,
+            assets_folder='dashboard/assets' if os.path.exists('dashboard/assets') else 'assets'
         )
+        
+        # Serve external CSS for enhanced styling
+        self.app.index_string = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="/assets/styles.css">
+        <style>
+            /* Enhanced Cyberpunk Theme */
+            :root {
+                --bg-primary: #0a0a0f;
+                --bg-secondary: #12121a;
+                --bg-card: rgba(18, 18, 28, 0.85);
+                --accent-green: #00ff88;
+                --accent-red: #ff4757;
+                --accent-blue: #00d4ff;
+                --accent-purple: #a855f7;
+                --accent-orange: #ff9500;
+                --accent-yellow: #ffd60a;
+                --accent-cyan: #00f5ff;
+                --accent-pink: #ff6b9d;
+                --text-primary: #ffffff;
+                --text-secondary: #9ca3af;
+                --border-color: rgba(255, 255, 255, 0.08);
+            }
+            
+            body {
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                background: var(--bg-primary);
+                color: var(--text-primary);
+            }
+            
+            /* Animated Background */
+            body::before {
+                content: '';
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: 
+                    radial-gradient(ellipse at 20% 20%, rgba(102, 126, 234, 0.08) 0%, transparent 50%),
+                    radial-gradient(ellipse at 80% 80%, rgba(118, 75, 162, 0.08) 0%, transparent 50%),
+                    radial-gradient(ellipse at 50% 50%, rgba(0, 212, 255, 0.04) 0%, transparent 70%);
+                pointer-events: none;
+                z-index: -1;
+                animation: bgPulse 20s ease-in-out infinite;
+            }
+            
+            @keyframes bgPulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.7; }
+            }
+            
+            /* Neon Glow Effects */
+            .neon-green { text-shadow: 0 0 10px var(--accent-green), 0 0 20px var(--accent-green), 0 0 40px var(--accent-green); }
+            .neon-blue { text-shadow: 0 0 10px var(--accent-blue), 0 0 20px var(--accent-blue), 0 0 40px var(--accent-blue); }
+            .neon-purple { text-shadow: 0 0 10px var(--accent-purple), 0 0 20px var(--accent-purple), 0 0 40px var(--accent-purple); }
+            
+            /* Glassmorphism Cards */
+            .glass-card {
+                background: linear-gradient(135deg, rgba(20, 20, 35, 0.95) 0%, rgba(30, 30, 50, 0.9) 100%);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+            }
+            
+            /* Pulse Animation */
+            @keyframes pulse {
+                0%, 100% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.7; transform: scale(1.05); }
+            }
+            
+            /* Gradient Text */
+            .gradient-text {
+                background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-blue) 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+            
+            /* Custom Scrollbar */
+            ::-webkit-scrollbar { width: 8px; height: 8px; }
+            ::-webkit-scrollbar-track { background: transparent; }
+            ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+            ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+        </style>
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+'''
         
         self._build_layout()
         self._register_callbacks()

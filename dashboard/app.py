@@ -949,7 +949,483 @@ app.index_string = '''
         <title>{%title%}</title>
         {%favicon%}
         {%css%}
+        <link rel="stylesheet" href="/assets/styles.css">
         <style>
+            /* ==================== ENHANCED UX STYLES ==================== */
+            
+            /* Loading Overlay */
+            .loading-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(13, 17, 23, 0.9);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+                backdrop-filter: blur(5px);
+            }
+            
+            .loading-overlay.hidden {
+                display: none;
+            }
+            
+            .loading-spinner-large {
+                width: 60px;
+                height: 60px;
+                border: 4px solid rgba(88, 166, 255, 0.2);
+                border-top-color: #58a6ff;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+            
+            .loading-text {
+                color: #8b949e;
+                margin-top: 20px;
+                font-size: 16px;
+            }
+            
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+            
+            /* Skeleton Loading */
+            .skeleton {
+                background: linear-gradient(90deg, 
+                    rgba(88, 166, 255, 0.1) 25%, 
+                    rgba(88, 166, 255, 0.2) 50%, 
+                    rgba(88, 166, 255, 0.1) 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+                border-radius: 4px;
+            }
+            
+            @keyframes shimmer {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+            
+            .skeleton-text {
+                height: 20px;
+                width: 80%;
+                margin-bottom: 10px;
+            }
+            
+            .skeleton-value {
+                height: 40px;
+                width: 60%;
+            }
+            
+            /* Toast Notifications */
+            .toast-container {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .toast {
+                padding: 16px 24px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+                animation: slideInRight 0.3s ease, fadeOut 0.3s ease 4.7s forwards;
+                min-width: 280px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            
+            .toast-success {
+                background: linear-gradient(135deg, #238636 0%, #2ea043 100%);
+                border-left: 4px solid #3fb950;
+            }
+            
+            .toast-error {
+                background: linear-gradient(135deg, #da3633 0%, #f85149 100%);
+                border-left: 4px solid #f85149;
+            }
+            
+            .toast-warning {
+                background: linear-gradient(135deg, #9e6a03 0%, #d29922 100%);
+                border-left: 4px solid #d29922;
+            }
+            
+            .toast-info {
+                background: linear-gradient(135deg, #1f6feb 0%, #58a6ff 100%);
+                border-left: 4px solid #58a6ff;
+            }
+            
+            .toast-icon {
+                font-size: 20px;
+            }
+            
+            .toast-close {
+                margin-left: auto;
+                cursor: pointer;
+                opacity: 0.7;
+                font-size: 18px;
+            }
+            
+            .toast-close:hover {
+                opacity: 1;
+            }
+            
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+            
+            /* Refresh Button States */
+            .btn-refresh {
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .btn-refresh.loading::after {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 20px;
+                height: 20px;
+                margin: -10px 0 0 -10px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                border-top-color: white;
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+            }
+            
+            .btn-refresh.loading .btn-icon {
+                visibility: hidden;
+            }
+            
+            /* Empty State */
+            .empty-state {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 60px 20px;
+                text-align: center;
+            }
+            
+            .empty-state-icon {
+                font-size: 64px;
+                margin-bottom: 20px;
+                opacity: 0.5;
+            }
+            
+            .empty-state-title {
+                color: #c9d1d9;
+                font-size: 20px;
+                font-weight: 600;
+                margin-bottom: 10px;
+            }
+            
+            .empty-state-description {
+                color: #8b949e;
+                font-size: 14px;
+                max-width: 400px;
+            }
+            
+            /* Error State */
+            .error-state {
+                background: rgba(248, 81, 73, 0.1);
+                border: 1px solid rgba(248, 81, 73, 0.3);
+                border-radius: 8px;
+                padding: 20px;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .error-state-icon {
+                font-size: 32px;
+                color: #f85149;
+            }
+            
+            .error-state-content {
+                flex: 1;
+            }
+            
+            .error-state-title {
+                color: #f85149;
+                font-weight: 600;
+                margin-bottom: 5px;
+            }
+            
+            .error-state-message {
+                color: #8b949e;
+                font-size: 13px;
+            }
+            
+            .error-state-retry {
+                background: #f85149;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 500;
+            }
+            
+            .error-state-retry:hover {
+                background: #da3633;
+            }
+            
+            /* Metric Cards - Enhanced */
+            .metric-card {
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .metric-card::after {
+                content: '';
+                position: absolute;
+                top: -50%;
+                right: -50%;
+                width: 100%;
+                height: 100%;
+                background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            
+            .metric-card:hover::after {
+                opacity: 1;
+            }
+            
+            .metric-value {
+                transition: transform 0.3s ease, color 0.3s ease;
+            }
+            
+            .metric-card:hover .metric-value {
+                transform: scale(1.05);
+            }
+            
+            /* Enhanced Tables */
+            .data-table-container {
+                overflow-x: auto;
+                border-radius: 8px;
+                border: 1px solid #30363d;
+            }
+            
+            .data-table {
+                width: 100%;
+                border-collapse: collapse;
+                min-width: 600px;
+            }
+            
+            .data-table th {
+                background: #161b22;
+                padding: 14px 16px;
+                text-align: left;
+                font-weight: 600;
+                color: #8b949e;
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+            }
+            
+            .data-table td {
+                padding: 12px 16px;
+                border-bottom: 1px solid #21262d;
+                font-size: 14px;
+            }
+            
+            .data-table tr:hover td {
+                background: rgba(88, 166, 255, 0.05);
+            }
+            
+            .data-table .row-buy {
+                border-left: 3px solid #3fb950;
+            }
+            
+            .data-table .row-sell {
+                border-left: 3px solid #f85149;
+            }
+            
+            /* Signal Badges */
+            .signal-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 600;
+            }
+            
+            .signal-badge.buy {
+                background: rgba(63, 185, 80, 0.15);
+                color: #3fb950;
+            }
+            
+            .signal-badge.sell {
+                background: rgba(248, 81, 73, 0.15);
+                color: #f85149;
+            }
+            
+            .signal-badge.hold {
+                background: rgba(88, 166, 255, 0.15);
+                color: #58a6ff;
+            }
+            
+            /* Enhanced Charts */
+            .chart-container {
+                position: relative;
+            }
+            
+            .chart-loading {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(13, 17, 23, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10;
+                border-radius: 8px;
+            }
+            
+            .chart-loading.hidden {
+                display: none;
+            }
+            
+            /* Keyboard Shortcuts Hint */
+            .keyboard-hint {
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                background: rgba(22, 27, 34, 0.9);
+                border: 1px solid #30363d;
+                border-radius: 8px;
+                padding: 12px 16px;
+                font-size: 12px;
+                color: #8b949e;
+                z-index: 100;
+                backdrop-filter: blur(10px);
+            }
+            
+            .keyboard-hint kbd {
+                background: #30363d;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-family: monospace;
+                color: #c9d1d9;
+            }
+            
+            /* Responsive Table Scroll */
+            .table-scroll-wrapper {
+                max-height: 400px;
+                overflow-y: auto;
+                scrollbar-width: thin;
+                scrollbar-color: #30363d transparent;
+            }
+            
+            .table-scroll-wrapper::-webkit-scrollbar {
+                width: 6px;
+            }
+            
+            .table-scroll-wrapper::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            
+            .table-scroll-wrapper::-webkit-scrollbar-thumb {
+                background: #30363d;
+                border-radius: 3px;
+            }
+            
+            /* Pulse Animation for Live Data */
+            @keyframes dataPulse {
+                0% { box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.4); }
+                70% { box-shadow: 0 0 0 10px rgba(63, 185, 80, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(63, 185, 80, 0); }
+            }
+            
+            .live-data-indicator {
+                animation: dataPulse 2s infinite;
+            }
+            
+            /* Header Refresh Time */
+            .last-updated {
+                font-size: 12px;
+                color: #6e7681;
+                margin-top: 4px;
+            }
+            
+            /* Status Badges */
+            .status-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 4px 10px;
+                border-radius: 12px;
+                font-size: 12px;
+                font-weight: 500;
+            }
+            
+            .status-badge.success {
+                background: rgba(63, 185, 80, 0.15);
+                color: #3fb950;
+            }
+            
+            .status-badge.warning {
+                background: rgba(210, 153, 34, 0.15);
+                color: #d29922;
+            }
+            
+            .status-badge.error {
+                background: rgba(248, 81, 73, 0.15);
+                color: #f85149;
+            }
+            
+            .status-badge.info {
+                background: rgba(88, 166, 255, 0.15);
+                color: #58a6ff;
+            }
+            
+            /* Quick Actions */
+            .quick-actions {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            
+            .quick-action-btn {
+                background: #21262d;
+                border: 1px solid #30363d;
+                color: #c9d1d9;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 12px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            
+            .quick-action-btn:hover {
+                background: #30363d;
+                border-color: #58a6ff;
+            }
+            
+            /* Body */
             body {
                 background-color: #0d1117;
                 color: #c9d1d9;
@@ -1012,6 +1488,7 @@ app.index_string = '''
                 font-size: 1em;
                 height: 40px;
                 margin-top: auto;
+                transition: all 0.3s ease;
             }
             .btn-refresh:hover {
                 background-color: #2ea043;
@@ -1223,12 +1700,72 @@ app.index_string = '''
         </style>
     </head>
     <body>
+        <div id="toast-container" class="toast-container"></div>
         {%app_entry%}
         <footer>
             {%config%}
             {%scripts%}
             {%renderer%}
         </footer>
+        <script>
+            // Toast notification system
+            function showToast(message, type = 'info', duration = 5000) {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                
+                const icons = {
+                    success: '✓',
+                    error: '✕',
+                    warning: '⚠',
+                    info: 'ℹ'
+                };
+                
+                toast.innerHTML = `
+                    <span class="toast-icon">${icons[type]}</span>
+                    <span class="toast-message">${message}</span>
+                    <span class="toast-close" onclick="this.parentElement.remove()">×</span>
+                `;
+                
+                container.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, duration);
+            }
+            
+            // Global loading state
+            let isLoading = false;
+            
+            function setLoadingState(loading) {
+                isLoading = loading;
+                const overlay = document.getElementById('loading-overlay');
+                if (overlay) {
+                    if (loading) {
+                        overlay.classList.remove('hidden');
+                    } else {
+                        overlay.classList.add('hidden');
+                    }
+                }
+            }
+            
+            // Show toast on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('Dashboard loaded successfully');
+            });
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + R to refresh
+                if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                    e.preventDefault();
+                    const refreshBtn = document.querySelector('#refresh-btn');
+                    if (refreshBtn) {
+                        refreshBtn.click();
+                    }
+                }
+            });
+        </script>
     </body>
 </html>
 '''

@@ -13,7 +13,7 @@ import asyncio
 import argparse
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List
 
 # Setup logging
@@ -39,7 +39,7 @@ class ConnectionTester:
     
     def print_result(self, name: str, success: bool, details: str = None):
         """Print test result."""
-        status = "✅ PASS" if success else "❌ FAIL"
+        status = "[PASS]" if success else "[FAIL]"
         print(f"  {status} | {name}")
         if details:
             print(f"         | {details}")
@@ -66,7 +66,7 @@ class ConnectionTester:
                 if health["connected"]:
                     # Test basic operations
                     test_key = "test:connection"
-                    test_value = {"timestamp": datetime.utcnow().isoformat()}
+                    test_value = {"timestamp": datetime.now(timezone.utc).isoformat()}
                     
                     # Set
                     set_ok = await cache.set(test_key, test_value, ttl=60)
@@ -198,7 +198,7 @@ class ConnectionTester:
         
         # Test Binance
         try:
-            from app.execution.broker_connector import BinanceConnector
+            from app.execution.broker_connector import BinanceConnector, BrokerOrder
             
             binance = BinanceConnector(testnet=True)
             connected = await binance.connect()
@@ -340,9 +340,9 @@ class ConnectionTester:
                         if sub_data["connected"]:
                             passed += 1
         
-        status = "✅ ALL PASSED" if passed == total else f"⚠️ {passed}/{total} PASSED"
+        status = "[ALL PASSED]" if passed == total else f"[{passed}/{total} PASSED]"
         print(f"\n  {status}")
-        print(f"  Tested at: {datetime.utcnow().isoformat()}")
+        print(f"  Tested at: {datetime.now(timezone.utc).isoformat()}")
         print()
 
 
@@ -359,7 +359,7 @@ async def main():
     print("\n" + "=" * 60)
     print("  AI TRADING SYSTEM - CONNECTION TEST")
     print("=" * 60)
-    print(f"  Started at: {datetime.utcnow().isoformat()}")
+    print(f"  Started at: {datetime.now(timezone.utc).isoformat()}")
     
     tester = ConnectionTester()
     
