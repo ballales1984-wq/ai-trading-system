@@ -68,3 +68,6 @@ logs/*.log
 .env
 .env.local
 .env.*
+
+# TypeScript build info
+*.tsbuildinfo
