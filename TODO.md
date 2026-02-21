@@ -1,37 +1,39 @@
-# TODO: Add Missing Database Tables
+# TODO: Implementation Checklist
 
-## Task: Enhance SQLite Database with Additional Tables
+## Priorità ALTA - Da Implementare
 
-### Current Tables (Already Exist):
-- portfolio ✅
-- positions ✅
-- orders ✅
-- models ✅
-- trades ✅
-- event_log ✅
+### 1. Execution Algorithms (TWAP/VWAP) - PRIORITÀ 1
+- [x] TWAP (Time-Weighted Average Price) - `src/core/execution/best_execution.py` ✅
+- [x] VWAP (Volume-Weighted Average Price) - `src/core/execution/best_execution.py` ✅
+- [x] POV (Percentage of Volume) - `src/core/execution/best_execution.py` ✅
+- [x] Adaptive Execution - `src/core/execution/best_execution.py` ✅
+- [ ] Iceberg orders - `src/execution/iceberg.py`
+- [ ] Smart Order Routing - migliorare `src/core/execution/best_execution.py`
 
-### New Tables Added:
-1. [x] **signals** - Store ML signals history
-   - symbol, signal_type, confidence, timestamp, source
-    
-2. [x] **price_history** - Store OHLCV data for backtesting
-   - symbol, timestamp, open, high, low, close, volume
-    
-3. [x] **model_performance** - Track ML model accuracy over time
-   - model_id, accuracy, precision, recall, f1, timestamp
-    
-4. [x] **backtest_results** - Store backtest results
-   - strategy, initial_balance, final_balance, total_return, trades, win_rate, timestamp
+### 2. Security (JWT) - PRIORITÀ 2
+- [x] JWT authentication - `app/core/security.py` ✅
+- [x] API rate limiting - `app/core/rate_limiter.py` ✅
+- [x] RBAC (Role-Based Access Control) - `app/core/rbac.py` ✅
 
-### Files Modified:
-- src/core/state_manager.py - Added new table schemas and methods ✅
-- test_database_tables.py - Added tests for new tables ✅
+### 3. Latency Engineering - PRIORITÀ 3
+- [ ] asyncio + uvloop setup - `src/core/performance/uvloop_setup.py`
+- [ ] Async logging - migliorare `app/core/logging_production.py`
+- [ ] WebSocket batch processing - `src/core/performance/ws_batcher.py`
 
-### Implementation Complete:
-1. [x] Add new table schemas in `_init_database()` method
-2. [x] Add new data classes for each table
-3. [x] Add CRUD methods for each new table
-4. [x] Add indexes for better query performance
-5. [x] Add tests for all new tables
+### 4. Research Environment - PRIORITÀ 4
+- [x] Feature store - `src/research/feature_store.py` ✅
+- [x] Alpha lab - `src/research/alpha_lab.py` ✅
 
-### Tests: 9/9 PASSED ✅
+### 5. Test Coverage - PRIORITÀ 5
+- [ ] Portare coverage al 80%+
+- [ ] Aggiungere test mancanti
+
+---
+
+## Progresso
+- [ ] Completare Execution Algorithms
+- [ ] Completare Security
+- [ ] Completare Latency Engineering
+- [ ] Completare Research Environment
+- [ ] Migliorare Test Coverage
+
