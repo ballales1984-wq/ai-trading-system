@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { portfolioApi, marketApi } from '../services/api';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { TrendingUp, TrendingDown, DollarSign, Activity, Wallet, BarChart3 } from 'lucide-react';
+import { XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { TrendingUp, TrendingDown, DollarSign, Activity, Wallet } from 'lucide-react';
 
 export default function Dashboard() {
   const { data: summary, isLoading: summaryLoading } = useQuery({

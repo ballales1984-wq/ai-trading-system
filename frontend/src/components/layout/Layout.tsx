@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Settings, Bot } from 'lucide-react';
+import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Bot } from 'lucide-react';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },

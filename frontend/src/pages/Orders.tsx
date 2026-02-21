@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ordersApi } from '../services/api';
-import { Plus, Trash2, Play, X, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Play, X, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 export default function Orders() {
   const queryClient = useQueryClient();
@@ -14,7 +14,7 @@ export default function Orders() {
     broker: 'paper',
   });
 
-  const { data: orders, isLoading } = useQuery({
+  const { data: orders } = useQuery({
     queryKey: ['orders'],
     queryFn: () => ordersApi.list(),
     refetchInterval: 10000,

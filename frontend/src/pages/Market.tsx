@@ -2,12 +2,35 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { marketApi } from '../services/api';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { TrendingUp, TrendingDown, Loader2, AlertCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
+
+// TypeScript interfaces for type safety
+interface MarketData {
+  symbol: string;
+  price: number;
+  change_pct_24h: number;
+  high_24h: number;
+  low_24h: number;
+  volume_24h: number;
+}
+
+interface PricesResponse {
+  markets: MarketData[];
+}
+
+interface CandleData {
+  timestamp: string | number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
 
 const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'EURUSD'];
 
 // Fallback data for when API is unavailable
-const fallbackPrices = {
+const fallbackPrices: PricesResponse = {
   markets: [
     { symbol: 'BTCUSDT', price: 43500, change_pct_24h: 2.5, high_24h: 44000, low_24h: 42000, volume_24h: 5000000000 },
     { symbol: 'ETHUSDT', price: 2350, change_pct_24h: 1.8, high_24h: 2400, low_24h: 2300, volume_24h: 2000000000 },
@@ -17,7 +40,7 @@ const fallbackPrices = {
   ]
 };
 
-const fallbackCandles = Array.from({ length: 50 }, (_, i) => ({
+const fallbackCandles: CandleData[] = Array.from({ length: 50 }, (_, i) => ({
   timestamp: new Date(Date.now() - (50 - i) * 3600000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
   open: 43000 + Math.random() * 1000,
   high: 44000 + Math.random() * 1000,
@@ -37,7 +60,7 @@ export default function Market() {
     staleTime: 30000,
   });
 
-  const { data: candles, isLoading: candlesLoading, error: candlesError } = useQuery({
+  const { data: candles, error: candlesError } = useQuery({
     queryKey: ['market-candles', selectedSymbol, timeframe],
     queryFn: () => marketApi.getCandles(selectedSymbol, timeframe, 100),
     retry: 1,
@@ -62,7 +85,7 @@ export default function Market() {
     return value.toFixed(6);
   };
 
-  const chartData = candlesData?.map((candle: any) => ({
+  const chartData = candlesData?.map((candle: CandleData) => ({
     timestamp: typeof candle.timestamp === 'string' ? candle.timestamp : new Date(candle.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
     open: candle.open,
     high: candle.high,
@@ -72,7 +95,7 @@ export default function Market() {
   })) || [];
 
   // Get selected market data
-  const selectedMarket = pricesData?.markets?.find((m: any) => m.symbol === selectedSymbol);
+  const selectedMarket = pricesData?.markets?.find((m: MarketData) => m.symbol === selectedSymbol);
 
   return (
     <div className="p-6">
@@ -204,7 +227,7 @@ export default function Market() {
               </tr>
             </thead>
             <tbody>
-              {prices?.markets.map((market) => (
+              {pricesData?.markets?.map((market) => (
                 <tr
                   key={market.symbol}
                   className="border-b border-border/50 hover:bg-border/20 cursor-pointer"

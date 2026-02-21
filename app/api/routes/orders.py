@@ -72,7 +72,7 @@ orders_db: dict = {}
 # ROUTES
 # ============================================================================
 
-@router.post("/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 async def create_order(order: OrderCreate) -> OrderResponse:
     """
     Create a new order.
@@ -143,7 +143,7 @@ async def create_order(order: OrderCreate) -> OrderResponse:
     return order_response
 
 
-@router.get("/", response_model=List[OrderResponse])
+@router.get("", response_model=List[OrderResponse])
 async def list_orders(
     symbol: Optional[str] = Query(None, description="Filter by symbol"),
     status: Optional[str] = Query(None, description="Filter by status"),
