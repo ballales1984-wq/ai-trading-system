@@ -14,7 +14,7 @@ Version: 1.0.0
 
 import dash
 from dash import html, dcc
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -337,8 +337,19 @@ THEME = {
     'yellow': '#d29922',
 }
 
-# App Layout
+# App Layout with Enhanced UX
 app.layout = html.Div([
+    # Loading Overlay
+    html.Div([
+        html.Div([
+            html.Div(className="loading-spinner-large"),
+            html.Div("Loading dashboard...", className="loading-text"),
+        ], className="loading-content")
+    ], id="loading-overlay", className="loading-overlay"),
+    
+    # Toast Container
+    html.Div(id="toast-container", className="toast-container"),
+    
     # Header
     html.Div([
         html.Div([
@@ -348,7 +359,7 @@ app.layout = html.Div([
                   style={'margin': '5px 0 0 0', 'color': THEME['text_muted']})
         ], style={'flex': '1'}),
         
-        # Exchange Status
+        # Exchange Status + Last Updated
         html.Div([
             html.Div([
                 html.Span("●", style={'color': THEME['green'], 'margin-right': '8px'}),
@@ -357,7 +368,8 @@ app.layout = html.Div([
             html.Div([
                 html.Span("Mode: ", style={'color': THEME['text_muted']}),
                 html.Span("Paper Trading", style={'color': THEME['green'], 'font-weight': 'bold'})
-            ])
+            ]),
+            html.Div(id="last-updated", className="last-updated", style={'margin-top': '8px', 'font-size': '11px'})
         ], style={'text-align': 'right', 'padding': '10px'})
     ], style={
         'background': 'linear-gradient(135deg, #161b22 0%, #1f2937 100%)',
@@ -377,33 +389,33 @@ app.layout = html.Div([
             html.Div([
                 html.Div("Total Portfolio Value", style={'color': THEME['text_muted'], 'font-size': '14px'}),
                 html.Div(id='total-value', style={'color': THEME['green'], 'font-size': '28px', 'font-weight': 'bold'})
-            ], style={'background': THEME['card'], 'padding': '20px', 'border-radius': '12px', 
+            ], className="stat-card", style={'background': THEME['card'], 'padding': '20px', 'border-radius': '12px', 
                      'border': f'1px solid {THEME["border"]}', 'text-align': 'center', 'flex': '1'}),
             
             html.Div([
                 html.Div("Open Orders", style={'color': THEME['text_muted'], 'font-size': '14px'}),
                 html.Div(id='open-orders', style={'color': THEME['blue'], 'font-size': '28px', 'font-weight': 'bold'})
-            ], style={'background': THEME['card'], 'padding': '20px', 'border-radius': '12px',
+            ], className="stat-card", style={'background': THEME['card'], 'padding': '20px', 'border-radius': '12px',
                      'border': f'1px solid {THEME["border"]}', 'text-align': 'center', 'flex': '1'}),
             
             html.Div([
                 html.Div("Executed Orders", style={'color': THEME['text_muted'], 'font-size': '14px'}),
                 html.Div(id='executed-orders', style={'color': THEME['green'], 'font-size': '28px', 'font-weight': 'bold'})
-            ], style={'background': THEME['card'], 'padding': '20px', 'border-radius': '12px',
+            ], className="stat-card", style={'background': THEME['card'], 'padding': '20px', 'border-radius': '12px',
                      'border': f'1px solid {THEME["border"]}', 'text-align': 'center', 'flex': '1'}),
             
             html.Div([
                 html.Div("Failed Orders", style={'color': THEME['text_muted'], 'font-size': '14px'}),
                 html.Div(id='failed-orders', style={'color': THEME['red'], 'font-size': '28px', 'font-weight': 'bold'})
-            ], style={'background': THEME['card'], 'padding': '20px', 'border-radius': '12px',
+            ], className="stat-card", style={'background': THEME['card'], 'padding': '20px', 'border-radius': '12px',
                      'border': f'1px solid {THEME["border"]}', 'text-align': 'center', 'flex': '1'}),
             
             html.Div([
                 html.Div("Success Rate", style={'color': THEME['text_muted'], 'font-size': '14px'}),
                 html.Div(id='success-rate', style={'color': THEME['purple'], 'font-size': '28px', 'font-weight': 'bold'})
-            ], style={'background': THEME['card'], 'padding': '20px', 'border-radius': '12px',
+            ], className="stat-card", style={'background': THEME['card'], 'padding': '20px', 'border-radius': '12px',
                      'border': f'1px solid {THEME["border"]}', 'text-align': 'center', 'flex': '1'}),
-        ], style={'display': 'flex', 'gap': '15px', 'margin-bottom': '20px'}),
+        ], className="stats-row", style={'display': 'flex', 'gap': '15px', 'margin-bottom': '20px'}),
         
         # Charts Row
         html.Div([
@@ -467,42 +479,77 @@ app.layout = html.Div([
      Output('signals-data', 'data'),
      Output('orders-data', 'data'),
      Output('portfolio-data', 'data')],
-    [Input('interval-component', 'n_intervals')]
+    [Input('interval-component', 'n_intervals')],
+    [State('signals-data', 'data'),
+     State('orders-data', 'data'),
+     State('portfolio-data', 'data')]
 )
-def update_dashboard(n):
-    # Simulate new signal processing periodically
-    if n > 0 and n % 3 == 0:  # Every 3 intervals
-        news = get_sample_news_feed()
-        signals = engine.process_news_feed(news)
+def update_dashboard(n, current_signals, current_orders, current_portfolio):
+    try:
+        # Simulate new signal processing periodically
+        if n > 0 and n % 3 == 0:  # Every 3 intervals
+            news = get_sample_news_feed()
+            signals = engine.process_news_feed(news)
+            
+            # Execute signals
+            for sig in signals:
+                if sig.get('can_execute') and sig.get('final_signal') != 'HOLD':
+                    engine.execute_signal(sig)
         
-        # Execute signals
-        for sig in signals:
-            if sig.get('can_execute') and sig.get('final_signal') != 'HOLD':
-                engine.execute_signal(sig)
-    
-    # Get data
-    order_stats = engine.order_manager.get_order_stats()
-    signals = engine.get_signals(20)
-    portfolio_state = engine.get_portfolio_state()
-    orders = engine.order_manager.get_orders(20)
-    
-    # Format values
-    total_value = f"${portfolio_state['total_value']:,.2f}"
-    open_orders = str(order_stats['pending'])
-    executed_orders = str(order_stats['executed'])
-    failed_orders = str(order_stats['failed'])
-    success_rate = f"{order_stats['success_rate']:.1f}%"
-    
-    return (
-        total_value,
-        open_orders,
-        executed_orders,
-        failed_orders,
-        success_rate,
-        signals,
-        orders,
-        portfolio_state
-    )
+        # Get data
+        order_stats = engine.order_manager.get_order_stats()
+        signals = engine.get_signals(20)
+        portfolio_state = engine.get_portfolio_state()
+        orders = engine.order_manager.get_orders(20)
+        
+        # Format values
+        total_value = f"${portfolio_state['total_value']:,.2f}"
+        open_orders = str(order_stats['pending'])
+        executed_orders = str(order_stats['executed'])
+        failed_orders = str(order_stats['failed'])
+        success_rate = f"{order_stats['success_rate']:.1f}%"
+        
+        # Ensure we always return valid data (not None)
+        # Clean signals data to ensure it's JSON serializable
+        clean_signals = []
+        for sig in (signals if signals else []):
+            if isinstance(sig, dict):
+                clean_sig = {}
+                for k, v in sig.items():
+                    # Handle NaN/Inf values that can't be serialized
+                    if isinstance(v, float):
+                        import math
+                        if math.isnan(v) or math.isinf(v):
+                            clean_sig[k] = 0.0
+                        else:
+                            clean_sig[k] = v
+                    else:
+                        clean_sig[k] = v
+                clean_signals.append(clean_sig)
+        
+        return (
+            total_value,
+            open_orders,
+            executed_orders,
+            failed_orders,
+            success_rate,
+            clean_signals,
+            orders if orders else [],
+            portfolio_state
+        )
+    except Exception as e:
+        logger.error(f"Error in update_dashboard: {e}")
+        # Return safe defaults on error
+        return (
+            "$0.00",
+            "0",
+            "0",
+            "0",
+            "0.0%",
+            current_signals if current_signals else [],
+            current_orders if current_orders else [],
+            current_portfolio if current_portfolio else {'balances': {}, 'total_value': 0, 'prices': {}}
+        )
 
 
 @app.callback(
@@ -510,41 +557,100 @@ def update_dashboard(n):
     [Input('signals-data', 'data')]
 )
 def update_signals_chart(signals):
-    if not signals:
-        # Return empty figure with message
+    try:
+        # Handle None or empty data
+        if not signals:
+            # Return empty figure with message
+            fig = go.Figure()
+            fig.update_layout(
+                template='plotly_dark',
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                title='No signals available - waiting for data...',
+                xaxis_title='Asset',
+                yaxis_title='Confidence'
+            )
+            return fig
+        
+        # Ensure signals is a list
+        if not isinstance(signals, list):
+            logger.warning(f"Unexpected signals data type: {type(signals)}")
+            signals = [signals] if signals else []
+        
+        # Filter out any invalid signal entries
+        valid_signals = []
+        for s in signals:
+            if isinstance(s, dict) and 'asset' in s and 'adjusted_confidence' in s:
+                # Ensure final_signal exists and is valid
+                signal_copy = s.copy()
+                if 'final_signal' not in signal_copy or signal_copy['final_signal'] is None:
+                    signal_copy['final_signal'] = 'HOLD'
+                # Normalize signal to uppercase
+                signal_copy['final_signal'] = str(signal_copy['final_signal']).upper()
+                valid_signals.append(signal_copy)
+        
+        if not valid_signals:
+            fig = go.Figure()
+            fig.update_layout(
+                template='plotly_dark',
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                title='No valid signals available',
+                xaxis_title='Asset',
+                yaxis_title='Confidence'
+            )
+            return fig
+        
+        df = pd.DataFrame(valid_signals)
+        
+        # Ensure required columns exist
+        if 'asset' not in df.columns or 'adjusted_confidence' not in df.columns:
+            fig = go.Figure()
+            fig.update_layout(
+                template='plotly_dark',
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                title='Invalid signal data structure'
+            )
+            return fig
+        
+        # Create bar chart with safe color mapping
+        color_map = {'BUY': '#3fb950', 'SELL': '#f85149', 'HOLD': '#8b949e'}
+        fig = px.bar(
+            df, 
+            x='asset', 
+            y='adjusted_confidence',
+            color='final_signal',
+            color_discrete_map=color_map,
+            title='Signal Confidence by Asset'
+        )
+        
+        fig.update_layout(
+            template='plotly_dark',
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            yaxis_title='Confidence',
+            xaxis_title='Asset',
+            legend_title='Signal',
+            font=dict(color=THEME['text']),
+            height=280
+        )
+        
+        return fig
+        
+    except Exception as e:
+        logger.error(f"Error in update_signals_chart: {e}")
+        # Return safe empty figure on error
         fig = go.Figure()
         fig.update_layout(
             template='plotly_dark',
-            paper_bgcolor='transparent',
-            plot_bgcolor='transparent',
-            title='No signals available'
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            title='Error loading signals',
+            xaxis_title='Asset',
+            yaxis_title='Confidence'
         )
         return fig
-    
-    df = pd.DataFrame(signals)
-    
-    # Create bar chart
-    fig = px.bar(
-        df, 
-        x='asset', 
-        y='adjusted_confidence',
-        color='final_signal',
-        color_discrete_map={'BUY': '#3fb950', 'SELL': '#f85149', 'HOLD': '#8b949e'},
-        title='Signal Confidence by Asset'
-    )
-    
-    fig.update_layout(
-        template='plotly_dark',
-        paper_bgcolor='transparent',
-        plot_bgcolor='transparent',
-        yaxis_title='Confidence',
-        xaxis_title='Asset',
-        legend_title='Signal',
-        font=dict(color=THEME['text']),
-        height=280
-    )
-    
-    return fig
 
 
 @app.callback(
@@ -585,8 +691,8 @@ def update_portfolio_chart(portfolio_data):
     
     fig.update_layout(
         template='plotly_dark',
-        paper_bgcolor='transparent',
-        plot_bgcolor='transparent',
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color=THEME['text']),
         height=280
     )
@@ -746,7 +852,174 @@ def update_portfolio_holdings(portfolio_data):
 
 # ==================== RUN SERVER ====================
 
+# Add enhanced CSS and JS
+app.index_string = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
+        <style>
+            /* Loading Overlay */
+            .loading-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(13, 17, 23, 0.95);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+            }
+            
+            .loading-overlay.hidden {
+                display: none;
+            }
+            
+            .loading-spinner-large {
+                width: 50px;
+                height: 50px;
+                border: 4px solid rgba(88, 166, 255, 0.2);
+                border-top-color: #58a6ff;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+            
+            .loading-content {
+                text-align: center;
+            }
+            
+            .loading-text {
+                color: #8b949e;
+                margin-top: 20px;
+                font-size: 16px;
+            }
+            
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+            
+            /* Toast Notifications */
+            .toast-container {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .toast {
+                padding: 14px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+                animation: slideInRight 0.3s ease;
+                min-width: 250px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .toast-success {
+                background: linear-gradient(135deg, #238636 0%, #2ea043 100%);
+                border-left: 4px solid #3fb950;
+            }
+            
+            .toast-error {
+                background: linear-gradient(135deg, #da3633 0%, #f85149 100%);
+            }
+            
+            .toast-info {
+                background: linear-gradient(135deg, #1f6feb 0%, #58a6ff 100%);
+            }
+            
+            .toast-close {
+                margin-left: auto;
+                cursor: pointer;
+                opacity: 0.7;
+                font-size: 18px;
+            }
+            
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            
+            /* Last Updated */
+            .last-updated {
+                color: #6e7681;
+                font-size: 11px;
+            }
+            
+            /* Enhanced Stat Cards */
+            .stat-card {
+                transition: all 0.3s ease;
+            }
+            
+            .stat-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            }
+        </style>
+    </head>
+    <body>
+        <div id="toast-container" class="toast-container"></div>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+        <script>
+            // Toast notification system
+            function showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = 'toast toast-' + type;
+                
+                const icons = {
+                    success: '✓',
+                    error: '✕',
+                    info: 'ℹ'
+                };
+                
+                toast.innerHTML = `
+                    <span>${icons[type] || 'ℹ'}</span>
+                    <span>${message}</span>
+                    <span class="toast-close" onclick="this.parentElement.remove()">×</span>
+                `;
+                
+                container.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            }
+            
+            // Hide loading overlay when page loads
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(() => {
+                    const overlay = document.getElementById('loading-overlay');
+                    if (overlay) {
+                        overlay.classList.add('hidden');
+                    }
+                }, 500);
+            });
+        </script>
+    </body>
+</html>
+'''
+
 if __name__ == "__main__":
     logger.info("Starting Multi-Asset Execution Dashboard...")
-    app.run_server(debug=True, host="127.0.0.1", port=8050)
+    app.run(debug=True, host="127.0.0.1", port=8050)
 

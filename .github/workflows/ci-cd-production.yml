@@ -22,6 +22,11 @@ on:
         default: false
         type: boolean
 
+# Set permissions for the workflow
+permissions:
+  contents: read
+  packages: read
+
 env:
   PYTHON_VERSION: '3.11'
   NODE_VERSION: '18'
@@ -35,6 +40,8 @@ jobs:
   code-quality:
     name: Code Quality Checks
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
     - name: Checkout code
@@ -49,15 +56,15 @@ jobs:
     - name: Install linting tools
       run: |
         python -m pip install --upgrade pip
-        pip install ruff black || exit 0
+        pip install ruff black
     
     - name: Lint with Ruff
       run: |
-        ruff check --output-format=github src/ app/ tests/ || exit 0
+        ruff check --output-format=github src/ app/ tests/ || true
     
     - name: Check code formatting
       run: |
-        black --check src/ app/ tests/ || exit 0
+        black --check src/ app/ tests/ || true
 
   # ==========================================
   # SECURITY SCANNING
@@ -79,8 +86,8 @@ jobs:
     
     - name: Run Bandit security scan
       run: |
-        pip install bandit || exit 0
-        bandit -r src/ app/ -f txt --severity-level medium || exit 0
+        pip install bandit
+        bandit -r src/ app/ -f txt --severity-level medium || true
 
   # ==========================================
   # TEST SUITE
@@ -88,6 +95,8 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
     - name: Checkout code
@@ -102,11 +111,11 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pandas numpy scikit-learn ccxt python-dotenv requests aiohttp websockets dash plotly pytest pytest-cov || exit 0
+        pip install pandas numpy scikit-learn ccxt python-dotenv requests aiohttp websockets dash plotly pytest pytest-cov
     
     - name: Run tests
       run: |
-        pytest tests/ -v --tb=short --ignore=tests/test_production_features.py -x || echo "Tests done"
+        pytest tests/ -v --tb=short --ignore=tests/test_production_features.py || true
 
   # ==========================================
   # DOCKER BUILD
@@ -114,7 +123,6 @@ jobs:
   docker:
     name: Build Docker Images
     runs-on: ubuntu-latest
-    if: always()
     permissions:
       contents: read
       packages: write
@@ -136,7 +144,6 @@ jobs:
         registry: ${{ env.DOCKER_REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-      continue-on-error: true
     
     - name: Extract metadata
       id: meta
@@ -159,7 +166,6 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         platforms: linux/amd64
-      continue-on-error: true
 
   # ==========================================
   # DEPLOY TO STAGING (optional)
@@ -172,6 +178,8 @@ jobs:
     environment:
       name: staging
       url: https://staging.trading.example.com
+    permissions:
+      contents: read
     
     steps:
     - name: Checkout code
@@ -190,6 +198,8 @@ jobs:
     environment:
       name: production
       url: https://trading.example.com
+    permissions:
+      contents: read
     
     steps:
     - name: Checkout code
