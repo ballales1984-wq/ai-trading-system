@@ -289,11 +289,11 @@ def get_sample_news_feed() -> List[NewsItem]:
 
 # Initialize global components
 portfolio = Portfolio(balances={
-    "BTC": 1.5,
-    "ETH": 15.0,
-    "SOL": 100.0,
-    "ADA": 5000.0,
-    "USDT": 50000.0
+    "BTC": 0.1,
+    "ETH": 1.0,
+    "SOL": 10.0,
+    "ADA": 100.0,
+    "USDT": 10000.0
 })
 
 # Set initial prices
@@ -359,6 +359,21 @@ app.layout = html.Div([
                   style={'margin': '5px 0 0 0', 'color': THEME['text_muted']})
         ], style={'flex': '1'}),
         
+        # Mode Selector
+        html.Div([
+            html.Label("Trading Mode:", style={'color': THEME['text_muted'], 'margin-right': '10px'}),
+            dcc.Dropdown(
+                id='trading-mode',
+                options=[
+                    {'label': '📊 Backtest', 'value': 'backtest'},
+                    {'label': '🎮 Paper Trading', 'value': 'paper'},
+                    {'label': '🚀 Live Trading', 'value': 'live'},
+                ],
+                value='paper',
+                style={'width': '150px', 'background': '#0d1117', 'color': '#000'}
+            ),
+        ], style={'display': 'flex', 'align-items': 'center', 'margin-right': '20px'}),
+        
         # Exchange Status + Last Updated
         html.Div([
             html.Div([
@@ -376,7 +391,8 @@ app.layout = html.Div([
         'padding': '20px',
         'border-bottom': f'1px solid {THEME["border"]}',
         'display': 'flex',
-        'align-items': 'center'
+        'align-items': 'center',
+        'flex-wrap': 'wrap'
     }),
     
     # Auto-refresh interval

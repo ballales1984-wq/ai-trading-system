@@ -15,7 +15,11 @@ from fastapi.exceptions import RequestValidationError
 
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
-from app.api.routes import health, orders, portfolio, strategy, risk, market
+from app.api.routes import health, orders, portfolio, strategy, risk, market, waitlist
+
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from pathlib import Path
 
 
 # Setup logging
@@ -171,11 +175,25 @@ app.include_router(
     tags=["Market"]
 )
 
+app.include_router(
+    waitlist.router,
+    prefix=f"{settings.api_prefix}",
+    tags=["Waitlist"]
+)
 
-# Root endpoint
+# Serve landing page
+LANDING_DIR = Path(__file__).parent.parent / "landing"
+if LANDING_DIR.exists():
+    app.mount("/landing", StaticFiles(directory=str(LANDING_DIR), html=True), name="landing")
+
+
+# Root endpoint - serve landing page
 @app.get("/")
 async def root():
-    """Root endpoint."""
+    """Root endpoint - serve landing page if available."""
+    landing_file = LANDING_DIR / "index.html"
+    if landing_file.exists():
+        return FileResponse(str(landing_file))
     return {
         "name": settings.app_name,
         "version": settings.app_version,

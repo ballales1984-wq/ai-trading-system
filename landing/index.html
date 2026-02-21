@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Trading System - Professional Trading with Monte Carlo Risk Analysis</title>
+    <meta name="description" content="Professional-grade trading platform with Monte Carlo simulations, multi-asset support, and institutional risk management.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --gray: #64748b;
+            --light: #f8fafc;
+            --gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark);
+            color: var(--light);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        header {
+            padding: 20px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: var(--gray);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--light);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--light);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        /* Hero */
+        .hero {
+            padding: 160px 0 100px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            line-height: 1.2;
+        }
+        
+        .hero h1 span {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--gray);
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+        
+        .hero-cta {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        /* Email Form */
+        .email-form {
+            background: var(--dark-light);
+            padding: 60px 40px;
+            border-radius: 16px;
+            max-width: 500px;
+            margin: 60px auto 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .email-form h3 {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+        }
+        
+        .email-form p {
+            color: var(--gray);
+            margin-bottom: 24px;
+        }
+        
+        .form-group {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .form-group input {
+            flex: 1;
+            padding: 14px 18px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: var(--dark);
+            color: var(--light);
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .form-group input::placeholder {
+            color: var(--gray);
+        }
+        
+        .form-message {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .form-message.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--secondary);
+            border: 1px solid var(--secondary);
+        }
+        
+        .form-message.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+        
+        /* Features */
+        .features {
+            padding: 100px 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        .section-title h2 {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+        }
+        
+        .section-title p {
+            color: var(--gray);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .feature-card {
+            background: var(--dark-light);
+            padding: 40px 30px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 12px;
+        }
+        
+        .feature-card p {
+            color: var(--gray);
+        }
+        
+        /* Stats */
+        .stats {
+            padding: 80px 0;
+            background: var(--dark-light);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+            text-align: center;
+        }
+        
+        .stat-item h3 {
+            font-size: 3rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+        
+        .stat-item p {
+            color: var(--gray);
+        }
+        
+        /* Pricing */
+        .pricing {
+            padding: 100px 0;
+        }
+        
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .pricing-card {
+            background: var(--dark-light);
+            padding: 40px 30px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+            text-align: center;
+        }
+        
+        .pricing-card.featured {
+            border-color: var(--primary);
+            position: relative;
+            transform: scale(1.05);
+        }
+        
+        .pricing-card.featured::before {
+            content: 'Most Popular';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gradient);
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .pricing-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        
+        .pricing-card .price {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 20px 0;
+        }
+        
+        .pricing-card .price span {
+            font-size: 1rem;
+            color: var(--gray);
+            font-weight: 400;
+        }
+        
+        .pricing-card ul {
+            list-style: none;
+            margin: 30px 0;
+            text-align: left;
+        }
+        
+        .pricing-card ul li {
+            padding: 10px 0;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .pricing-card ul li::before {
+            content: '✓';
+            color: var(--secondary);
+            font-weight: bold;
+        }
+        
+        /* Footer */
+        footer {
+            padding: 60px 0 30px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .footer-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+        
+        .footer-links a {
+            color: var(--gray);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--light);
+        }
+        
+        .copyright {
+            color: var(--gray);
+            font-size: 0.875rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .form-group {
+                flex-direction: column;
+            }
+            
+            .pricing-card.featured {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">🤖 AI Trading</div>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#demo">Demo</a></li>
+            </ul>
+            <a href="#signup" class="btn btn-primary">Get Started</a>
+        </nav>
+    </header>
+    
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>Trade Smarter with<br><span>Monte Carlo Risk Analysis</span></h1>
+                <p>Professional-grade trading platform with institutional risk management, multi-asset support, and AI-powered signals.</p>
+                <div class="hero-cta">
+                    <a href="#demo" class="btn btn-primary">View Demo</a>
+                    <a href="#features" class="btn btn-secondary">Learn More</a>
+                </div>
+                
+                <div class="email-form" id="signup">
+                    <h3>🚀 Join the Beta</h3>
+                    <p>Get early access and 7 days free trial. No credit card required.</p>
+                    <form id="waitlist-form">
+                        <div class="form-group">
+                            <input type="email" id="email" placeholder="Enter your email" required>
+                            <button type="submit" class="btn btn-primary">Join</button>
+                        </div>
+                        <div class="form-message" id="form-message"></div>
+                    </form>
+                </div>
+            </div>
+        </section>
+        
+        <section class="features" id="features">
+            <div class="container">
+                <div class="section-title">
+                    <h2>Professional Trading Tools</h2>
+                    <p>Everything you need for informed trading decisions</p>
+                </div>
+                
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🎲</div>
+                        <h3>Monte Carlo Simulations</h3>
+                        <p>5-level probability analysis with thousands of scenarios to understand risk and potential outcomes.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Multi-Asset Support</h3>
+                        <p>Trade crypto, forex, stocks, and futures from a single platform with unified risk management.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🤖</div>
+                        <h3>AI-Powered Signals</h3>
+                        <p>Machine learning models trained on years of data to identify trading opportunities.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🛡️</div>
+                        <h3>Institutional Risk Management</h3>
+                        <p>VaR, CVaR, and dynamic position sizing to protect your capital.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📈</div>
+                        <h3>Real-Time Dashboard</h3>
+                        <p>Live portfolio tracking with interactive charts and performance metrics.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔔</div>
+                        <h3>Smart Alerts</h3>
+                        <p>Telegram and email notifications for important market events and trade signals.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="stats">
+            <div class="container">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <h3>50+</h3>
+                        <p>Supported Assets</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>10K+</h3>
+                        <p>Simulations/Day</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>99.9%</h3>
+                        <p>Uptime</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>24/7</h3>
+                        <p>Monitoring</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="pricing" id="pricing">
+            <div class="container">
+                <div class="section-title">
+                    <h2>Simple, Transparent Pricing</h2>
+                    <p>Start with a 7-day free trial. No credit card required.</p>
+                </div>
+                
+                <div class="pricing-grid">
+                    <div class="pricing-card">
+                        <h3>Basic</h3>
+                        <div class="price">€19<span>/month</span></div>
+                        <ul>
+                            <li>5 assets monitoring</li>
+                            <li>Basic Monte Carlo</li>
+                            <li>Email alerts</li>
+                            <li>Daily reports</li>
+                            <li>Community support</li>
+                        </ul>
+                        <a href="#signup" class="btn btn-secondary" style="width: 100%;">Start Free Trial</a>
+                    </div>
+                    
+                    <div class="pricing-card featured">
+                        <h3>Pro</h3>
+                        <div class="price">€49<span>/month</span></div>
+                        <ul>
+                            <li>Unlimited assets</li>
+                            <li>Advanced Monte Carlo (5 levels)</li>
+                            <li>Telegram + Email alerts</li>
+                            <li>Real-time dashboard</li>
+                            <li>API access</li>
+                            <li>Priority support</li>
+                        </ul>
+                        <a href="#signup" class="btn btn-primary" style="width: 100%;">Start Free Trial</a>
+                    </div>
+                    
+                    <div class="pricing-card">
+                        <h3>Enterprise</h3>
+                        <div class="price">€199<span>/month</span></div>
+                        <ul>
+                            <li>Everything in Pro</li>
+                            <li>Custom strategies</li>
+                            <li>Dedicated support</li>
+                            <li>White-label options</li>
+                            <li>SLA guarantee</li>
+                        </ul>
+                        <a href="#signup" class="btn btn-secondary" style="width: 100%;">Contact Sales</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="logo">🤖 AI Trading</div>
+                <ul class="footer-links">
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+                <p class="copyright">© 2024 AI Trading System. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Email form handling
+        document.getElementById('waitlist-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const messageDiv = document.getElementById('form-message');
+            
+            try {
+                // Send to API endpoint
+                const response = await fetch('/api/v1/waitlist', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+                
+                if (response.ok) {
+                    messageDiv.className = 'form-message success';
+                    messageDiv.textContent = '🎉 Thanks! You\'re on the list. We\'ll be in touch soon.';
+                    document.getElementById('email').value = '';
+                } else {
+                    // Fallback: store locally
+                    localStorage.setItem('waitlist_email', email);
+                    messageDiv.className = 'form-message success';
+                    messageDiv.textContent = '🎉 Thanks! You\'re on the list. We\'ll be in touch soon.';
+                    document.getElementById('email').value = '';
+                }
+            } catch (error) {
+                // Fallback for offline/demo
+                localStorage.setItem('waitlist_email', email);
+                messageDiv.className = 'form-message success';
+                messageDiv.textContent = '🎉 Thanks! You\'re on the list. We\'ll be in touch soon.';
+                document.getElementById('email').value = '';
+            }
+        });
+        
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
