@@ -96,4 +96,4 @@ print()
 total_working = len(configured) + len(free_apis)
 total_apis = 18
 print(f'TOTALE: {total_working}/{total_apis} API connesse')
-ua
+
