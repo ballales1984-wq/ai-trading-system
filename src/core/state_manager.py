@@ -364,6 +364,20 @@ class StateManager:
             
             conn.commit()
             
+            # Event log table - for system events
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS event_log (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    event_type TEXT NOT NULL,
+                    data TEXT,
+                    timestamp TEXT NOT NULL
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_event_log_type ON event_log(event_type)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_event_log_timestamp ON event_log(timestamp)")
+            
+            conn.commit()
+            
 # Event
     
     # Portfolio methods

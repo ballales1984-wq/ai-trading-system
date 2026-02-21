@@ -93,7 +93,7 @@ class RiskAgent(BaseAgent):
         self.lookback_days = config.get("lookback_days", 30)
         
         # Risk metrics cache
-        self._metrics: Dict[str, RiskMetrics] = {}
+        self._risk_metrics: Dict[str, RiskMetrics] = {}
         
         # Position tracking
         self._positions: Dict[str, Dict] = {}
@@ -137,7 +137,7 @@ class RiskAgent(BaseAgent):
                     
                     if metrics:
                         # Store metrics
-                        self._metrics[symbol] = metrics
+                        self._risk_metrics[symbol] = metrics
                         
                         # Update shared state
                         self._update_state(metrics)
@@ -163,7 +163,7 @@ class RiskAgent(BaseAgent):
                 break
             except Exception as e:
                 logger.error(f"Error in risk calculation loop: {e}")
-                self._metrics.errors += 1
+                self._error_count += 1
                 await asyncio.sleep(self._error_backoff)
     
     def _get_price_history(self, symbol: str) -> np.ndarray:
@@ -455,11 +455,11 @@ class RiskAgent(BaseAgent):
     
     def get_risk_metrics(self, symbol: str) -> Optional[RiskMetrics]:
         """Get latest risk metrics for a symbol."""
-        return self._metrics.get(symbol)
+        return self._risk_metrics.get(symbol)
     
     def get_all_metrics(self) -> Dict[str, RiskMetrics]:
         """Get all risk metrics."""
-        return self._metrics.copy()
+        return self._risk_metrics.copy()
     
     def get_alerts(self, limit: int = 100) -> List[Dict]:
         """Get recent alerts."""
@@ -482,7 +482,7 @@ class RiskAgent(BaseAgent):
         Returns:
             Recommended position size in base currency
         """
-        metrics = self._metrics.get(symbol)
+        metrics = self._risk_metrics.get(symbol)
         
         if not metrics:
             return portfolio_value * 0.01  # Default 1%
@@ -514,7 +514,7 @@ class RiskAgent(BaseAgent):
         metrics = super().get_metrics()
         metrics.update({
             "symbols_monitored": len(self.symbols),
-            "risk_metrics_cached": len(self._metrics),
+            "risk_metrics_cached": len(self._risk_metrics),
             "total_alerts": len(self._alerts),
             "var_confidence": self.var_confidence,
         })

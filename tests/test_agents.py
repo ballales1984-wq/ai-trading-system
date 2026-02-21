@@ -488,8 +488,8 @@ class TestAgentIntegration:
         await risk_agent.stop()
         
         # Verify agents ran
-        assert market_agent.metrics["events_processed"] >= 0
-        assert mc_agent.metrics["events_processed"] >= 0
+        assert market_agent.metrics.events_processed >= 0
+        assert mc_agent.metrics.events_processed >= 0
 
 
 if __name__ == "__main__":
