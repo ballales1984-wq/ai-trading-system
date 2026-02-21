@@ -1,5 +1,1 @@
-{
-  "tests/test_production_features.py::TestHardenedRiskEngine::test_order_risk_check_approved": true,
-  "tests/test_production_features.py::TestHardenedRiskEngine::test_order_risk_check_rejected_position_size": true,
-  "tests/test_production_features.py": true
-}
+{}

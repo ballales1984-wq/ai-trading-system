@@ -147,7 +147,7 @@ class MLSignalModel:
         
         # Fill NaN and replace infinities
         features = features.replace([np.inf, -np.inf], np.nan)
-        features = features.fillna(method='ffill').fillna(0)
+        features = features.ffill().fillna(0)
         
         self.feature_names = features.columns.tolist()
         

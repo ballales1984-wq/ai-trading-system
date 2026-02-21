@@ -38,9 +38,9 @@ from config import CRYPTO_SYMBOLS, SIMULATED_PRICES
 # Try to import ML modules
 try:
     sys.path.insert(0, 'src')
-    from models.ensemble import EnsembleSignalModel
     from ml_model import MLSignalModel
     from ml_model_xgb import XGBSignalModel
+    from models.ensemble import EnsembleSignalModel
     ML_AVAILABLE = True
 except ImportError:
     ML_AVAILABLE = False

@@ -394,6 +394,105 @@ class TechnicalAnalyzer:
         volatility = returns.rolling(window=period).std() * np.sqrt(365)  # Annualized
         
         return volatility.iloc[-1] if not np.isnan(volatility.iloc[-1]) else 0.0
+
+    def calculate_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculate all technical indicators and add them as columns to the DataFrame.
+        This method is used for ML model training.
+        
+        Args:
+            df: DataFrame with OHLCV data (must have: open, high, low, close, volume)
+            
+        Returns:
+            DataFrame with added indicator columns
+        """
+        if df is None or df.empty:
+            return df
+        
+        # Ensure we have required columns
+        required_cols = ['open', 'high', 'low', 'close', 'volume']
+        if not all(col in df.columns for col in required_cols):
+            logger.warning(f"Missing required columns for calculate_indicators. Got: {df.columns.tolist()}")
+            return df
+        
+        result_df = df.copy()
+        
+        try:
+            # EMA indicators
+            result_df['ema_short'] = df['close'].ewm(span=self.settings['ema_short'], adjust=False).mean()
+            result_df['ema_medium'] = df['close'].ewm(span=self.settings['ema_medium'], adjust=False).mean()
+            result_df['ema_long'] = df['close'].ewm(span=self.settings['ema_long'], adjust=False).mean()
+            
+            # RSI
+            delta = df['close'].diff()
+            gains = delta.where(delta > 0, 0)
+            losses = (-delta).where(delta < 0, 0)
+            avg_gain = gains.rolling(window=self.settings['rsi_period']).mean()
+            avg_loss = losses.rolling(window=self.settings['rsi_period']).mean()
+            rs = avg_gain / avg_loss.replace(0, np.nan)
+            result_df['rsi'] = 100 - (100 / (1 + rs))
+            
+            # MACD
+            fast = self.settings['macd_fast']
+            slow = self.settings['macd_slow']
+            signal_period = self.settings['macd_signal']
+            ema_fast = df['close'].ewm(span=fast, adjust=False).mean()
+            ema_slow = df['close'].ewm(span=slow, adjust=False).mean()
+            macd_line = ema_fast - ema_slow
+            signal_line = macd_line.ewm(span=signal_period, adjust=False).mean()
+            result_df['macd'] = macd_line
+            result_df['macd_signal'] = signal_line
+            result_df['macd_histogram'] = macd_line - signal_line
+            
+            # Bollinger Bands
+            period_bb = self.settings['bb_period']
+            std_dev = self.settings['bb_std']
+            middle = df['close'].rolling(window=period_bb).mean()
+            std = df['close'].rolling(window=period_bb).std()
+            result_df['bb_upper'] = middle + (std * std_dev)
+            result_df['bb_middle'] = middle
+            result_df['bb_lower'] = middle - (std * std_dev)
+            
+            # Calculate BB position
+            current_upper = result_df['bb_upper']
+            current_lower = result_df['bb_lower']
+            result_df['bb_position'] = (df['close'] - current_lower) / (current_upper - current_lower).replace(0, np.nan)
+            
+            # ATR
+            high = df['high']
+            low = df['low']
+            close = df['close']
+            tr1 = high - low
+            tr2 = abs(high - close.shift(1))
+            tr3 = abs(low - close.shift(1))
+            tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+            result_df['atr'] = tr.rolling(window=self.settings['atr_period']).mean()
+            
+            # Stochastic
+            period_stoch = self.settings['stoch_period']
+            smooth = self.settings['stoch_smooth']
+            low_min = df['low'].rolling(window=period_stoch).min()
+            high_max = df['high'].rolling(window=period_stoch).max()
+            stoch_k = 100 * (df['close'] - low_min) / (high_max - low_min).replace(0, np.nan)
+            result_df['stoch_k'] = stoch_k
+            result_df['stoch_d'] = stoch_k.rolling(window=smooth).mean()
+            
+            # Additional indicators for ML
+            result_df['returns'] = df['close'].pct_change()
+            result_df['log_returns'] = np.log(df['close'] / df['close'].shift(1))
+            result_df['high_low_ratio'] = df['high'] / df['low']
+            result_df['close_open_ratio'] = df['close'] / df['open']
+            result_df['volume_price_ratio'] = df['volume'] / df['close']
+            
+            # Fill NaN values
+            result_df = result_df.fillna(0)
+            
+            logger.debug(f"Calculated indicators for {len(result_df)} rows")
+            
+        except Exception as e:
+            logger.error(f"Error calculating indicators: {e}")
+        
+        return result_df
     
     def calculate_momentum(self, df: pd.DataFrame, period: int = 10) -> float:
         """

@@ -791,7 +791,7 @@ class MLModelPipeline:
         
         # Clean up
         features = features.replace([np.inf, -np.inf], np.nan)
-        features = features.fillna(method='ffill').fillna(0)
+        features = features.ffill().fillna(0)
         
         return features
     
