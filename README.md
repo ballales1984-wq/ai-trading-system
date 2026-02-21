@@ -94,6 +94,8 @@ External APIs (18+)  →  API Registry  →  Central Database
 | **CI/CD Pipeline** | GitHub Actions with code quality, security scans, Docker build, K8s deploy | ✅ |
 | **Docker Production** | Multi-stage builds, Nginx reverse proxy, Prometheus metrics | ✅ |
 | **Broker Connectors** | Binance, Bybit, Interactive Brokers, Paper trading | ✅ |
+| **Real Trading Ready** | SIMULATION_MODE=false by default for live trading | ✅ |
+| **HMM Regime Detection** | Hidden Markov Models for market regime identification (hmmlearn installed) | ✅ |
 
 ### New Features
 - **HMM Regime Detection** — Hidden Markov Models for market regime identification
@@ -106,9 +108,11 @@ External APIs (18+)  →  API Registry  →  Central Database
 - **Multi-Agent System** — Market makers, arbitrageurs, retail agents simulation
 - **AutoML Engine** — Evolutionary strategy optimization
 - **HFT Simulator** — Tick-by-tick simulation with order book
+- **Real Trading Mode** — System configured for live trading by default
 
 ### Bug Fixes (Feb 2026)
 - **Fixed Dashboard News Feed** — News was stuck showing static content. Now fetches live news from CoinGecko API with proper `?page=1` parameter and includes dynamic time-based fallback when API is unavailable.
+- **Fixed Simulation Mode** — Changed SIMULATION_MODE default to `false` for production use
 
 ### New Dependencies
 | Category | Libraries |
