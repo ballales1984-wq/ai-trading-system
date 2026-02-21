@@ -1,746 +1,902 @@
 """
-Predictive Multi-Source Engine
-=============================
-Modular predictive engine with real API integrations for:
-- Weather (Open-Meteo)
-- Crypto (CoinGecko)
-- Energy (EIA)
-- Commodities (Nasdaq/Quandl)
-- Traffic (TomTom)
-- Events (Eventbrite)
-- Crime Data (FBI Crime Data API)
+Modular Predictive Multi-Source Engine
+======================================
+
+A comprehensive modular engine for generating composite signals from multiple
+data sources including weather, crypto, energy, traffic, events, and crime data.
+
+Architecture:
+- Temporal Modules: Day/Night, Week, Season, Year, Weather
+- API Modules: Open-Meteo, CoinGecko, EIA, Traffic APIs
+- Composite Engine: Weighted signal aggregation
+- Timeline Generation: Daily signals for 50 world cities
 
 Author: AI Trading System
+Version: 1.0.0
 """
 
-import requests
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass, field
-from enum import Enum
 import logging
+import requests
+from abc import ABC, abstractmethod
+import json
 import time
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
+# =============================================================================
+# DATA CLASSES
+# =============================================================================
 
 @dataclass
 class City:
-    """City configuration."""
+    """Represents a city with geographic and economic data."""
     name: str
+    country: str
     lat: float
     lon: float
-    population_m: float
-    country: str = ""
-    
-    def __hash__(self):
-        return hash(self.name)
+    population_m: float  # millions
+    gdp_billion_usd: float
+    economic_importance: float  # 0-1 normalized
+    electricity_consumption_per_capita_kwh: float = 5000.0
+    cash_circulating_billion_usd: float = 0.0
+    electronic_money_billion_usd: float = 0.0
+    tax_evasion_factor: float = 0.1
+    criminal_low_income_factor: float = 0.02
+    criminal_high_income_factor: float = 0.01
 
 
 @dataclass
-class SignalWeights:
-    """Signal weight configuration."""
-    time: float = 0.3
-    weather: float = 0.2
-    economic: float = 0.2
-    social: float = 0.1
-    crime: float = 0.1
-    crypto: float = 0.1
+class SignalResult:
+    """Result of a signal calculation."""
+    timestamp: datetime
+    city: str
+    composite_signal: float
+    time_signal: float = 0.0
+    weather_signal: float = 0.0
+    economic_signal: float = 0.0
+    social_signal: float = 0.0
+    crime_signal: float = 0.0
+    crypto_signal: float = 0.0
+    raw_data: Dict[str, Any] = field(default_factory=dict)
 
 
-# Default cities
-DEFAULT_CITIES = [
-    City("New York", 40.7128, -74.0060, 8.5, "USA"),
-    City("London", 51.5074, -0.1278, 9.0, "UK"),
-    City("Tokyo", 35.6895, 139.6917, 14.0, "Japan"),
-    City("Paris", 48.8566, 2.3522, 2.2, "France"),
-    City("Shanghai", 31.2304, 121.4737, 24.0, "China"),
-    City("Los Angeles", 34.0522, -118.2437, 4.0, "USA"),
-    City("Berlin", 52.5200, 13.4050, 3.6, "Germany"),
-    City("Sydney", -33.8688, 151.2093, 5.3, "Australia"),
+# =============================================================================
+# TOP 50 WORLD CITIES DATA
+# =============================================================================
+
+TOP_50_CITIES = [
+    # North America
+    City("New York", "USA", 40.7128, -74.0060, 8.5, 1700, 0.95, 4800, 2000, 5000, 0.08, 0.015, 0.01),
+    City("Los Angeles", "USA", 34.0522, -118.2437, 4.0, 1000, 0.85, 4500, 800, 2000, 0.07, 0.02, 0.012),
+    City("Chicago", "USA", 41.8781, -87.6298, 2.7, 700, 0.80, 5200, 500, 1200, 0.07, 0.025, 0.015),
+    City("Houston", "USA", 29.7604, -95.3698, 2.3, 550, 0.75, 6000, 400, 1000, 0.06, 0.018, 0.01),
+    City("Miami", "USA", 25.7617, -80.1918, 2.1, 400, 0.70, 5500, 350, 900, 0.09, 0.022, 0.014),
+    City("Toronto", "Canada", 43.6532, -79.3832, 6.0, 380, 0.78, 4600, 300, 800, 0.06, 0.012, 0.008),
+    City("Mexico City", "Mexico", 19.4326, -99.1332, 21.0, 250, 0.65, 2200, 150, 400, 0.25, 0.05, 0.03),
+    
+    # South America
+    City("São Paulo", "Brazil", -23.5505, -46.6333, 12.3, 350, 0.70, 2800, 120, 350, 0.28, 0.06, 0.035),
+    City("Buenos Aires", "Argentina", -34.6037, -58.3816, 15.0, 180, 0.60, 3200, 80, 250, 0.30, 0.055, 0.032),
+    City("Rio de Janeiro", "Brazil", -22.9068, -43.1729, 6.7, 150, 0.55, 2600, 70, 200, 0.30, 0.07, 0.04),
+    
+    # Europe
+    City("London", "UK", 51.5074, -0.1278, 9.0, 1100, 0.92, 4200, 1800, 4500, 0.05, 0.012, 0.008),
+    City("Paris", "France", 48.8566, 2.3522, 2.2, 850, 0.90, 4100, 600, 1500, 0.06, 0.01, 0.007),
+    City("Berlin", "Germany", 52.5200, 13.4050, 3.6, 450, 0.82, 4400, 400, 1000, 0.05, 0.008, 0.006),
+    City("Madrid", "Spain", 40.4168, -3.7038, 3.2, 300, 0.75, 3800, 250, 700, 0.12, 0.018, 0.012),
+    City("Rome", "Italy", 41.9028, 12.4964, 2.8, 200, 0.72, 3600, 200, 550, 0.18, 0.025, 0.018),
+    City("Milan", "Italy", 45.4642, 9.1900, 3.2, 350, 0.78, 4000, 280, 750, 0.16, 0.02, 0.015),
+    City("Amsterdam", "Netherlands", 52.3676, 4.9041, 1.1, 250, 0.80, 4500, 180, 500, 0.04, 0.008, 0.006),
+    City("Frankfurt", "Germany", 50.1109, 8.6821, 1.8, 400, 0.85, 4800, 350, 900, 0.04, 0.007, 0.005),
+    City("Moscow", "Russia", 55.7558, 37.6173, 12.5, 300, 0.70, 3800, 150, 400, 0.20, 0.06, 0.04),
+    
+    # Asia
+    City("Tokyo", "Japan", 35.6762, 139.6503, 14.0, 1800, 0.95, 5200, 2500, 6000, 0.03, 0.005, 0.004),
+    City("Osaka", "Japan", 34.6937, 135.5023, 8.8, 600, 0.80, 4800, 800, 2000, 0.03, 0.006, 0.005),
+    City("Shanghai", "China", 31.2304, 121.4737, 24.0, 1200, 0.88, 4200, 500, 1500, 0.15, 0.03, 0.02),
+    City("Beijing", "China", 39.9042, 116.4074, 21.5, 900, 0.85, 4000, 400, 1200, 0.15, 0.028, 0.018),
+    City("Shenzhen", "China", 22.5431, 114.0579, 12.5, 550, 0.80, 4500, 300, 1000, 0.12, 0.025, 0.016),
+    City("Hong Kong", "China", 22.3193, 114.1694, 7.5, 450, 0.90, 5500, 600, 1800, 0.05, 0.012, 0.008),
+    City("Singapore", "Singapore", 1.3521, 103.8198, 5.7, 400, 0.88, 5800, 500, 1500, 0.03, 0.008, 0.005),
+    City("Seoul", "South Korea", 37.5665, 126.9780, 9.7, 600, 0.82, 5000, 400, 1200, 0.06, 0.015, 0.01),
+    City("Mumbai", "India", 19.0760, 72.8777, 20.7, 200, 0.65, 1200, 80, 250, 0.30, 0.08, 0.05),
+    City("Delhi", "India", 28.7041, 77.1025, 16.8, 180, 0.62, 1100, 70, 200, 0.32, 0.085, 0.055),
+    City("Bangalore", "India", 12.9716, 77.5946, 8.4, 120, 0.58, 1400, 50, 150, 0.25, 0.06, 0.04),
+    City("Bangkok", "Thailand", 13.7563, 100.5018, 10.7, 150, 0.60, 2800, 100, 350, 0.18, 0.04, 0.028),
+    City("Jakarta", "Indonesia", -6.2088, 106.8456, 10.5, 180, 0.58, 1500, 80, 250, 0.25, 0.055, 0.035),
+    City("Manila", "Philippines", 14.5995, 120.9842, 13.9, 120, 0.52, 1200, 60, 180, 0.28, 0.06, 0.04),
+    City("Kuala Lumpur", "Malaysia", 3.1390, 101.6869, 7.6, 150, 0.62, 3500, 120, 400, 0.15, 0.03, 0.02),
+    City("Taipei", "Taiwan", 25.0330, 121.5654, 7.0, 200, 0.72, 4800, 180, 550, 0.06, 0.015, 0.01),
+    
+    # Middle East
+    City("Dubai", "UAE", 25.2048, 55.2708, 3.4, 300, 0.80, 7500, 200, 800, 0.02, 0.01, 0.008),
+    City("Tel Aviv", "Israel", 32.0853, 34.7818, 2.5, 150, 0.72, 4200, 100, 350, 0.05, 0.012, 0.008),
+    City("Istanbul", "Turkey", 41.0082, 28.9784, 15.5, 200, 0.65, 2800, 120, 400, 0.18, 0.04, 0.028),
+    
+    # Africa
+    City("Cairo", "Egypt", 30.0444, 31.2357, 20.5, 100, 0.50, 1500, 40, 150, 0.35, 0.07, 0.045),
+    City("Johannesburg", "South Africa", -26.2041, 28.0473, 5.8, 120, 0.55, 3200, 50, 200, 0.25, 0.06, 0.04),
+    City("Lagos", "Nigeria", 6.5244, 3.3792, 15.4, 80, 0.45, 800, 30, 100, 0.40, 0.09, 0.06),
+    
+    # Oceania
+    City("Sydney", "Australia", -33.8688, 151.2093, 5.3, 400, 0.82, 5800, 350, 1100, 0.04, 0.01, 0.007),
+    City("Melbourne", "Australia", -37.8136, 144.9631, 5.0, 350, 0.78, 5500, 300, 950, 0.04, 0.01, 0.007),
+    
+    # Additional major cities
+    City("San Francisco", "USA", 37.7749, -122.4194, 0.9, 600, 0.88, 4500, 500, 1500, 0.06, 0.015, 0.01),
+    City("Seattle", "USA", 47.6062, -122.3321, 0.8, 400, 0.80, 4800, 300, 900, 0.05, 0.014, 0.009),
+    City("Boston", "USA", 42.3601, -71.0589, 0.7, 380, 0.82, 4600, 280, 850, 0.05, 0.012, 0.008),
+    City("Philadelphia", "USA", 39.9526, -75.1652, 1.6, 320, 0.72, 4400, 250, 750, 0.06, 0.018, 0.012),
+    City("Atlanta", "USA", 33.7490, -84.3880, 2.2, 350, 0.70, 5200, 200, 650, 0.07, 0.02, 0.014),
 ]
 
 
-# ============================================================================
-# API MODULES
-# ============================================================================
+# =============================================================================
+# TEMPORAL MODULES
+# =============================================================================
 
-class WeatherAPI:
-    """Open-Meteo Weather API."""
+class TemporalModule(ABC):
+    """Abstract base class for temporal modules."""
+    
+    @abstractmethod
+    def calculate(self, dt: datetime) -> float:
+        """Calculate the temporal factor for a given datetime."""
+        pass
+
+
+class DayNightModule(TemporalModule):
+    """
+    Day/Night factor module.
+    
+    Determines activity levels based on time of day:
+    - Day (6-18): Normal activity (1.0)
+    - Evening (18-22): Peak activity (1.2)
+    - Night (22-6): Low activity (0.8)
+    """
+    
+    def calculate(self, dt: datetime) -> float:
+        hour = dt.hour
+        if 6 <= hour < 18:
+            return 1.0  # Day - normal
+        elif 18 <= hour < 22:
+            return 1.2  # Evening - peak
+        else:
+            return 0.8  # Night - low
+
+
+class WeekModule(TemporalModule):
+    """
+    Week day factor module.
+    
+    Weekend days have higher activity:
+    - Monday: 0.95
+    - Tuesday: 0.90
+    - Wednesday: 0.90
+    - Thursday: 0.95
+    - Friday: 1.10
+    - Saturday: 1.40
+    - Sunday: 1.30
+    """
+    
+    WEEKDAY_FACTORS = {
+        "Monday": 0.95,
+        "Tuesday": 0.90,
+        "Wednesday": 0.90,
+        "Thursday": 0.95,
+        "Friday": 1.10,
+        "Saturday": 1.40,
+        "Sunday": 1.30
+    }
+    
+    def calculate(self, dt: datetime) -> float:
+        day_name = dt.strftime("%A")
+        return self.WEEKDAY_FACTORS.get(day_name, 1.0)
+
+
+class SeasonModule(TemporalModule):
+    """
+    Season factor module.
+    
+    Affects consumption patterns:
+    - Winter (Dec-Feb): 0.9 (lower retail, higher energy)
+    - Spring (Mar-May): 1.1 (increased activity)
+    - Summer (Jun-Aug): 1.2 (peak activity)
+    - Autumn (Sep-Nov): 1.0 (normal)
+    """
+    
+    def calculate(self, dt: datetime) -> float:
+        month = dt.month
+        if month in [12, 1, 2]:
+            return 0.9  # Winter
+        elif month in [3, 4, 5]:
+            return 1.1  # Spring
+        elif month in [6, 7, 8]:
+            return 1.2  # Summer
+        else:
+            return 1.0  # Autumn
+
+
+class YearModule(TemporalModule):
+    """
+    Year factor module for special events and holidays.
+    
+    Major holidays have significant impact on consumption.
+    """
+    
+    SPECIAL_EVENTS = {
+        # Format: "MM-DD": factor
+        "01-01": 1.3,   # New Year
+        "02-14": 1.2,   # Valentine's Day
+        "03-08": 1.1,   # International Women's Day
+        "04-01": 1.05,  # April Fools
+        "05-01": 1.1,   # Labor Day
+        "06-21": 1.1,   # Summer Solstice
+        "10-31": 1.25,  # Halloween
+        "11-11": 1.3,   # Singles Day (big in Asia)
+        "11-26": 1.4,   # Thanksgiving (US)
+        "12-24": 1.5,   # Christmas Eve
+        "12-25": 1.6,   # Christmas
+        "12-31": 1.4,   # New Year's Eve
+    }
+    
+    def calculate(self, dt: datetime) -> float:
+        key = dt.strftime("%m-%d")
+        return self.SPECIAL_EVENTS.get(key, 1.0)
+
+
+class WeatherModule:
+    """
+    Weather factor module.
+    
+    Calculates impact based on temperature, rain, and wind.
+    """
+    
+    def calculate(self, temp: float, rain: bool, wind: bool) -> float:
+        """
+        Calculate weather factor.
+        
+        Args:
+            temp: Temperature in Celsius
+            rain: Whether it's raining
+            wind: Whether it's windy (>20 m/s)
+        
+        Returns:
+            Weather factor (0.5 - 1.3)
+        """
+        factor = 1.0
+        
+        # Temperature impact
+        if temp < 5:
+            factor *= 0.9  # Cold - less outdoor activity
+        elif temp > 35:
+            factor *= 0.85  # Extreme heat
+        elif temp > 25:
+            factor *= 1.15  # Warm - more activity
+        elif 15 <= temp <= 25:
+            factor *= 1.1  # Pleasant weather
+        
+        # Rain impact
+        if rain:
+            factor *= 0.85  # Rain reduces physical activity
+        
+        # Wind impact
+        if wind:
+            factor *= 0.9  # Wind reduces activity
+        
+        return factor
+
+
+# =============================================================================
+# API MODULES
+# =============================================================================
+
+class APIModule(ABC):
+    """Abstract base class for API modules."""
+    
+    @abstractmethod
+    def fetch(self, city: City, dt: datetime) -> Dict[str, Any]:
+        """Fetch data from API."""
+        pass
+    
+    @abstractmethod
+    def normalize(self, data: Dict[str, Any]) -> float:
+        """Normalize API data to 0-1 scale."""
+        pass
+
+
+class OpenMeteoModule(APIModule):
+    """
+    Open-Meteo API module for weather data.
+    
+    Free API, no key required.
+    """
     
     BASE_URL = "https://api.open-meteo.com/v1/forecast"
     
-    @classmethod
-    def get_weather(cls, lat: float, lon: float) -> Dict[str, Any]:
-        """Get current weather data."""
+    def fetch(self, city: City, dt: datetime) -> Dict[str, Any]:
+        """Fetch weather data from Open-Meteo."""
         try:
-            params = {
-                "latitude": lat,
-                "longitude": lon,
-                "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max",
-                "timezone": "auto",
-                "forecast_days": 1
-            }
-            response = requests.get(cls.BASE_URL, params=params, timeout=10)
+            url = f"{self.BASE_URL}?latitude={city.lat}&longitude={city.lon}&daily=temperature_2m_max,precipitation_sum,windspeed_10m_max&timezone=auto"
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
             data = response.json()
             
-            daily = data.get("daily", {})
+            daily = data.get('daily', {})
             return {
-                "temp_max": daily.get("temperature_2m_max", [20])[0],
-                "temp_min": daily.get("temperature_2m_min", [15])[0],
-                "temp_avg": (daily.get("temperature_2m_max", [20])[0] + 
-                           daily.get("temperature_2m_min", [15])[0]) / 2,
-                "precipitation": daily.get("precipitation_sum", [0])[0],
-                "wind_speed": daily.get("windspeed_10m_max", [10])[0],
-                "is_rainy": daily.get("precipitation_sum", [0])[0] > 0,
-                "is_windy": daily.get("windspeed_10m_max", [10])[0] > 20,
+                "temp": daily.get('temperature_2m_max', [20])[0],
+                "precipitation": daily.get('precipitation_sum', [0])[0],
+                "windspeed": daily.get('windspeed_10m_max', [0])[0],
+                "success": True
             }
         except Exception as e:
-            logger.warning(f"Weather API error: {e}")
-            return cls._fallback()
+            logger.warning(f"Open-Meteo API error for {city.name}: {e}")
+            return {"temp": 20, "precipitation": 0, "windspeed": 5, "success": False}
     
-    @staticmethod
-    def _fallback() -> Dict[str, Any]:
-        """Fallback data."""
-        return {
-            "temp_max": 20, "temp_min": 15, "temp_avg": 17.5,
-            "precipitation": 0, "wind_speed": 10, "is_rainy": False, "is_windy": False
-        }
+    def normalize(self, data: Dict[str, Any]) -> float:
+        """Normalize weather data to 0-1 scale."""
+        temp = data.get("temp", 20)
+        precip = data.get("precipitation", 0)
+        wind = data.get("windspeed", 5)
+        
+        # Temperature normalization (-30 to 50 range)
+        temp_norm = np.clip((temp + 30) / 80, 0, 1)
+        
+        # Precipitation normalization (0 to 50mm)
+        precip_norm = np.clip(precip / 50, 0, 1)
+        
+        # Wind normalization (0 to 30 m/s)
+        wind_norm = np.clip(wind / 30, 0, 1)
+        
+        # Weighted average
+        return 0.5 * temp_norm + 0.3 * precip_norm + 0.2 * wind_norm
 
 
-class CryptoAPI:
-    """CoinGecko Crypto API."""
+class CoinGeckoModule(APIModule):
+    """
+    CoinGecko API module for crypto data.
+    
+    Free API with rate limits.
+    """
     
     BASE_URL = "https://api.coingecko.com/api/v3"
     
-    # Top coins by market cap
-    TOP_COINS = ["bitcoin", "ethereum", "binancecoin", "solana", "cardano"]
+    def __init__(self):
+        self._cache = {}
+        self._cache_time = 0
     
-    @classmethod
-    def get_market_data(cls, coin_id: str = "bitcoin") -> Dict[str, Any]:
-        """Get crypto market data."""
+    def fetch(self, city: City, dt: datetime) -> Dict[str, Any]:
+        """Fetch crypto data from CoinGecko."""
+        # Use cache if less than 1 hour old
+        current_time = time.time()
+        if self._cache and (current_time - self._cache_time) < 3600:
+            return self._cache
+        
         try:
-            url = f"{cls.BASE_URL}/coins/{coin_id}"
-            params = {
-                "localization": "false",
-                "tickers": "false",
-                "community_data": "false",
-                "developer_data": "false"
-            }
-            response = requests.get(url, params=params, timeout=10)
+            url = f"{self.BASE_URL}/coins/bitcoin/market_chart?vs_currency=usd&days=1"
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
             data = response.json()
             
-            market_data = data.get("market_data", {})
-            return {
-                "price": market_data.get("current_price", {}).get("usd", 0),
-                "volume_24h": market_data.get("total_volume", {}).get("usd", 0),
-                "market_cap": market_data.get("market_cap", {}).get("usd", 0),
-                "price_change_24h": market_data.get("price_change_percentage_24h", 0),
-                "volume_normalized": min(1.0, market_data.get("total_volume", {}).get("usd", 0) / 1e10),
-            }
-        except Exception as e:
-            logger.warning(f"Crypto API error: {e}")
-            return cls._fallback()
-    
-    @classmethod
-    def get_all_markets(cls) -> List[Dict[str, Any]]:
-        """Get all top coins market data."""
-        try:
-            url = f"{cls.BASE_URL}/coins/markets"
-            params = {
-                "vs_currency": "usd",
-                "order": "market_cap_desc",
-                "per_page": 10,
-                "page": 1
-            }
-            response = requests.get(url, params=params, timeout=10)
-            data = response.json()
+            prices = data.get('prices', [])
+            volumes = data.get('total_volumes', [])
             
-            return [{
-                "id": coin["id"],
-                "symbol": coin["symbol"],
-                "price": coin["current_price"],
-                "volume": coin["total_volume"],
-                "market_cap": coin["market_cap"],
-                "change_24h": coin["price_change_percentage_24h"]
-            } for coin in data]
+            if prices and volumes:
+                price_change = prices[-1][1] - prices[0][1] if len(prices) > 1 else 0
+                total_volume = sum(v[1] for v in volumes)
+                
+                result = {
+                    "price_change": price_change,
+                    "total_volume": total_volume,
+                    "success": True
+                }
+                self._cache = result
+                self._cache_time = current_time
+                return result
+            
         except Exception as e:
-            logger.warning(f"Crypto markets API error: {e}")
-            return []
+            logger.warning(f"CoinGecko API error: {e}")
+        
+        return {"price_change": 0, "total_volume": 1e9, "success": False}
     
-    @staticmethod
-    def _fallback() -> Dict[str, Any]:
-        """Fallback data."""
+    def normalize(self, data: Dict[str, Any]) -> float:
+        """Normalize crypto data to 0-1 scale."""
+        price_change = data.get("price_change", 0)
+        volume = data.get("total_volume", 1e9)
+        
+        # Price change normalization (tanh for bounded output)
+        change_norm = (np.tanh(price_change / 1000) + 1) / 2
+        
+        # Volume normalization (0 to 50 billion)
+        volume_norm = np.clip(volume / 5e10, 0, 1)
+        
+        return 0.6 * change_norm + 0.4 * volume_norm
+
+
+class EnergyModule(APIModule):
+    """
+    Energy data module.
+    
+    Uses EIA API for US data, simulated for others.
+    """
+    
+    def __init__(self, eia_api_key: Optional[str] = None):
+        self.eia_api_key = eia_api_key
+    
+    def fetch(self, city: City, dt: datetime) -> Dict[str, Any]:
+        """Fetch energy data."""
+        # Simulated data for now
+        # In production, would call EIA API for US cities
+        base_consumption = city.electricity_consumption_per_capita_kwh
+        
+        # Seasonal variation
+        month = dt.month
+        if month in [12, 1, 2, 6, 7, 8]:  # Winter and Summer peaks
+            multiplier = 1.2
+        else:
+            multiplier = 1.0
+        
         return {
-            "price": 50000, "volume_24h": 1e9, "market_cap": 1e12,
-            "price_change_24h": 0, "volume_normalized": 0.5
+            "consumption": base_consumption * multiplier,
+            "price": np.random.uniform(40, 120),  # Simulated price
+            "success": True
         }
+    
+    def normalize(self, data: Dict[str, Any]) -> float:
+        """Normalize energy data to 0-1 scale."""
+        consumption = data.get("consumption", 5000)
+        price = data.get("price", 80)
+        
+        # Consumption normalization (0 to 10000 kWh)
+        consumption_norm = np.clip(consumption / 10000, 0, 1)
+        
+        # Price normalization (20 to 200)
+        price_norm = np.clip((price - 20) / 180, 0, 1)
+        
+        return 0.6 * consumption_norm + 0.4 * price_norm
 
 
-class EnergyAPI:
-    """Energy price API (EIA - U.S. Energy Information Administration)."""
+class TrafficModule(APIModule):
+    """
+    Traffic data module.
     
-    # EIA provides free data - we'll simulate realistic patterns
-    BASE_URL = "https://api.eia.gov/v2/electricity/retail-sales/data"
+    Simulated traffic index (placeholder for Google Maps/TomTom API).
+    """
     
-    @classmethod
-    def get_energy_price(cls, region: str = "US") -> Dict[str, Any]:
-        """Get energy prices (simulated based on realistic patterns)."""
-        # Real EIA API would require API key
-        # Using realistic simulation based on time/region
-        try:
-            month = datetime.now().month
-            hour = datetime.now().hour
-            
-            # Base price (cents per kWh)
-            base_price = 12.5
-            
-            # Seasonal variation
-            if month in [6, 7, 8]:  # Summer peak
-                seasonal_multiplier = 1.3
-            elif month in [12, 1, 2]:  # Winter
-                seasonal_multiplier = 1.2
-            else:
-                seasonal_multiplier = 1.0
-            
-            # Hourly variation (peak hours)
-            if 17 <= hour <= 21:  # Evening peak
-                hourly_multiplier = 1.4
-            elif 6 <= hour <= 9:  # Morning peak
-                hourly_multiplier = 1.2
-            else:
-                hourly_multiplier = 0.9
-            
-            price = base_price * seasonal_multiplier * hourly_multiplier
-            
-            return {
-                "price_cents": round(price, 2),
-                "price_usd_per_mwh": round(price * 10, 2),  # Convert to $/MWh
-                "region": region,
-                "timestamp": datetime.now().isoformat(),
-            }
-        except Exception as e:
-            logger.warning(f"Energy API error: {e}")
-            return cls._fallback()
-    
-    @staticmethod
-    def _fallback() -> Dict[str, Any]:
-        """Fallback data."""
+    def fetch(self, city: City, dt: datetime) -> Dict[str, Any]:
+        """Fetch traffic data (simulated)."""
+        # Base traffic based on population
+        base_traffic = city.population_m / 25  # Normalize by max population
+        
+        # Day of week effect
+        weekday = dt.weekday()
+        if weekday < 5:
+            day_factor = 0.8  # Weekday
+        else:
+            day_factor = 1.2  # Weekend
+        
+        # Hour effect
+        hour = dt.hour
+        if 7 <= hour <= 9 or 17 <= hour <= 19:
+            hour_factor = 1.3  # Rush hour
+        elif 22 <= hour or hour <= 5:
+            hour_factor = 0.3  # Night
+        else:
+            hour_factor = 1.0
+        
+        traffic_index = base_traffic * day_factor * hour_factor
+        
         return {
-            "price_cents": 12.5, "price_usd_per_mwh": 125,
-            "region": "US", "timestamp": datetime.now().isoformat()
+            "traffic_index": np.clip(traffic_index, 0, 1),
+            "success": True
         }
+    
+    def normalize(self, data: Dict[str, Any]) -> float:
+        """Normalize traffic data."""
+        return data.get("traffic_index", 0.5)
 
 
-class CommoditiesAPI:
-    """Commodities price API (using free sources)."""
+class EventsModule(APIModule):
+    """
+    Events data module.
     
-    # Using realistic commodity prices (would connect to real APIs in production)
+    Simulated events index based on calendar.
+    """
     
-    @classmethod
-    def get_commodity_prices(cls) -> Dict[str, Any]:
-        """Get current commodity prices."""
-        try:
-            # Simulate real commodity prices
-            return {
-                "oil_wti": round(75 + np.random.randn() * 5, 2),
-                "oil_brent": round(80 + np.random.randn() * 5, 2),
-                "natural_gas": round(2.5 + np.random.randn() * 0.3, 2),
-                "gold": round(2000 + np.random.randn() * 50, 2),
-                "silver": round(25 + np.random.randn() * 2, 2),
-                "copper": round(4.0 + np.random.randn() * 0.3, 2),
-                "wheat": round(6.0 + np.random.randn() * 0.5, 2),
-                "corn": round(5.5 + np.random.randn() * 0.4, 2),
-                "timestamp": datetime.now().isoformat(),
-            }
-        except Exception as e:
-            logger.warning(f"Commodities API error: {e}")
-            return cls._fallback()
-    
-    @staticmethod
-    def _fallback() -> Dict[str, Any]:
-        """Fallback data."""
+    def fetch(self, city: City, dt: datetime) -> Dict[str, Any]:
+        """Fetch events data (simulated)."""
+        weekday = dt.weekday()
+        
+        # Weekend has more events
+        if weekday >= 5:
+            base = 0.7
+        else:
+            base = 0.3
+        
+        # Add some randomness
+        events_index = base + np.random.uniform(-0.1, 0.1)
+        
         return {
-            "oil_wti": 75, "oil_brent": 80, "natural_gas": 2.5,
-            "gold": 2000, "silver": 25, "copper": 4.0,
-            "wheat": 6.0, "corn": 5.5, "timestamp": datetime.now().isoformat()
+            "events_index": np.clip(events_index, 0, 1),
+            "success": True
         }
+    
+    def normalize(self, data: Dict[str, Any]) -> float:
+        """Normalize events data."""
+        return data.get("events_index", 0.5)
 
 
-class TrafficAPI:
-    """Traffic data API (TomTom or HERE - simulated)."""
+class CrimeModule(APIModule):
+    """
+    Crime data module.
     
-    @classmethod
-    def get_traffic_index(cls, city: str = "New York") -> Dict[str, Any]:
-        """Get traffic index for city (simulated based on city characteristics)."""
-        try:
-            hour = datetime.now().hour
-            day = datetime.now().weekday()
-            
-            # Base traffic by city size
-            city_traffic_base = {
-                "New York": 0.85, "London": 0.80, "Tokyo": 0.90,
-                "Paris": 0.75, "Shanghai": 0.88, "Los Angeles": 0.92,
-                "Berlin": 0.70, "Sydney": 0.65
-            }
-            base = city_traffic_base.get(city, 0.75)
-            
-            # Hourly variation
-            if 7 <= hour <= 9:  # Morning rush
-                hour_factor = 1.2
-            elif 17 <= hour <= 19:  # Evening rush
-                hour_factor = 1.3
-            elif 22 <= hour <= 5:  # Night
-                hour_factor = 0.4
-            else:
-                hour_factor = 0.8
-            
-            # Day of week
-            if day < 5:  # Weekday
-                day_factor = 1.1
-            else:  # Weekend
-                day_factor = 0.7
-            
-            traffic_index = min(1.0, base * hour_factor * day_factor)
-            
-            return {
-                "traffic_index": round(traffic_index, 3),
-                "congestion_level": "high" if traffic_index > 0.7 else "medium" if traffic_index > 0.4 else "low",
-                "city": city,
-                "timestamp": datetime.now().isoformat(),
-            }
-        except Exception as e:
-            logger.warning(f"Traffic API error: {e}")
-            return cls._fallback()
+    Simulated crime index based on city factors.
+    """
     
-    @staticmethod
-    def _fallback() -> Dict[str, Any]:
-        """Fallback data."""
+    def fetch(self, city: City, dt: datetime) -> Dict[str, Any]:
+        """Fetch crime data (simulated)."""
+        # Base crime from city factors
+        low_income_crime = city.criminal_low_income_factor
+        high_income_crime = city.criminal_high_income_factor
+        
+        # Weighted average
+        crime_index = 0.6 * low_income_crime + 0.4 * high_income_crime
+        
+        # Add temporal variation
+        hour = dt.hour
+        if 22 <= hour or hour <= 5:
+            crime_index *= 1.3  # More crime at night
+        elif 6 <= hour <= 18:
+            crime_index *= 0.8  # Less crime during day
+        
         return {
-            "traffic_index": 0.5, "congestion_level": "medium",
-            "city": "Unknown", "timestamp": datetime.now().isoformat()
+            "crime_index": np.clip(crime_index, 0, 1),
+            "success": True
         }
+    
+    def normalize(self, data: Dict[str, Any]) -> float:
+        """Normalize crime data (inverse - lower crime = higher signal)."""
+        crime = data.get("crime_index", 0.5)
+        return max(0.5, 1 - crime)
 
 
-class EventsAPI:
-    """Events API (Eventbrite - simulated)."""
-    
-    @classmethod
-    def get_events_index(cls, city: str = "New York") -> Dict[str, Any]:
-        """Get events index (simulated)."""
-        try:
-            month = datetime.now().month
-            day = datetime.now().day
-            
-            # Base events by city
-            city_events_base = {
-                "New York": 0.8, "London": 0.75, "Tokyo": 0.7,
-                "Paris": 0.65, "Shanghai": 0.6, "Los Angeles": 0.7,
-                "Berlin": 0.6, "Sydney": 0.5
-            }
-            base = city_events_base.get(city, 0.6)
-            
-            # Seasonal variation
-            if month in [6, 7, 8, 12]:  # Summer/Holiday season
-                seasonal_factor = 1.3
-            elif month in [1, 2]:  # Post-holiday
-                seasonal_factor = 0.7
-            else:
-                seasonal_factor = 1.0
-            
-            # Weekend boost
-            if datetime.now().weekday() >= 5:
-                weekend_factor = 1.4
-            else:
-                weekend_factor = 0.8
-            
-            events_index = min(1.0, base * seasonal_factor * weekend_factor)
-            
-            return {
-                "events_index": round(events_index, 3),
-                "event_level": "high" if events_index > 0.7 else "medium" if events_index > 0.4 else "low",
-                "city": city,
-                "timestamp": datetime.now().isoformat(),
-            }
-        except Exception as e:
-            logger.warning(f"Events API error: {e}")
-            return cls._fallback()
-    
-    @staticmethod
-    def _fallback() -> Dict[str, Any]:
-        """Fallback data."""
-        return {
-            "events_index": 0.5, "event_level": "medium",
-            "city": "Unknown", "timestamp": datetime.now().isoformat()
-        }
-
-
-class CrimeAPI:
-    """Crime data API (FBI Crime Data - simulated)."""
-    
-    @classmethod
-    def get_crime_index(cls, city: str = "New York") -> Dict[str, Any]:
-        """Get crime index (simulated based on FBI statistics)."""
-        try:
-            # Base crime rates by city (per 100,000 population)
-            city_crime_base = {
-                "New York": 0.35, "London": 0.28, "Tokyo": 0.15,
-                "Paris": 0.40, "Shanghai": 0.20, "Los Angeles": 0.45,
-                "Berlin": 0.30, "Sydney": 0.25
-            }
-            base = city_crime_base.get(city, 0.35)
-            
-            # Time-based variation (night is higher)
-            hour = datetime.now().hour
-            if 22 <= hour or hour <= 5:  # Night
-                time_factor = 1.4
-            elif 10 <= hour <= 18:  # Daytime
-                time_factor = 0.8
-            else:
-                time_factor = 1.0
-            
-            # Weekend slightly higher
-            if datetime.now().weekday() >= 5:
-                weekend_factor = 1.1
-            else:
-                weekend_factor = 1.0
-            
-            crime_index = min(1.0, base * time_factor * weekend_factor)
-            
-            return {
-                "crime_index": round(crime_index, 3),
-                "safety_level": "low" if crime_index > 0.5 else "medium" if crime_index > 0.3 else "high",
-                "city": city,
-                "timestamp": datetime.now().isoformat(),
-            }
-        except Exception as e:
-            logger.warning(f"Crime API error: {e}")
-            return cls._fallback()
-    
-    @staticmethod
-    def _fallback() -> Dict[str, Any]:
-        """Fallback data."""
-        return {
-            "crime_index": 0.35, "safety_level": "medium",
-            "city": "Unknown", "timestamp": datetime.now().isoformat()
-        }
-
-
-# ============================================================================
-# SIGNAL PROCESSING MODULES
-# ============================================================================
-
-class SignalProcessor:
-    """Signal processing and normalization."""
-    
-    # Time-based factors
-    @staticmethod
-    def day_night_factor(hour: int) -> float:
-        """Calculate day/night factor."""
-        if 6 <= hour < 18:
-            return 1.0
-        elif 18 <= hour < 22:
-            return 1.2
-        else:  # Night
-            return 0.8
-    
-    @staticmethod
-    def week_factor(day_name: str) -> float:
-        """Calculate weekday factor."""
-        factors = {
-            "Monday": 0.95, "Tuesday": 0.90, "Wednesday": 0.90,
-            "Thursday": 0.95, "Friday": 1.10, "Saturday": 1.40, "Sunday": 1.30
-        }
-        return factors.get(day_name, 1.0)
-    
-    @staticmethod
-    def season_factor(month: int) -> float:
-        """Calculate seasonal factor."""
-        if month in [12, 1, 2]:  # Winter
-            return 0.9
-        elif month in [3, 4, 5]:  # Spring
-            return 1.1
-        elif month in [6, 7, 8]:  # Summer
-            return 1.2
-        else:  # Fall
-            return 1.0
-    
-    @staticmethod
-    def year_factor(date: datetime) -> float:
-        """Calculate special events factor."""
-        date_str = date.strftime("%Y-%m-%d")
-        special_events = {
-            "2026-12-25": 1.5, "2026-12-31": 1.4, "2026-01-01": 1.3,
-            "2026-07-04": 1.3, "2026-11-28": 1.3,  # US holidays
-        }
-        return special_events.get(date_str, 1.0)
-    
-    # Weather factors
-    @staticmethod
-    def weather_factor(temp: float, is_rainy: bool, is_windy: bool) -> float:
-        """Calculate weather impact factor."""
-        factor = 1.0
-        
-        if temp < 5:
-            factor *= 0.9
-        elif temp > 25:
-            factor *= 1.2
-        
-        if is_rainy:
-            factor *= 0.85
-        
-        if is_windy:
-            factor *= 0.9
-        
-        return factor
-    
-    # Economic factors
-    @staticmethod
-    def economic_factor(energy_price: float, commodities: Dict[str, float], income_avg: float) -> float:
-        """Calculate economic impact factor."""
-        factor = 1.0
-        
-        # Energy price impact
-        factor *= max(0.5, min(1.5, 1 - 0.001 * (energy_price - 50)))
-        
-        # Commodities impact (oil price)
-        if "oil_wti" in commodities:
-            oil_factor = max(0.5, min(1.5, 1 - 0.0005 * (commodities["oil_wti"] - 75)))
-            factor *= oil_factor
-        
-        # Income impact
-        factor *= max(0.5, min(1.5, income_avg / 50000))
-        
-        return factor
-    
-    # Social factors
-    @staticmethod
-    def social_factor(traffic_index: float, events_index: float) -> float:
-        """Calculate social activity factor."""
-        return 0.7 + 0.3 * (traffic_index + events_index) / 2
-    
-    # Crime factor
-    @staticmethod
-    def crime_factor(crime_index: float) -> float:
-        """Calculate crime impact factor."""
-        return max(0.8, 1 - crime_index * 0.5)
-    
-    # Crypto factor
-    @staticmethod
-    def crypto_factor(volume_normalized: float) -> float:
-        """Calculate crypto market factor."""
-        return 0.9 + 0.2 * volume_normalized
-
-
-# ============================================================================
-# COMPOSITE ENGINE
-# ============================================================================
+# =============================================================================
+# COMPOSITE SIGNAL ENGINE
+# =============================================================================
 
 class CompositeSignalEngine:
-    """Main composite signal calculation engine."""
+    """
+    Composite Signal Engine.
     
-    def __init__(self, weights: Optional[SignalWeights] = None):
-        """Initialize engine."""
-        self.weights = weights or SignalWeights()
-        self.processor = SignalProcessor()
+    Combines multiple signal sources into a unified composite signal.
+    """
+    
+    DEFAULT_WEIGHTS = {
+        "time": 0.25,
+        "weather": 0.15,
+        "economic": 0.20,
+        "social": 0.15,
+        "crime": 0.10,
+        "crypto": 0.15
+    }
+    
+    def __init__(
+        self,
+        weights: Optional[Dict[str, float]] = None,
+        use_real_apis: bool = True,
+        eia_api_key: Optional[str] = None
+    ):
+        """
+        Initialize the composite signal engine.
         
-        # Initialize APIs
-        self.weather_api = WeatherAPI()
-        self.crypto_api = CryptoAPI()
-        self.energy_api = EnergyAPI()
-        self.commodities_api = CommoditiesAPI()
-        self.traffic_api = TrafficAPI()
-        self.events_api = EventsAPI()
-        self.crime_api = CrimeAPI()
+        Args:
+            weights: Custom weights for signal components
+            use_real_apis: Whether to use real API calls
+            eia_api_key: EIA API key for energy data
+        """
+        self.weights = weights or self.DEFAULT_WEIGHTS.copy()
+        self.use_real_apis = use_real_apis
+        
+        # Initialize temporal modules
+        self.day_night = DayNightModule()
+        self.week = WeekModule()
+        self.season = SeasonModule()
+        self.year = YearModule()
+        self.weather = WeatherModule()
+        
+        # Initialize API modules
+        if use_real_apis:
+            self.weather_api = OpenMeteoModule()
+            self.crypto_api = CoinGeckoModule()
+        else:
+            self.weather_api = None
+            self.crypto_api = None
+        
+        self.energy_api = EnergyModule(eia_api_key)
+        self.traffic_api = TrafficModule()
+        self.events_api = EventsModule()
+        self.crime_api = CrimeModule()
     
-    def calculate_composite_signal(
+    def calculate_time_signal(self, dt: datetime) -> float:
+        """Calculate combined temporal signal."""
+        return (
+            self.day_night.calculate(dt) *
+            self.week.calculate(dt) *
+            self.season.calculate(dt) *
+            self.year.calculate(dt)
+        )
+    
+    def calculate_weather_signal(
         self,
         city: City,
-        date: datetime,
-        weather_data: Dict,
-        crypto_data: Dict,
-        energy_data: Dict,
-        commodities_data: Dict,
-        traffic_data: Dict,
-        events_data: Dict,
-        crime_data: Dict,
-    ) -> float:
-        """Calculate composite signal for city/date."""
+        dt: datetime,
+        use_api: bool = True
+    ) -> tuple:
+        """Calculate weather signal."""
+        if use_api and self.weather_api:
+            data = self.weather_api.fetch(city, dt)
+            signal = self.weather_api.normalize(data)
+            raw = data
+        else:
+            # Simulated weather
+            temp = np.random.uniform(-5, 35)
+            rain = np.random.random() > 0.8
+            wind = np.random.random() > 0.9
+            signal = self.weather.calculate(temp, rain, wind)
+            raw = {"temp": temp, "rain": rain, "wind": wind}
         
-        # Time signals
-        time_signal = (
-            self.processor.day_night_factor(date.hour) *
-            self.processor.week_factor(date.strftime("%A")) *
-            self.processor.season_factor(date.month) *
-            self.processor.year_factor(date)
-        )
-        
-        # Weather signal
-        weather_signal = self.processor.weather_factor(
-            weather_data.get("temp_avg", 20),
-            weather_data.get("is_rainy", False),
-            weather_data.get("is_windy", False)
-        )
-        
-        # Economic signal
-        economic_signal = self.processor.economic_factor(
-            energy_data.get("price_cents", 12),
-            commodities_data,
-            50000  # Average income
-        )
-        
-        # Social signal
-        social_signal = self.processor.social_factor(
-            traffic_data.get("traffic_index", 0.5),
-            events_data.get("events_index", 0.5)
-        )
-        
-        # Crime signal
-        crime_signal = self.processor.crime_factor(
-            crime_data.get("crime_index", 0.35)
-        )
-        
-        # Crypto signal
-        crypto_signal = self.processor.crypto_factor(
-            crypto_data.get("volume_normalized", 0.5)
-        )
-        
-        # Weighted composite
-        composite = (
-            time_signal * self.weights.time +
-            weather_signal * self.weights.weather +
-            economic_signal * self.weights.economic +
-            social_signal * self.weights.social +
-            crime_signal * self.weights.crime +
-            crypto_signal * self.weights.crypto
-        )
-        
-        return composite
+        return signal, raw
     
-    def generate_timeline(
+    def calculate_economic_signal(self, city: City, dt: datetime) -> tuple:
+        """Calculate economic signal."""
+        energy_data = self.energy_api.fetch(city, dt)
+        energy_signal = self.energy_api.normalize(energy_data)
+        
+        # Commodity placeholder
+        commodity_signal = np.random.uniform(0.3, 0.7)
+        
+        signal = (energy_signal + commodity_signal) / 2
+        return signal, energy_data
+    
+    def calculate_social_signal(self, city: City, dt: datetime) -> tuple:
+        """Calculate social signal."""
+        traffic_data = self.traffic_api.fetch(city, dt)
+        traffic_signal = self.traffic_api.normalize(traffic_data)
+        
+        events_data = self.events_api.fetch(city, dt)
+        events_signal = self.events_api.normalize(events_data)
+        
+        signal = (traffic_signal + events_signal) / 2
+        return signal, {"traffic": traffic_data, "events": events_data}
+    
+    def calculate_crime_signal(self, city: City, dt: datetime) -> tuple:
+        """Calculate crime signal."""
+        data = self.crime_api.fetch(city, dt)
+        signal = self.crime_api.normalize(data)
+        return signal, data
+    
+    def calculate_crypto_signal(self, city: City, dt: datetime, use_api: bool = True) -> tuple:
+        """Calculate crypto signal."""
+        if use_api and self.crypto_api:
+            data = self.crypto_api.fetch(city, dt)
+            signal = self.crypto_api.normalize(data)
+        else:
+            signal = np.random.uniform(0.3, 0.7)
+            data = {"simulated": True}
+        
+        return signal, data
+    
+    def calculate_composite(
         self,
-        cities: List[City],
+        city: City,
+        dt: datetime,
+        use_api: bool = True
+    ) -> SignalResult:
+        """
+        Calculate composite signal for a city at a given time.
+        
+        Args:
+            city: City object
+            dt: Datetime
+            use_api: Whether to use real API calls
+        
+        Returns:
+            SignalResult with all signal components
+        """
+        # Calculate individual signals
+        time_signal = self.calculate_time_signal(dt)
+        weather_signal, weather_raw = self.calculate_weather_signal(city, dt, use_api)
+        economic_signal, economic_raw = self.calculate_economic_signal(city, dt)
+        social_signal, social_raw = self.calculate_social_signal(city, dt)
+        crime_signal, crime_raw = self.calculate_crime_signal(city, dt)
+        crypto_signal, crypto_raw = self.calculate_crypto_signal(city, dt, use_api)
+        
+        # Calculate weighted composite
+        composite = (
+            self.weights["time"] * time_signal +
+            self.weights["weather"] * weather_signal +
+            self.weights["economic"] * economic_signal +
+            self.weights["social"] * social_signal +
+            self.weights["crime"] * crime_signal +
+            self.weights["crypto"] * crypto_signal
+        )
+        
+        # Normalize to 0-1
+        composite = np.clip(composite / 1.5, 0, 1)  # Max theoretical is ~1.5
+        
+        return SignalResult(
+            timestamp=dt,
+            city=city.name,
+            composite_signal=round(composite, 4),
+            time_signal=round(time_signal, 4),
+            weather_signal=round(weather_signal, 4),
+            economic_signal=round(economic_signal, 4),
+            social_signal=round(social_signal, 4),
+            crime_signal=round(crime_signal, 4),
+            crypto_signal=round(crypto_signal, 4),
+            raw_data={
+                "weather": weather_raw,
+                "economic": economic_raw,
+                "social": social_raw,
+                "crime": crime_raw,
+                "crypto": crypto_raw
+            }
+        )
+
+
+# =============================================================================
+# TIMELINE GENERATOR
+# =============================================================================
+
+class TimelineGenerator:
+    """
+    Timeline Generator.
+    
+    Generates daily signals for multiple cities over a time period.
+    """
+    
+    def __init__(
+        self,
+        engine: Optional[CompositeSignalEngine] = None,
+        cities: Optional[List[City]] = None
+    ):
+        """
+        Initialize timeline generator.
+        
+        Args:
+            engine: CompositeSignalEngine instance
+            cities: List of cities to process
+        """
+        self.engine = engine or CompositeSignalEngine()
+        self.cities = cities or TOP_50_CITIES
+    
+    def generate(
+        self,
         start_date: datetime,
         end_date: datetime,
+        use_api: bool = True,
+        progress_callback: Optional[Callable] = None
     ) -> pd.DataFrame:
-        """Generate timeline with signals for all cities/dates."""
+        """
+        Generate timeline of signals.
         
+        Args:
+            start_date: Start date
+            end_date: End date
+            use_api: Whether to use real API calls
+            progress_callback: Optional callback for progress updates
+        
+        Returns:
+            DataFrame with timeline data
+        """
         dates = pd.date_range(start_date, end_date, freq='D')
-        timeline = []
+        results = []
+        total = len(self.cities) * len(dates)
+        count = 0
         
-        for city in cities:
-            # Get city-specific data
-            weather_data = self.weather_api.get_weather(city.lat, city.lon)
-            crypto_data = self.crypto_api.get_market_data()
-            energy_data = self.energy_api.get_energy_price()
-            commodities_data = self.commodities_api.get_commodity_prices()
-            traffic_data = self.traffic_api.get_traffic_index(city.name)
-            events_data = self.events_api.get_events_index(city.name)
-            crime_data = self.crime_api.get_crime_index(city.name)
-            
+        for city in self.cities:
             for date in dates:
-                signal = self.calculate_composite_signal(
-                    city=city,
-                    date=date,
-                    weather_data=weather_data,
-                    crypto_data=crypto_data,
-                    energy_data=energy_data,
-                    commodities_data=commodities_data,
-                    traffic_data=traffic_data,
-                    events_data=events_data,
-                    crime_data=crime_data,
-                )
+                result = self.engine.calculate_composite(city, date, use_api)
                 
-                timeline.append({
+                results.append({
                     "date": date,
                     "city": city.name,
                     "country": city.country,
                     "population_m": city.population_m,
-                    "composite_signal": round(signal, 3),
-                    
-                    # Weather
-                    "temp_avg": weather_data.get("temp_avg"),
-                    "is_rainy": weather_data.get("is_rainy"),
-                    "is_windy": weather_data.get("is_windy"),
-                    
-                    # Crypto
-                    "crypto_price": crypto_data.get("price"),
-                    "crypto_volume": crypto_data.get("volume_24h"),
-                    
-                    # Energy
-                    "energy_price": energy_data.get("price_cents"),
-                    
-                    # Commodities
-                    "oil_price": commodities_data.get("oil_wti"),
-                    "gold_price": commodities_data.get("gold"),
-                    
-                    # Social
-                    "traffic_index": traffic_data.get("traffic_index"),
-                    "events_index": events_data.get("events_index"),
-                    
-                    # Crime
-                    "crime_index": crime_data.get("crime_index"),
-                    "safety_level": crime_data.get("safety_level"),
+                    "gdp_billion_usd": city.gdp_billion_usd,
+                    "economic_importance": city.economic_importance,
+                    "composite_signal": result.composite_signal,
+                    "time_signal": result.time_signal,
+                    "weather_signal": result.weather_signal,
+                    "economic_signal": result.economic_signal,
+                    "social_signal": result.social_signal,
+                    "crime_signal": result.crime_signal,
+                    "crypto_signal": result.crypto_signal
                 })
                 
-                # Rate limiting
-                time.sleep(0.1)
+                count += 1
+                if progress_callback and count % 10 == 0:
+                    progress_callback(count, total)
         
-        df = pd.DataFrame(timeline)
+        df = pd.DataFrame(results)
         return df
     
-    def save_timeline(self, df: pd.DataFrame, filename: str = "timeline.csv"):
-        """Save timeline to CSV."""
-        df.to_csv(filename, index=False)
-        logger.info(f"Timeline saved to {filename}")
-        return filename
+    def generate_summary(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Generate summary statistics by city."""
+        summary = df.groupby('city').agg({
+            'composite_signal': ['mean', 'std', 'min', 'max'],
+            'weather_signal': 'mean',
+            'economic_signal': 'mean',
+            'social_signal': 'mean',
+            'crime_signal': 'mean',
+            'crypto_signal': 'mean',
+            'population_m': 'first',
+            'gdp_billion_usd': 'first',
+            'economic_importance': 'first'
+        }).round(4)
+        
+        summary.columns = ['_'.join(col).strip() for col in summary.columns.values]
+        return summary.reset_index()
 
 
-# ============================================================================
+# =============================================================================
 # MAIN EXECUTION
-# ============================================================================
+# =============================================================================
 
 def main():
-    """Main execution."""
+    """Main execution function."""
     print("=" * 60)
-    print("PREDICTIVE MULTI-SOURCE ENGINE")
+    print("Modular Predictive Multi-Source Engine")
     print("=" * 60)
     
     # Initialize engine
-    engine = CompositeSignalEngine()
+    engine = CompositeSignalEngine(use_real_apis=True)
     
-    # Generate timeline (7 days for all cities)
-    start_date = datetime(2026, 2, 20)
-    end_date = datetime(2026, 2, 27)
+    # Initialize generator
+    generator = TimelineGenerator(engine=engine, cities=TOP_50_CITIES[:10])  # First 10 cities for demo
     
-    print(f"\nGenerating timeline from {start_date.date()} to {end_date.date()}")
-    print(f"Cities: {len(DEFAULT_CITIES)}")
+    # Generate timeline for 1 week
+    start_date = datetime(2026, 2, 1)
+    end_date = datetime(2026, 2, 7)
     
-    df = engine.generate_timeline(DEFAULT_CITIES, start_date, end_date)
+    print(f"\nGenerating timeline from {start_date.date()} to {end_date.date()}...")
+    print(f"Cities: {len(generator.cities)}")
     
-    # Save
-    filename = engine.save_timeline(df, "timeline_multi_source.csv")
+    def progress(current, total):
+        pct = (current / total) * 100
+        print(f"\rProgress: {pct:.1f}% ({current}/{total})", end="", flush=True)
     
-    # Display summary
-    print("\n" + "=" * 60)
-    print("SUMMARY")
-    print("=" * 60)
-    print(f"\nTotal records: {len(df)}")
-    print(f"\nBy City (Average Signal):")
-    print(df.groupby("city")["composite_signal"].mean().sort_values(ascending=False))
+    df = generator.generate(start_date, end_date, use_api=True, progress_callback=progress)
+    print("\n")
     
-    print("\nSample data:")
-    print(df.head(10).to_string(index=False))
+    # Display sample
+    print("\nSample Data:")
+    print(df.head(10).to_string())
     
-    return df
+    # Generate summary
+    print("\n\nSummary Statistics:")
+    summary = generator.generate_summary(df)
+    print(summary.to_string())
+    
+    # Save to CSV
+    output_file = "city_signals_timeline.csv"
+    df.to_csv(output_file, index=False)
+    print(f"\n\nTimeline saved to: {output_file}")
+    
+    # Save summary
+    summary_file = "city_signals_summary.csv"
+    summary.to_csv(summary_file, index=False)
+    print(f"Summary saved to: {summary_file}")
+    
+    return df, summary
 
 
 if __name__ == "__main__":
     main()
-
