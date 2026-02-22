@@ -1,14 +1,9 @@
 {
   "version": 2,
-  "framework": "other",
+  "framework": null,
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
   "installCommand": "pip install --break-system-packages -r api/requirements.txt",
-  "functions": {
-    "api/index.py": {
-      "maxDuration": 10
-    }
-  },
   "rewrites": [
     {
       "source": "/api",
@@ -33,6 +28,10 @@
     {
       "source": "/redoc",
       "destination": "/api/index"
+    },
+    {
+      "source": "/((?!api|docs|openapi.json|redoc|assets).*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
