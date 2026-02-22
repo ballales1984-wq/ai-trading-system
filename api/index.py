@@ -4,15 +4,10 @@ Vercel Serverless Entry Point
 Simplified entry point for Vercel serverless functions.
 """
 
-import sys
-import os
-
-# Add the project root to the path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from mangum import Mangum
 
 # Create a minimal FastAPI app for Vercel
 app = FastAPI(
@@ -151,28 +146,5 @@ async def waitlist_count():
 
 
 # Vercel requires the handler to be named 'handler'
-# Use Mangum to wrap FastAPI for AWS Lambda/Vercel compatibility
-try:
-    from mangum import Mangum
-    handler = Mangum(app, lifespan="off")
-except ImportError:
-    # Fallback: create a simple ASGI handler
-    import asyncio
-    from typing import Dict, Any, Callable
-    
-    async def handle_request(scope: Dict[str, Any], receive: Callable, send: Callable):
-        await app(scope, receive, send)
-    
-    def handler(event, context):
-        # Convert Lambda event to ASGI scope
-        scope = {
-            "type": "http",
-            "method": event.get("httpMethod", "GET"),
-            "path": event.get("path", "/"),
-            "headers": [[k.lower(), v] for k, v in event.get("headers", {}).items()],
-            "query_string": event.get("queryStringParameters", {}),
-        }
-        
-        # Run the async handler
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(handle_request(scope, None, None))
+# Mangum wraps FastAPI as an ASGI handler for serverless
+handler = Mangum(app)

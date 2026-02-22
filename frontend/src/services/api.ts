@@ -12,14 +12,29 @@ import type {
   OrderCreate,
 } from '../types';
 
-const API_BASE = '/api/v1';
+// Use environment variable for API base URL
+// In production (Vercel), this should point to your local backend via ngrok or public IP
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 const api = axios.create({
   baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
   },
+  // Add timeout and retry logic
+  timeout: 10000,
 });
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === 'ERR_NETWORK') {
+      console.error('Network error: Cannot connect to backend. Is your local backend running?');
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Portfolio API
 export const portfolioApi = {
@@ -112,4 +127,3 @@ export const ordersApi = {
 };
 
 export default api;
-
