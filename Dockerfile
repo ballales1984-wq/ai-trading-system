@@ -15,8 +15,8 @@ FROM node:18-alpine AS frontend-builder
 # Copia package.json
 COPY frontend/package*.json ./
 
-# Installa dipendenze Node
-RUN npm ci --only=production
+# Installa dipendenze Node (tutte, incluso dev per build)
+RUN npm ci
 
 # Copia sorgenti frontend
 COPY frontend/ .
