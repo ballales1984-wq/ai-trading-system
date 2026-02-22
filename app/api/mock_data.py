@@ -9,9 +9,11 @@ import random
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 import math
+import os
 
-# Demo mode configuration
-DEMO_MODE = True  # Set to False to use real data
+# Demo mode configuration - set to False to use real data
+# Can be overridden by environment variable DEMO_MODE
+DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
 
 # Base prices for demo assets
 BASE_PRICES = {
