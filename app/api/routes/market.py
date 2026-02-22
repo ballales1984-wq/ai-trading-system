@@ -13,6 +13,13 @@ import logging
 from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel, Field
 
+from app.api.mock_data import (
+    DEMO_MODE,
+    get_market_prices as mock_market_prices,
+    get_price_data as mock_price_data,
+    get_candle_data as mock_candle_data,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -68,6 +75,20 @@ async def get_price(symbol: str) -> PriceData:
     """
     Get current price for a symbol.
     """
+    # Use mock data if demo mode is enabled
+    if DEMO_MODE:
+        data = mock_price_data(symbol)
+        return PriceData(
+            symbol=data["symbol"],
+            price=data["price"],
+            change_24h=data["change_24h"],
+            change_pct_24h=data["change_pct_24h"],
+            high_24h=data["high_24h"],
+            low_24h=data["low_24h"],
+            volume_24h=data["volume_24h"],
+            timestamp=datetime.utcnow(),
+        )
+    
     # Simulated price data
     base_prices = {
         "BTCUSDT": 43500.0,
@@ -97,6 +118,26 @@ async def get_all_prices() -> MarketOverview:
     """
     Get prices for all tracked symbols.
     """
+    # Use mock data if demo mode is enabled
+    if DEMO_MODE:
+        data = mock_market_prices()
+        markets = []
+        for m in data["markets"]:
+            markets.append(PriceData(
+                symbol=m["symbol"],
+                price=m["price"],
+                change_24h=m["price"] * m["change_pct_24h"] / 100,
+                change_pct_24h=m["change_pct_24h"],
+                high_24h=m["high_24h"],
+                low_24h=m["low_24h"],
+                volume_24h=m["volume_24h"],
+                timestamp=datetime.utcnow(),
+            ))
+        return MarketOverview(
+            timestamp=datetime.utcnow(),
+            markets=markets,
+        )
+    
     symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "EURUSD"]
     markets = []
     
@@ -119,6 +160,18 @@ async def get_candles(
     """
     Get OHLCV candle data for a symbol.
     """
+    # Use mock data if demo mode is enabled
+    if DEMO_MODE:
+        data = mock_candle_data(symbol, interval, limit)
+        return [CandleData(
+            timestamp=datetime.fromisoformat(c["timestamp"]),
+            open=c["open"],
+            high=c["high"],
+            low=c["low"],
+            close=c["close"],
+            volume=c["volume"],
+        ) for c in data]
+    
     # Generate sample candles
     base_price = 43500.0 if "BTC" in symbol.upper() else 2350.0
     candles = []

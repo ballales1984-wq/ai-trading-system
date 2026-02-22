@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { portfolioApi } from '../services/api';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { Wallet, TrendingUp, TrendingDown, Target } from 'lucide-react';
 
 const COLORS = ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#a371f7', '#f0883e'];

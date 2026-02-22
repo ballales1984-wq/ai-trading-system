@@ -12,6 +12,14 @@ from fastapi import APIRouter, HTTPException, status, Query
 from pydantic import BaseModel, Field
 
 from app.core.data_adapter import get_data_adapter
+from app.api.mock_data import (
+    DEMO_MODE,
+    get_portfolio_summary as mock_portfolio_summary,
+    get_positions as mock_positions,
+    get_performance_metrics as mock_performance,
+    get_portfolio_history as mock_history,
+    get_allocation as mock_allocation,
+)
 
 
 router = APIRouter()
@@ -139,6 +147,24 @@ async def get_portfolio_summary() -> PortfolioSummary:
     
     Returns total portfolio value, cash, positions, and P&L.
     """
+    # Use mock data if demo mode is enabled
+    if DEMO_MODE:
+        data = mock_portfolio_summary()
+        return PortfolioSummary(
+            total_value=data["total_value"],
+            cash_balance=data["cash"],
+            market_value=data["invested"],
+            total_pnl=data["unrealized_pnl"],
+            unrealized_pnl=data["unrealized_pnl"],
+            realized_pnl=0.0,
+            daily_pnl=data["daily_pnl"],
+            daily_return_pct=data["daily_return_pct"],
+            total_return_pct=data["total_return_pct"],
+            leverage=1.0,
+            buying_power=data["total_value"],
+            num_positions=data["num_positions"]
+        )
+    
     # Try to get real data first
     adapter = get_data_adapter()
     real_data = adapter.get_portfolio_summary()
@@ -202,6 +228,29 @@ async def list_positions(
     """
     List all open positions.
     """
+    # Use mock data if demo mode is enabled
+    if DEMO_MODE:
+        positions = mock_positions()
+        if symbol:
+            positions = [p for p in positions if p["symbol"] == symbol]
+        if side:
+            positions = [p for p in positions if p["side"] == side]
+        return [Position(
+            position_id=str(uuid4()),
+            symbol=p["symbol"],
+            side=p["side"],
+            quantity=p["quantity"],
+            entry_price=p["entry_price"],
+            current_price=p["current_price"],
+            market_value=p["market_value"],
+            unrealized_pnl=p["unrealized_pnl"],
+            realized_pnl=0.0,
+            leverage=1.0,
+            margin_used=p["market_value"],
+            opened_at=datetime.fromisoformat(p["opened_at"]),
+            updated_at=datetime.utcnow(),
+        ) for p in positions]
+    
     # Try to get real positions first
     adapter = get_data_adapter()
     real_positions = adapter.get_positions()
@@ -241,6 +290,26 @@ async def get_performance_metrics() -> PerformanceMetrics:
     
     Returns Sharpe ratio, max drawdown, win rate, etc.
     """
+    # Use mock data if demo mode is enabled
+    if DEMO_MODE:
+        data = mock_performance()
+        return PerformanceMetrics(
+            total_return=data["total_return_pct"] * 1000,  # Approximate
+            total_return_pct=data["total_return_pct"],
+            sharpe_ratio=data["sharpe_ratio"],
+            sortino_ratio=data["sortino_ratio"],
+            max_drawdown=data["max_drawdown_pct"] * 1000,  # Approximate
+            max_drawdown_pct=data["max_drawdown_pct"],
+            calmar_ratio=data["calmar_ratio"],
+            win_rate=data["win_rate"],
+            profit_factor=data["profit_factor"],
+            avg_win=data["avg_win"],
+            avg_loss=data["avg_loss"],
+            num_trades=data["total_trades"],
+            num_winning_trades=data["winning_trades"],
+            num_losing_trades=data["losing_trades"],
+        )
+    
     # Simulated performance data
     return PerformanceMetrics(
         total_return=50000.0,
@@ -265,6 +334,21 @@ async def get_allocation() -> dict:
     """
     Get portfolio allocation by asset class and sector.
     """
+    # Use mock data if demo mode is enabled
+    if DEMO_MODE:
+        data = mock_allocation()
+        return {
+            "by_asset_class": {
+                "crypto": 100.0,
+            },
+            "by_sector": {
+                "crypto": 100.0,
+            },
+            "by_symbol": {item["symbol"]: item["percentage"] for item in data["by_asset"]},
+            "total": data["total"],
+            "cash": data["cash"],
+        }
+    
     return {
         "by_asset_class": {
             "crypto": 85.0,
@@ -295,6 +379,16 @@ async def get_portfolio_history(
     Returns historical portfolio values for the specified number of days.
     Default is 30 days if not specified.
     """
+    # Use mock data if demo mode is enabled
+    if DEMO_MODE:
+        data = mock_history(days)
+        history = [HistoryEntry(
+            date=h["date"],
+            value=h["value"],
+            daily_return=h["daily_return"],
+        ) for h in data["history"]]
+        return PortfolioHistory(history=history)
+    
     # Try to get real history first
     adapter = get_data_adapter()
     real_history = adapter.get_portfolio_history(days=days)

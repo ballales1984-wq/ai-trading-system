@@ -7,11 +7,15 @@ REST API for order management and execution.
 from datetime import datetime
 from typing import List, Optional
 from uuid import uuid4
+import logging
 
 from fastapi import APIRouter, HTTPException, status, Query
 
 from pydantic import BaseModel, Field
 from app.core.data_adapter import get_data_adapter
+from app.api.mock_data import DEMO_MODE, get_orders as mock_orders
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter()
@@ -72,7 +76,7 @@ orders_db: dict = {}
 # ROUTES
 # ============================================================================
 
-@router.post("/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 async def create_order(order: OrderCreate) -> OrderResponse:
     """
     Create a new order.
@@ -143,7 +147,7 @@ async def create_order(order: OrderCreate) -> OrderResponse:
     return order_response
 
 
-@router.get("/", response_model=List[OrderResponse])
+@router.get("", response_model=List[OrderResponse])
 async def list_orders(
     symbol: Optional[str] = Query(None, description="Filter by symbol"),
     status: Optional[str] = Query(None, description="Filter by status"),
@@ -152,6 +156,32 @@ async def list_orders(
     """
     List all orders with optional filters.
     """
+    # Use mock data if demo mode is enabled
+    if DEMO_MODE:
+        mock_data = mock_orders(status=status)
+        orders = [OrderResponse(
+            order_id=o["id"],
+            symbol=o["symbol"],
+            side=o["side"],
+            order_type=o["type"],
+            quantity=o["quantity"],
+            price=o["price"],
+            stop_price=None,
+            status=o["status"],
+            filled_quantity=o["filled_quantity"],
+            average_price=o["price"] if o["status"] == "FILLED" else None,
+            commission=0.0,
+            created_at=datetime.fromisoformat(o["created_at"]) if o.get("created_at") else datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+            strategy_id=None,
+            broker="demo",
+        ) for o in mock_data]
+        
+        if symbol:
+            orders = [o for o in orders if o.symbol == symbol]
+        
+        return orders[:limit]
+    
     # Try to get real orders first
     adapter = get_data_adapter()
     real_orders = adapter.get_orders()

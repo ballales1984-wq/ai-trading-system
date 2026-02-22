@@ -153,7 +153,8 @@ class JWTManager:
     
     def create_access_token(self, user: User) -> str:
         """Create an access token."""
-        expire = datetime.now() + timedelta(
+        now = datetime.utcnow()
+        expire = now + timedelta(
             minutes=self.config.access_token_expire_minutes
         )
         
@@ -162,7 +163,7 @@ class JWTManager:
             "username": user.username,
             "role": user.role.value,
             "exp": expire,
-            "iat": datetime.now(),
+            "iat": now,
         }
         
         token = jwt.encode(
@@ -202,15 +203,16 @@ class JWTManager:
             payload = jwt.decode(
                 token,
                 self.config.secret_key,
-                algorithms=[self.config.algorithm]
+                algorithms=[self.config.algorithm],
+                options={"verify_iat": False}  # Disable iat verification to handle clock skew
             )
             
             return TokenPayload(
                 sub=payload.get("sub"),
                 username=payload.get("username"),
                 role=payload.get("role"),
-                exp=datetime.fromtimestamp(payload.get("exp")),
-                iat=datetime.fromtimestamp(payload.get("iat")) if payload.get("iat") else None
+                exp=datetime.utcfromtimestamp(payload.get("exp")),
+                iat=datetime.utcfromtimestamp(payload.get("iat")) if payload.get("iat") else None
             )
             
         except jwt.ExpiredSignatureError:

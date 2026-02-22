@@ -82,19 +82,65 @@ body {
   }
 }
 
-/* Live indicator pulse animation */
-@keyframes livePulse {
-  0%, 100% {
-    opacity: 1;
-    box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.7);
+/* Live indicator pulse animation - now defined in tailwind.config.js */
+/* Use class "animate-live-pulse" for the animation */
+
+/* Custom animations */
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
   }
-  50% {
-    opacity: 0.7;
-    box-shadow: 0 0 0 8px rgba(63, 185, 80, 0);
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
 
-.live-indicator {
-  animation: livePulse 2s ease-in-out infinite;
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s ease-in-out infinite;
+}
+
+/* Loading skeleton animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #161b22 25%, #30363d 50%, #161b22 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 1024px) {
+  .main-content {
+    padding-top: 4rem;
+  }
+}
+
+/* Table responsive wrapper */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 

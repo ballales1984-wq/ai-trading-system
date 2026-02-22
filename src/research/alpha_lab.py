@@ -111,9 +111,9 @@ class AlphaTemplate:
     def mean_reversion(df: pd.DataFrame, lookback: int = 20) -> pd.Series:
         """Mean reversion alpha."""
         ma = df["close"].rolling(lookback).mean()
-        return ( - ma) / ma
+        return (df["close"] - ma) / ma
     
-    @df["close"]staticmethod
+    @staticmethod
     def volume_price_correlation(df: pd.DataFrame, lookback: int = 20) -> pd.Series:
         """Volume-price correlation alpha."""
         returns = df["close"].pct_change()
