@@ -1,5 +1,5 @@
-# Vercel entry point
+# Vercel entry point for FastAPI
 from app.main import app
 
-# Vercel requires the handler to be named 'handler'
+# Vercel Python runtime expects an ASGI app named 'handler'
 handler = app
