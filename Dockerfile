@@ -12,6 +12,8 @@ RUN pip install --no-cache-dir -r requirements-vercel.txt
 # ------------------------------------
 FROM node:18-alpine AS frontend-builder
 
+WORKDIR /app
+
 # Copia package.json
 COPY frontend/package*.json ./
 
