@@ -183,23 +183,48 @@ app.include_router(
 
 # Serve landing page
 LANDING_DIR = Path(__file__).parent.parent / "landing"
+FRONTEND_DIR = Path(__file__).parent.parent / "frontend" / "dist"
+
 if LANDING_DIR.exists():
     app.mount("/landing", StaticFiles(directory=str(LANDING_DIR), html=True), name="landing")
 
+# Serve frontend in production
+if FRONTEND_DIR.exists():
+    app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR / "assets")), name="assets")
 
-# Root endpoint - serve landing page
+
+# Root endpoint - serve landing page or frontend
 @app.get("/")
 async def root():
     """Root endpoint - serve landing page if available."""
     landing_file = LANDING_DIR / "index.html"
     if landing_file.exists():
         return FileResponse(str(landing_file))
+    
+    # Fallback to frontend
+    frontend_file = FRONTEND_DIR / "index.html"
+    if frontend_file.exists():
+        return FileResponse(str(frontend_file))
+    
     return {
         "name": settings.app_name,
         "version": settings.app_version,
         "status": "running",
         "docs": "/docs"
     }
+
+
+# Serve frontend for SPA routes
+@app.get("/dashboard")
+@app.get("/portfolio")
+@app.get("/market")
+@app.get("/orders")
+async def serve_spa():
+    """Serve frontend SPA for client-side routes."""
+    frontend_file = FRONTEND_DIR / "index.html"
+    if frontend_file.exists():
+        return FileResponse(str(frontend_file))
+    return {"error": "Frontend not built"}
 
 
 # Health check
