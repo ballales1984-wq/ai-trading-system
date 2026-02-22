@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { marketApi } from '../services/api';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
 
 // TypeScript interfaces for type safety
 interface MarketData {
@@ -29,7 +29,7 @@ interface CandleData {
 
 const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'EURUSD'];
 
-// Fallback data for when API is unavailable
+// Fallback data for when API is unavailable (deterministic for consistent renders)
 const fallbackPrices: PricesResponse = {
   markets: [
     { symbol: 'BTCUSDT', price: 43500, change_pct_24h: 2.5, high_24h: 44000, low_24h: 42000, volume_24h: 5000000000 },
@@ -40,18 +40,23 @@ const fallbackPrices: PricesResponse = {
   ]
 };
 
-const fallbackCandles: CandleData[] = Array.from({ length: 50 }, (_, i) => ({
-  timestamp: new Date(Date.now() - (50 - i) * 3600000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-  open: 43000 + Math.random() * 1000,
-  high: 44000 + Math.random() * 1000,
-  low: 42000 + Math.random() * 1000,
-  close: 43500 + Math.random() * 1000,
-  volume: Math.random() * 1000,
-}));
+// Generate deterministic fallback candles to prevent inconsistent renders
+const generateFallbackCandles = (): CandleData[] => 
+  Array.from({ length: 50 }, (_, i) => ({
+    timestamp: new Date(Date.now() - (50 - i) * 3600000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+    open: 43000 + i * 15,
+    high: 44000 + i * 15,
+    low: 42000 + i * 15,
+    close: 43500 + i * 15,
+    volume: 500 + i * 10,
+  }));
 
 export default function Market() {
   const [selectedSymbol, setSelectedSymbol] = useState('BTCUSDT');
   const [timeframe, setTimeframe] = useState('1h');
+
+  // Memoize fallback candles to prevent inconsistent renders
+  const fallbackCandles = useMemo(() => generateFallbackCandles(), []);
 
   const { data: prices, isLoading: pricesLoading, error: pricesError } = useQuery({
     queryKey: ['market-prices'],
@@ -68,6 +73,7 @@ export default function Market() {
   });
 
   // Use fallback data if API fails
+  const isUsingFallback = !!(pricesError || candlesError);
   const pricesData = pricesError ? fallbackPrices : prices;
   const candlesData = candlesError ? fallbackCandles : candles;
 
@@ -104,6 +110,17 @@ export default function Market() {
         <h1 className="text-2xl font-bold text-text">Market</h1>
         <p className="text-text-muted">Real-time market data and charts</p>
       </div>
+
+      {/* Fallback Data Warning */}
+      {isUsingFallback && (
+        <div className="mb-6 bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-4 flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0" />
+          <div>
+            <p className="text-yellow-500 font-medium">Using Demo Data</p>
+            <p className="text-text-muted text-sm">API connection unavailable. Showing simulated market data for demonstration purposes.</p>
+          </div>
+        </div>
+      )}
 
       {/* Symbol Selector */}
       <div className="flex gap-4 mb-6">
@@ -262,4 +279,3 @@ function PriceCard({ title, value, icon: Icon, valueColor = 'text-text' }: { tit
     </div>
   );
 }
-
