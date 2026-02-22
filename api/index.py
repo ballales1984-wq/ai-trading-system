@@ -7,7 +7,13 @@ Simplified entry point for Vercel serverless functions.
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from mangum import Mangum
+
+# Mangum is required for Vercel serverless deployment
+try:
+    from mangum import Mangum
+    MANGUM_AVAILABLE = True
+except ImportError:
+    MANGUM_AVAILABLE = False
 
 # Create a minimal FastAPI app for Vercel
 app = FastAPI(
@@ -147,4 +153,8 @@ async def waitlist_count():
 
 # Vercel requires the handler to be named 'handler'
 # Mangum wraps FastAPI as an ASGI handler for serverless
-handler = Mangum(app)
+if MANGUM_AVAILABLE:
+    handler = Mangum(app)
+else:
+    # Fallback for local development without Mangum
+    handler = None

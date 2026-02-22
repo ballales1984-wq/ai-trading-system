@@ -30,10 +30,12 @@ class Settings(BaseSettings):
     debug: bool = True
     api_prefix: str = "/api/v1"
     
-    # CORS - Allow Vercel frontend and local development
-    cors_origins: List[str] = [
-        "*",  # Allow all for development (remove in production)
-        "https://*.vercel.app",  # Vercel deployments
+    # CORS - Environment-based origin configuration
+    # In development: allow all origins
+    # In production: restrict to specific domains
+    cors_origins: List[str] = ["*"] if debug else [
+        "https://ai-trading-system.vercel.app",  # Production frontend
+        "https://*.vercel.app",  # Preview deployments (note: wildcard not supported by browsers)
         "http://localhost:3000",  # Local React dev server
         "http://localhost:5173",  # Local Vite dev server
     ]

@@ -6,7 +6,7 @@
 ## 📊 Riepilogo Test
 
 ```
-TOTALI:     235+ test
+TOTALI:     311+ test
 PRODUCTION: 30+ test (nuovi)
 CORE:       167+ test passing
 ```
