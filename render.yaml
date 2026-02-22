@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: ai-trading-system
+    env: python
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build && cd .. && pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: NODE_VERSION
+        value: 18
+    staticPublishPath: frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
