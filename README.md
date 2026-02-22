@@ -311,6 +311,7 @@ def estimate_slippage(order_size, avg_volume, volatility):
 ### Prerequisites
 
 - Python 3.11+
+- Node.js 18+ (for React frontend)
 - PostgreSQL 15+ (optional, for persistence)
 - Redis 7+ (optional, for caching)
 
@@ -325,7 +326,7 @@ cd ai-trading-system
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies
+# Install Python dependencies
 pip install -r requirements.txt
 
 # Configure environment
@@ -340,6 +341,22 @@ python -m uvicorn app.main:app --reload  # http://127.0.0.1:8000/docs
 
 # Start with Docker
 docker-compose up -d
+```
+
+### React Frontend
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev  # http://127.0.0.1:5173
+
+# Build for production
+npm run build
 ```
 
 ---
