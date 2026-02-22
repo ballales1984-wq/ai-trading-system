@@ -359,6 +359,43 @@ npm run dev  # http://127.0.0.1:5173
 npm run build
 ```
 
+### Frontend Tech Stack
+
+| Technology | Purpose |
+|------------|---------|
+| React 18 | UI Framework |
+| TypeScript | Type Safety |
+| Tailwind CSS | Styling with CSS Variables |
+| Vite | Build Tool |
+| React Router | Client-side Routing |
+
+### Theming System
+
+The frontend uses CSS custom properties integrated with Tailwind CSS for consistent theming:
+
+```css
+/* CSS Variables (frontend/src/index.css) */
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --border-color: #30363d;
+  --text-primary: #c9d1d9;
+  --text-secondary: #8b949e;
+  --accent-blue: #58a6ff;
+  --accent-green: #3fb950;
+  --accent-red: #f85149;
+  --accent-yellow: #d29922;
+}
+```
+
+```jsx
+// Usage in components
+<div className="bg-bg-primary text-text-primary border border-border">
+  <button className="bg-primary text-white">Trade</button>
+  <span className="bg-success/15 text-success">Live</span>
+</div>
+```
+
 ---
 
 ## 📊 Feature Matrix
@@ -481,6 +518,8 @@ VAR_CONFIDENCE=0.95
 ## 📈 Roadmap
 
 ### Q1 2025
+- [x] React frontend with Tailwind CSS
+- [x] CSS variables theming system
 - [ ] Live trading with real capital
 - [ ] Additional exchange support (OKX, Bybit)
 - [ ] Advanced order types (iceberg, TWAP, VWAP)
@@ -489,6 +528,7 @@ VAR_CONFIDENCE=0.95
 - [ ] Multi-strategy portfolio allocation
 - [ ] Options pricing and Greeks calculation
 - [ ] Cross-exchange arbitrage detection
+- [ ] Dark/Light theme toggle
 
 ### Q3 2025
 - [ ] Reinforcement learning agent
