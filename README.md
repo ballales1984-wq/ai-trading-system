@@ -3,8 +3,26 @@
 [![CI/CD](https://github.com/ballales1984-wq/ai-trading-system/actions/workflows/python-app.yml/badge.svg)](https://github.com/ballales1984-wq/ai-trading-system/actions)
 [![Production CI/CD](https://github.com/ballales1984-wq/ai-trading-system/actions/workflows/ci-cd-production.yml/badge.svg)](https://github.com/ballales1984-wq/ai-trading-system/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Tests](https://img.shields.io/badge/tests-300%2B-green.svg)]()
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+
+---
+
+## 📋 Table of Contents
+
+1. [Why This Project](#-why-this-project-exists)
+2. [System Philosophy](#-system-philosophy)
+3. [Architecture Overview](#-architecture-overview)
+4. [Quick Start](#-quick-start)
+5. [Features](#-features)
+6. [Technology Stack](#-technology-stack)
+7. [Testing](#-testing)
+8. [Deployment](#-deployment)
+9. [Roadmap](#-roadmap)
+10. [Contributing](#-contributing)
+11. [License](#-license)
 
 ---
 
