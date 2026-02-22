@@ -153,7 +153,8 @@ class JWTManager:
     
     def create_access_token(self, user: User) -> str:
         """Create an access token."""
-        expire = datetime.utcnow() + timedelta(
+        now = datetime.utcnow()
+        expire = now + timedelta(
             minutes=self.config.access_token_expire_minutes
         )
         
@@ -161,8 +162,8 @@ class JWTManager:
             "sub": user.user_id,
             "username": user.username,
             "role": user.role.value,
-            "exp": expire.timestamp(),
-            "iat": datetime.utcnow().timestamp(),
+            "exp": expire,
+            "iat": now,
         }
         
         token = jwt.encode(
