@@ -3,6 +3,7 @@ services:
     name: ai-trading-system
     env: docker
     plan: free
+    branch: main
     dockerfilePath: ./Dockerfile.render.optimized
     dockerContext: .
     healthCheckPath: /api/v1/health
