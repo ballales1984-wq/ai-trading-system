@@ -6,7 +6,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "install:frontend": "npm install --prefix frontend",
+    "install:frontend": "npm install --prefix frontend --include=dev",
     "build:frontend": "npm run build --prefix frontend",
     "build": "npm run install:frontend && npm run build:frontend"
   }
