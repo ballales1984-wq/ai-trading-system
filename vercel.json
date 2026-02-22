@@ -1,4 +1,5 @@
 {
+<<<<<<< Updated upstream
   "version": 2,
   "framework": null,
   "buildCommand": "npm run build",
@@ -45,3 +46,52 @@
     }
   ]
 }
+=======
+	"version": 2,
+	"framework": "fastapi",
+	"buildCommand": "cd frontend && npm install && npm run build",
+	"outputDirectory": "frontend/dist",
+	"installCommand": "pip install --break-system-packages -r requirements-vercel.txt",
+	"rewrites": [
+		{
+			"source": "/api",
+			"destination": "/api/index"
+		},
+		{
+			"source": "/api/",
+			"destination": "/api/index"
+		},
+		{
+			"source": "/api/:path*",
+			"destination": "/api/index"
+		},
+		{
+			"source": "/docs",
+			"destination": "/api/index"
+		},
+		{
+			"source": "/openapi.json",
+			"destination": "/api/index"
+		},
+		{
+			"source": "/redoc",
+			"destination": "/api/index"
+		},
+		{
+			"source": "/((?!api|docs|openapi.json|redoc|assets).*)",
+			"destination": "/index.html"
+		}
+	],
+	"headers": [
+		{
+			"source": "/api/(.*)",
+			"headers": [
+				{
+					"key": "Cache-Control",
+					"value": "no-store, must-revalidate"
+				}
+			]
+		}
+	]
+}
+>>>>>>> Stashed changes

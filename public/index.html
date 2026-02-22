@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Trading System</title>
+</head>
+<body>
+    <div id="root">
+        <h1>AI Trading System - Loading...</h1>
+        <p>Frontend is building...</p>
+    </div>
+    <script>
+        // Redirect to API health check for testing
+        fetch('/api/v1/health')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('root').innerHTML = `
+                    <h1>✅ AI Trading System Online</h1>
+                    <p>Status: ${data.status}</p>
+                    <p>Service: ${data.service}</p>
+                    <hr>
+                    <h2>API Endpoints:</h2>
+                    <ul>
+                        <li><a href="/api/v1/health">Health Check</a></li>
+                        <li><a href="/api/v1/portfolio/summary">Portfolio</a></li>
+                        <li><a href="/api/v1/market/prices">Market Prices</a></li>
+                        <li><a href="/docs">API Documentation</a></li>
+                    </ul>
+                `;
+            })
+            .catch(error => {
+                document.getElementById('root').innerHTML = `
+                    <h1>❌ API Error</h1>
+                    <p>Error: ${error.message}</p>
+                `;
+            });
+    </script>
+</body>
+</html>
