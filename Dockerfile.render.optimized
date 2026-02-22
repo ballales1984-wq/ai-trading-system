@@ -1,0 +1,83 @@
+# ============================================================
+# AI Trading System - Render Optimized Dockerfile
+# ============================================================
+# Multi-stage build ottimizzato per Render
+
+# ------------------------------------
+# Stage 1: Builder
+# ------------------------------------
+FROM python:3.11-slim-bookworm AS builder
+
+# Installa Python build dependencies
+RUN pip install --no-cache-dir --upgrade pip wheel
+
+# Installa dipendenze Python
+COPY requirements-vercel.txt .
+RUN pip install --no-cache-dir -r requirements-vercel.txt
+
+# ------------------------------------
+# Stage 2: Frontend Builder  
+# ------------------------------------
+FROM node:18-alpine AS frontend-builder
+
+# Copia package.json
+COPY frontend/package*.json ./
+
+# Installa dipendenze Node
+RUN npm ci --only=production
+
+# Copia sorgenti frontend
+COPY frontend/ .
+
+# Build frontend
+RUN npm run build
+
+# ------------------------------------
+# Stage 3: Production
+# ------------------------------------
+FROM python:3.11-slim-bookworm AS production
+
+# Installa system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Setta environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONPATH=/app
+
+# Setta working directory
+WORKDIR /app
+
+# Installa Python dependencies (copi cache dal builder)
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+
+# Copia requirements e installa eventuali dipendenze mancanti
+COPY requirements-vercel.txt .
+RUN pip install --no-cache-dir -r requirements-vercel.txt
+
+# Copia codice applicazione
+COPY app/ ./app/
+COPY api/ ./api/
+
+# Copia frontend build dal frontend-builder
+COPY --from=frontend-builder /app/frontend/dist ./frontend/
+
+# Crea environment file minimo inline
+RUN echo "FASTAPI_ENV=production" > .env
+
+# Crea non-root user
+RUN useradd --create-home --shell /bin/bash appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Espone porta (Render usa 10000 di default)
+EXPOSE 10000
+
+# Health check ottimizzato
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:10000/api/v1/health || exit 1
+
+# Comando per avviare FastAPI
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "10000"]
