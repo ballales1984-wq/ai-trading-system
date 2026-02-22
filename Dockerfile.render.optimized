@@ -1,11 +1,3 @@
-# ============================================================
-# AI Trading System - Render Optimized Dockerfile
-# ============================================================
-# Multi-stage build ottimizzato per Render
-
-# ------------------------------------
-# Stage 1: Builder
-# ------------------------------------
 FROM python:3.11-slim-bookworm AS builder
 
 # Installa Python build dependencies
