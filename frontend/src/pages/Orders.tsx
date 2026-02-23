@@ -160,6 +160,7 @@ export default function Orders() {
               <input
                 type="number"
                 step="0.0001"
+                autoComplete="off"
                 value={newOrder.quantity}
                 onChange={(e) => setNewOrder({ ...newOrder, quantity: parseFloat(e.target.value) })}
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text"
