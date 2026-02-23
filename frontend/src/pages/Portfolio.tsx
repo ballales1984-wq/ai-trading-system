@@ -34,6 +34,8 @@ export default function Portfolio() {
     }).format(value);
   };
 
+  const positionsList = Array.isArray(positions) ? positions : [];
+
   const pieData = allocation?.by_symbol 
     ? Object.entries(allocation.by_symbol).map(([name, value]) => ({ name, value }))
     : [];
@@ -145,7 +147,7 @@ export default function Portfolio() {
               </tr>
             </thead>
             <tbody>
-              {positions?.map((position) => {
+              {positionsList.map((position) => {
                 const pnlPercent = ((position.current_price - position.entry_price) / position.entry_price) * 100;
                 return (
                   <tr key={position.position_id} className="border-b border-border/50 hover:bg-border/20">

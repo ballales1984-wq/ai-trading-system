@@ -40,11 +40,14 @@ export default function Dashboard() {
     return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
   };
 
-  const chartData = history?.history ? history.history.map((entry) => ({
+  const historyRows = Array.isArray(history?.history) ? history.history : [];
+  const marketRows = Array.isArray(markets?.markets) ? markets.markets : [];
+
+  const chartData = historyRows.map((entry) => ({
     date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     value: entry.value,
     return: entry.daily_return,
-  })) : [];
+  }));
 
   // Show loading skeleton
   if (summaryLoading && !summary) {
@@ -163,7 +166,7 @@ export default function Dashboard() {
           <div className="h-48 flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-        ) : markets?.markets && Array.isArray(markets.markets) && markets.markets.length > 0 ? (
+        ) : marketRows.length > 0 ? (
           <div className="overflow-x-auto table-responsive">
             <table className="w-full">
               <thead>
@@ -177,7 +180,7 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {markets.markets.map((market) => (
+                {marketRows.map((market) => (
                   <tr key={market.symbol} className="border-b border-border/50 hover:bg-border/20">
                     <td className="py-3 px-4 font-medium text-text">{market.symbol}</td>
                     <td className="py-3 px-4 text-right text-text">{formatCurrency(market.price)}</td>
