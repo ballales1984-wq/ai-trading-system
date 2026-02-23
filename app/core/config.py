@@ -73,8 +73,8 @@ class Settings(BaseSettings):
     
     # Broker Configuration
     binance_api_key: str = Field(default="", env="BINANCE_API_KEY")
-    binance_secret_key: str = Field(default="", env="BINANCE_SECRET_KEY")
-    binance_testnet: bool = True
+    binance_secret_key: str = Field(default="", env="BINANCE_API_SECRET")
+    binance_testnet: bool = Field(default=True, env="USE_BINANCE_TESTNET")
     
     ib_host: str = "127.0.0.1"
     ib_port: int = 7497
