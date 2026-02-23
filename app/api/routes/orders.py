@@ -8,8 +8,10 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import uuid4
 import logging
+import os
+import secrets
 
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Query, Header, Depends
 
 from pydantic import BaseModel, Field
 from app.core.data_adapter import get_data_adapter
@@ -70,6 +72,62 @@ class OrderUpdate(BaseModel):
 # ============================================================================
 
 orders_db: dict = {}
+emergency_state = {
+    "trading_halted": False,
+    "changed_at": None,
+    "reason": None,
+    "changed_by": None,
+}
+
+
+class EmergencyStatusResponse(BaseModel):
+    """Response model for emergency trading status."""
+    trading_halted: bool
+    changed_at: Optional[datetime] = None
+    reason: Optional[str] = None
+    changed_by: Optional[str] = None
+
+
+class EmergencyToggleRequest(BaseModel):
+    """Request model for toggling emergency stop."""
+    confirm: bool = Field(default=False, description="Must be true to confirm action")
+    reason: Optional[str] = Field(default=None, description="Optional reason for emergency action")
+
+
+def _ensure_trading_allowed() -> None:
+    """Raise if emergency stop is active."""
+    if emergency_state["trading_halted"]:
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail="Trading is halted by emergency stop. Disable emergency mode to resume BUY/SELL orders.",
+        )
+
+
+async def verify_admin_access(
+    x_admin_key: str = Header(None, alias="X-Admin-Key"),
+    x_admin_user: str = Header("admin", alias="X-Admin-User"),
+) -> str:
+    """
+    Verify admin key for emergency stop operations.
+    Fail-secure: if ADMIN_SECRET_KEY is not configured, deny access.
+    """
+    admin_key = os.getenv("ADMIN_SECRET_KEY", "")
+
+    if not admin_key:
+        logger.error("ADMIN_SECRET_KEY not configured - denying emergency control access")
+        raise HTTPException(
+            status_code=503,
+            detail="Admin access not configured. Set ADMIN_SECRET_KEY environment variable.",
+        )
+
+    if not x_admin_key or not secrets.compare_digest(x_admin_key, admin_key):
+        logger.warning("Invalid admin key attempt on emergency controls")
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid or missing admin credentials",
+        )
+
+    return x_admin_user
 
 
 # ============================================================================
@@ -83,6 +141,8 @@ async def create_order(order: OrderCreate) -> OrderResponse:
     
     The order goes through the risk engine before execution.
     """
+    _ensure_trading_allowed()
+
     order_id = str(uuid4())
     now = datetime.utcnow()
     
@@ -283,6 +343,8 @@ async def execute_order(order_id: str) -> OrderResponse:
     
     In production, this submits the order to the broker.
     """
+    _ensure_trading_allowed()
+
     if order_id not in orders_db:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -305,3 +367,57 @@ async def execute_order(order_id: str) -> OrderResponse:
     order.updated_at = datetime.utcnow()
     
     return order
+
+
+@router.get("/emergency/status", response_model=EmergencyStatusResponse)
+async def get_emergency_status() -> EmergencyStatusResponse:
+    """Get current emergency trading status."""
+    return EmergencyStatusResponse(**emergency_state)
+
+
+@router.post("/emergency/activate", response_model=EmergencyStatusResponse)
+async def activate_emergency_stop(
+    payload: EmergencyToggleRequest,
+    admin_user: str = Depends(verify_admin_access),
+) -> EmergencyStatusResponse:
+    """Activate emergency stop and block all BUY/SELL order creation/execution."""
+    if not payload.confirm:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Confirmation required to activate emergency stop.",
+        )
+
+    emergency_state["trading_halted"] = True
+    emergency_state["changed_at"] = datetime.utcnow()
+    emergency_state["reason"] = payload.reason or "Manual emergency stop"
+    emergency_state["changed_by"] = admin_user
+    logger.warning(
+        "Emergency stop activated by %s. Reason: %s",
+        emergency_state["changed_by"],
+        emergency_state["reason"],
+    )
+    return EmergencyStatusResponse(**emergency_state)
+
+
+@router.post("/emergency/deactivate", response_model=EmergencyStatusResponse)
+async def deactivate_emergency_stop(
+    payload: EmergencyToggleRequest,
+    admin_user: str = Depends(verify_admin_access),
+) -> EmergencyStatusResponse:
+    """Deactivate emergency stop and allow trading again."""
+    if not payload.confirm:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Confirmation required to deactivate emergency stop.",
+        )
+
+    emergency_state["trading_halted"] = False
+    emergency_state["changed_at"] = datetime.utcnow()
+    emergency_state["reason"] = payload.reason or "Manual resume trading"
+    emergency_state["changed_by"] = admin_user
+    logger.warning(
+        "Emergency stop deactivated by %s. Reason: %s",
+        emergency_state["changed_by"],
+        emergency_state["reason"],
+    )
+    return EmergencyStatusResponse(**emergency_state)

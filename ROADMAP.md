@@ -1,4 +1,5 @@
 # AI Trading System - Roadmap to 100%
+<!-- markdownlint-disable MD009 MD012 MD022 MD031 MD032 MD036 MD040 MD060 -->
 
 ## Project Progress Overview
 

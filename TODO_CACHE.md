@@ -1,4 +1,5 @@
 # TODO: Cache Restart & Clear Implementation
+<!-- markdownlint-disable MD012 MD022 MD026 MD032 -->
 
 ## Steps:
 1. [x] Analyze existing cache implementations

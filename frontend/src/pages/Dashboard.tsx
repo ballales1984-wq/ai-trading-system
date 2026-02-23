@@ -128,7 +128,14 @@ export default function Dashboard() {
                     labelStyle={{ color: '#c9d1d9' }}
                     formatter={(value: number) => [formatCurrency(value), 'Value']}
                   />
-                  <Area type="monotone" dataKey="value" stroke="#58a6ff" fillOpacity={1} fill="url(#colorValue)" />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#58a6ff"
+                    fillOpacity={1}
+                    fill="url(#colorValue)"
+                    isAnimationActive={false}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ordersApi } from '../services/api';
+import { emergencyApi, ordersApi } from '../services/api';
 import { Plus, Play, X, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 export default function Orders() {
@@ -19,6 +19,13 @@ export default function Orders() {
     queryFn: () => ordersApi.list(),
     refetchInterval: 10000,
   });
+
+  const { data: emergencyStatus } = useQuery({
+    queryKey: ['emergency-status'],
+    queryFn: emergencyApi.getStatus,
+  });
+
+  const tradingHalted = Boolean(emergencyStatus?.trading_halted);
 
   const createOrder = useMutation({
     mutationFn: ordersApi.create,
@@ -51,6 +58,7 @@ export default function Orders() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (tradingHalted) return;
     createOrder.mutate(newOrder);
   };
 
@@ -106,6 +114,7 @@ export default function Orders() {
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
+          disabled={tradingHalted}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors"
         >
           <Plus className="w-5 h-5" />
@@ -113,14 +122,22 @@ export default function Orders() {
         </button>
       </div>
 
+      {tradingHalted && (
+        <div className="mb-4 rounded-lg border border-danger/50 bg-danger/10 px-4 py-3 text-danger">
+          Emergency Stop attivo: creazione ed esecuzione ordini BUY/SELL bloccate.
+        </div>
+      )}
+
       {/* New Order Form */}
       {showForm && (
         <div className="bg-surface border border-border rounded-lg p-4 mb-6">
           <h2 className="text-lg font-semibold text-text mb-4">Create New Order</h2>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-text-muted text-sm mb-1">Symbol</label>
+              <label htmlFor="order-symbol" className="block text-text-muted text-sm mb-1">Symbol</label>
               <select
+                id="order-symbol"
+                name="symbol"
                 value={newOrder.symbol}
                 onChange={(e) => setNewOrder({ ...newOrder, symbol: e.target.value })}
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text"
@@ -133,8 +150,10 @@ export default function Orders() {
               </select>
             </div>
             <div>
-              <label className="block text-text-muted text-sm mb-1">Side</label>
+              <label htmlFor="order-side" className="block text-text-muted text-sm mb-1">Side</label>
               <select
+                id="order-side"
+                name="side"
                 value={newOrder.side}
                 onChange={(e) => setNewOrder({ ...newOrder, side: e.target.value })}
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text"
@@ -144,8 +163,10 @@ export default function Orders() {
               </select>
             </div>
             <div>
-              <label className="block text-text-muted text-sm mb-1">Order Type</label>
+              <label htmlFor="order-type" className="block text-text-muted text-sm mb-1">Order Type</label>
               <select
+                id="order-type"
+                name="order_type"
                 value={newOrder.order_type}
                 onChange={(e) => setNewOrder({ ...newOrder, order_type: e.target.value })}
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text"
@@ -156,8 +177,10 @@ export default function Orders() {
               </select>
             </div>
             <div>
-              <label className="block text-text-muted text-sm mb-1">Quantity</label>
+              <label htmlFor="order-quantity" className="block text-text-muted text-sm mb-1">Quantity</label>
               <input
+                id="order-quantity"
+                name="quantity"
                 type="number"
                 step="0.0001"
                 autoComplete="off"
@@ -167,8 +190,10 @@ export default function Orders() {
               />
             </div>
             <div>
-              <label className="block text-text-muted text-sm mb-1">Broker</label>
+              <label htmlFor="order-broker" className="block text-text-muted text-sm mb-1">Broker</label>
               <select
+                id="order-broker"
+                name="broker"
                 value={newOrder.broker}
                 onChange={(e) => setNewOrder({ ...newOrder, broker: e.target.value })}
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text"
@@ -182,7 +207,7 @@ export default function Orders() {
             <div className="flex items-end gap-2">
               <button
                 type="submit"
-                disabled={createOrder.isPending}
+                disabled={createOrder.isPending || tradingHalted}
                 className="flex-1 px-4 py-2 bg-success text-white rounded-lg hover:bg-success/80 transition-colors disabled:opacity-50"
               >
                 {createOrder.isPending ? 'Creating...' : 'Create Order'}
@@ -245,6 +270,7 @@ export default function Orders() {
                         <>
                           <button
                             onClick={() => executeOrder.mutate(order.order_id)}
+                            disabled={tradingHalted}
                             className="p-1 text-success hover:bg-success/20 rounded"
                             title="Execute"
                           >

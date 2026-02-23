@@ -10,6 +10,7 @@ import type {
   CandleData,
   Order,
   OrderCreate,
+  EmergencyStatus,
 } from '../types';
 
 // Use environment variable for API base URL
@@ -127,6 +128,39 @@ export const ordersApi = {
 
   execute: async (orderId: string): Promise<Order> => {
     const { data } = await api.post<Order>(`/orders/${orderId}/execute`);
+    return data;
+  },
+};
+
+export const emergencyApi = {
+  getStatus: async (): Promise<EmergencyStatus> => {
+    const { data } = await api.get<EmergencyStatus>('/orders/emergency/status');
+    return data;
+  },
+
+  activate: async (reason: string, adminKey: string): Promise<EmergencyStatus> => {
+    const { data } = await api.post<EmergencyStatus>('/orders/emergency/activate', {
+      confirm: true,
+      reason,
+    }, {
+      headers: {
+        'X-Admin-Key': adminKey,
+        'X-Admin-User': 'ui-operator',
+      },
+    });
+    return data;
+  },
+
+  deactivate: async (reason: string, adminKey: string): Promise<EmergencyStatus> => {
+    const { data } = await api.post<EmergencyStatus>('/orders/emergency/deactivate', {
+      confirm: true,
+      reason,
+    }, {
+      headers: {
+        'X-Admin-Key': adminKey,
+        'X-Admin-User': 'ui-operator',
+      },
+    });
     return data;
   },
 };

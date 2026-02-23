@@ -1,11 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
-import { portfolioApi } from '../services/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { emergencyApi, ordersApi, portfolioApi } from '../services/api';
+import type { Position } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { Wallet, TrendingUp, TrendingDown, Target } from 'lucide-react';
 
 const COLORS = ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#a371f7', '#f0883e'];
 
 export default function Portfolio() {
+  const queryClient = useQueryClient();
+
   const { data: summary, isLoading: summaryLoading } = useQuery({
     queryKey: ['portfolio-summary'],
     queryFn: portfolioApi.getSummary,
@@ -24,6 +27,31 @@ export default function Portfolio() {
   const { data: performance } = useQuery({
     queryKey: ['portfolio-performance'],
     queryFn: portfolioApi.getPerformance,
+  });
+
+  const { data: emergencyStatus } = useQuery({
+    queryKey: ['emergency-status'],
+    queryFn: emergencyApi.getStatus,
+  });
+
+  const tradingHalted = Boolean(emergencyStatus?.trading_halted);
+
+  const closePosition = useMutation({
+    mutationFn: (position: Position) =>
+      ordersApi.create({
+        symbol: position.symbol,
+        side: position.side === 'LONG' ? 'SELL' : 'BUY',
+        order_type: 'MARKET',
+        quantity: position.quantity,
+        broker: 'paper',
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['portfolio-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['portfolio-positions'] });
+      queryClient.invalidateQueries({ queryKey: ['portfolio-allocation'] });
+      queryClient.invalidateQueries({ queryKey: ['portfolio-performance'] });
+    },
   });
 
   const formatCurrency = (value: number) => {
@@ -97,6 +125,7 @@ export default function Portfolio() {
                   dataKey="value"
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   labelLine={false}
+                  isAnimationActive={false}
                 >
                   {pieData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -122,7 +151,7 @@ export default function Portfolio() {
                 <Tooltip
                   contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
                 />
-                <Bar dataKey="value" fill="#58a6ff" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="value" fill="#58a6ff" radius={[4, 4, 0, 0]} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -132,6 +161,11 @@ export default function Portfolio() {
       {/* Positions Table */}
       <div className="bg-surface border border-border rounded-lg p-4">
         <h2 className="text-lg font-semibold text-text mb-4">Open Positions</h2>
+        {tradingHalted && (
+          <div className="mb-4 rounded-lg border border-danger/50 bg-danger/10 px-4 py-3 text-danger">
+            Emergency Stop attivo: chiusura posizioni via ordini a mercato temporaneamente bloccata.
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -144,6 +178,7 @@ export default function Portfolio() {
                 <th className="text-right py-3 px-4 text-text-muted font-medium">Market Value</th>
                 <th className="text-right py-3 px-4 text-text-muted font-medium">P&L</th>
                 <th className="text-right py-3 px-4 text-text-muted font-medium">P&L %</th>
+                <th className="text-center py-3 px-4 text-text-muted font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -164,6 +199,15 @@ export default function Portfolio() {
                     </td>
                     <td className={`py-3 px-4 text-right ${pnlPercent >= 0 ? 'text-success' : 'text-danger'}`}>
                       {pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <button
+                        onClick={() => closePosition.mutate(position)}
+                        disabled={closePosition.isPending || tradingHalted}
+                        className="px-3 py-1 rounded border border-border text-text hover:bg-border/40 disabled:opacity-50"
+                      >
+                        {closePosition.isPending ? 'Closing...' : 'Close'}
+                      </button>
                     </td>
                   </tr>
                 );

@@ -225,6 +225,18 @@
             color: #ef4444;
             border: 1px solid #ef4444;
         }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
         
         /* Features */
         .features {
@@ -477,7 +489,8 @@
                     <p>Get early access and 7 days free trial. No credit card required.</p>
                     <form id="waitlist-form">
                         <div class="form-group">
-                            <input type="email" id="email" autocomplete="email" placeholder="Enter your email" required>
+                            <label for="email" class="sr-only">Email address</label>
+                            <input type="email" id="email" name="email" autocomplete="email" placeholder="Enter your email" required>
                             <button type="submit" class="btn btn-primary">Join</button>
                         </div>
                         <div class="form-message" id="form-message"></div>

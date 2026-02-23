@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Bot, Menu, X } from 'lucide-react';
 import { ToastContainer, useToast } from '../ui/Toast';
+import { emergencyApi } from '../../services/api';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -13,6 +15,57 @@ const navItems = [
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { toasts, removeToast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: emergencyStatus } = useQuery({
+    queryKey: ['emergency-status'],
+    queryFn: emergencyApi.getStatus,
+    refetchInterval: 5000,
+  });
+
+  const activateEmergency = useMutation({
+    mutationFn: ({ reason, adminKey }: { reason: string; adminKey: string }) =>
+      emergencyApi.activate(reason, adminKey),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['emergency-status'] });
+    },
+  });
+
+  const deactivateEmergency = useMutation({
+    mutationFn: ({ reason, adminKey }: { reason: string; adminKey: string }) =>
+      emergencyApi.deactivate(reason, adminKey),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['emergency-status'] });
+    },
+  });
+
+  const isTradingHalted = Boolean(emergencyStatus?.trading_halted);
+  const isMutating = activateEmergency.isPending || deactivateEmergency.isPending;
+
+  const getAdminKey = (): string | null => {
+    const fromStorage = window.localStorage.getItem('admin_emergency_key');
+    if (fromStorage) return fromStorage;
+    const entered = window.prompt('Inserisci X-Admin-Key per azione di emergenza');
+    if (!entered) return null;
+    window.localStorage.setItem('admin_emergency_key', entered);
+    return entered;
+  };
+
+  const handleEmergencyClick = () => {
+    const adminKey = getAdminKey();
+    if (!adminKey) return;
+
+    if (isTradingHalted) {
+      const ok = window.confirm('Confermi riattivazione trading? BUY e SELL torneranno abilitati.');
+      if (!ok) return;
+      deactivateEmergency.mutate({ reason: 'Manual resume from dashboard', adminKey });
+      return;
+    }
+
+    const ok = window.confirm('EMERGENCY STOP: bloccare subito BUY e SELL su tutta l\'app?');
+    if (!ok) return;
+    activateEmergency.mutate({ reason: 'Manual emergency stop from dashboard', adminKey });
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -76,9 +129,25 @@ export default function Layout() {
 
           {/* Status */}
           <div className="p-4 border-t border-border">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="w-2 h-2 bg-success rounded-full live-indicator" />
-              <span className="text-text-muted">Live Mode Active</span>
+            <div className="flex items-center justify-between gap-2 text-sm">
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${isTradingHalted ? 'bg-danger' : 'bg-success'} live-indicator`} />
+                <span className="text-text-muted">
+                  {isTradingHalted ? 'Emergency Stop Active' : 'Live Mode Active'}
+                </span>
+              </div>
+              <button
+                onClick={handleEmergencyClick}
+                disabled={isMutating}
+                className={`px-2 py-1 rounded border text-xs disabled:opacity-50 ${
+                  isTradingHalted
+                    ? 'border-success/50 text-success hover:bg-success/10'
+                    : 'border-danger/50 text-danger hover:bg-danger/10'
+                }`}
+                title={isTradingHalted ? 'Resume trading' : 'Emergency stop trading'}
+              >
+                {isMutating ? '...' : isTradingHalted ? 'Resume' : 'STOP'}
+              </button>
             </div>
           </div>
         </aside>

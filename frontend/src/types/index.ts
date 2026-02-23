@@ -104,6 +104,13 @@ export interface OrderCreate {
   broker?: string;
 }
 
+export interface EmergencyStatus {
+  trading_halted: boolean;
+  changed_at?: string | null;
+  reason?: string | null;
+  changed_by?: string | null;
+}
+
 export interface Allocation {
   by_asset_class: Record<string, number>;
   by_sector: Record<string, number>;
