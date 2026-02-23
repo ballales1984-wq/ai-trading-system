@@ -190,6 +190,7 @@ if LANDING_DIR.exists():
 
 # Serve frontend in production
 if FRONTEND_DIR.exists():
+    app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
     app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR / "assets")), name="assets")
 
 
@@ -224,6 +225,12 @@ async def serve_spa():
     frontend_file = FRONTEND_DIR / "index.html"
     if frontend_file.exists():
         return FileResponse(str(frontend_file))
+    
+    # Try to serve from /frontend path
+    frontend_file = Path("/app/frontend/dist/index.html")
+    if frontend_file.exists():
+        return FileResponse(str(frontend_file))
+    
     return {"error": "Frontend not built"}
 
 
