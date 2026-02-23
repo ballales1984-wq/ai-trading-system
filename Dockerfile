@@ -76,5 +76,5 @@ EXPOSE 10000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:10000/api/v1/health || exit 1
 
-# Comando per avviare FastAPI - usa shell form per better compatibility
-CMD uvicorn app.main:app --host 0.0.0.0 --port 10000 --log-level info
+# Comando per avviare FastAPI - usa python -m uvicorn per evitare PATH issues
+CMD python -m uvicorn app.main:app --host 0.0.0.0 --port 10000 --log-level info
