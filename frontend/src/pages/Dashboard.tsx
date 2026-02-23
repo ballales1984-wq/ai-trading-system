@@ -40,11 +40,11 @@ export default function Dashboard() {
     return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
   };
 
-  const chartData = history?.history.map((entry) => ({
+  const chartData = history?.history ? history.history.map((entry) => ({
     date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     value: entry.value,
     return: entry.daily_return,
-  })) || [];
+  })) : [];
 
   // Show loading skeleton
   if (summaryLoading && !summary) {
@@ -163,7 +163,7 @@ export default function Dashboard() {
           <div className="h-48 flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-        ) : markets?.markets && markets.markets.length > 0 ? (
+        ) : markets?.markets && Array.isArray(markets.markets) && markets.markets.length > 0 ? (
           <div className="overflow-x-auto table-responsive">
             <table className="w-full">
               <thead>

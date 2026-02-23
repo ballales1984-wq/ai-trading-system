@@ -80,6 +80,13 @@ body {
   .badge-danger {
     @apply bg-danger/15 text-danger;
   }
+
+  /* Skeleton animation */
+  .skeleton {
+    background-color: rgba(88, 166, 255, 0.2);
+    border-radius: 0.25rem;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
 }
 
 /* Live indicator pulse animation - now defined in tailwind.config.js */

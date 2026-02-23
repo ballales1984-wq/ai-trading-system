@@ -8,7 +8,7 @@ import os
 from functools import lru_cache
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 from pydantic.config import ConfigDict
 
@@ -32,7 +32,6 @@ class Settings(BaseSettings):
     
     # CORS - Allow Vercel frontend and local development
     cors_origins: List[str] = [
-        "*",  # Allow all for development (remove in production)
         "https://*.vercel.app",  # Vercel deployments
         "http://localhost:3000",  # Local React dev server
         "http://localhost:5173",  # Local Vite dev server
@@ -89,7 +88,7 @@ class Settings(BaseSettings):
     paper_initial_balance: float = 1000000.0
     
     # Security
-    secret_key: str = Field(default="dev-secret-key", env="SECRET_KEY")
+    secret_key: str = Field(default="", env="SECRET_KEY")
     jwt_algorithm: str = "HS256"
     jwt_expiration_minutes: int = 60
     
@@ -106,6 +105,17 @@ class Settings(BaseSettings):
     # Performance
     workers: int = 4
     worker_timeout: int = 300
+    
+    @field_validator('secret_key')
+    @classmethod
+    def validate_secret_key(cls, v: str) -> str:
+        """Validate secret key is set in production."""
+        environment = os.getenv('ENVIRONMENT', 'development')
+        if environment == 'production' and not v:
+            raise ValueError("SECRET_KEY must be set in production environment")
+        if v and len(v) < 32:
+            raise ValueError("SECRET_KEY must be at least 32 characters")
+        return v
 
 
 @lru_cache()
