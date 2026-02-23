@@ -182,6 +182,17 @@ class RedisCacheManager:
         except Exception as e:
             logger.error(f"Redis DELETE error: {e}")
             return 0
+
+    async def unlink(self, *keys: str) -> int:
+        """Asynchronously remove one or more keys."""
+        if not self._redis or not keys:
+            return 0
+
+        try:
+            return await self._redis.unlink(*keys)
+        except Exception as e:
+            logger.error(f"Redis UNLINK error: {e}")
+            return 0
     
     async def exists(self, *keys: str) -> int:
         """Check if keys exist."""
@@ -387,6 +398,27 @@ class RedisCacheManager:
         except Exception as e:
             logger.error(f"Redis KEYS error for pattern '{pattern}': {e}")
             return []
+
+    async def scan(
+        self,
+        cursor: int = 0,
+        match: Optional[str] = None,
+        count: int = 100,
+    ) -> tuple[int, List[str]]:
+        """Incrementally scan keys without blocking Redis."""
+        if not self._redis:
+            return 0, []
+
+        try:
+            next_cursor, keys = await self._redis.scan(
+                cursor=cursor,
+                match=match,
+                count=count,
+            )
+            return int(next_cursor), keys
+        except Exception as e:
+            logger.error(f"Redis SCAN error for match '{match}': {e}")
+            return 0, []
     
     async def delete_pattern(self, pattern: str) -> int:
         """Delete all keys matching pattern."""

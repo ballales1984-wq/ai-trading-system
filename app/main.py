@@ -16,6 +16,7 @@ from fastapi.exceptions import RequestValidationError
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
 from app.api.routes import health, orders, portfolio, strategy, risk, market, waitlist
+from app.api.routes import cache
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -179,6 +180,12 @@ app.include_router(
     waitlist.router,
     prefix=f"{settings.api_prefix}",
     tags=["Waitlist"]
+)
+
+app.include_router(
+    cache.router,
+    prefix=f"{settings.api_prefix}/cache",
+    tags=["Cache"]
 )
 
 # Serve landing page
