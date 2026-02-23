@@ -6,6 +6,7 @@ Institutional-grade logging with JSON formatting and context.
 
 import json
 import logging
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -67,10 +68,18 @@ def setup_logging(
     """
     level = log_level or settings.log_level
     file_path = log_file or settings.log_file
+    running_on_vercel = bool(os.getenv("VERCEL"))
+    if running_on_vercel:
+        # Vercel runtime filesystem is read-only for app code paths.
+        file_path = None
     
     # Create logs directory if needed
     if file_path:
-        Path(file_path).parent.mkdir(parents=True, exist_ok=True)
+        try:
+            Path(file_path).parent.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            # Fall back to console-only logging when filesystem is not writable.
+            file_path = None
     
     # Configure root logger
     root_logger = logging.getLogger()
@@ -87,10 +96,13 @@ def setup_logging(
     
     # File handler (optional)
     if file_path:
-        file_handler = logging.FileHandler(file_path)
-        file_handler.setLevel(getattr(logging, level.upper()))
-        file_handler.setFormatter(JSONFormatter())
-        root_logger.addHandler(file_handler)
+        try:
+            file_handler = logging.FileHandler(file_path)
+            file_handler.setLevel(getattr(logging, level.upper()))
+            file_handler.setFormatter(JSONFormatter())
+            root_logger.addHandler(file_handler)
+        except OSError:
+            logging.warning("File logging disabled: unable to open log file")
     
     # Set third-party loggers to WARNING
     logging.getLogger("uvicorn").setLevel(logging.WARNING)
