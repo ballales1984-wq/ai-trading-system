@@ -105,6 +105,13 @@ class Settings(BaseSettings):
     # Performance
     workers: int = 4
     worker_timeout: int = 300
+
+    # Payments (Stripe)
+    stripe_secret_key: str = Field(default="", env="STRIPE_SECRET_KEY")
+    stripe_webhook_secret: str = Field(default="", env="STRIPE_WEBHOOK_SECRET")
+    stripe_default_price_id: str = Field(default="", env="STRIPE_DEFAULT_PRICE_ID")
+    stripe_success_url: str = Field(default="https://example.com/access?paid=1", env="STRIPE_SUCCESS_URL")
+    stripe_cancel_url: str = Field(default="https://example.com/access?canceled=1", env="STRIPE_CANCEL_URL")
     
     @field_validator('secret_key')
     @classmethod

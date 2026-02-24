@@ -63,7 +63,7 @@ export default function Marketing() {
             <Link to="/legal/risk" className="text-sm text-text-muted hover:text-text">
               Risk Disclosure
             </Link>
-            <Link to="/dashboard" className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/80">
+            <Link to="/access" className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/80">
               Dashboard
             </Link>
           </div>

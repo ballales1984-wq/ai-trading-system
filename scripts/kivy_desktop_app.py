@@ -11,9 +11,12 @@ MVP features:
 from __future__ import annotations
 
 import ctypes
+import csv
+import io
 import json
 import os
 import socket
+import subprocess
 import sys
 import threading
 import traceback
@@ -169,6 +172,55 @@ def _is_port_open(host: str, port: int, timeout: float = 0.5) -> bool:
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
         sock.settimeout(timeout)
         return sock.connect_ex((host, port)) == 0
+
+
+def _find_listening_pid(port: int) -> Optional[int]:
+    """Return PID listening on TCP port, if discoverable on Windows."""
+    try:
+        result = subprocess.run(
+            ["netstat", "-aon", "-p", "tcp"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except Exception:
+        return None
+
+    for line in result.stdout.splitlines():
+        parts = line.split()
+        if len(parts) < 5:
+            continue
+        proto, local_addr, _foreign_addr, state, pid_str = parts[:5]
+        if proto.upper() != "TCP" or state.upper() != "LISTENING":
+            continue
+        if not local_addr.endswith(f":{port}"):
+            continue
+        try:
+            return int(pid_str)
+        except ValueError:
+            return None
+    return None
+
+
+def _describe_port_blocker(port: int) -> str:
+    pid = _find_listening_pid(port)
+    if pid is None:
+        return f"Port {port} already in use."
+
+    try:
+        result = subprocess.run(
+            ["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        row = next(csv.reader(io.StringIO(result.stdout.strip())), None)
+        if row and row[0] and row[0] != "INFO: No tasks are running which match the specified criteria.":
+            return f"Port {port} already in use by PID {pid} ({row[0]})."
+    except Exception:
+        pass
+
+    return f"Port {port} already in use by PID {pid}."
 
 
 class DATA_BLOB(ctypes.Structure):
@@ -514,6 +566,13 @@ class RootWidget(BoxLayout):
     def start_backend(self) -> None:
         if self._server_thread and self._server_thread.is_alive():
             self._set_message("Backend already running.")
+            return
+
+        if _is_port_open(self.host, self.port):
+            conflict = _describe_port_blocker(self.port)
+            self._set_status(False)
+            self._set_message(f"{conflict} Close it, then retry Start Backend.")
+            _append_runtime_log(f"Start backend blocked: {conflict}")
             return
 
         self._backend_start_applied = self._apply_keys_to_env()

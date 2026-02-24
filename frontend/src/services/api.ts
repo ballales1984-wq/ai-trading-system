@@ -208,6 +208,17 @@ export interface WaitlistResponse {
   position?: number;
 }
 
+export interface StripeCheckoutRequest {
+  email?: string;
+  price_id?: string;
+  quantity?: number;
+}
+
+export interface StripeCheckoutResponse {
+  checkout_url: string;
+  session_id: string;
+}
+
 export const waitlistApi = {
   join: async (payload: WaitlistRequest): Promise<WaitlistResponse> => {
     const { data } = await api.post<WaitlistResponse>('/waitlist', payload);
@@ -216,6 +227,15 @@ export const waitlistApi = {
 
   count: async (): Promise<{ count: number }> => {
     const { data } = await api.get<{ count: number }>('/waitlist/count');
+    return data;
+  },
+};
+
+export const paymentsApi = {
+  createStripeCheckoutSession: async (
+    payload: StripeCheckoutRequest
+  ): Promise<StripeCheckoutResponse> => {
+    const { data } = await api.post<StripeCheckoutResponse>('/payments/stripe/checkout-session', payload);
     return data;
   },
 };
