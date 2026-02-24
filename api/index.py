@@ -119,7 +119,7 @@ except ModuleNotFoundError:  # pragma: no cover - environment dependent
 
 
 class CreateCheckoutRequest(BaseModel):
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     price_id: Optional[str] = None
     quantity: int = 1
 
@@ -481,3 +481,4 @@ async def health_client_events(event: ClientEvent) -> Dict[str, Any]:
     }
     _client_events.append(row)
     return {"success": True, "event_id": row["id"]}
+
