@@ -16,7 +16,6 @@ import os
 import socket
 import sys
 import threading
-import time
 import traceback
 import webbrowser
 from datetime import datetime
@@ -32,6 +31,11 @@ from kivy.app import App
 from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
+
+
+_SINGLE_INSTANCE_MUTEX_NAME = "Local\\AITradingSystemDesktopMutex"
+_ERROR_ALREADY_EXISTS = 183
+_app_mutex_handle = None
 
 try:
     from tkinter import Tk, filedialog
@@ -253,6 +257,8 @@ class RootWidget(BoxLayout):
         super().__init__(**kwargs)
         self._server = None
         self._server_thread = None
+        self._backend_start_wait_ticks = 0
+        self._backend_start_applied = 0
         _append_runtime_log("RootWidget initialized")
         Clock.schedule_once(lambda *_: self.bootstrap_keys(), 0.2)
 
@@ -510,26 +516,35 @@ class RootWidget(BoxLayout):
             self._set_message("Backend already running.")
             return
 
-        applied = self._apply_keys_to_env()
+        self._backend_start_applied = self._apply_keys_to_env()
+        self._backend_start_wait_ticks = 0
         self._server_thread = threading.Thread(target=self._run_server, daemon=True)
         self._server_thread.start()
+        self._set_message("Starting backend...")
+        Clock.schedule_interval(self._poll_backend_start, 0.1)
 
-        for _ in range(100):
-            if _is_port_open(self.host, self.port):
-                self._set_status(True)
-                if applied == 0:
-                    self._set_message(
-                        "Backend started with 0 keys. Load .env or type keys before live data."
-                    )
-                else:
-                    self._set_message(f"Backend started. Loaded {applied} local API keys.")
-                return
-            time.sleep(0.1)
+    def _poll_backend_start(self, _dt: float) -> bool:
+        self._backend_start_wait_ticks += 1
+        if _is_port_open(self.host, self.port):
+            self._set_status(True)
+            if self._backend_start_applied == 0:
+                self._set_message(
+                    "Backend started with 0 keys. Load .env or type keys before live data."
+                )
+            else:
+                self._set_message(
+                    f"Backend started. Loaded {self._backend_start_applied} local API keys."
+                )
+            return False
 
-        self._set_status(False)
-        self._set_message(
-            "Backend did not start in time. Check desktop_crash.log and verify port 8000 is free."
-        )
+        if self._backend_start_wait_ticks >= 100:
+            self._set_status(False)
+            self._set_message(
+                "Backend did not start in time. Check desktop_crash.log and verify port 8000 is free."
+            )
+            return False
+
+        return True
 
     def stop_backend(self) -> None:
         if self._server is not None:
@@ -715,8 +730,27 @@ def _show_error_dialog(message: str) -> None:
         pass
 
 
+def _acquire_single_instance_lock() -> bool:
+    global _app_mutex_handle
+    try:
+        kernel32 = ctypes.windll.kernel32
+        kernel32.CreateMutexW.argtypes = [ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR]
+        kernel32.CreateMutexW.restype = wintypes.HANDLE
+        kernel32.GetLastError.restype = wintypes.DWORD
+        handle = kernel32.CreateMutexW(None, False, _SINGLE_INSTANCE_MUTEX_NAME)
+        if not handle:
+            return True
+        _app_mutex_handle = handle
+        return kernel32.GetLastError() != _ERROR_ALREADY_EXISTS
+    except Exception:
+        return True
+
+
 if __name__ == "__main__":
     try:
+        if not _acquire_single_instance_lock():
+            _show_error_dialog("AI Trading System Desktop is already running.")
+            raise SystemExit(0)
         _append_runtime_log("Desktop app bootstrap")
         KivyDesktopApp().run()
     except Exception:
