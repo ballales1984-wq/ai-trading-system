@@ -126,4 +126,72 @@ export const ordersApi = {
   },
 };
 
+// Stripe Payment API
+export interface CreateCheckoutRequest {
+  email?: string;
+  price_id?: string;
+  quantity?: number;
+}
+
+export interface CreateCheckoutResponse {
+  checkout_url: string;
+  session_id: string;
+}
+
+export const paymentApi = {
+  /**
+   * Create a Stripe checkout session
+   * Uses backend API to generate Stripe checkout URL
+   */
+  createCheckoutSession: async (payload: CreateCheckoutRequest): Promise<CreateCheckoutResponse> => {
+    const { data } = await api.post<CreateCheckoutResponse>(
+      '/payments/stripe/checkout-session',
+      payload
+    );
+    return data;
+  },
+
+  /**
+   * Redirect to Stripe checkout
+   * Creates a checkout session and redirects the user
+   */
+  redirectToCheckout: async (email?: string, priceId?: string): Promise<void> => {
+    const response = await paymentApi.createCheckoutSession({
+      email,
+      price_id: priceId,
+      quantity: 1,
+    });
+    
+    // Redirect to Stripe checkout
+    window.location.href = response.checkout_url;
+  },
+
+  /**
+   * Get Stripe payment link from environment
+   * For simple payment link redirect (no backend required)
+   */
+  getPaymentLink: (): string | undefined => {
+    return import.meta.env.VITE_STRIPE_PAYMENT_LINK;
+  },
+
+  /**
+   * Check if Stripe payment is configured
+   */
+  isConfigured: (): boolean => {
+    return !!paymentApi.getPaymentLink();
+  },
+
+  /**
+   * Redirect to Stripe payment link
+   */
+  redirectToPaymentLink: (): void => {
+    const paymentLink = paymentApi.getPaymentLink();
+    if (paymentLink) {
+      window.location.href = paymentLink;
+    } else {
+      console.error('Stripe payment link not configured');
+    }
+  },
+};
+
 export default api;

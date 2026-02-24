@@ -9,5 +9,8 @@
     "install:frontend": "npm install --prefix frontend --include=dev",
     "build:frontend": "npm run build --prefix frontend",
     "build": "npm run install:frontend && npm run build:frontend"
+  },
+  "dependencies": {
+    "stripe": "^20.3.1"
   }
 }

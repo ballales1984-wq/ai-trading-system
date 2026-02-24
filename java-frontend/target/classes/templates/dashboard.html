@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Trading Dashboard</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.2/css/bootstrap.min.css}">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <script th:src="@{/webjars/jquery/3.7.1/jquery.min.js}"></script>
+    <script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <span class="text-warning">AI</span> Trading System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" th:classappend="${page == 'dashboard'} ? 'active'" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:classappend="${page == 'market'} ? 'active'" href="/market">Market</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:classappend="${page == 'signals'} ? 'active'" href="/signals">Signals</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:classappend="${page == 'portfolio'} ? 'active'" href="/portfolio">Portfolio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:classappend="${page == 'trade'} ? 'active'" href="/trade">Trade</a>
+                    </li>
+                </ul>
+                <span class="navbar-text text-success">
+                    <span class="badge bg-success">Live</span>
+                    Connected to Python Backend
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Portfolio Summary -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Total Portfolio Value</h6>
+                        <h2 th:text="'$' + ${#numbers.formatDecimal(portfolio.totalValue, 1, 2)}">$125,000.00</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card" th:classappend="${portfolio.unrealizedPnL >= 0} ? 'bg-success' : 'bg-danger'" th:if="${portfolio != null}">
+                    <div class="card-body text-white">
+                        <h6 class="card-title">Unrealized P&L</h6>
+                        <h2 th:text="'$' + ${#numbers.formatDecimal(portfolio.unrealizedPnL, 1, 2)}">$3,500.00</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Win Rate</h6>
+                        <h2 th:if="${portfolio != null}" th:text="${#numbers.formatPercent(portfolio.winRate, 1, 1)}">68%</h2>
+                        <h2 th:unless="${portfolio != null}">--</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body">
+                        <h6 class="card-title">Sharpe Ratio</h6>
+                        <h2 th:if="${portfolio != null}" th:text="${#numbers.formatDecimal(portfolio.sharpeRatio, 1, 2)}">1.45</h2>
+                        <h2 th:unless="${portfolio != null}">--</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trading Signals -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">AI Trading Signals</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Symbol</th>
+                                        <th>Action</th>
+                                        <th>Confidence</th>
+                                        <th>Target Price</th>
+                                        <th>Stop Loss</th>
+                                        <th>RSI</th>
+                                        <th>MACD</th>
+                                        <th>EMA 20</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="signal : ${signals}">
+                                        <td><strong th:text="${signal.symbol}">BTCUSDT</strong></td>
+                                        <td>
+                                            <span class="badge" 
+                                                  th:classappend="${signal.action == 'BUY'} ? 'bg-success' : (${signal.action == 'SELL'} ? 'bg-danger' : 'bg-secondary')"
+                                                  th:text="${signal.action}">BUY</span>
+                                        </td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar" 
+                                                     th:style="'width: ' + ${signal.confidence * 100} + '%'"
+                                                     th:classappend="${signal.confidence >= 0.7} ? 'bg-success' : (${signal.confidence >= 0.5} ? 'bg-warning' : 'bg-danger')">
+                                                    <span th:text="${#numbers.formatPercent(signal.confidence, 1, 0)}">78%</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td th:text="'$' + ${#numbers.formatDecimal(signal.targetPrice, 1, 2)}">$55,000.00</td>
+                                        <td th:text="'$' + ${#numbers.formatDecimal(signal.stopLoss, 1, 2)}">$49,000.00</td>
+                                        <td th:text="${#numbers.formatDecimal(signal.rsi, 1, 1)}">45.2</td>
+                                        <td th:text="${#numbers.formatDecimal(signal.macd, 1, 2)}">125.5</td>
+                                        <td th:text="'$' + ${#numbers.formatDecimal(signal.ema20, 1, 2)}">$51,500.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Positions and Market Data -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">Open Positions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Symbol</th>
+                                        <th>Side</th>
+                                        <th>Quantity</th>
+                                        <th>Entry</th>
+                                        <th>Current</th>
+                                        <th>P&L</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="position : ${portfolio.positions}">
+                                        <td th:text="${position.symbol}">BTCUSDT</td>
+                                        <td>
+                                            <span class="badge" th:classappend="${position.side == 'LONG'} ? 'bg-success' : 'bg-danger'" 
+                                                  th:text="${position.side}">LONG</span>
+                                        </td>
+                                        <td th:text="${#numbers.formatDecimal(position.quantity, 1, 4)}">1.5</td>
+                                        <td th:text="'$' + ${#numbers.formatDecimal(position.entryPrice, 1, 2)}">$50,000</td>
+                                        <td th:text="'$' + ${#numbers.formatDecimal(position.currentPrice, 1, 2)}">$52,000</td>
+                                        <td th:classappend="${position.unrealizedPnL >= 0} ? 'text-success' : 'text-danger'" 
+                                            th:text="'$' + ${#numbers.formatDecimal(position.unrealizedPnL, 1, 2)}">$3,000</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">Available Symbols</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6 mb-2" th:each="symbol : ${symbols}">
+                                <div class="d-grid">
+                                    <a th:href="@{/market(symbol=${symbol})}" class="btn btn-outline-primary btn-sm" th:text="${symbol}">BTCUSDT</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <p class="mb-0">AI Trading System &copy; 2026 | Powered by Python Backend</p>
+    </footer>
+
+    <script>
+        // Auto-refresh data every 30 seconds
+        setInterval(function() {
+            location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>

@@ -183,6 +183,9 @@ class Settings(BaseSettings):
     # Stripe
     stripe_api_key: str = Field(default="", env="STRIPE_API_KEY")
     stripe_webhook_secret: str = Field(default="", env="STRIPE_WEBHOOK_SECRET")
+    stripe_default_price_id: str = Field(default="", env="STRIPE_DEFAULT_PRICE_ID")
+    stripe_success_url: str = Field(default="", env="STRIPE_SUCCESS_URL")
+    stripe_cancel_url: str = Field(default="", env="STRIPE_CANCEL_URL")
     
     # Pricing plans
     plan_basic_price: float = 19.0  # EUR/month

@@ -1,0 +1,125 @@
+{
+  "generation": 0,
+  "config": {
+    "population_size": 10,
+    "elite_size": 2,
+    "mutation_rate": 0.1,
+    "crossover_rate": 0.7
+  },
+  "population": [
+    {
+      "id": "ind_46048",
+      "params": {
+        "threshold": 0.032331913124436305,
+        "period": 5
+      },
+      "fitness": 0.5,
+      "generation": 0,
+      "history": []
+    },
+    {
+      "id": "ind_23434",
+      "params": {
+        "threshold": 0.012999700836370337,
+        "period": 9
+      },
+      "fitness": 0.5,
+      "generation": 0,
+      "history": []
+    },
+    {
+      "id": "ind_21395",
+      "params": {
+        "threshold": 0.03415827488372265,
+        "period": 22
+      },
+      "fitness": 0.5,
+      "generation": 0,
+      "history": []
+    },
+    {
+      "id": "ind_13905",
+      "params": {
+        "threshold": 0.029934133110002946,
+        "period": 6
+      },
+      "fitness": 0.5,
+      "generation": 0,
+      "history": []
+    },
+    {
+      "id": "ind_76237",
+      "params": {
+        "threshold": 0.00559106675321803,
+        "period": 12
+      },
+      "fitness": 0.5,
+      "generation": 0,
+      "history": []
+    },
+    {
+      "id": "ind_36062",
+      "params": {
+        "threshold": 0.030498917723449037,
+        "period": 22
+      },
+      "fitness": 0.5,
+      "generation": 0,
+      "history": []
+    },
+    {
+      "id": "ind_81426",
+      "params": {
+        "threshold": 0.03608496103319777,
+        "period": 27
+      },
+      "fitness": 0.5,
+      "generation": 0,
+      "history": []
+    },
+    {
+      "id": "ind_87236",
+      "params": {
+        "threshold": 0.02155647122712128,
+        "period": 19
+      },
+      "fitness": 0.5,
+      "generation": 0,
+      "history": []
+    },
+    {
+      "id": "ind_30926",
+      "params": {
+        "threshold": 0.014631344703302473,
+        "period": 5
+      },
+      "fitness": 0.5,
+      "generation": 0,
+      "history": []
+    },
+    {
+      "id": "ind_46421",
+      "params": {
+        "threshold": 0.03520883035442312,
+        "period": 15
+      },
+      "fitness": 0.5,
+      "generation": 0,
+      "history": []
+    }
+  ],
+  "best_individual": null,
+  "history": [],
+  "param_space": {
+    "threshold": [
+      0.001,
+      0.05,
+      "float"
+    ],
+    "period": [
+      5,
+      30,
+      "int"
+    ]
+  }
+}

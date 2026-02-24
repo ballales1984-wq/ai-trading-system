@@ -3,6 +3,7 @@
 interface ImportMetaEnv {
   readonly VITE_API_BASE_URL: string
   readonly VITE_APP_TITLE: string
+  readonly VITE_STRIPE_PAYMENT_LINK: string
   // Add more env variables as needed
 }
 

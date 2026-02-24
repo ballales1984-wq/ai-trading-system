@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Signals - AI Trading</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.2/css/bootstrap.min.css}">
+    <script th:src="@{/webjars/jquery/3.7.1/jquery.min.js}"></script>
+    <script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/"><span class="text-warning">AI</span> Trading</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/">Dashboard</a>
+                <a class="nav-link" href="/market">Market</a>
+                <a class="nav-link active" href="/signals">Signals</a>
+                <a class="nav-link" href="/portfolio">Portfolio</a>
+                <a class="nav-link" href="/trade">Trade</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2>AI Trading Signals</h2>
+        
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Action</th>
+                        <th>Confidence</th>
+                        <th>Target</th>
+                        <th>Stop Loss</th>
+                        <th>RSI</th>
+                        <th>MACD</th>
+                        <th>EMA20</th>
+                        <th>EMA50</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="signal : ${signals}">
+                        <td><strong th:text="${signal.symbol}">BTCUSDT</strong></td>
+                        <td>
+                            <span class="badge fs-6" 
+                                  th:classappend="${signal.action == 'BUY'} ? 'bg-success' : (${signal.action == 'SELL'} ? 'bg-danger' : 'bg-secondary')"
+                                  th:text="${signal.action}">BUY</span>
+                        </td>
+                        <td>
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar" 
+                                     th:style="'width: ' + ${signal.confidence * 100} + '%'"
+                                     th:classappend="${signal.confidence >= 0.7} ? 'bg-success' : (${signal.confidence >= 0.5} ? 'bg-warning' : 'bg-danger')">
+                                    <span th:text="${#numbers.formatPercent(signal.confidence, 1, 0)}">78%</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td th:text="'$' + ${#numbers.formatDecimal(signal.targetPrice, 1, 2)}">$55,000</td>
+                        <td th:text="'$' + ${#numbers.formatDecimal(signal.stopLoss, 1, 2)}">$49,000</td>
+                        <td th:text="${#numbers.formatDecimal(signal.rsi, 1, 1)}">45.2</td>
+                        <td th:text="${#numbers.formatDecimal(signal.macd, 1, 2)}">125.5</td>
+                        <td th:text="'$' + ${#numbers.formatDecimal(signal.ema20, 1, 2)}">$51,500</td>
+                        <td th:text="'$' + ${#numbers.formatDecimal(signal.ema50, 1, 2)}">$50,500</td>
+                        <td th:text="${#temporals.format(T(java.time.Instant).ofEpochMilli(signal.timestamp), 'HH:mm:ss')}">14:30:00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
