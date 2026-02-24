@@ -6,13 +6,15 @@ Important:
 """
 
 from datetime import datetime, timedelta
+import json
+import os
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 
 app = FastAPI(
@@ -61,6 +63,18 @@ class OrderCreate(BaseModel):
     broker: str = "demo"
 
 
+class WaitlistEntry(BaseModel):
+    email: EmailStr
+    source: str = "landing_page"
+
+
+class ClientEvent(BaseModel):
+    level: str = "error"
+    message: str
+    source: str = "frontend"
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
 _positions: List[Position] = [
     Position(
         position_id=str(uuid4()),
@@ -96,6 +110,27 @@ _positions: List[Position] = [
 
 _orders: Dict[str, Dict[str, Any]] = {}
 _waitlist: List[Dict[str, Any]] = []
+_client_events: List[Dict[str, Any]] = []
+
+try:
+    import stripe
+except ModuleNotFoundError:  # pragma: no cover - environment dependent
+    stripe = None  # type: ignore[assignment]
+
+
+class CreateCheckoutRequest(BaseModel):
+    email: Optional[EmailStr] = None
+    price_id: Optional[str] = None
+    quantity: int = 1
+
+
+class CreateCheckoutResponse(BaseModel):
+    checkout_url: str
+    session_id: str
+
+
+def _stripe_secret_key() -> str:
+    return (os.getenv("STRIPE_SECRET_KEY", "") or os.getenv("STRIPE_API_KEY", "")).strip()
 
 
 @app.get("/")
@@ -264,6 +299,85 @@ async def market_orderbook(symbol: str) -> Dict[str, Any]:
     }
 
 
+@app.get("/api/v1/market/news")
+async def market_news(query: str = Query("crypto"), limit: int = Query(8, ge=1, le=50)) -> Dict[str, Any]:
+    now = datetime.utcnow().isoformat()
+    items = [
+        {
+            "id": f"news-{idx}",
+            "title": f"{query.title()} market update #{idx}",
+            "source": "internal-fallback",
+            "url": "https://example.com/news",
+            "sentiment_score": 0.0,
+            "timestamp": now,
+        }
+        for idx in range(1, limit + 1)
+    ]
+    return {"query": query, "count": len(items), "items": items}
+
+
+@app.post("/api/v1/payments/stripe/checkout-session", response_model=CreateCheckoutResponse)
+async def create_checkout_session(payload: CreateCheckoutRequest) -> CreateCheckoutResponse:
+    if stripe is None:
+        raise HTTPException(status_code=503, detail="Stripe SDK not installed on server.")
+
+    secret = _stripe_secret_key()
+    if not secret:
+        raise HTTPException(status_code=503, detail="Stripe is not configured yet (missing STRIPE_SECRET_KEY).")
+
+    price_id = (payload.price_id or os.getenv("STRIPE_DEFAULT_PRICE_ID", "")).strip()
+    if not price_id:
+        raise HTTPException(status_code=400, detail="Missing Stripe price id (STRIPE_DEFAULT_PRICE_ID).")
+
+    success_url = (os.getenv("STRIPE_SUCCESS_URL", "") or "").strip()
+    cancel_url = (os.getenv("STRIPE_CANCEL_URL", "") or "").strip()
+    if not success_url or not cancel_url:
+        raise HTTPException(status_code=503, detail="Stripe redirect URLs not configured.")
+
+    stripe.api_key = secret
+    try:
+        session = stripe.checkout.Session.create(
+            mode="payment",
+            line_items=[{"price": price_id, "quantity": max(1, payload.quantity)}],
+            success_url=success_url,
+            cancel_url=cancel_url,
+            customer_email=payload.email or None,
+            metadata={"source": "web_access_gate"},
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Unable to create Stripe checkout session: {exc}") from exc
+
+    if not session.url:
+        raise HTTPException(status_code=502, detail="Stripe checkout session has no URL.")
+
+    return CreateCheckoutResponse(checkout_url=session.url, session_id=session.id)
+
+
+@app.post("/api/v1/payments/stripe/webhook")
+async def stripe_webhook(request: Request) -> Dict[str, Any]:
+    if stripe is None:
+        raise HTTPException(status_code=503, detail="Stripe SDK not installed on server.")
+
+    payload = await request.body()
+    signature = request.headers.get("stripe-signature", "")
+    endpoint_secret = (os.getenv("STRIPE_WEBHOOK_SECRET", "") or "").strip()
+    secret = _stripe_secret_key()
+    if not secret:
+        raise HTTPException(status_code=503, detail="Stripe not configured.")
+
+    stripe.api_key = secret
+    if endpoint_secret:
+        try:
+            event = stripe.Webhook.construct_event(payload=payload, sig_header=signature, secret=endpoint_secret)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid Stripe webhook: {exc}")
+    else:
+        event = json.loads(payload.decode("utf-8"))
+
+    event_type = event.get("type", "unknown")
+    return {"received": True, "type": event_type}
+
+
 @app.get("/api/v1/orders")
 async def list_orders() -> List[Dict[str, Any]]:
     return list(_orders.values())
@@ -323,39 +437,47 @@ async def execute_order(order_id: str) -> Dict[str, Any]:
 
 
 @app.post("/api/v1/waitlist")
-async def join_waitlist(request: Request) -> Dict[str, Any]:
-    try:
-        data = await request.json()
-        email = data.get("email")
-        source = data.get("source", "landing_page")
-        if not email:
-            return JSONResponse(
-                status_code=400,
-                content={"success": False, "message": "Email is required"},
-            )
+async def join_waitlist(entry: WaitlistEntry) -> Dict[str, Any]:
+    email = entry.email.lower().strip()
 
-        for entry in _waitlist:
-            if entry["email"] == email:
-                return {
-                    "success": True,
-                    "message": "You're already on the waitlist!",
-                    "position": entry["position"],
-                }
+    for item in _waitlist:
+        if item["email"] == email:
+            return {
+                "success": True,
+                "message": "You're already on the waitlist!",
+                "position": item["position"],
+            }
 
-        position = len(_waitlist) + 1
-        _waitlist.append({"email": email, "source": source, "position": position})
-        return {
-            "success": True,
-            "message": "Successfully joined the waitlist!",
+    position = len(_waitlist) + 1
+    _waitlist.append(
+        {
+            "email": email,
+            "source": entry.source,
             "position": position,
+            "created_at": datetime.utcnow().isoformat(),
         }
-    except Exception as exc:
-        return JSONResponse(
-            status_code=500,
-            content={"success": False, "message": str(exc)},
-        )
+    )
+    return {
+        "success": True,
+        "message": "Successfully joined the waitlist!",
+        "position": position,
+    }
 
 
 @app.get("/api/v1/waitlist/count")
 async def waitlist_count() -> Dict[str, int]:
     return {"count": len(_waitlist)}
+
+
+@app.post("/api/v1/health/client-events")
+async def health_client_events(event: ClientEvent) -> Dict[str, Any]:
+    row = {
+        "id": str(uuid4()),
+        "level": event.level,
+        "message": event.message,
+        "source": event.source,
+        "metadata": event.metadata,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    _client_events.append(row)
+    return {"success": True, "event_id": row["id"]}
