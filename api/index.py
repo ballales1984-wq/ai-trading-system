@@ -14,7 +14,7 @@ from uuid import uuid4
 from fastapi import FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 
 app = FastAPI(
@@ -64,7 +64,7 @@ class OrderCreate(BaseModel):
 
 
 class WaitlistEntry(BaseModel):
-    email: EmailStr
+    email: str
     source: str = "landing_page"
 
 
