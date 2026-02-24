@@ -117,13 +117,14 @@ class TestJWTManager:
     
     def test_create_user(self):
         """Test user creation."""
-        user = self.jwt_manager.create_user(
+        user, errors = self.jwt_manager.create_user(
             username="testuser",
-            password="test_password_123",
+            password="TestP@ssw0rd123!",
             role=UserRole.TRADER
         )
         
         assert user is not None
+        assert len(errors) == 0
         assert user.username == "testuser"
         assert user.role == UserRole.TRADER
         assert user.is_active is True
@@ -132,11 +133,13 @@ class TestJWTManager:
     
     def test_create_user_default_role(self):
         """Test user creation with default role."""
-        user = self.jwt_manager.create_user(
+        user, errors = self.jwt_manager.create_user(
             username="vieweruser",
-            password="test_password_123"
+            password="TestP@ssw0rd123!"
         )
         
+        assert user is not None
+        assert len(errors) == 0
         assert user.role == UserRole.VIEWER
     
     def test_authenticate_success(self):
@@ -144,12 +147,12 @@ class TestJWTManager:
         # Create user
         self.jwt_manager.create_user(
             username="testuser",
-            password="test_password_123",
+            password="TestP@ssw0rd123!",
             role=UserRole.TRADER
         )
         
         # Authenticate
-        user = self.jwt_manager.authenticate("testuser", "test_password_123")
+        user = self.jwt_manager.authenticate("testuser", "TestP@ssw0rd123!")
         
         assert user is not None
         assert user.username == "testuser"
@@ -177,25 +180,25 @@ class TestJWTManager:
     def test_authenticate_inactive_user(self):
         """Test authentication with inactive user."""
         # Create user
-        user = self.jwt_manager.create_user(
+        user, errors = self.jwt_manager.create_user(
             username="testuser",
-            password="test_password_123"
+            password="TestP@ssw0rd123!"
         )
         
         # Deactivate user
         user.is_active = False
         
         # Authenticate
-        result = self.jwt_manager.authenticate("testuser", "test_password_123")
+        result = self.jwt_manager.authenticate("testuser", "TestP@ssw0rd123!")
         
         assert result is None
     
     def test_create_access_token(self):
         """Test access token creation."""
         # Create user
-        user = self.jwt_manager.create_user(
+        user, errors = self.jwt_manager.create_user(
             username="testuser",
-            password="test_password_123",
+            password="TestP@ssw0rd123!",
             role=UserRole.TRADER
         )
         
@@ -209,9 +212,9 @@ class TestJWTManager:
     def test_create_refresh_token(self):
         """Test refresh token creation."""
         # Create user
-        user = self.jwt_manager.create_user(
+        user, errors = self.jwt_manager.create_user(
             username="testuser",
-            password="test_password_123"
+            password="TestP@ssw0rd123!"
         )
         
         # Create refresh token
@@ -224,9 +227,9 @@ class TestJWTManager:
     def test_verify_token_valid(self):
         """Test token verification with valid token."""
         # Create user and token
-        user = self.jwt_manager.create_user(
+        user, errors = self.jwt_manager.create_user(
             username="testuser",
-            password="test_password_123",
+            password="TestP@ssw0rd123!",
             role=UserRole.TRADER
         )
         token = self.jwt_manager.create_access_token(user)
@@ -254,9 +257,9 @@ class TestJWTManager:
         jwt_manager = JWTManager(config=config)
         
         # Create user and token
-        user = jwt_manager.create_user(
+        user, errors = jwt_manager.create_user(
             username="testuser",
-            password="test_password_123"
+            password="TestP@ssw0rd123!"
         )
         token = jwt_manager.create_access_token(user)
         
@@ -268,9 +271,9 @@ class TestJWTManager:
     def test_get_user_from_token(self):
         """Test getting user from token."""
         # Create user and token
-        user = self.jwt_manager.create_user(
+        user, errors = self.jwt_manager.create_user(
             username="testuser",
-            password="test_password_123",
+            password="TestP@ssw0rd123!",
             role=UserRole.TRADER
         )
         token = self.jwt_manager.create_access_token(user)
@@ -290,9 +293,9 @@ class TestJWTManager:
     def test_refresh_access_token(self):
         """Test refreshing access token."""
         # Create user and refresh token
-        user = self.jwt_manager.create_user(
+        user, errors = self.jwt_manager.create_user(
             username="testuser",
-            password="test_password_123"
+            password="TestP@ssw0rd123!"
         )
         refresh_token = self.jwt_manager.create_refresh_token(user)
         

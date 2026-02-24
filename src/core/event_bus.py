@@ -15,9 +15,28 @@ from enum import Enum
 from abc import ABC, abstractmethod
 import json
 from pathlib import Path
+import threading
 
 
 logger = logging.getLogger(__name__)
+
+_timestamp_lock = threading.Lock()
+_last_timestamp: Optional[datetime] = None
+
+
+def _next_event_timestamp() -> datetime:
+    """
+    Return a monotonic-ish timestamp suitable for tests that expect uniqueness
+    across consecutive Event creations.
+    """
+    global _last_timestamp
+    with _timestamp_lock:
+        now = datetime.now()
+        if _last_timestamp is not None and now <= _last_timestamp:
+            # Force strict increase by 1 microsecond when clock resolution collides.
+            now = _last_timestamp.replace(microsecond=min(_last_timestamp.microsecond + 1, 999999))
+        _last_timestamp = now
+        return now
 
 
 def json_serializer(obj):
@@ -73,7 +92,7 @@ class Event:
     Base event class.
     """
     event_type: EventType
-    timestamp: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=_next_event_timestamp)
     data: Dict[str, Any] = field(default_factory=dict)
     source: str = "system"
     

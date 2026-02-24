@@ -322,6 +322,9 @@ class PricePredictor:
             'has_gb_model': self.gb_model is not None,
             'has_scaler': self.scaler is not None
         }
+
+
+class SimpleMovingAveragePredictor:
     """
     Simple predictor using moving averages for trend prediction
     No ML required - uses technical analysis rules

@@ -2,21 +2,29 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { emergencyApi, ordersApi } from '../services/api';
 import { Plus, Play, X, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { TableSkeleton } from '../components/ui/Skeleton';
+import { EmptyState, ErrorState } from '../components/ui/EmptyState';
+import { formatCurrencyUSD, formatLocalDateTime } from '../utils/format';
 
 export default function Orders() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [symbolFilter, setSymbolFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [newOrder, setNewOrder] = useState({
     symbol: 'BTCUSDT',
     side: 'BUY',
     order_type: 'MARKET',
     quantity: 0.001,
+    price: undefined as number | undefined,
+    stop_price: undefined as number | undefined,
     broker: 'paper',
   });
 
-  const { data: orders } = useQuery({
-    queryKey: ['orders'],
-    queryFn: () => ordersApi.list(),
+  const { data: orders, isLoading: ordersLoading, error: ordersError } = useQuery({
+    queryKey: ['orders', symbolFilter, statusFilter],
+    queryFn: () => ordersApi.list(symbolFilter || undefined, statusFilter || undefined),
     refetchInterval: 10000,
   });
 
@@ -37,8 +45,11 @@ export default function Orders() {
         side: 'BUY',
         order_type: 'MARKET',
         quantity: 0.001,
+        price: undefined,
+        stop_price: undefined,
         broker: 'paper',
       });
+      setFormError('');
     },
   });
 
@@ -56,18 +67,29 @@ export default function Orders() {
     },
   });
 
+  const backendError =
+    (createOrder.error as { response?: { data?: { detail?: string } } } | null)?.response?.data?.detail ||
+    (cancelOrder.error as { response?: { data?: { detail?: string } } } | null)?.response?.data?.detail ||
+    (executeOrder.error as { response?: { data?: { detail?: string } } } | null)?.response?.data?.detail ||
+    '';
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (tradingHalted) return;
+    if (newOrder.quantity <= 0 || Number.isNaN(newOrder.quantity)) {
+      setFormError('Quantity must be greater than 0.');
+      return;
+    }
+    if (newOrder.order_type === 'LIMIT' && !newOrder.price) {
+      setFormError('Limit orders require a price.');
+      return;
+    }
+    if (newOrder.order_type === 'STOP' && !newOrder.stop_price) {
+      setFormError('Stop orders require a stop price.');
+      return;
+    }
+    setFormError('');
     createOrder.mutate(newOrder);
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(value);
   };
 
   const ordersList = Array.isArray(orders) ? orders : [];
@@ -104,6 +126,18 @@ export default function Orders() {
     }
   };
 
+  if (ordersError) {
+    return (
+      <div className="p-6">
+        <ErrorState
+          title="Failed to load orders"
+          message="Unable to retrieve orders list from backend."
+          retry={() => window.location.reload()}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -122,6 +156,34 @@ export default function Orders() {
         </button>
       </div>
 
+      <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+        <input
+          type="text"
+          placeholder="Filter symbol (e.g. BTCUSDT)"
+          value={symbolFilter}
+          onChange={(e) => setSymbolFilter(e.target.value.toUpperCase())}
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
+        >
+          <option value="">All statuses</option>
+          <option value="PENDING">PENDING</option>
+          <option value="FILLED">FILLED</option>
+          <option value="PARTIALLY_FILLED">PARTIALLY_FILLED</option>
+          <option value="CANCELLED">CANCELLED</option>
+          <option value="REJECTED">REJECTED</option>
+        </select>
+        <button
+          onClick={() => queryClient.invalidateQueries({ queryKey: ['orders'] })}
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text hover:bg-border/40"
+        >
+          Refresh orders
+        </button>
+      </div>
+
       {tradingHalted && (
         <div className="mb-4 rounded-lg border border-danger/50 bg-danger/10 px-4 py-3 text-danger">
           Emergency Stop attivo: creazione ed esecuzione ordini BUY/SELL bloccate.
@@ -132,6 +194,11 @@ export default function Orders() {
       {showForm && (
         <div className="bg-surface border border-border rounded-lg p-4 mb-6">
           <h2 className="text-lg font-semibold text-text mb-4">Create New Order</h2>
+          {formError && (
+            <div className="mb-4 rounded-lg border border-danger/50 bg-danger/10 px-3 py-2 text-sm text-danger">
+              {formError}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label htmlFor="order-symbol" className="block text-text-muted text-sm mb-1">Symbol</label>
@@ -189,6 +256,46 @@ export default function Orders() {
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text"
               />
             </div>
+            {newOrder.order_type === 'LIMIT' && (
+              <div>
+                <label htmlFor="order-price" className="block text-text-muted text-sm mb-1">Limit Price</label>
+                <input
+                  id="order-price"
+                  name="price"
+                  type="number"
+                  step="0.0001"
+                  autoComplete="off"
+                  value={newOrder.price ?? ''}
+                  onChange={(e) =>
+                    setNewOrder({
+                      ...newOrder,
+                      price: e.target.value ? parseFloat(e.target.value) : undefined,
+                    })
+                  }
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text"
+                />
+              </div>
+            )}
+            {newOrder.order_type === 'STOP' && (
+              <div>
+                <label htmlFor="order-stop-price" className="block text-text-muted text-sm mb-1">Stop Price</label>
+                <input
+                  id="order-stop-price"
+                  name="stop_price"
+                  type="number"
+                  step="0.0001"
+                  autoComplete="off"
+                  value={newOrder.stop_price ?? ''}
+                  onChange={(e) =>
+                    setNewOrder({
+                      ...newOrder,
+                      stop_price: e.target.value ? parseFloat(e.target.value) : undefined,
+                    })
+                  }
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text"
+                />
+              </div>
+            )}
             <div>
               <label htmlFor="order-broker" className="block text-text-muted text-sm mb-1">Broker</label>
               <select
@@ -224,10 +331,19 @@ export default function Orders() {
         </div>
       )}
 
+      {backendError && (
+        <div className="mb-4 rounded-lg border border-danger/50 bg-danger/10 px-4 py-3 text-sm text-danger">
+          {backendError}
+        </div>
+      )}
+
       {/* Orders Table */}
       <div className="bg-surface border border-border rounded-lg p-4">
         <h2 className="text-lg font-semibold text-text mb-4">All Orders</h2>
         <div className="overflow-x-auto">
+          {ordersLoading ? (
+            <TableSkeleton rows={6} />
+          ) : (
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
@@ -253,7 +369,7 @@ export default function Orders() {
                   <td className="py-3 px-4 text-text-muted">{order.order_type}</td>
                   <td className="py-3 px-4 text-right text-text">{order.quantity.toFixed(4)}</td>
                   <td className="py-3 px-4 text-right text-text">
-                    {order.average_price ? formatCurrency(order.average_price) : '-'}
+                    {order.average_price ? formatCurrencyUSD(order.average_price) : '-'}
                   </td>
                   <td className="py-3 px-4 text-center">
                     <div className="flex items-center justify-center gap-2">
@@ -262,7 +378,7 @@ export default function Orders() {
                     </div>
                   </td>
                   <td className="py-3 px-4 text-text-muted text-sm">
-                    {new Date(order.created_at).toLocaleString()}
+                    {formatLocalDateTime(order.created_at)}
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center justify-center gap-2">
@@ -291,10 +407,13 @@ export default function Orders() {
               ))}
             </tbody>
           </table>
-          {ordersList.length === 0 && (
-            <div className="text-center py-8 text-text-muted">
-              No orders found. Create your first order!
-            </div>
+          )}
+          {!ordersLoading && ordersList.length === 0 && (
+            <EmptyState
+              icon={Clock}
+              title="No orders found"
+              description="Create your first order to start tracking execution."
+            />
           )}
         </div>
       </div>

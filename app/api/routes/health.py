@@ -6,6 +6,8 @@ System health and status endpoints.
 
 from datetime import datetime
 from typing import Dict, Any
+from pydantic import BaseModel
+import logging
 
 from fastapi import APIRouter, status
 
@@ -13,6 +15,13 @@ from app.core.config import settings
 
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
+
+class ClientEvent(BaseModel):
+    level: str
+    event: str
+    details: Dict[str, Any] | None = None
 
 
 @router.get("/health", status_code=status.HTTP_200_OK)
@@ -49,3 +58,17 @@ async def liveness_check() -> Dict[str, str]:
     Returns 'alive' to indicate the process is running.
     """
     return {"status": "alive"}
+
+
+@router.post("/health/client-events", status_code=status.HTTP_202_ACCEPTED)
+async def ingest_client_event(payload: ClientEvent) -> Dict[str, str]:
+    """
+    Lightweight endpoint to ingest frontend runtime events.
+    """
+    logger.info(
+        "client_event level=%s event=%s details=%s",
+        payload.level,
+        payload.event,
+        payload.details or {},
+    )
+    return {"status": "accepted"}

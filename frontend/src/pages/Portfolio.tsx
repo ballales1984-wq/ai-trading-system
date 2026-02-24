@@ -3,18 +3,21 @@ import { emergencyApi, ordersApi, portfolioApi } from '../services/api';
 import type { Position } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { Wallet, TrendingUp, TrendingDown, Target } from 'lucide-react';
+import { DashboardSkeleton, TableSkeleton } from '../components/ui/Skeleton';
+import { EmptyState, ErrorState } from '../components/ui/EmptyState';
+import { formatCurrencyUSD } from '../utils/format';
 
 const COLORS = ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#a371f7', '#f0883e'];
 
 export default function Portfolio() {
   const queryClient = useQueryClient();
 
-  const { data: summary, isLoading: summaryLoading } = useQuery({
+  const { data: summary, isLoading: summaryLoading, error: summaryError } = useQuery({
     queryKey: ['portfolio-summary'],
     queryFn: portfolioApi.getSummary,
   });
 
-  const { data: positions } = useQuery({
+  const { data: positions, isLoading: positionsLoading, error: positionsError } = useQuery({
     queryKey: ['portfolio-positions'],
     queryFn: () => portfolioApi.getPositions(),
   });
@@ -46,21 +49,15 @@ export default function Portfolio() {
         broker: 'paper',
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['portfolio-summary'] });
-      queryClient.invalidateQueries({ queryKey: ['portfolio-positions'] });
-      queryClient.invalidateQueries({ queryKey: ['portfolio-allocation'] });
-      queryClient.invalidateQueries({ queryKey: ['portfolio-performance'] });
+      const keys = new Set(['orders', 'portfolio-summary', 'portfolio-positions', 'portfolio-allocation', 'portfolio-performance']);
+      queryClient.invalidateQueries({
+        predicate: (q) => {
+          const head = q.queryKey?.[0];
+          return typeof head === 'string' && keys.has(head);
+        },
+      });
     },
   });
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(value);
-  };
 
   const positionsList = Array.isArray(positions) ? positions : [];
 
@@ -72,6 +69,26 @@ export default function Portfolio() {
     { name: 'Winning', value: performance.num_winning_trades },
     { name: 'Losing', value: performance.num_losing_trades },
   ] : [];
+
+  const topAllocation = pieData.length
+    ? [...pieData].sort((a, b) => b.value - a.value)[0]
+    : null;
+
+  if (summaryLoading && !summary) {
+    return <DashboardSkeleton />;
+  }
+
+  if (summaryError || positionsError) {
+    return (
+      <div className="p-6">
+        <ErrorState
+          title="Unable to load portfolio"
+          message="Check backend connectivity and retry."
+          retry={() => window.location.reload()}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -85,26 +102,45 @@ export default function Portfolio() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <SummaryCard
           title="Total Value"
-          value={summaryLoading ? '...' : formatCurrency(summary?.total_value || 0)}
+          value={summaryLoading ? '...' : formatCurrencyUSD(summary?.total_value || 0)}
           icon={Wallet}
         />
         <SummaryCard
           title="Cash Balance"
-          value={summaryLoading ? '...' : formatCurrency(summary?.cash_balance || 0)}
+          value={summaryLoading ? '...' : formatCurrencyUSD(summary?.cash_balance || 0)}
           icon={Target}
         />
         <SummaryCard
           title="Unrealized P&L"
-          value={summaryLoading ? '...' : formatCurrency(summary?.unrealized_pnl || 0)}
+          value={summaryLoading ? '...' : formatCurrencyUSD(summary?.unrealized_pnl || 0)}
           icon={summary && summary.unrealized_pnl >= 0 ? TrendingUp : TrendingDown}
           valueColor={summary && summary.unrealized_pnl >= 0 ? 'text-success' : 'text-danger'}
         />
         <SummaryCard
           title="Realized P&L"
-          value={summaryLoading ? '...' : formatCurrency(summary?.realized_pnl || 0)}
+          value={summaryLoading ? '...' : formatCurrencyUSD(summary?.realized_pnl || 0)}
           icon={summary && summary.realized_pnl >= 0 ? TrendingUp : TrendingDown}
           valueColor={summary && summary.realized_pnl >= 0 ? 'text-success' : 'text-danger'}
         />
+      </div>
+
+      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="rounded-lg border border-border bg-surface p-3">
+          <p className="text-xs text-text-muted">Open positions</p>
+          <p className="text-lg font-semibold text-text">{positionsList.length}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-surface p-3">
+          <p className="text-xs text-text-muted">Top exposure</p>
+          <p className="text-lg font-semibold text-text">
+            {topAllocation ? `${topAllocation.name} (${topAllocation.value.toFixed(1)}%)` : 'N/A'}
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-surface p-3">
+          <p className="text-xs text-text-muted">Trade win rate</p>
+          <p className="text-lg font-semibold text-text">
+            {performance ? `${(performance.win_rate * 100).toFixed(1)}%` : 'N/A'}
+          </p>
+        </div>
       </div>
 
       {/* Charts */}
@@ -167,6 +203,15 @@ export default function Portfolio() {
           </div>
         )}
         <div className="overflow-x-auto">
+          {positionsLoading ? (
+            <TableSkeleton rows={6} />
+          ) : positionsList.length === 0 ? (
+            <EmptyState
+              icon={Wallet}
+              title="No open positions"
+              description="Create your first order to open a position."
+            />
+          ) : (
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
@@ -191,11 +236,11 @@ export default function Portfolio() {
                       {position.side}
                     </td>
                     <td className="py-3 px-4 text-right text-text">{position.quantity.toFixed(4)}</td>
-                    <td className="py-3 px-4 text-right text-text-muted">{formatCurrency(position.entry_price)}</td>
-                    <td className="py-3 px-4 text-right text-text">{formatCurrency(position.current_price)}</td>
-                    <td className="py-3 px-4 text-right text-text">{formatCurrency(position.market_value)}</td>
+                    <td className="py-3 px-4 text-right text-text-muted">{formatCurrencyUSD(position.entry_price)}</td>
+                    <td className="py-3 px-4 text-right text-text">{formatCurrencyUSD(position.current_price)}</td>
+                    <td className="py-3 px-4 text-right text-text">{formatCurrencyUSD(position.market_value)}</td>
                     <td className={`py-3 px-4 text-right ${position.unrealized_pnl >= 0 ? 'text-success' : 'text-danger'}`}>
-                      {formatCurrency(position.unrealized_pnl)}
+                      {formatCurrencyUSD(position.unrealized_pnl)}
                     </td>
                     <td className={`py-3 px-4 text-right ${pnlPercent >= 0 ? 'text-success' : 'text-danger'}`}>
                       {pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%
@@ -214,6 +259,7 @@ export default function Portfolio() {
               })}
             </tbody>
           </table>
+          )}
         </div>
       </div>
     </div>

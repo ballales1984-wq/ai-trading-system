@@ -9,6 +9,7 @@ from typing import List, Optional
 import random
 import os
 import logging
+import asyncio
 
 from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel, Field
@@ -24,6 +25,11 @@ logger = logging.getLogger(__name__)
 
 
 router = APIRouter()
+
+try:
+    from src.external.sentiment_apis import create_sentiment_clients_from_env
+except Exception:
+    create_sentiment_clients_from_env = None
 
 
 # ============================================================================
@@ -64,6 +70,22 @@ class MarketOverview(BaseModel):
     """Overview of multiple markets."""
     timestamp: datetime
     markets: List[PriceData]
+
+
+class NewsItem(BaseModel):
+    """News/sentiment item for dashboard feed."""
+    timestamp: datetime
+    title: str
+    source: str
+    url: str
+    sentiment_score: float = 0.0
+
+
+class NewsResponse(BaseModel):
+    """News feed response."""
+    query: str
+    count: int
+    items: List[NewsItem]
 
 
 # ============================================================================
@@ -250,6 +272,70 @@ async def get_recent_trades(
         })
     
     return trades
+
+
+@router.get("/news", response_model=NewsResponse)
+async def get_market_news(
+    query: str = Query("bitcoin", min_length=2, max_length=100),
+    limit: int = Query(10, ge=1, le=50),
+) -> NewsResponse:
+    """
+    Get latest market news/sentiment feed.
+    Uses configured sentiment providers from environment.
+    """
+    if not create_sentiment_clients_from_env:
+        raise HTTPException(status_code=503, detail="Sentiment providers not available")
+
+    clients = create_sentiment_clients_from_env()
+    if not clients:
+        raise HTTPException(status_code=503, detail="No sentiment provider configured")
+
+    items: List[NewsItem] = []
+    # Keep latency bounded for dashboard usage
+    max_per_client = min(20, max(5, limit))
+
+    for client in clients:
+        try:
+            records = await asyncio.wait_for(
+                client.fetch(query=query, limit=max_per_client),
+                timeout=4.0,
+            )
+        except asyncio.TimeoutError:
+            logger.warning("news_provider_timeout provider=%s", getattr(client, "name", "unknown"))
+            continue
+        except Exception as exc:
+            logger.warning("news_provider_error provider=%s error=%s", getattr(client, "name", "unknown"), exc)
+            continue
+
+        for rec in records:
+            payload = rec.payload or {}
+            title = str(payload.get("title") or payload.get("text") or "").strip()
+            if not title:
+                continue
+
+            source = str(payload.get("source") or payload.get("domain") or rec.source_api or "unknown")
+            url = str(payload.get("url") or "")
+            sentiment_score = float(payload.get("sentiment_score") or 0.0)
+
+            items.append(
+                NewsItem(
+                    timestamp=rec.timestamp,
+                    title=title,
+                    source=source,
+                    url=url,
+                    sentiment_score=sentiment_score,
+                )
+            )
+
+    # Deduplicate by title+source and order by newest
+    unique = {}
+    for item in items:
+        key = f"{item.source.lower()}::{item.title.lower()}"
+        if key not in unique:
+            unique[key] = item
+
+    sorted_items = sorted(unique.values(), key=lambda x: x.timestamp, reverse=True)[:limit]
+    return NewsResponse(query=query, count=len(sorted_items), items=sorted_items)
 
 
 @router.get("/futures/funding/{symbol}")

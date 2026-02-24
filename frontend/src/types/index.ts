@@ -64,6 +64,20 @@ export interface MarketOverview {
   markets: PriceData[];
 }
 
+export interface NewsItem {
+  timestamp: string;
+  title: string;
+  source: string;
+  url: string;
+  sentiment_score: number;
+}
+
+export interface NewsResponse {
+  query: string;
+  count: number;
+  items: NewsItem[];
+}
+
 export interface CandleData {
   timestamp: string;
   open: number;

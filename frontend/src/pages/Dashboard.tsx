@@ -1,12 +1,20 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { portfolioApi, marketApi } from '../services/api';
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, Activity, Wallet } from 'lucide-react';
 import { DashboardSkeleton } from '../components/ui/Skeleton';
 import { ErrorState } from '../components/ui/EmptyState';
+import { formatCurrencyUSD, formatLocalDateTime, formatPercent } from '../utils/format';
 
 export default function Dashboard() {
-  const { data: summary, isLoading: summaryLoading, error: summaryError } = useQuery({
+  const {
+    data: summary,
+    isLoading: summaryLoading,
+    error: summaryError,
+    dataUpdatedAt: summaryUpdatedAt,
+    isFetching: summaryFetching,
+  } = useQuery({
     queryKey: ['portfolio-summary'],
     queryFn: portfolioApi.getSummary,
     refetchInterval: 30000, // Refresh every 30 seconds
@@ -28,26 +36,24 @@ export default function Dashboard() {
     refetchInterval: 15000, // Refresh every 15 seconds
   });
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(value);
-  };
-
-  const formatPercent = (value: number) => {
-    return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
-  };
+  const { data: newsFeed, isLoading: newsLoading } = useQuery({
+    queryKey: ['market-news'],
+    queryFn: () => marketApi.getNews('crypto', 8),
+    refetchInterval: 60000,
+  });
 
   const historyRows = Array.isArray(history?.history) ? history.history : [];
   const marketRows = Array.isArray(markets?.markets) ? markets.markets : [];
 
-  const chartData = historyRows.map((entry) => ({
-    date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    value: entry.value,
-    return: entry.daily_return,
-  }));
+  const chartData = useMemo(
+    () =>
+      historyRows.map((entry) => ({
+        date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        value: entry.value,
+        return: entry.daily_return,
+      })),
+    [historyRows]
+  );
 
   // Show loading skeleton
   if (summaryLoading && !summary) {
@@ -70,28 +76,36 @@ export default function Dashboard() {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-text">Dashboard</h1>
-        <p className="text-text-muted">Overview of your trading portfolio</p>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-text">Dashboard</h1>
+          <p className="text-text-muted">Overview of your trading portfolio</p>
+        </div>
+        <div className="rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-muted">
+          {summaryUpdatedAt
+            ? `Updated: ${formatLocalDateTime(summaryUpdatedAt)}`
+            : 'Waiting first sync...'}
+          {summaryFetching && <span className="ml-2 text-primary">syncing</span>}
+        </div>
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <MetricCard
           title="Total Value"
-          value={summaryLoading ? '...' : formatCurrency(summary?.total_value || 0)}
+          value={summaryLoading ? '...' : formatCurrencyUSD(summary?.total_value || 0)}
           icon={DollarSign}
           trend={summary?.daily_return_pct}
         />
         <MetricCard
           title="Daily P&L"
-          value={summaryLoading ? '...' : formatCurrency(summary?.daily_pnl || 0)}
+          value={summaryLoading ? '...' : formatCurrencyUSD(summary?.daily_pnl || 0)}
           icon={Activity}
           trend={summary?.daily_return_pct}
         />
         <MetricCard
           title="Unrealized P&L"
-          value={summaryLoading ? '...' : formatCurrency(summary?.unrealized_pnl || 0)}
+          value={summaryLoading ? '...' : formatCurrencyUSD(summary?.unrealized_pnl || 0)}
           icon={TrendingUp}
           trend={summary?.total_return_pct}
         />
@@ -126,7 +140,7 @@ export default function Dashboard() {
                   <Tooltip
                     contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
                     labelStyle={{ color: '#c9d1d9' }}
-                    formatter={(value: number) => [formatCurrency(value), 'Value']}
+                    formatter={(value: number) => [formatCurrencyUSD(value), 'Value']}
                   />
                   <Area
                     type="monotone"
@@ -190,12 +204,12 @@ export default function Dashboard() {
                 {marketRows.map((market) => (
                   <tr key={market.symbol} className="border-b border-border/50 hover:bg-border/20">
                     <td className="py-3 px-4 font-medium text-text">{market.symbol}</td>
-                    <td className="py-3 px-4 text-right text-text">{formatCurrency(market.price)}</td>
+                    <td className="py-3 px-4 text-right text-text">{formatCurrencyUSD(market.price)}</td>
                     <td className={`py-3 px-4 text-right ${market.change_pct_24h >= 0 ? 'text-success' : 'text-danger'}`}>
                       {formatPercent(market.change_pct_24h)}
                     </td>
-                    <td className="py-3 px-4 text-right text-text-muted">{formatCurrency(market.high_24h)}</td>
-                    <td className="py-3 px-4 text-right text-text-muted">{formatCurrency(market.low_24h)}</td>
+                    <td className="py-3 px-4 text-right text-text-muted">{formatCurrencyUSD(market.high_24h)}</td>
+                    <td className="py-3 px-4 text-right text-text-muted">{formatCurrencyUSD(market.low_24h)}</td>
                     <td className="py-3 px-4 text-right text-text-muted">{market.volume_24h.toLocaleString()}</td>
                   </tr>
                 ))}
@@ -205,6 +219,47 @@ export default function Dashboard() {
         ) : (
           <div className="h-48 flex items-center justify-center text-text-muted">
             No market data available
+          </div>
+        )}
+      </div>
+
+      {/* News Feed */}
+      <div className="mt-6 bg-surface border border-border rounded-lg p-4">
+        <h2 className="text-lg font-semibold text-text mb-4">News & Sentiment</h2>
+        {newsLoading ? (
+          <div className="h-24 flex items-center justify-center text-text-muted">Loading news...</div>
+        ) : Array.isArray(newsFeed?.items) && newsFeed.items.length > 0 ? (
+          <div className="space-y-3">
+            {newsFeed.items.map((item, idx) => (
+              <a
+                key={`${item.source}-${idx}-${item.timestamp}`}
+                href={item.url || '#'}
+                target={item.url ? '_blank' : undefined}
+                rel={item.url ? 'noreferrer' : undefined}
+                className="block rounded-lg border border-border/70 p-3 hover:bg-border/20"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs text-text-muted">{item.source}</span>
+                  <span
+                    className={`text-xs font-semibold ${
+                      item.sentiment_score > 0.1
+                        ? 'text-success'
+                        : item.sentiment_score < -0.1
+                        ? 'text-danger'
+                        : 'text-warning'
+                    }`}
+                  >
+                    sentiment {item.sentiment_score.toFixed(2)}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm text-text">{item.title}</p>
+                <p className="mt-1 text-xs text-text-muted">{formatLocalDateTime(item.timestamp)}</p>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div className="h-24 flex items-center justify-center text-text-muted">
+            No news available. Verify NEWSAPI_KEY (or provider keys) in backend environment.
           </div>
         )}
       </div>
@@ -234,7 +289,7 @@ function MetricCard({ title, value, icon: Icon, trend }: { title: string; value:
 
 function PerformanceItem({ label, value }: { label: string; value: string }) {
   const isPositive = value.startsWith('+');
-  const isNegative = value.startsWith('-') && !value.includes('%');
+  const isNegative = value.startsWith('-');
   const valueColor = isPositive ? 'text-success' : isNegative ? 'text-danger' : 'text-text';
 
   return (

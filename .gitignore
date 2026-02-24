@@ -72,3 +72,12 @@ logs/*.log
 # TypeScript build info
 *.tsbuildinfo
 .vercel
+
+# Frontend dependencies/build artifacts
+frontend/node_modules/
+
+# Java build artifacts
+java-frontend/target/
+
+# Temporary compiled files
+*.pyc.*

@@ -12,6 +12,8 @@ import json
 import os
 import sys
 from pathlib import Path
+import shutil
+import tempfile
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -28,15 +30,14 @@ class TestEventBus:
     def setup_method(self):
         """Setup test data."""
         self.event_bus = EventBus()
-        self.test_dir = Path("logs/events")
-        self.test_dir.mkdir(exist_ok=True)
+        self._tmp_dir = Path(tempfile.mkdtemp(prefix="eventbus_test_"))
+        self.test_dir = self._tmp_dir / "events"
+        self.test_dir.mkdir(parents=True, exist_ok=True)
+        self.event_bus._log_dir = self.test_dir
     
     def teardown_method(self):
         """Clean up test data."""
-        # Remove test event logs
-        for log_file in self.test_dir.glob("*.jsonl"):
-            log_file.unlink()
-        self.test_dir.rmdir()
+        shutil.rmtree(self._tmp_dir, ignore_errors=True)
     
     def test_initialization(self):
         """Test EventBus initialization."""
@@ -221,20 +222,22 @@ class TestEventBus:
     
     def test_event_history_limit(self):
         """Test event history limit."""
-        # Create more events than max history
-        events = [
-            Event(event_type=EventType.MARKET_DATA, data={'symbol': f'TEST{i}'})
-            for i in range(15000)
-        ]
-        
-        # Publish all events
-        for event in events:
-            asyncio.run(self.event_bus.publish(event))
-        
-        # Verify history is limited
-        assert len(self.event_bus._event_history) == 10000
-        assert self.event_bus._event_history[-1] == events[-1]
-        assert self.event_bus._event_history[0] == events[-10000]
+        # Patch _log_event to avoid writing to file
+        with patch.object(self.event_bus, '_log_event', return_value=None):
+            # Create more events than max history
+            events = [
+                Event(event_type=EventType.MARKET_DATA, data={'symbol': f'TEST{i}'})
+                for i in range(15000)
+            ]
+            
+            # Publish all events
+            for event in events:
+                asyncio.run(self.event_bus.publish(event))
+            
+            # Verify history is limited
+            assert len(self.event_bus._event_history) == 10000
+            assert self.event_bus._event_history[-1] == events[-1]
+            assert self.event_bus._event_history[0] == events[-10000]
 
 
 class TestEvent:
@@ -362,6 +365,13 @@ class TestEventBusAsync:
     def setup_method(self):
         """Setup event bus instance for async tests."""
         self.event_bus = EventBus()
+        self._tmp_dir = Path(tempfile.mkdtemp(prefix="eventbus_async_test_"))
+        self.event_bus._log_dir = self._tmp_dir / "events"
+        self.event_bus._log_dir.mkdir(parents=True, exist_ok=True)
+
+    def teardown_method(self):
+        """Clean up async test data."""
+        shutil.rmtree(self._tmp_dir, ignore_errors=True)
     
     async def test_publish_async(self):
         """Test async publishing."""

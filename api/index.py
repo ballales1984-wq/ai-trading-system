@@ -9,10 +9,10 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException, Query, Request, status
+from fastapi import FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 
 app = FastAPI(
@@ -61,6 +61,18 @@ class OrderCreate(BaseModel):
     broker: str = "demo"
 
 
+class WaitlistEntry(BaseModel):
+    email: EmailStr
+    source: str = "landing_page"
+
+
+class ClientEvent(BaseModel):
+    level: str = "error"
+    message: str
+    source: str = "frontend"
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
 _positions: List[Position] = [
     Position(
         position_id=str(uuid4()),
@@ -96,6 +108,7 @@ _positions: List[Position] = [
 
 _orders: Dict[str, Dict[str, Any]] = {}
 _waitlist: List[Dict[str, Any]] = []
+_client_events: List[Dict[str, Any]] = []
 
 
 @app.get("/")
@@ -264,6 +277,23 @@ async def market_orderbook(symbol: str) -> Dict[str, Any]:
     }
 
 
+@app.get("/api/v1/market/news")
+async def market_news(query: str = Query("crypto"), limit: int = Query(8, ge=1, le=50)) -> Dict[str, Any]:
+    now = datetime.utcnow().isoformat()
+    items = [
+        {
+            "id": f"news-{idx}",
+            "title": f"{query.title()} market update #{idx}",
+            "source": "internal-fallback",
+            "url": "https://example.com/news",
+            "sentiment_score": 0.0,
+            "timestamp": now,
+        }
+        for idx in range(1, limit + 1)
+    ]
+    return {"query": query, "count": len(items), "items": items}
+
+
 @app.get("/api/v1/orders")
 async def list_orders() -> List[Dict[str, Any]]:
     return list(_orders.values())
@@ -323,39 +353,47 @@ async def execute_order(order_id: str) -> Dict[str, Any]:
 
 
 @app.post("/api/v1/waitlist")
-async def join_waitlist(request: Request) -> Dict[str, Any]:
-    try:
-        data = await request.json()
-        email = data.get("email")
-        source = data.get("source", "landing_page")
-        if not email:
-            return JSONResponse(
-                status_code=400,
-                content={"success": False, "message": "Email is required"},
-            )
+async def join_waitlist(entry: WaitlistEntry) -> Dict[str, Any]:
+    email = entry.email.lower().strip()
 
-        for entry in _waitlist:
-            if entry["email"] == email:
-                return {
-                    "success": True,
-                    "message": "You're already on the waitlist!",
-                    "position": entry["position"],
-                }
+    for item in _waitlist:
+        if item["email"] == email:
+            return {
+                "success": True,
+                "message": "You're already on the waitlist!",
+                "position": item["position"],
+            }
 
-        position = len(_waitlist) + 1
-        _waitlist.append({"email": email, "source": source, "position": position})
-        return {
-            "success": True,
-            "message": "Successfully joined the waitlist!",
+    position = len(_waitlist) + 1
+    _waitlist.append(
+        {
+            "email": email,
+            "source": entry.source,
             "position": position,
+            "created_at": datetime.utcnow().isoformat(),
         }
-    except Exception as exc:
-        return JSONResponse(
-            status_code=500,
-            content={"success": False, "message": str(exc)},
-        )
+    )
+    return {
+        "success": True,
+        "message": "Successfully joined the waitlist!",
+        "position": position,
+    }
 
 
 @app.get("/api/v1/waitlist/count")
 async def waitlist_count() -> Dict[str, int]:
     return {"count": len(_waitlist)}
+
+
+@app.post("/api/v1/health/client-events")
+async def health_client_events(event: ClientEvent) -> Dict[str, Any]:
+    row = {
+        "id": str(uuid4()),
+        "level": event.level,
+        "message": event.message,
+        "source": event.source,
+        "metadata": event.metadata,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    _client_events.append(row)
+    return {"success": True, "event_id": row["id"]}

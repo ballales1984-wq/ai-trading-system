@@ -6,35 +6,7 @@
 	"installCommand": "pip install --break-system-packages -r api/requirements.txt",
 	"rewrites": [
 		{
-			"source": "/api/v1/:path*",
-			"destination": "https://tonita-deposable-manneristically.ngrok-free.dev/api/v1/:path*"
-		},
-		{
-			"source": "/api",
-			"destination": "/api/index"
-		},
-		{
-			"source": "/api/",
-			"destination": "/api/index"
-		},
-		{
-			"source": "/api/:path*",
-			"destination": "/api/index"
-		},
-		{
-			"source": "/docs",
-			"destination": "/api/index"
-		},
-		{
-			"source": "/openapi.json",
-			"destination": "/api/index"
-		},
-		{
-			"source": "/redoc",
-			"destination": "/api/index"
-		},
-		{
-			"source": "/((?!api|docs|openapi.json|redoc|assets).*)",
+			"source": "/((?!api|assets).*)",
 			"destination": "/index.html"
 		}
 	],

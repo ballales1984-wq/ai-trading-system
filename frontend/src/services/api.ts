@@ -6,12 +6,14 @@ import type {
   Allocation,
   PortfolioHistory,
   MarketOverview,
+  NewsResponse,
   PriceData,
   CandleData,
   Order,
   OrderCreate,
   EmergencyStatus,
 } from '../types';
+import { sendClientEvent } from '../utils/telemetry';
 
 // Use environment variable for API base URL
 // In production (Vercel), this should point to your local backend via ngrok or public IP
@@ -26,6 +28,7 @@ const api = axios.create({
   baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
   },
   // Add timeout and retry logic
   timeout: 10000,
@@ -37,6 +40,25 @@ api.interceptors.response.use(
   (error) => {
     if (error.code === 'ERR_NETWORK') {
       console.error('Network error: Cannot connect to backend. Is your local backend running?');
+      sendClientEvent({
+        level: 'error',
+        event: 'api_network_error',
+        details: {
+          message: error.message,
+          url: error?.config?.url,
+          baseURL: error?.config?.baseURL,
+        },
+      });
+    } else {
+      sendClientEvent({
+        level: 'warning',
+        event: 'api_http_error',
+        details: {
+          message: error.message,
+          status: error?.response?.status,
+          url: error?.config?.url,
+        },
+      });
     }
     return Promise.reject(error);
   }
@@ -100,6 +122,16 @@ export const marketApi = {
     const { data } = await api.get(`/market/orderbook/${symbol}`);
     return data;
   },
+
+  getNews: async (query: string = 'bitcoin', limit: number = 8): Promise<NewsResponse> => {
+    const { data } = await api.get<NewsResponse>('/market/news', {
+      params: { query, limit },
+    });
+    if (!data || !Array.isArray(data.items)) {
+      throw new Error('Invalid news response payload');
+    }
+    return data;
+  },
 };
 
 // Orders API
@@ -161,6 +193,29 @@ export const emergencyApi = {
         'X-Admin-User': 'ui-operator',
       },
     });
+    return data;
+  },
+};
+
+export interface WaitlistRequest {
+  email: string;
+  source?: string;
+}
+
+export interface WaitlistResponse {
+  success: boolean;
+  message: string;
+  position?: number;
+}
+
+export const waitlistApi = {
+  join: async (payload: WaitlistRequest): Promise<WaitlistResponse> => {
+    const { data } = await api.post<WaitlistResponse>('/waitlist', payload);
+    return data;
+  },
+
+  count: async (): Promise<{ count: number }> => {
+    const { data } = await api.get<{ count: number }>('/waitlist/count');
     return data;
   },
 };

@@ -3,6 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { marketApi } from '../services/api';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
+import { DashboardSkeleton } from '../components/ui/Skeleton';
+import { EmptyState, ErrorState } from '../components/ui/EmptyState';
+import { formatCurrencyUSD } from '../utils/format';
 
 // TypeScript interfaces for type safety
 interface MarketData {
@@ -28,6 +31,9 @@ interface CandleData {
 }
 
 const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'EURUSD'];
+const ALLOW_FALLBACK =
+  import.meta.env.VITE_ALLOW_MARKET_FALLBACK === 'true' ||
+  (import.meta.env.VITE_ALLOW_MARKET_FALLBACK === undefined && import.meta.env.DEV);
 
 // Fallback data for when API is unavailable (deterministic for consistent renders)
 const fallbackPrices: PricesResponse = {
@@ -58,14 +64,14 @@ export default function Market() {
   // Memoize fallback candles to prevent inconsistent renders
   const fallbackCandles = useMemo(() => generateFallbackCandles(), []);
 
-  const { data: prices, isLoading: pricesLoading } = useQuery({
+  const { data: prices, isLoading: pricesLoading, error: pricesError } = useQuery({
     queryKey: ['market-prices'],
     queryFn: marketApi.getAllPrices,
     retry: 1,
     staleTime: 30000,
   });
 
-  const { data: candles } = useQuery({
+  const { data: candles, error: candlesError } = useQuery({
     queryKey: ['market-candles', selectedSymbol, timeframe],
     queryFn: () => marketApi.getCandles(selectedSymbol, timeframe, 100),
     retry: 1,
@@ -76,17 +82,9 @@ export default function Market() {
   // Avoid false "demo data" warnings on transient query errors.
   const hasPricesData = !!(prices?.markets && prices.markets.length > 0);
   const hasCandlesData = Array.isArray(candles) && candles.length > 0;
-  const pricesData = hasPricesData ? prices : fallbackPrices;
-  const candlesData = hasCandlesData ? candles : fallbackCandles;
-  const isUsingFallback = !hasPricesData || !hasCandlesData;
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(value);
-  };
+  const pricesData = hasPricesData ? prices : ALLOW_FALLBACK ? fallbackPrices : { markets: [] };
+  const candlesData = hasCandlesData ? candles : ALLOW_FALLBACK ? fallbackCandles : [];
+  const isUsingFallback = ALLOW_FALLBACK && (!hasPricesData || !hasCandlesData);
 
   const formatPrice = (value: number) => {
     if (value >= 1000) return value.toFixed(2);
@@ -106,6 +104,22 @@ export default function Market() {
   // Get selected market data
   const selectedMarket = pricesData?.markets?.find((m: MarketData) => m.symbol === selectedSymbol);
 
+  if (pricesLoading && !prices) {
+    return <DashboardSkeleton />;
+  }
+
+  if (pricesError || candlesError) {
+    return (
+      <div className="p-6">
+        <ErrorState
+          title="Failed to load market data"
+          message="Backend/API provider returned an error."
+          retry={() => window.location.reload()}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -122,6 +136,11 @@ export default function Market() {
             <p className="text-yellow-500 font-medium">Using Demo Data</p>
             <p className="text-text-muted text-sm">API connection unavailable. Showing simulated market data for demonstration purposes.</p>
           </div>
+        </div>
+      )}
+      {!ALLOW_FALLBACK && (!hasPricesData || !hasCandlesData) && (
+        <div className="mb-6 rounded-lg border border-danger/50 bg-danger/10 p-4 text-sm text-danger">
+          Live market data unavailable. Demo fallback is disabled in this environment.
         </div>
       )}
 
@@ -166,7 +185,7 @@ export default function Market() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <PriceCard
             title="Current Price"
-            value={formatCurrency(selectedMarket.price)}
+            value={formatCurrencyUSD(selectedMarket.price)}
             icon={selectedMarket.change_pct_24h >= 0 ? TrendingUp : TrendingDown}
           />
           <PriceCard
@@ -176,11 +195,11 @@ export default function Market() {
           />
           <PriceCard
             title="24h High"
-            value={formatCurrency(selectedMarket.high_24h)}
+            value={formatCurrencyUSD(selectedMarket.high_24h)}
           />
           <PriceCard
             title="24h Low"
-            value={formatCurrency(selectedMarket.low_24h)}
+            value={formatCurrencyUSD(selectedMarket.low_24h)}
           />
         </div>
       )}
@@ -198,7 +217,7 @@ export default function Market() {
                 <Tooltip
                   contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
                   labelStyle={{ color: '#c9d1d9' }}
-                  formatter={(value: number) => [formatCurrency(value), 'Price']}
+                  formatter={(value: number) => [formatCurrencyUSD(value), 'Price']}
                 />
                 <Line
                   type="monotone"
@@ -255,17 +274,24 @@ export default function Market() {
                   onClick={() => setSelectedSymbol(market.symbol)}
                 >
                   <td className="py-3 px-4 font-medium text-text">{market.symbol}</td>
-                  <td className="py-3 px-4 text-right text-text">{formatCurrency(market.price)}</td>
+                  <td className="py-3 px-4 text-right text-text">{formatCurrencyUSD(market.price)}</td>
                   <td className={`py-3 px-4 text-right ${market.change_pct_24h >= 0 ? 'text-success' : 'text-danger'}`}>
                     {market.change_pct_24h >= 0 ? '+' : ''}{market.change_pct_24h.toFixed(2)}%
                   </td>
-                  <td className="py-3 px-4 text-right text-text-muted">{formatCurrency(market.high_24h)}</td>
-                  <td className="py-3 px-4 text-right text-text-muted">{formatCurrency(market.low_24h)}</td>
+                  <td className="py-3 px-4 text-right text-text-muted">{formatCurrencyUSD(market.high_24h)}</td>
+                  <td className="py-3 px-4 text-right text-text-muted">{formatCurrencyUSD(market.low_24h)}</td>
                   <td className="py-3 px-4 text-right text-text-muted">{market.volume_24h.toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {pricesData?.markets?.length === 0 && (
+            <EmptyState
+              icon={AlertTriangle}
+              title="No market symbols available"
+              description="No market payload returned by backend."
+            />
+          )}
         </div>
       </div>
     </div>
