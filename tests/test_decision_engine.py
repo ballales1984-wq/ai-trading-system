@@ -48,11 +48,11 @@ class TestDecisionEngine(unittest.TestCase):
         
     def test_decision_engine_initialization(self):
         """Test DecisionEngine initialization with ML"""
-        from decision_engine import DecisionEngine
-        
-        with patch('decision_engine.DataCollector', return_value=self.mock_data_collector):
-            with patch('decision_engine.SentimentAnalyzer') as mock_sent:
+        with patch('data_collector.DataCollector', return_value=self.mock_data_collector):
+            with patch('decision_engine.core.SentimentAnalyzer') as mock_sent:
                 mock_sent.return_value.get_combined_sentiment.return_value = self.mock_sentiment
+                
+                from decision_engine.core import DecisionEngine
                 
                 engine = DecisionEngine(
                     data_collector=self.mock_data_collector,
@@ -65,12 +65,12 @@ class TestDecisionEngine(unittest.TestCase):
     
     def test_ml_enabled_property(self):
         """Test ML enable/disable functionality"""
-        from decision_engine import DecisionEngine
-        
-        with patch('decision_engine.DataCollector', return_value=self.mock_data_collector):
-            with patch('decision_engine.SentimentAnalyzer') as mock_sent:
-                with patch('decision_engine.get_ml_predictor') as mock_ml:
+        with patch('data_collector.DataCollector', return_value=self.mock_data_collector):
+            with patch('decision_engine.core.SentimentAnalyzer') as mock_sent:
+                with patch('decision_engine.core.get_ml_predictor') as mock_ml:
                     mock_ml.return_value = Mock()
+                    
+                    from decision_engine.core import DecisionEngine
                     
                     engine = DecisionEngine(
                         data_collector=self.mock_data_collector,
@@ -86,13 +86,13 @@ class TestDecisionEngine(unittest.TestCase):
     
     def test_is_ml_ready(self):
         """Test ML readiness check"""
-        from decision_engine import DecisionEngine
-        
-        with patch('decision_engine.DataCollector', return_value=self.mock_data_collector):
-            with patch('decision_engine.SentimentAnalyzer') as mock_sent:
-                with patch('decision_engine.get_ml_predictor') as mock_ml:
+        with patch('data_collector.DataCollector', return_value=self.mock_data_collector):
+            with patch('decision_engine.core.SentimentAnalyzer') as mock_sent:
+                with patch('decision_engine.core.get_ml_predictor') as mock_ml:
                     mock_predictor = Mock()
                     mock_ml.return_value = mock_predictor
+                    
+                    from decision_engine.core import DecisionEngine
                     
                     engine = DecisionEngine(
                         data_collector=self.mock_data_collector,
@@ -114,13 +114,11 @@ class TestDecisionEngine(unittest.TestCase):
     
     def test_ml_prediction_in_signal(self):
         """Test that ML prediction is included in signal"""
-        from decision_engine import DecisionEngine, TradingSignal
-        
-        with patch('decision_engine.DataCollector', return_value=self.mock_data_collector):
-            with patch('decision_engine.SentimentAnalyzer') as mock_sent:
+        with patch('data_collector.DataCollector', return_value=self.mock_data_collector):
+            with patch('decision_engine.core.SentimentAnalyzer') as mock_sent:
                 mock_sent.return_value.get_combined_sentiment.return_value = self.mock_sentiment
                 
-                with patch('decision_engine.get_ml_predictor') as mock_ml:
+                with patch('decision_engine.core.get_ml_predictor') as mock_ml:
                     mock_predictor = Mock()
                     mock_predictor.is_trained = True
                     mock_predictor.predict.return_value = {
@@ -128,6 +126,8 @@ class TestDecisionEngine(unittest.TestCase):
                         'confidence': 0.7
                     }
                     mock_ml.return_value = mock_predictor
+                    
+                    from decision_engine.core import DecisionEngine, TradingSignal
                     
                     engine = DecisionEngine(
                         data_collector=self.mock_data_collector,
@@ -147,7 +147,7 @@ class TestDecisionEngine(unittest.TestCase):
                     with patch.object(engine.technical_analyzer, 'analyze', return_value=mock_tech_analysis):
                         with patch.object(engine, '_analyze_correlations', return_value={'avg_correlation': 0.3, 'correlations': {}}):
                             with patch.object(engine, '_calculate_volatility_score', return_value=0.5):
-                                with patch.object(engine, '_generate_reason', return_value='Test signal'):
+                                with patch.object(engine, '_get_regime', return_value=(0.5, 'Bull')):
                                     signal = engine._generate_signal('BTC/USDT')
                                     
                                     # Verify ml_score is in the signal
@@ -156,7 +156,7 @@ class TestDecisionEngine(unittest.TestCase):
     
     def test_trading_signal_ml_score_field(self):
         """Test TradingSignal has ml_score field"""
-        from decision_engine import TradingSignal
+        from decision_engine.core import TradingSignal
         
         signal = TradingSignal(
             symbol='BTC/USDT',
@@ -172,11 +172,11 @@ class TestDecisionEngine(unittest.TestCase):
     
     def test_combine_factors_with_ml(self):
         """Test _combine_factors includes ML score"""
-        from decision_engine import DecisionEngine
-        from technical_analysis import TechnicalAnalysis
-        
-        with patch('decision_engine.DataCollector', return_value=self.mock_data_collector):
-            with patch('decision_engine.SentimentAnalyzer') as mock_sent:
+        with patch('data_collector.DataCollector', return_value=self.mock_data_collector):
+            with patch('decision_engine.core.SentimentAnalyzer') as mock_sent:
+                from decision_engine.core import DecisionEngine
+                from technical_analysis import TechnicalAnalysis
+                
                 engine = DecisionEngine(
                     data_collector=self.mock_data_collector,
                     sentiment_analyzer=mock_sent.return_value
@@ -210,11 +210,11 @@ class TestDecisionEngine(unittest.TestCase):
     
     def test_calculate_confidence_with_ml(self):
         """Test _calculate_confidence includes ML confidence"""
-        from decision_engine import DecisionEngine
-        from technical_analysis import TechnicalAnalysis
-        
-        with patch('decision_engine.DataCollector', return_value=self.mock_data_collector):
-            with patch('decision_engine.SentimentAnalyzer') as mock_sent:
+        with patch('data_collector.DataCollector', return_value=self.mock_data_collector):
+            with patch('decision_engine.core.SentimentAnalyzer') as mock_sent:
+                from decision_engine.core import DecisionEngine
+                from technical_analysis import TechnicalAnalysis
+                
                 engine = DecisionEngine(
                     data_collector=self.mock_data_collector,
                     sentiment_analyzer=mock_sent.return_value
@@ -243,6 +243,122 @@ class TestDecisionEngine(unittest.TestCase):
                 )
                 # Confidence should be higher with high ML confidence
                 self.assertGreater(confidence_with_ml, confidence)
+
+
+class TestSignalGenerator(unittest.TestCase):
+    """Test cases for SignalGenerator in signals.py"""
+    
+    def setUp(self):
+        """Set up test fixtures"""
+        self.settings = {
+            'weights': {
+                'technical': 0.30,
+                'momentum': 0.20,
+                'sentiment': 0.15,
+                'volatility': 0.15,
+                'correlation': 0.20,
+            },
+            'strong_signal_threshold': 0.75,
+            'min_signal_confidence': 0.55,
+            'stop_loss_percent': 0.02,
+            'take_profit_percent': 0.05,
+            'max_position_size': 0.1,
+        }
+    
+    def test_combine_factors_with_ml(self):
+        """Test combine_factors includes ML score"""
+        from decision_engine.signals import SignalGenerator
+        from technical_analysis import TechnicalAnalysis
+        
+        generator = SignalGenerator(self.settings)
+        
+        # Mock technical analysis
+        mock_tech = Mock(spec=TechnicalAnalysis)
+        mock_tech.technical_score = 0.6
+        mock_tech.momentum_score = 0.5
+        
+        # Test without ML
+        score = generator.combine_factors(
+            mock_tech,
+            {'combined_score': 0.0},
+            {'avg_correlation': 0.3},
+            0.5
+        )
+        self.assertIsNotNone(score)
+        self.assertGreaterEqual(score, 0)
+        self.assertLessEqual(score, 1)
+        
+        # Test with ML score bullish
+        score_with_ml = generator.combine_factors(
+            mock_tech,
+            {'combined_score': 0.0},
+            {'avg_correlation': 0.3},
+            0.5,
+            ml_score=1.0
+        )
+        self.assertGreater(score_with_ml, score)
+    
+    def test_calculate_confidence_with_ml(self):
+        """Test calculate_confidence includes ML confidence"""
+        from decision_engine.signals import SignalGenerator
+        from technical_analysis import TechnicalAnalysis
+        
+        generator = SignalGenerator(self.settings)
+        
+        mock_tech = Mock(spec=TechnicalAnalysis)
+        mock_tech.technical_score = 0.6
+        
+        # Test without ML
+        confidence = generator.calculate_confidence(
+            mock_tech,
+            {'confidence': 0.5},
+            0.5
+        )
+        self.assertGreaterEqual(confidence, 0)
+        self.assertLessEqual(confidence, 1)
+        
+        # Test with ML confidence
+        confidence_with_ml = generator.calculate_confidence(
+            mock_tech,
+            {'confidence': 0.5},
+            0.5,
+            ml_confidence=0.9
+        )
+        self.assertGreater(confidence_with_ml, confidence)
+    
+    def test_determine_action(self):
+        """Test action determination"""
+        from decision_engine.signals import SignalGenerator
+        
+        generator = SignalGenerator(self.settings)
+        
+        self.assertEqual(generator.determine_action(0.8), 'BUY')
+        self.assertEqual(generator.determine_action(0.3), 'SELL')
+        self.assertEqual(generator.determine_action(0.5), 'HOLD')
+    
+    def test_get_strength_label(self):
+        """Test strength label conversion"""
+        from decision_engine.signals import SignalGenerator
+        
+        generator = SignalGenerator(self.settings)
+        
+        self.assertEqual(generator.get_strength_label(0.8), 'STRONG')
+        self.assertEqual(generator.get_strength_label(0.6), 'MODERATE')
+        self.assertEqual(generator.get_strength_label(0.4), 'WEAK')
+    
+    def test_calculate_price_levels(self):
+        """Test price levels calculation"""
+        from decision_engine.signals import SignalGenerator
+        
+        generator = SignalGenerator(self.settings)
+        
+        sl, tp = generator.calculate_price_levels(45000.0, 500, 'BUY')
+        
+        self.assertGreater(sl, 0)
+        self.assertGreater(tp, sl)
+        
+        sl_sell, tp_sell = generator.calculate_price_levels(45000.0, 500, 'SELL')
+        self.assertGreater(sl_sell, tp_sell)
 
 
 class TestMLModelPersistence(unittest.TestCase):
