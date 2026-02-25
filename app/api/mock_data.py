@@ -11,9 +11,10 @@ from typing import List, Dict, Any, Optional
 import math
 import os
 
-# Demo mode configuration - set to False to use real data
+# Demo mode configuration - set to True for demo mode by default
 # Can be overridden by environment variable DEMO_MODE
-DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
+DEMO_MODE = os.getenv("DEMO_MODE", "true").lower() == "true"
+
 
 # Base prices for demo assets
 BASE_PRICES = {
