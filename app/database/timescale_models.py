@@ -386,6 +386,55 @@ class RiskMetricsHistory(Base):
             print(f"TimescaleDB hypertable creation skipped: {e}")
 
 
+class SignalTimeseries(Base):
+    """
+    Trading signals time-series data.
+    TimescaleDB hypertable for signal analysis.
+    """
+    __tablename__ = "signals_ts"
+    
+    timestamp = Column(DateTime, primary_key=True, nullable=False)
+    symbol = Column(String(20), primary_key=True, nullable=False)
+    
+    action = Column(String(10), nullable=False)  # BUY, SELL, HOLD
+    confidence = Column(Float, default=0.0)
+    price_at_signal = Column(Float, default=0.0)
+    strategy = Column(String(50), nullable=True)
+    
+    # Execution tracking
+    executed = Column(Boolean, default=False)
+    execution_price = Column(Float, nullable=True)
+    execution_time = Column(DateTime, nullable=True)
+    result_pnl = Column(Float, nullable=True)
+    
+    # Analysis factors
+    technical_score = Column(Float, nullable=True)
+    sentiment_score = Column(Float, nullable=True)
+    ml_score = Column(Float, nullable=True)
+    monte_carlo_level = Column(Integer, default=1)
+    
+    __table_args__ = (
+        Index('ix_signals_ts_symbol_time', 'symbol', 'timestamp'),
+    )
+    
+    @classmethod
+    def create_hypertable(cls, engine):
+        """Create TimescaleDB hypertable for signals."""
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("""
+                    SELECT create_hypertable(
+                        'signals_ts',
+                        'timestamp',
+                        chunk_time_interval => INTERVAL '1 day',
+                        if_not_exists => TRUE
+                    );
+                """))
+                conn.commit()
+        except Exception as e:
+            print(f"TimescaleDB hypertable creation skipped: {e}")
+
+
 # ============================================================================
 # CONTINUOUS AGGREGATES
 # ============================================================================
@@ -469,6 +518,66 @@ def create_continuous_aggregates(engine):
         GROUP BY bucket, symbol
         WITH DATA;
         """,
+        # Daily signals aggregate (for trading signals analysis)
+        # Uses signals_ts hypertable for time-series optimized queries
+        """
+        CREATE MATERIALIZED VIEW IF NOT EXISTS daily_signals
+        WITH (timescaledb.continuous) AS
+        SELECT
+            time_bucket('1 day', timestamp) AS bucket,
+            symbol,
+            COUNT(*) AS signal_count,
+            AVG(CASE WHEN action = 'BUY' THEN 1 ELSE 0 END) AS buy_ratio,
+            AVG(confidence) AS avg_confidence,
+            AVG(CASE WHEN executed = TRUE THEN 1 ELSE 0 END) AS execution_rate,
+            SUM(CASE WHEN executed = TRUE AND result_pnl IS NOT NULL THEN result_pnl ELSE 0 END) AS total_result_pnl,
+            AVG(technical_score) AS avg_technical_score,
+            AVG(sentiment_score) AS avg_sentiment_score,
+            AVG(ml_score) AS avg_ml_score
+        FROM signals_ts
+        WHERE timestamp > NOW() - INTERVAL '365 days'
+        GROUP BY bucket, symbol
+        WITH DATA;
+        """,
+        # Weekly portfolio performance aggregate
+        """
+        CREATE MATERIALIZED VIEW IF NOT EXISTS weekly_performance
+        WITH (timescaledb.continuous) AS
+        SELECT
+            time_bucket('7 days', time) AS bucket,
+            portfolio_id,
+            FIRST(total_value, time) AS start_value,
+            LAST(total_value, time) AS end_value,
+            (LAST(total_value, time) - FIRST(total_value, time)) AS value_change,
+            ((LAST(total_value, time) - FIRST(total_value, time)) / FIRST(total_value, time) * 100) AS return_pct,
+            MAX(drawdown) AS max_drawdown,
+            AVG(sharpe) AS avg_sharpe,
+            AVG(win_rate) AS avg_win_rate,
+            SUM(daily_pnl) AS total_pnl,
+            COUNT(*) AS observations
+        FROM portfolio_history
+        WHERE time > NOW() - INTERVAL '2 years'
+        GROUP BY bucket, portfolio_id
+        WITH DATA;
+        """,
+        # Hourly risk metrics aggregate
+        """
+        CREATE MATERIALIZED VIEW IF NOT EXISTS hourly_risk_metrics
+        WITH (timescaledb.continuous) AS
+        SELECT
+            time_bucket('1 hour', time) AS bucket,
+            portfolio_id,
+            AVG(var_1d_95) AS avg_var_95,
+            AVG(var_1d_99) AS avg_var_99,
+            MAX(current_drawdown) AS max_drawdown,
+            AVG(volatility_annualized) AS avg_volatility,
+            AVG(beta) AS avg_beta,
+            AVG(liquidity_score) AS avg_liquidity
+        FROM risk_metrics_history
+        WHERE time > NOW() - INTERVAL '90 days'
+        GROUP BY bucket, portfolio_id
+        WITH DATA;
+        """,
     ]
     
     refresh_policies = [
@@ -477,6 +586,30 @@ def create_continuous_aggregates(engine):
         "SELECT add_continuous_aggregate_policy('ohlcv_1h', start_offset => INTERVAL '1 day', end_offset => INTERVAL '1 hour', schedule_interval => INTERVAL '1 hour', if_not_exists => TRUE);",
         "SELECT add_continuous_aggregate_policy('ohlcv_1d', start_offset => INTERVAL '7 days', end_offset => INTERVAL '1 day', schedule_interval => INTERVAL '1 day', if_not_exists => TRUE);",
         "SELECT add_continuous_aggregate_policy('trade_volume_1h', start_offset => INTERVAL '1 day', end_offset => INTERVAL '1 hour', schedule_interval => INTERVAL '1 hour', if_not_exists => TRUE);",
+        # New aggregates refresh policies
+        "SELECT add_continuous_aggregate_policy('daily_signals', start_offset => INTERVAL '7 days', end_offset => INTERVAL '1 day', schedule_interval => INTERVAL '1 day', if_not_exists => TRUE);",
+        "SELECT add_continuous_aggregate_policy('weekly_performance', start_offset => INTERVAL '30 days', end_offset => INTERVAL '7 days', schedule_interval => INTERVAL '1 day', if_not_exists => TRUE);",
+        "SELECT add_continuous_aggregate_policy('hourly_risk_metrics', start_offset => INTERVAL '7 days', end_offset => INTERVAL '1 hour', schedule_interval => INTERVAL '1 hour', if_not_exists => TRUE);",
+    ]
+    
+    retention_policies = [
+        # Retention policies for raw data (keep for different periods based on importance)
+        # Raw 1-minute OHLCV: keep for 90 days
+        "SELECT add_retention_policy('ohlcv_bars', INTERVAL '90 days', if_not_exists => TRUE);",
+        # Trade ticks: keep for 30 days (high volume)
+        "SELECT add_retention_policy('trade_ticks', INTERVAL '30 days', if_not_exists => TRUE);",
+        # Orderbook snapshots: keep for 7 days (very high volume)
+        "SELECT add_retention_policy('orderbook_snapshots', INTERVAL '7 days', if_not_exists => TRUE);",
+        # Funding rates: keep for 1 year
+        "SELECT add_retention_policy('funding_rates', INTERVAL '1 year', if_not_exists => TRUE);",
+        # Liquidation events: keep for 1 year
+        "SELECT add_retention_policy('liquidation_events', INTERVAL '1 year', if_not_exists => TRUE);",
+        # Portfolio history: keep for 5 years
+        "SELECT add_retention_policy('portfolio_history', INTERVAL '5 years', if_not_exists => TRUE);",
+        # Risk metrics: keep for 2 years
+        "SELECT add_retention_policy('risk_metrics_history', INTERVAL '2 years', if_not_exists => TRUE);",
+        # Signals time-series: keep for 1 year
+        "SELECT add_retention_policy('signals_ts', INTERVAL '1 year', if_not_exists => TRUE);",
     ]
     
     try:
@@ -492,6 +625,12 @@ def create_continuous_aggregates(engine):
                     conn.execute(text(policy_sql))
                 except Exception as e:
                     print(f"Policy creation skipped: {e}")
+            
+            for retention_sql in retention_policies:
+                try:
+                    conn.execute(text(retention_sql))
+                except Exception as e:
+                    print(f"Retention policy creation skipped: {e}")
             
             conn.commit()
     except Exception as e:
@@ -537,6 +676,7 @@ def init_timescaledb(database_url: str):
     LiquidationEvent.create_hypertable(engine)
     PortfolioHistory.create_hypertable(engine)
     RiskMetricsHistory.create_hypertable(engine)
+    SignalTimeseries.create_hypertable(engine)
     
     # Create continuous aggregates
     create_continuous_aggregates(engine)
