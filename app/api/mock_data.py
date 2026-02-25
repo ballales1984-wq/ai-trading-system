@@ -310,7 +310,7 @@ def get_candle_data(symbol: str, interval: str = "1h", limit: int = 100) -> List
 
 
 def get_orders(status: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Get demo orders."""
+    """Get demo orders with P&L data for trade history."""
     # Handle FastAPI Query objects and convert to string if needed
     if status is not None and hasattr(status, 'upper'):
         status_str = status.upper()
@@ -318,6 +318,17 @@ def get_orders(status: Optional[str] = None) -> List[Dict[str, Any]]:
         status_str = str(status).upper()
     else:
         status_str = None
+    
+    # Current prices for P&L calculation
+    current_prices = {
+        "BTC/USDT": 67500.00,
+        "ETH/USDT": 3450.00,
+        "SOL/USDT": 145.00,
+        "BNB/USDT": 580.00,
+        "AVAX/USDT": 35.50,
+        "XRP/USDT": 0.52,
+        "DOGE/USDT": 0.12,
+    }
     
     all_orders = [
 
@@ -332,6 +343,8 @@ def get_orders(status: Optional[str] = None) -> List[Dict[str, Any]]:
             "status": "FILLED",
             "created_at": (datetime.utcnow() - timedelta(days=15)).isoformat(),
             "filled_at": (datetime.utcnow() - timedelta(days=15)).isoformat(),
+            "pnl": 2750.00,  # (67500 - 62000) * 0.5
+            "pnl_pct": 8.87,
         },
         {
             "id": "ORD-002",
@@ -344,6 +357,8 @@ def get_orders(status: Optional[str] = None) -> List[Dict[str, Any]]:
             "status": "FILLED",
             "created_at": (datetime.utcnow() - timedelta(days=10)).isoformat(),
             "filled_at": (datetime.utcnow() - timedelta(days=10)).isoformat(),
+            "pnl": 1750.00,  # (3450 - 3100) * 5
+            "pnl_pct": 11.29,
         },
         {
             "id": "ORD-003",
@@ -356,6 +371,8 @@ def get_orders(status: Optional[str] = None) -> List[Dict[str, Any]]:
             "status": "FILLED",
             "created_at": (datetime.utcnow() - timedelta(days=7)).isoformat(),
             "filled_at": (datetime.utcnow() - timedelta(days=7)).isoformat(),
+            "pnl": 750.00,  # (145 - 130) * 50
+            "pnl_pct": 11.54,
         },
         {
             "id": "ORD-004",
@@ -368,6 +385,8 @@ def get_orders(status: Optional[str] = None) -> List[Dict[str, Any]]:
             "status": "FILLED",
             "created_at": (datetime.utcnow() - timedelta(days=5)).isoformat(),
             "filled_at": (datetime.utcnow() - timedelta(days=5)).isoformat(),
+            "pnl": 300.00,  # (580 - 550) * 10
+            "pnl_pct": 5.45,
         },
         {
             "id": "ORD-005",
@@ -380,6 +399,8 @@ def get_orders(status: Optional[str] = None) -> List[Dict[str, Any]]:
             "status": "FILLED",
             "created_at": (datetime.utcnow() - timedelta(days=3)).isoformat(),
             "filled_at": (datetime.utcnow() - timedelta(days=3)).isoformat(),
+            "pnl": 350.00,  # (35.50 - 32) * 100
+            "pnl_pct": 10.94,
         },
         {
             "id": "ORD-006",
@@ -392,6 +413,8 @@ def get_orders(status: Optional[str] = None) -> List[Dict[str, Any]]:
             "status": "PENDING",
             "created_at": (datetime.utcnow() - timedelta(hours=2)).isoformat(),
             "filled_at": None,
+            "pnl": 0.00,
+            "pnl_pct": 0.00,
         },
         {
             "id": "ORD-007",
@@ -404,6 +427,8 @@ def get_orders(status: Optional[str] = None) -> List[Dict[str, Any]]:
             "status": "CANCELLED",
             "created_at": (datetime.utcnow() - timedelta(days=1)).isoformat(),
             "filled_at": None,
+            "pnl": 0.00,
+            "pnl_pct": 0.00,
         },
     ]
     
@@ -411,6 +436,7 @@ def get_orders(status: Optional[str] = None) -> List[Dict[str, Any]]:
         return [o for o in all_orders if o["status"] == status_str]
     
     return all_orders
+
 
 
 

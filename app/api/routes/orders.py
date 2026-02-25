@@ -316,8 +316,116 @@ async def list_orders(
 
 
 
+@router.get("/history", response_model=List[OrderResponse])
+async def get_trade_history(
+    symbol: Optional[str] = Query(None, description="Filter by symbol"),
+    status: Optional[str] = Query(None, description="Filter by status: FILLED, PENDING, CANCELLED"),
+    date_from: Optional[datetime] = Query(None, description="Start date (ISO format)"),
+    date_to: Optional[datetime] = Query(None, description="End date (ISO format)"),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum orders to return"),
+) -> List[OrderResponse]:
+    """
+    Get trade history with P&L data.
+    
+    Returns filled orders with profit/loss calculations for trade history display.
+    Supports filtering by symbol, status, and date range.
+    """
+    # Extract actual values from Query objects if needed
+    symbol_val = None
+    status_val = None
+    limit_val = 100
+    
+    if symbol is not None:
+        if hasattr(symbol, 'default'):
+            symbol_val = symbol.default
+        else:
+            symbol_val = symbol
+    
+    if status is not None:
+        if hasattr(status, 'default'):
+            status_val = status.default.upper() if status.default else None
+        else:
+            status_val = str(status).upper() if status else None
+    
+    if limit is not None:
+        if hasattr(limit, 'default'):
+            limit_val = int(limit.default) if limit.default is not None else 100
+        else:
+            limit_val = int(limit) if limit is not None else 100
+    
+    # Use mock data if demo mode is enabled
+    if DEMO_MODE:
+        from app.api.mock_data import get_orders as mock_get_orders
+        
+        mock_orders = mock_get_orders(status=status_val)
+        
+        orders = []
+        for o in mock_orders:
+            # Skip orders without filled_at for history (unless explicitly requested)
+            if status_val != "PENDING" and o.get("status") == "PENDING":
+                continue
+                
+            order = OrderResponse(
+                order_id=o["id"],
+                symbol=o["symbol"],
+                side=o["side"],
+                order_type=o["type"],
+                quantity=o["quantity"],
+                price=o["price"],
+                stop_price=None,
+                status=o["status"],
+                filled_quantity=o["filled_quantity"],
+                average_price=o["price"] if o["status"] == "FILLED" else None,
+                commission=0.0,
+                created_at=datetime.fromisoformat(o["created_at"]) if o.get("created_at") else datetime.utcnow(),
+                updated_at=datetime.fromisoformat(o["filled_at"]) if o.get("filled_at") else datetime.utcnow(),
+                strategy_id=None,
+                broker="demo",
+            )
+            orders.append(order)
+        
+        # Apply symbol filter
+        if symbol_val:
+            orders = [o for o in orders if o.symbol == symbol_val]
+        
+        # Sort by created_at descending (most recent first)
+        orders.sort(key=lambda x: x.created_at, reverse=True)
+        
+        return orders[:limit_val]
+    
+    # Production mode: get from database
+    adapter = get_data_adapter()
+    real_orders = adapter.get_orders()
+    
+    if real_orders:
+        orders = [OrderResponse(**o) for o in real_orders]
+    else:
+        orders = list(orders_db.values())
+    
+    # Apply filters
+    if symbol_val:
+        orders = [o for o in orders if o.symbol == symbol_val]
+    if status_val:
+        orders = [o for o in orders if o.status == status_val]
+    
+    # Apply date filters if provided
+    if date_from:
+        orders = [o for o in orders if o.created_at >= date_from]
+    if date_to:
+        orders = [o for o in orders if o.created_at <= date_to]
+    
+    # Sort by created_at descending
+    orders.sort(key=lambda x: x.created_at, reverse=True)
+    
+    # Apply limit
+    orders = orders[:limit_val]
+    
+    return orders
+
+
 @router.get("/{order_id}", response_model=OrderResponse)
 async def get_order(order_id: str) -> OrderResponse:
+
     """
     Get order by ID.
     """

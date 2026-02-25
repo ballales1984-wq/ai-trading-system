@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ordersApi } from '../services/api';
-import { Plus, Play, X, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Play, X, Clock, CheckCircle, XCircle, History, List } from 'lucide-react';
+
 
 export default function Orders() {
   const queryClient = useQueryClient();
@@ -13,12 +14,21 @@ export default function Orders() {
     quantity: 0.001,
     broker: 'paper',
   });
+  const [activeTab, setActiveTab] = useState<'orders' | 'history'>('orders');
+
 
   const { data: orders } = useQuery({
     queryKey: ['orders'],
     queryFn: () => ordersApi.list(),
     refetchInterval: 10000,
   });
+
+  const { data: tradeHistory } = useQuery({
+    queryKey: ['orders', 'history'],
+    queryFn: () => ordersApi.getHistory({ limit: 50 }),
+    refetchInterval: 30000,
+  });
+
 
   const createOrder = useMutation({
     mutationFn: ordersApi.create,
@@ -63,6 +73,8 @@ export default function Orders() {
   };
 
   const ordersList = Array.isArray(orders) ? orders : [];
+  const historyList = Array.isArray(tradeHistory) ? tradeHistory : [];
+
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -95,6 +107,16 @@ export default function Orders() {
         return 'text-text-muted';
     }
   };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
 
   return (
     <div className="p-6">
@@ -199,10 +221,38 @@ export default function Orders() {
         </div>
       )}
 
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setActiveTab('orders')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+            activeTab === 'orders'
+              ? 'bg-primary text-white'
+              : 'bg-surface border border-border text-text hover:bg-border/20'
+          }`}
+        >
+          <List className="w-4 h-4" />
+          Active Orders
+        </button>
+        <button
+          onClick={() => setActiveTab('history')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+            activeTab === 'history'
+              ? 'bg-primary text-white'
+              : 'bg-surface border border-border text-text hover:bg-border/20'
+          }`}
+        >
+          <History className="w-4 h-4" />
+          Trade History
+        </button>
+      </div>
+
       {/* Orders Table */}
+      {activeTab === 'orders' && (
       <div className="bg-surface border border-border rounded-lg p-4">
         <h2 className="text-lg font-semibold text-text mb-4">All Orders</h2>
         <div className="overflow-x-auto">
+
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
@@ -272,7 +322,72 @@ export default function Orders() {
           )}
         </div>
       </div>
+      )}
+
+      {/* Trade History Table */}
+      {activeTab === 'history' && (
+      <div className="bg-surface border border-border rounded-lg p-4">
+        <h2 className="text-lg font-semibold text-text mb-4">Trade History</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left py-3 px-4 text-text-muted font-medium">Date</th>
+                <th className="text-left py-3 px-4 text-text-muted font-medium">Symbol</th>
+                <th className="text-left py-3 px-4 text-text-muted font-medium">Side</th>
+                <th className="text-left py-3 px-4 text-text-muted font-medium">Type</th>
+                <th className="text-right py-3 px-4 text-text-muted font-medium">Qty</th>
+                <th className="text-right py-3 px-4 text-text-muted font-medium">Price</th>
+                <th className="text-center py-3 px-4 text-text-muted font-medium">Status</th>
+                <th className="text-right py-3 px-4 text-text-muted font-medium">P&L</th>
+                <th className="text-right py-3 px-4 text-text-muted font-medium">P&L %</th>
+              </tr>
+            </thead>
+            <tbody>
+              {historyList.map((order) => (
+                <tr key={order.order_id} className="border-b border-border/50 hover:bg-border/20">
+                  <td className="py-3 px-4 text-text-muted text-sm">
+                    {formatDate(order.created_at)}
+                  </td>
+                  <td className="py-3 px-4 font-medium text-text">{order.symbol}</td>
+                  <td className={`py-3 px-4 font-medium ${
+                    order.side === 'BUY' ? 'text-success' : 'text-danger'
+                  }`}>
+                    {order.side}
+                  </td>
+                  <td className="py-3 px-4 text-text-muted">{order.order_type}</td>
+                  <td className="py-3 px-4 text-right text-text">{order.quantity.toFixed(4)}</td>
+                  <td className="py-3 px-4 text-right text-text">
+                    {order.average_price ? formatCurrency(order.average_price) : '-'}
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      {getStatusIcon(order.status)}
+                      <span className={getStatusColor(order.status)}>{order.status}</span>
+                    </div>
+                  </td>
+                  <td className={`py-3 px-4 text-right font-medium ${
+                    (order.pnl || 0) >= 0 ? 'text-success' : 'text-danger'
+                  }`}>
+                    {order.pnl !== undefined ? formatCurrency(order.pnl) : '-'}
+                  </td>
+                  <td className={`py-3 px-4 text-right font-medium ${
+                    (order.pnl_pct || 0) >= 0 ? 'text-success' : 'text-danger'
+                  }`}>
+                    {order.pnl_pct !== undefined ? `${order.pnl_pct.toFixed(2)}%` : '-'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {historyList.length === 0 && (
+            <div className="text-center py-8 text-text-muted">
+              No trade history found.
+            </div>
+          )}
+        </div>
+      </div>
+      )}
     </div>
   );
 }
-

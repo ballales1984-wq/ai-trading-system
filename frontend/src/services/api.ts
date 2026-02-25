@@ -159,7 +159,23 @@ export const ordersApi = {
     const { data } = await api.post<Order>(`/orders/${orderId}/execute`);
     return data;
   },
+
+  /**
+   * Get trade history with P&L data
+   * Supports filtering by symbol, status, and date range
+   */
+  getHistory: async (params?: {
+    symbol?: string;
+    status?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    limit?: number;
+  }): Promise<Order[]> => {
+    const { data } = await api.get<Order[]>('/orders/history', { params });
+    return data;
+  },
 };
+
 
 // Stripe Payment API
 export interface CreateCheckoutRequest {

@@ -90,7 +90,12 @@ export interface Order {
   strategy_id?: string;
   broker: string;
   error_message?: string;
+  /** Profit/Loss in base currency (for trade history) */
+  pnl?: number;
+  /** Profit/Loss percentage (for trade history) */
+  pnl_pct?: number;
 }
+
 
 export interface OrderCreate {
   symbol: string;
@@ -119,4 +124,3 @@ export interface HistoryEntry {
 export interface PortfolioHistory {
   history: HistoryEntry[];
 }
-
