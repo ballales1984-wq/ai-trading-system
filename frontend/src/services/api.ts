@@ -101,8 +101,31 @@ export const marketApi = {
   },
 };
 
+// Risk API
+export const riskApi = {
+  getMetrics: async (): Promise<{
+    var_95: number;
+    var_99: number;
+    cvar_95: number;
+    portfolio_beta: number;
+    volatility_annualized: number;
+    correlation_matrix: Record<string, number>;
+    concentration_risk: {
+      max_position_pct: number;
+      top_3_positions_pct: number;
+    };
+    leverage: number;
+    margin_used_pct: number;
+    last_updated: string;
+  }> => {
+    const { data } = await api.get('/risk/metrics');
+    return data;
+  },
+};
+
 // Orders API
 export const ordersApi = {
+
   list: async (symbol?: string, status?: string): Promise<Order[]> => {
     const params: Record<string, string> = {};
     if (symbol) params.symbol = symbol;
