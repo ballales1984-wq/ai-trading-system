@@ -124,3 +124,12 @@ export interface HistoryEntry {
 export interface PortfolioHistory {
   history: HistoryEntry[];
 }
+
+export interface MarketSentiment {
+  fear_greed_index: number;
+  sentiment_label: string;
+  sentiment_emoji: string;
+  btc_dominance: number;
+  market_momentum: number;
+  last_updated: string;
+}

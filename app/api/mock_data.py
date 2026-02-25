@@ -503,7 +503,40 @@ def get_strategy_signals() -> List[Dict[str, Any]]:
     ]
 
 
+def get_market_sentiment() -> Dict[str, Any]:
+    """Get demo market sentiment data (Fear & Greed Index)."""
+    # Generate a random fear & greed index between 20 and 80
+    fear_greed_index = random.randint(20, 80)
+    
+    # Determine sentiment label based on index
+    if fear_greed_index <= 20:
+        sentiment_label = "Extreme Fear"
+        sentiment_emoji = "😱"
+    elif fear_greed_index <= 40:
+        sentiment_label = "Fear"
+        sentiment_emoji = "😰"
+    elif fear_greed_index <= 60:
+        sentiment_label = "Neutral"
+        sentiment_emoji = "😐"
+    elif fear_greed_index <= 80:
+        sentiment_label = "Greed"
+        sentiment_emoji = "🤑"
+    else:
+        sentiment_label = "Extreme Greed"
+        sentiment_emoji = "🚀"
+    
+    return {
+        "fear_greed_index": fear_greed_index,
+        "sentiment_label": sentiment_label,
+        "sentiment_emoji": sentiment_emoji,
+        "btc_dominance": round(random.uniform(52.0, 58.0), 2),
+        "market_momentum": round(random.uniform(-5.0, 15.0), 2),
+        "last_updated": datetime.utcnow().isoformat(),
+    }
+
+
 # Export all functions
+
 __all__ = [
     "DEMO_MODE",
     "get_portfolio_summary",
@@ -517,4 +550,5 @@ __all__ = [
     "get_orders",
     "get_risk_metrics",
     "get_strategy_signals",
+    "get_market_sentiment",
 ]

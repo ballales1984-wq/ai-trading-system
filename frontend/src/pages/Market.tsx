@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { marketApi } from '../services/api';
+import type { MarketSentiment } from '../types';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertTriangle, Brain } from 'lucide-react';
+
 
 // TypeScript interfaces for type safety
 interface MarketData {
@@ -72,6 +74,15 @@ export default function Market() {
     staleTime: 30000,
   });
 
+  const { data: sentiment } = useQuery({
+    queryKey: ['market-sentiment'],
+    queryFn: () => marketApi.getSentiment(),
+    retry: 1,
+    staleTime: 60000,
+    refetchInterval: 60000,
+  });
+
+
   // Use fallback data only when real payload is missing.
   // Avoid false "demo data" warnings on transient query errors.
   const hasPricesData = !!(prices?.markets && prices.markets.length > 0);
@@ -125,9 +136,21 @@ export default function Market() {
         </div>
       )}
 
+      {/* Sentiment Gauge */}
+      {sentiment && (
+        <div className="mb-6 bg-surface border border-border rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Brain className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold text-text">Market Sentiment</h2>
+          </div>
+          <SentimentGauge sentiment={sentiment} />
+        </div>
+      )}
+
       {/* Symbol Selector */}
       <div className="flex gap-4 mb-6">
         <div className="flex gap-2">
+
           {symbols.map((symbol) => (
             <button
               key={symbol}
@@ -279,6 +302,98 @@ function PriceCard({ title, value, icon: Icon, valueColor = 'text-text' }: { tit
         {Icon && <Icon className={`w-5 h-5 ${valueColor === 'text-success' ? 'text-success' : valueColor === 'text-danger' ? 'text-danger' : 'text-primary'}`} />}
       </div>
       <div className={`text-xl font-bold ${valueColor}`}>{value}</div>
+    </div>
+  );
+}
+
+function SentimentGauge({ sentiment }: { sentiment: MarketSentiment }) {
+  const { fear_greed_index, sentiment_label, sentiment_emoji, btc_dominance, market_momentum } = sentiment;
+
+  // Calculate color based on index (0-100)
+  const getColor = (index: number) => {
+    if (index <= 20) return 'text-red-500';      // Extreme Fear
+    if (index <= 40) return 'text-orange-500';   // Fear
+    if (index <= 60) return 'text-yellow-500';   // Neutral
+    if (index <= 80) return 'text-green-500';    // Greed
+    return 'text-emerald-500';                   // Extreme Greed
+  };
+
+  const getBgColor = (index: number) => {
+    if (index <= 20) return 'bg-red-500';
+    if (index <= 40) return 'bg-orange-500';
+    if (index <= 60) return 'bg-yellow-500';
+    if (index <= 80) return 'bg-green-500';
+    return 'bg-emerald-500';
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Fear & Greed Index Gauge */}
+      <div className="bg-background border border-border rounded-lg p-4">
+        <div className="text-center">
+          <div className="text-3xl mb-2">{sentiment_emoji}</div>
+          <div className={`text-4xl font-bold ${getColor(fear_greed_index)}`}>
+            {fear_greed_index}
+          </div>
+          <div className="text-text-muted text-sm mt-1">Fear & Greed Index</div>
+          <div className={`font-medium mt-2 ${getColor(fear_greed_index)}`}>
+            {sentiment_label}
+          </div>
+          {/* Progress bar */}
+          <div className="mt-3 h-2 bg-border rounded-full overflow-hidden">
+            <div
+              className={`h-full ${getBgColor(fear_greed_index)} transition-all duration-500`}
+              style={{ width: `${fear_greed_index}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-xs text-text-muted mt-1">
+            <span>Extreme Fear</span>
+            <span>Extreme Greed</span>
+          </div>
+        </div>
+      </div>
+
+      {/* BTC Dominance */}
+      <div className="bg-background border border-border rounded-lg p-4">
+        <div className="text-center">
+          <div className="text-3xl mb-2">₿</div>
+          <div className="text-4xl font-bold text-primary">
+            {btc_dominance.toFixed(1)}%
+          </div>
+          <div className="text-text-muted text-sm mt-1">BTC Dominance</div>
+          <div className="text-text text-sm mt-2">
+            Market share of Bitcoin
+          </div>
+        </div>
+      </div>
+
+      {/* Market Momentum */}
+      <div className="bg-background border border-border rounded-lg p-4">
+        <div className="text-center">
+          <div className="text-3xl mb-2">📈</div>
+          <div className={`text-4xl font-bold ${market_momentum >= 0 ? 'text-success' : 'text-danger'}`}>
+            {market_momentum >= 0 ? '+' : ''}{market_momentum.toFixed(2)}%
+          </div>
+          <div className="text-text-muted text-sm mt-1">Market Momentum</div>
+          <div className="text-text text-sm mt-2">
+            {market_momentum >= 0 ? 'Bullish trend' : 'Bearish trend'}
+          </div>
+        </div>
+      </div>
+
+      {/* Sentiment Summary */}
+      <div className="bg-background border border-border rounded-lg p-4">
+        <div className="text-center">
+          <div className="text-3xl mb-2">🎯</div>
+          <div className="text-lg font-bold text-text">
+            {fear_greed_index <= 40 ? 'Consider Buying' : fear_greed_index >= 60 ? 'Consider Selling' : 'Hold Position'}
+          </div>
+          <div className="text-text-muted text-sm mt-1">AI Recommendation</div>
+          <div className="text-text text-xs mt-2">
+            Based on Fear & Greed Index
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

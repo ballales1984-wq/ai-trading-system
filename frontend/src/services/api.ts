@@ -10,7 +10,9 @@ import type {
   CandleData,
   Order,
   OrderCreate,
+  MarketSentiment,
 } from '../types';
+
 
 // Use environment variable for API base URL
 // In production (Vercel), this should point to your local backend via ngrok or public IP
@@ -99,7 +101,17 @@ export const marketApi = {
     const { data } = await api.get(`/market/orderbook/${symbol}`);
     return data;
   },
+
+  /**
+   * Get market sentiment data (Fear & Greed Index)
+   * Returns fear/greed index, sentiment label with emoji, BTC dominance, and market momentum
+   */
+  getSentiment: async (): Promise<MarketSentiment> => {
+    const { data } = await api.get<MarketSentiment>('/market/sentiment');
+    return data;
+  },
 };
+
 
 // Risk API
 export const riskApi = {

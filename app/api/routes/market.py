@@ -18,7 +18,9 @@ from app.api.mock_data import (
     get_market_prices as mock_market_prices,
     get_price_data as mock_price_data,
     get_candle_data as mock_candle_data,
+    get_market_sentiment as mock_market_sentiment,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -66,9 +68,20 @@ class MarketOverview(BaseModel):
     markets: List[PriceData]
 
 
+class MarketSentiment(BaseModel):
+    """Market sentiment data (Fear & Greed Index)."""
+    fear_greed_index: int = Field(..., ge=0, le=100, description="Fear & Greed Index (0-100)")
+    sentiment_label: str = Field(..., description="Sentiment label: Extreme Fear, Fear, Neutral, Greed, Extreme Greed")
+    sentiment_emoji: str = Field(..., description="Emoji representing sentiment")
+    btc_dominance: float = Field(..., description="BTC market dominance percentage")
+    market_momentum: float = Field(..., description="Market momentum score")
+    last_updated: datetime
+
+
 # ============================================================================
 # ROUTES
 # ============================================================================
+
 
 @router.get("/price/{symbol}", response_model=PriceData)
 async def get_price(symbol: str) -> PriceData:
@@ -280,9 +293,62 @@ async def get_index_price(symbol: str) -> dict:
     }
 
 
+@router.get("/sentiment", response_model=MarketSentiment)
+async def get_market_sentiment() -> MarketSentiment:
+    """
+    Get market sentiment data (Fear & Greed Index).
+    
+    Returns the current market sentiment including:
+    - Fear & Greed Index (0-100)
+    - Sentiment label with emoji
+    - BTC dominance percentage
+    - Market momentum score
+    """
+    # Use mock data if demo mode is enabled
+    if DEMO_MODE:
+        data = mock_market_sentiment()
+        return MarketSentiment(
+            fear_greed_index=data["fear_greed_index"],
+            sentiment_label=data["sentiment_label"],
+            sentiment_emoji=data["sentiment_emoji"],
+            btc_dominance=data["btc_dominance"],
+            market_momentum=data["market_momentum"],
+            last_updated=datetime.fromisoformat(data["last_updated"]),
+        )
+    
+    # Fallback to simulated data
+    fear_greed = random.randint(20, 80)
+    
+    if fear_greed <= 20:
+        label = "Extreme Fear"
+        emoji = "😱"
+    elif fear_greed <= 40:
+        label = "Fear"
+        emoji = "😰"
+    elif fear_greed <= 60:
+        label = "Neutral"
+        emoji = "😐"
+    elif fear_greed <= 80:
+        label = "Greed"
+        emoji = "🤑"
+    else:
+        label = "Extreme Greed"
+        emoji = "🚀"
+    
+    return MarketSentiment(
+        fear_greed_index=fear_greed,
+        sentiment_label=label,
+        sentiment_emoji=emoji,
+        btc_dominance=round(random.uniform(52.0, 58.0), 2),
+        market_momentum=round(random.uniform(-5.0, 15.0), 2),
+        last_updated=datetime.utcnow(),
+    )
+
+
 # ============================================================================
 # COINMARKETCAP ENDPOINTS
 # ============================================================================
+
 
 def _get_cmc_client():
     """Lazy-load CoinMarketCap client."""
