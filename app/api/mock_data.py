@@ -310,7 +310,16 @@ def get_candle_data(symbol: str, interval: str = "1h", limit: int = 100) -> List
 
 def get_orders(status: Optional[str] = None) -> List[Dict[str, Any]]:
     """Get demo orders."""
+    # Handle FastAPI Query objects and convert to string if needed
+    if status is not None and hasattr(status, 'upper'):
+        status_str = status.upper()
+    elif status is not None:
+        status_str = str(status).upper()
+    else:
+        status_str = None
+    
     all_orders = [
+
         {
             "id": "ORD-001",
             "symbol": "BTC/USDT",
@@ -397,10 +406,11 @@ def get_orders(status: Optional[str] = None) -> List[Dict[str, Any]]:
         },
     ]
     
-    if status:
-        return [o for o in all_orders if o["status"] == status.upper()]
+    if status_str:
+        return [o for o in all_orders if o["status"] == status_str]
     
     return all_orders
+
 
 
 def get_risk_metrics() -> Dict[str, Any]:

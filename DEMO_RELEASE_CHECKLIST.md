@@ -1,6 +1,6 @@
-iam# 🚀 Demo Release Checklist - AI Trading System
+# 🚀 Demo Release Checklist - AI Trading System
 
-## Current Status: 90% Ready for Public Demo
+## Current Status: 95% Ready for Public Demo
 
 ---
 
@@ -31,6 +31,8 @@ iam# 🚀 Demo Release Checklist - AI Trading System
 - [x] Mock data module for demo mode (`app/api/mock_data.py`)
 - [x] Portfolio routes with demo mode support
 - [x] Market routes with demo mode support
+- [x] **Orders routes with demo mode support** ✅ (COMPLETED)
+- [x] **Emergency Stop API** ✅ (COMPLETED - New Feature)
 
 ### Landing Page
 - [x] Professional design with gradient theme
@@ -43,15 +45,12 @@ iam# 🚀 Demo Release Checklist - AI Trading System
 
 ## 🔧 REMAINING TASKS
 
-### 1. Orders Route Demo Mode (30 min)
-- [ ] Update `app/api/routes/orders.py` to use mock data
-
-### 2. Build & Test (1 hour)
+### 1. Build & Test (1 hour)
 - [ ] Run `npm run build` in frontend directory
 - [ ] Test production build locally
 - [ ] Verify all API endpoints work
 
-### 3. Deployment (2-3 hours)
+### 2. Deployment (2-3 hours)
 - [ ] Choose deployment platform (Railway recommended)
 - [ ] Set environment variables
 - [ ] Deploy and test
@@ -68,11 +67,32 @@ iam# 🚀 Demo Release Checklist - AI Trading System
 - `frontend/src/components/ui/EmptyState.tsx` - Empty/error state components
 
 ### Modified Files
+- `app/api/routes/orders.py` - ✅ Added full demo mode support + Emergency Stop API
 - `app/api/routes/portfolio.py` - Added demo mode support
 - `app/api/routes/market.py` - Added demo mode support
 - `frontend/src/components/layout/Layout.tsx` - Mobile nav, demo badge
 - `frontend/src/pages/Dashboard.tsx` - Loading states, error handling
 - `frontend/src/index.css` - Animations, responsive styles
+
+---
+
+## 🚨 NEW: Emergency Stop API
+
+### Endpoints Added:
+- `POST /api/orders/emergency-stop` - Activate emergency stop
+  - Cancels all pending orders
+  - Prevents new order creation
+  - Optional: Close all positions
+  
+- `POST /api/orders/emergency-resume` - Resume trading
+  
+- `GET /api/orders/status/emergency` - Check emergency status
+
+### Safety Features:
+- Emergency stop state persists across API calls
+- All order creation blocked when active
+- Manual execution blocked when active
+- Comprehensive logging of emergency actions
 
 ---
 
@@ -103,6 +123,7 @@ iam# 🚀 Demo Release Checklist - AI Trading System
 - [x] Mobile navigation works
 - [x] All charts render correctly
 - [x] Demo mode badge visible
+- [x] Emergency stop API functional
 
 ---
 
@@ -115,4 +136,31 @@ iam# 🚀 Demo Release Checklist - AI Trading System
 
 ---
 
-**Estimated Time to Complete: 3-4 hours**
+## 📝 API Endpoints Summary
+
+### Orders API (Demo Mode Ready)
+- `GET /api/orders` - List all orders
+- `POST /api/orders` - Create new order
+- `GET /api/orders/{order_id}` - Get order by ID
+- `PATCH /api/orders/{order_id}` - Update order
+- `DELETE /api/orders/{order_id}` - Cancel order
+- `POST /api/orders/{order_id}/execute` - Execute order
+- `POST /api/orders/emergency-stop` - 🆕 Emergency stop
+- `POST /api/orders/emergency-resume` - 🆕 Resume trading
+- `GET /api/orders/status/emergency` - 🆕 Check status
+
+### Portfolio API (Demo Mode Ready)
+- `GET /api/portfolio/summary` - Portfolio summary
+- `GET /api/portfolio/positions` - List positions
+- `GET /api/portfolio/performance` - Performance metrics
+- `GET /api/portfolio/allocation` - Asset allocation
+- `GET /api/portfolio/history` - Equity curve history
+
+### Market API (Demo Mode Ready)
+- `GET /api/market/prices` - Current prices
+- `GET /api/market/price/{symbol}` - Specific symbol price
+- `GET /api/market/candles/{symbol}` - OHLCV data
+
+---
+
+**Estimated Time to Complete: 2-3 hours** (Reduced from 3-4 hours - Orders task completed!)
