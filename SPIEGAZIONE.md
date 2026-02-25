@@ -27,7 +27,7 @@ Le chiavi API sono sul TUO server, MAI sul frontend!
 ## Struttura
 
 - decision_engine/ - Cervello AI
-- app/ - Backend FastAPI  
+- app/ - Backend FastAPI
 - frontend/ - Dashboard React
 - src/ - Componenti core
 
@@ -48,6 +48,8 @@ docker-compose up
 ## API Keys
 
 File .env (NON committare!):
+
 ```
+bash
 BINANCE_API_KEY=tuakey
 BINANCE_SECRET_KEY=segreto
