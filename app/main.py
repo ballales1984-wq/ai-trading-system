@@ -16,6 +16,7 @@ from fastapi.exceptions import RequestValidationError
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
 from app.api.routes import health, orders, portfolio, strategy, risk, market, waitlist
+from app.api.routes import cache
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -81,6 +82,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -181,6 +183,12 @@ app.include_router(
     tags=["Waitlist"]
 )
 
+app.include_router(
+    cache.router,
+    prefix=f"{settings.api_prefix}/cache",
+    tags=["Cache"]
+)
+
 # Serve landing page
 LANDING_DIR = Path(__file__).parent.parent / "landing"
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend" / "dist"
@@ -190,6 +198,7 @@ if LANDING_DIR.exists():
 
 # Serve frontend in production
 if FRONTEND_DIR.exists():
+    app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
     app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR / "assets")), name="assets")
 
 
@@ -224,6 +233,12 @@ async def serve_spa():
     frontend_file = FRONTEND_DIR / "index.html"
     if frontend_file.exists():
         return FileResponse(str(frontend_file))
+    
+    # Try to serve from /frontend path
+    frontend_file = Path("/app/frontend/dist/index.html")
+    if frontend_file.exists():
+        return FileResponse(str(frontend_file))
+    
     return {"error": "Frontend not built"}
 
 

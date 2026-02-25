@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Bot, Menu, X } from 'lucide-react';
-import { DemoBadge, DemoBanner } from '../ui/DemoBadge';
 import { ToastContainer, useToast } from '../ui/Toast';
 
 const navItems = [
@@ -17,13 +16,10 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Demo Banner */}
-      <DemoBanner />
-      
       <div className="flex flex-1">
         {/* Mobile Menu Button */}
         <button
-          className="lg:hidden fixed top-14 left-4 z-50 p-2 bg-surface rounded-lg border border-border"
+          className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-surface rounded-lg border border-border"
           onClick={() => setSidebarOpen(!sidebarOpen)}
         >
           {sidebarOpen ? (
@@ -82,7 +78,7 @@ export default function Layout() {
           <div className="p-4 border-t border-border">
             <div className="flex items-center gap-2 text-sm">
               <span className="w-2 h-2 bg-success rounded-full live-indicator" />
-              <span className="text-text-muted">Demo Mode Active</span>
+              <span className="text-text-muted">Live Mode Active</span>
             </div>
           </div>
         </aside>
@@ -100,9 +96,6 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
-
-      {/* Demo Badge */}
-      <DemoBadge />
 
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} removeToast={removeToast} />

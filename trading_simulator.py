@@ -409,7 +409,8 @@ class TradingSimulator:
         try:
             df = self.data_collector.fetch_ohlcv(symbol, '1h', 1)
             current_price = df['close'].iloc[-1] if df is not None else position.current_price
-        except:
+        except (ValueError, KeyError, TypeError) as e:
+            logger.warning(f"Error fetching price for {symbol}: {e}, using stored price")
             current_price = position.current_price
         
         # Calculate P&L

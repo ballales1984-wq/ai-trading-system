@@ -384,7 +384,7 @@ async def lifespan(app):
     manager = await initialize_connections(
         connect_redis=True,
         connect_database=True,
-        connect_brokers=False,  # Brokers connect on demand
+        connect_brokers=True,  # Connect brokers to get real data
     )
     
     yield

@@ -104,6 +104,7 @@ class TradingEngine:
         # Statistics
         self.stats = {
             'started_at': None,
+            'equity_high': config.initial_balance,  # Track highest equity for drawdown
             'signals_processed': 0,
             'orders_placed': 0,
             'orders_filled': 0,
@@ -363,11 +364,17 @@ class TradingEngine:
                         await self.stop(close_positions=True)
                         break
                 
-                # Log status periodically
+                # Log status periodically and update equity high
                 if self.broker:
                     balance = await self.broker.get_balance()
+                    
+                    # Update equity high watermark
+                    if balance.total_equity > self.stats.get('equity_high', 0):
+                        self.stats['equity_high'] = balance.total_equity
+                    
                     logger.info(
                         f"Health - Equity: {balance.total_equity:.2f}, "
+                        f"High Watermark: {self.stats.get('equity_high', balance.total_equity):.2f}, "
                         f"PnL: {self.stats['total_pnl']:.2f}"
                     )
                 

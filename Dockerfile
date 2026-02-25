@@ -12,11 +12,13 @@ RUN pip install --no-cache-dir -r requirements-vercel.txt
 # ------------------------------------
 FROM node:18-alpine AS frontend-builder
 
+WORKDIR /app
+
 # Copia package.json
 COPY frontend/package*.json ./
 
-# Installa dipendenze Node
-RUN npm ci --only=production
+# Installa dipendenze Node (tutte, incluso dev per build)
+RUN npm ci
 
 # Copia sorgenti frontend
 COPY frontend/ .
@@ -54,14 +56,17 @@ COPY app/ ./app/
 COPY api/ ./api/
 
 # Copia frontend build dal frontend-builder
-COPY --from=frontend-builder /app/frontend/dist ./frontend/
+COPY --from=frontend-builder /app/dist ./frontend/
 
 # Crea environment file minimo inline
 RUN echo "FASTAPI_ENV=production" > .env
 
 # Crea non-root user
 RUN useradd --create-home --shell /bin/bash appuser && \
-    chown -R appuser:appuser /app
+    chown -R appuser:appuser /app && \
+    chmod +x /app
+
+# Passa a non-root user
 USER appuser
 
 # Espone porta (Render usa 10000 di default)

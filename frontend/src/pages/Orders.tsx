@@ -62,6 +62,8 @@ export default function Orders() {
     }).format(value);
   };
 
+  const ordersList = Array.isArray(orders) ? orders : [];
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'FILLED':
@@ -158,6 +160,7 @@ export default function Orders() {
               <input
                 type="number"
                 step="0.0001"
+                autoComplete="off"
                 value={newOrder.quantity}
                 onChange={(e) => setNewOrder({ ...newOrder, quantity: parseFloat(e.target.value) })}
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text"
@@ -215,7 +218,7 @@ export default function Orders() {
               </tr>
             </thead>
             <tbody>
-              {orders?.map((order) => (
+              {ordersList.map((order) => (
                 <tr key={order.order_id} className="border-b border-border/50 hover:bg-border/20">
                   <td className="py-3 px-4 text-text-muted font-mono text-sm">{order.order_id.slice(0, 8)}...</td>
                   <td className="py-3 px-4 font-medium text-text">{order.symbol}</td>
@@ -262,7 +265,7 @@ export default function Orders() {
               ))}
             </tbody>
           </table>
-          {orders?.length === 0 && (
+          {ordersList.length === 0 && (
             <div className="text-center py-8 text-text-muted">
               No orders found. Create your first order!
             </div>

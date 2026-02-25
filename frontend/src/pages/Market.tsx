@@ -58,24 +58,27 @@ export default function Market() {
   // Memoize fallback candles to prevent inconsistent renders
   const fallbackCandles = useMemo(() => generateFallbackCandles(), []);
 
-  const { data: prices, isLoading: pricesLoading, error: pricesError } = useQuery({
+  const { data: prices, isLoading: pricesLoading } = useQuery({
     queryKey: ['market-prices'],
     queryFn: marketApi.getAllPrices,
     retry: 1,
     staleTime: 30000,
   });
 
-  const { data: candles, error: candlesError } = useQuery({
+  const { data: candles } = useQuery({
     queryKey: ['market-candles', selectedSymbol, timeframe],
     queryFn: () => marketApi.getCandles(selectedSymbol, timeframe, 100),
     retry: 1,
     staleTime: 30000,
   });
 
-  // Use fallback data if API fails
-  const isUsingFallback = !!(pricesError || candlesError);
-  const pricesData = pricesError ? fallbackPrices : prices;
-  const candlesData = candlesError ? fallbackCandles : candles;
+  // Use fallback data only when real payload is missing.
+  // Avoid false "demo data" warnings on transient query errors.
+  const hasPricesData = !!(prices?.markets && prices.markets.length > 0);
+  const hasCandlesData = Array.isArray(candles) && candles.length > 0;
+  const pricesData = hasPricesData ? prices : fallbackPrices;
+  const candlesData = hasCandlesData ? candles : fallbackCandles;
+  const isUsingFallback = !hasPricesData || !hasCandlesData;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {

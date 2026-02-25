@@ -1,10 +1,10 @@
+import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Portfolio from './pages/Portfolio';
 import Market from './pages/Market';
 import Orders from './pages/Orders';
-import PaymentTest from './pages/PaymentTest';
 
 function App() {
   return (
@@ -16,7 +16,6 @@ function App() {
           <Route path="portfolio" element={<Portfolio />} />
           <Route path="market" element={<Market />} />
           <Route path="orders" element={<Orders />} />
-          <Route path="payment-test" element={<PaymentTest />} />
         </Route>
       </Routes>
     </BrowserRouter>
