@@ -104,24 +104,31 @@ export const marketApi = {
 // Risk API
 export const riskApi = {
   getMetrics: async (): Promise<{
-    var_95: number;
-    var_99: number;
-    cvar_95: number;
-    portfolio_beta: number;
-    volatility_annualized: number;
-    correlation_matrix: Record<string, number>;
-    concentration_risk: {
-      max_position_pct: number;
-      top_3_positions_pct: number;
-    };
+    var_1d: number;
+    var_5d: number;
+    cvar_1d: number;
+    cvar_5d: number;
+    volatility: number;
+    beta: number;
+    correlation_to_btc: number;
+    max_drawdown: number;
+    sharpe_ratio: number;
     leverage: number;
-    margin_used_pct: number;
-    last_updated: string;
+    margin_utilization: number;
   }> => {
     const { data } = await api.get('/risk/metrics');
     return data;
   },
+
+  getCorrelationMatrix: async (): Promise<{
+    assets: string[];
+    matrix: number[][];
+  }> => {
+    const { data } = await api.get('/risk/correlation');
+    return data;
+  },
 };
+
 
 // Orders API
 export const ordersApi = {

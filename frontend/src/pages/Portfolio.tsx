@@ -64,10 +64,11 @@ export default function Portfolio() {
   })) || [];
 
   const riskData = riskMetrics ? [
-    { name: 'VaR 95%', value: riskMetrics.var_95, color: '#f85149' },
-    { name: 'CVaR', value: riskMetrics.cvar_95, color: '#a371f7' },
-    { name: 'Volatility', value: riskMetrics.volatility_annualized * 100, color: '#58a6ff' },
+    { name: 'VaR 1D', value: riskMetrics.var_1d, color: '#f85149' },
+    { name: 'CVaR 1D', value: riskMetrics.cvar_1d, color: '#a371f7' },
+    { name: 'Volatility', value: riskMetrics.volatility * 100, color: '#58a6ff' },
   ] : [];
+
 
 
   return (
@@ -172,14 +173,23 @@ export default function Portfolio() {
             <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
               <div className="bg-border/20 rounded p-2">
                 <span className="text-text-muted">Portfolio Beta:</span>
-                <span className="ml-2 text-text font-semibold">{riskMetrics.portfolio_beta.toFixed(2)}</span>
+                <span className="ml-2 text-text font-semibold">{riskMetrics.beta.toFixed(2)}</span>
               </div>
               <div className="bg-border/20 rounded p-2">
                 <span className="text-text-muted">Leverage:</span>
                 <span className="ml-2 text-text font-semibold">{riskMetrics.leverage.toFixed(1)}x</span>
               </div>
+              <div className="bg-border/20 rounded p-2">
+                <span className="text-text-muted">Sharpe:</span>
+                <span className="ml-2 text-text font-semibold">{riskMetrics.sharpe_ratio.toFixed(2)}</span>
+              </div>
+              <div className="bg-border/20 rounded p-2">
+                <span className="text-text-muted">Margin:</span>
+                <span className="ml-2 text-text font-semibold">{(riskMetrics.margin_utilization * 100).toFixed(0)}%</span>
+              </div>
             </div>
           )}
+
         </div>
       </div>
 
