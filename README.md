@@ -515,9 +515,39 @@ VAR_CONFIDENCE=0.95
 
 ---
 
-## 📈 Roadmap
+## 🗄️ Database Layer (TimescaleDB)
+
+### Hypertables
+
+| Hypertable | Purpose | Chunk Interval | Retention |
+|------------|---------|----------------|-----------|
+| `ohlcv_bars` | OHLCV price data | 1 day | 90 days |
+| `trade_ticks` | Individual trades | 1 day | 30 days |
+| `orderbook_snapshots` | Order book states | 1 hour | 7 days |
+| `funding_rates` | Perpetual funding | 1 day | 1 year |
+| `liquidation_events` | Liquidation data | 1 day | 1 year |
+| `portfolio_history` | Portfolio snapshots | 1 day | 5 years |
+| `risk_metrics_history` | Risk calculations | 1 day | 2 years |
+| `signals_ts` | Trading signals | 1 day | 1 year |
+
+### Continuous Aggregates
+
+| Aggregate | Source | Refresh | Purpose |
+|-----------|--------|---------|---------|
+| `ohlcv_5m` | ohlcv_bars | 5 min | 5-minute OHLCV candles |
+| `ohlcv_1h` | ohlcv_bars | 1 hour | Hourly OHLCV candles |
+| `ohlcv_1d` | ohlcv_bars | 1 day | Daily OHLCV candles |
+| `trade_volume_1h` | trade_ticks | 1 hour | Hourly trade volume stats |
+| `daily_signals` | signals_ts | 1 day | Daily signal aggregations |
+| `weekly_performance` | portfolio_history | 1 day | Weekly portfolio metrics |
+| `hourly_risk_metrics` | risk_metrics_history | 1 hour | Hourly risk aggregations |
+
+---
+
+##  Roadmap
 
 ### Q1 2025
+- [x] TimescaleDB continuous aggregates
 - [x] React frontend with Tailwind CSS
 - [x] CSS variables theming system
 - [ ] Live trading with real capital
