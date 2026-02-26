@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 import math
 import os
+import os
 
 # Demo mode configuration - set to True for demo mode by default
 # Can be overridden by environment variable DEMO_MODE
@@ -508,31 +509,32 @@ def get_market_sentiment() -> Dict[str, Any]:
     # Generate a random fear & greed index between 20 and 80
     fear_greed_index = random.randint(20, 80)
     
-    # Determine sentiment label based on index
+    # Determine sentiment label and trading indicator based on index
     if fear_greed_index <= 20:
         sentiment_label = "Extreme Fear"
-        sentiment_emoji = "😱"
+        trading_indicator = "STRONG_SELL"
     elif fear_greed_index <= 40:
         sentiment_label = "Fear"
-        sentiment_emoji = "😰"
+        trading_indicator = "SELL"
     elif fear_greed_index <= 60:
         sentiment_label = "Neutral"
-        sentiment_emoji = "😐"
+        trading_indicator = "HOLD"
     elif fear_greed_index <= 80:
         sentiment_label = "Greed"
-        sentiment_emoji = "🤑"
+        trading_indicator = "BUY"
     else:
         sentiment_label = "Extreme Greed"
-        sentiment_emoji = "🚀"
+        trading_indicator = "STRONG_BUY"
     
     return {
         "fear_greed_index": fear_greed_index,
         "sentiment_label": sentiment_label,
-        "sentiment_emoji": sentiment_emoji,
+        "trading_indicator": trading_indicator,
         "btc_dominance": round(random.uniform(52.0, 58.0), 2),
         "market_momentum": round(random.uniform(-5.0, 15.0), 2),
         "last_updated": datetime.utcnow().isoformat(),
     }
+
 
 
 def get_news(symbol: Optional[str] = None, limit: int = 10) -> List[Dict[str, Any]]:

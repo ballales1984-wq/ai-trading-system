@@ -19,6 +19,7 @@ import type {
 
 // Use environment variable for API base URL
 // In production (Vercel), this should point to your local backend via ngrok or public IP
+// For ngrok: set VITE_API_BASE_URL=https://your-ngrok-url.ngrok-free.app/api/v1
 const defaultApiBase =
   typeof window !== 'undefined' && ['5173', '3000'].includes(window.location.port)
     ? 'http://localhost:8000/api/v1'

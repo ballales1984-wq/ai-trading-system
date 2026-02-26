@@ -72,10 +72,11 @@ class MarketSentiment(BaseModel):
     """Market sentiment data (Fear & Greed Index)."""
     fear_greed_index: int = Field(..., ge=0, le=100, description="Fear & Greed Index (0-100)")
     sentiment_label: str = Field(..., description="Sentiment label: Extreme Fear, Fear, Neutral, Greed, Extreme Greed")
-    sentiment_emoji: str = Field(..., description="Emoji representing sentiment")
+    trading_indicator: str = Field(..., description="Trading indicator: STRONG_SELL, SELL, HOLD, BUY, STRONG_BUY")
     btc_dominance: float = Field(..., description="BTC market dominance percentage")
     market_momentum: float = Field(..., description="Market momentum score")
     last_updated: datetime
+
 
 
 # ============================================================================
@@ -310,39 +311,41 @@ async def get_market_sentiment() -> MarketSentiment:
         return MarketSentiment(
             fear_greed_index=data["fear_greed_index"],
             sentiment_label=data["sentiment_label"],
-            sentiment_emoji=data["sentiment_emoji"],
+            trading_indicator=data["trading_indicator"],
             btc_dominance=data["btc_dominance"],
             market_momentum=data["market_momentum"],
             last_updated=datetime.fromisoformat(data["last_updated"]),
         )
+
     
     # Fallback to simulated data
     fear_greed = random.randint(20, 80)
     
     if fear_greed <= 20:
         label = "Extreme Fear"
-        emoji = "😱"
+        indicator = "STRONG_SELL"
     elif fear_greed <= 40:
         label = "Fear"
-        emoji = "😰"
+        indicator = "SELL"
     elif fear_greed <= 60:
         label = "Neutral"
-        emoji = "😐"
+        indicator = "HOLD"
     elif fear_greed <= 80:
         label = "Greed"
-        emoji = "🤑"
+        indicator = "BUY"
     else:
         label = "Extreme Greed"
-        emoji = "🚀"
+        indicator = "STRONG_BUY"
     
     return MarketSentiment(
         fear_greed_index=fear_greed,
         sentiment_label=label,
-        sentiment_emoji=emoji,
+        trading_indicator=indicator,
         btc_dominance=round(random.uniform(52.0, 58.0), 2),
         market_momentum=round(random.uniform(-5.0, 15.0), 2),
         last_updated=datetime.utcnow(),
     )
+
 
 
 # ============================================================================
