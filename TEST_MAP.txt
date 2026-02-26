@@ -1,0 +1,1038 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.0, pytest-8.4.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: c:\ai-trading-system
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.12.1, dash-4.0.0, asyncio-0.24.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, default_loop_scope=function
+collecting ... collected 388 items
+
+<Dir ai-trading-system>
+  <Package tests>
+    <Module test_agents.py>
+      Test Suite for Agent Modules
+      ============================
+      Comprehensive tests for all agent implementations.
+      <Class TestEventBus>
+        Tests for EventBus.
+        <Function test_event_bus_creation>
+          Test event bus creation.
+        <Coroutine test_event_bus_subscribe_publish>
+          Test subscribe and publish.
+        <Coroutine test_event_bus_multiple_subscribers>
+          Test multiple subscribers.
+      <Class TestStateManager>
+        Tests for StateManager.
+        <Function test_state_manager_creation>
+          Test state manager creation.
+        <Function test_state_manager_portfolio>
+          Test portfolio state operations.
+        <Function test_state_manager_position>
+          Test position operations.
+        <Function test_state_manager_price_history>
+          Test price history operations.
+      <Class TestBaseAgent>
+        Tests for BaseAgent.
+        <Function test_agent_creation>
+          Test agent creation.
+        <Coroutine test_agent_start_stop>
+          Test agent start and stop.
+        <Coroutine test_agent_pause_resume>
+          Test agent pause and resume.
+      <Class TestMonteCarloAgent>
+        Tests for MonteCarloAgent.
+        <Function test_agent_creation>
+          Test Monte Carlo agent creation.
+        <Function test_simulation_levels>
+          Test simulation level enum.
+        <Function test_gbm_simulation>
+          Test GBM simulation.
+        <Function test_parameter_estimation>
+          Test parameter estimation from history.
+      <Class TestRiskAgent>
+        Tests for RiskAgent.
+        <Function test_agent_creation>
+          Test Risk agent creation.
+        <Function test_risk_level_determination>
+          Test risk level determination.
+        <Function test_max_drawdown_calculation>
+          Test maximum drawdown calculation.
+        <Function test_volatility_calculation>
+          Test volatility calculation.
+      <Class TestSupervisorAgent>
+        Tests for SupervisorAgent.
+        <Function test_agent_creation>
+          Test Supervisor agent creation.
+        <Function test_system_modes>
+          Test system mode enum.
+        <Function test_agent_management>
+          Test adding and removing agents.
+      <Class TestAgentIntegration>
+        Integration tests for agent system.
+        <Coroutine test_full_agent_workflow>
+          Test full workflow with multiple agents.
+    <Module test_all_modules.py>
+      Comprehensive Test Suite for Quantum AI Trading System
+      =====================================================
+      
+      Tests for all main modules:
+      - Technical Analysis
+      - Decision Engine
+      - Trading Simulator
+      - Data Collector
+      - Sentiment Analysis
+      - On-chain Analysis
+      - Config
+      - Dashboard Components
+      <Class TestTechnicalAnalysis>
+        Test Technical Analysis module
+        <Function test_initialization>
+          Test analyzer initialization
+        <Function test_rsi_calculation>
+          Test RSI calculation
+        <Function test_ema_calculation>
+          Test EMA calculation
+        <Function test_macd_calculation>
+          Test MACD calculation
+        <Function test_bollinger_bands>
+          Test Bollinger Bands
+        <Function test_atr_calculation>
+          Test ATR calculation
+        <Function test_stochastic_calculation>
+          Test Stochastic Oscillator
+        <Function test_analyze_method>
+          Test full analyze method
+      <Class TestDataCollector>
+        Test Data Collector module
+        <Function test_initialization>
+          Test data collector initialization
+        <Function test_fetch_ohlcv>
+          Test OHLCV data fetching
+        <Function test_fetch_multiple_timeframes>
+          Test fetching multiple timeframes
+      <Class TestTradingSimulator>
+        Test Trading Simulator module
+        <Function test_initialization>
+          Test simulator initialization
+        <Function test_start_method>
+          Test simulator can start
+        <Function test_portfolio_access>
+          Test portfolio attribute access
+        <Function test_decision_engine_integration>
+          Test decision engine is integrated
+        <Function test_data_collector_integration>
+          Test data collector is integrated
+      <Class TestDecisionEngine>
+        Test Decision Engine module
+        <Function test_initialization>
+          Test decision engine initialization
+        <Function test_generate_signals>
+          Test signal generation
+        <Function test_signal_structure>
+          Test signal structure
+      <Class TestSentimentAnalysis>
+        Test Sentiment Analysis module
+        <Function test_initialization>
+          Test sentiment analyzer initialization
+        <Function test_fetch_news>
+          Test news fetching
+        <Function test_analyze_asset_sentiment>
+          Test asset sentiment analysis
+        <Function test_analyze_multiple_assets>
+          Test multiple assets analysis
+      <Class TestOnChainAnalysis>
+        Test On-Chain Analysis module
+        <Function test_initialization>
+          Test on-chain analyzer initialization
+        <Function test_get_metrics>
+          Test getting on-chain metrics
+      <Class TestConfig>
+        Test Config module
+        <Function test_config_loading>
+          Test config can be loaded
+        <Function test_crypto_symbols>
+          Test crypto symbols configuration
+        <Function test_data_dir>
+          Test data directory configuration
+        <Function test_logs_dir>
+          Test logs directory configuration
+      <Class TestDashboard>
+        Test Dashboard module
+        <Function test_dashboard_initialization>
+          Test dashboard can be initialized
+        <Function test_safe_indicators_ema>
+          Test safe EMA calculation
+        <Function test_safe_indicators_rsi>
+          Test safe RSI calculation (no division by zero)
+        <Function test_safe_indicators_vwap>
+          Test safe VWAP calculation
+        <Function test_risk_engine_var>
+          Test VaR calculation
+        <Function test_risk_engine_cvar>
+          Test CVaR calculation
+        <Function test_risk_engine_monte_carlo>
+          Test Monte Carlo simulation
+        <Function test_trading_daemon_start_stop>
+          Test trading daemon start/stop
+        <Function test_trading_daemon_step>
+          Test trading daemon step
+        <Function test_trading_daemon_equity_history>
+          Test equity history management
+      <Class TestIntegration>
+        Integration tests for full system
+        <Function test_full_trading_workflow>
+          Test complete trading workflow
+        <Function test_data_collector_to_technical_analysis>
+          Test data flows from collector to analyzer
+        <Function test_sentiment_to_decision>
+          Test sentiment analysis integrates with decision
+    <Module test_app.py>
+      Test Suite for Quantum AI Trading System
+      Comprehensive tests for all main modules
+      <Class TestTechnicalAnalysis>
+        Test Technical Analysis module
+        <Function test_initialization>
+          Test technical analyzer initialization
+        <Function test_rsi_calculation>
+          Test RSI indicator calculation
+        <Function test_macd_calculation>
+          Test MACD indicator calculation
+        <Function test_bollinger_bands>
+          Test Bollinger Bands calculation
+        <Function test_atr_calculation>
+          Test ATR indicator calculation
+      <Class TestSentimentAnalysis>
+        Test Sentiment Analysis module
+        <Function test_initialization>
+          Test sentiment analyzer initialization
+        <Function test_sentiment_analysis>
+          Test sentiment analysis method
+      <Class TestDataCollector>
+        Test Data Collector module
+        <Function test_initialization>
+          Test data collector initialization
+        <Function test_generate_sample_data>
+          Test sample data generation
+      <Class TestDecisionEngine>
+        Test Decision Engine module
+        <Function test_initialization>
+          Test decision engine initialization
+        <Function test_generate_signals_method>
+          Test generate_signals method exists
+      <Class TestTradingSimulator>
+        Test Trading Simulator module
+        <Function test_initialization>
+          Test simulator initialization
+        <Function test_get_total_value>
+          Test get_total_value method
+      <Class TestLiveMultiAssetTrader>
+        Test Live Multi-Asset Trading module
+        <Function test_initialization>
+          Test trader initialization
+        <Function test_portfolio_initialization>
+          Test portfolio initialization
+      <Class TestTelegramNotifier>
+        Test Telegram Notifier module
+        <Function test_initialization>
+          Test telegram notifier initialization (without real connection)
+        <Function test_rate_limiting>
+          Test rate limiting functionality
+      <Class TestDashboard>
+        Test Dashboard module
+        <Function test_dashboard_import>
+          Test dashboard can be imported
+      <Class TestHFTSimulator>
+        Test HFT Simulator module
+        <Function test_initialization>
+          Test HFT simulator initialization
+        <Function test_get_tick>
+          Test get_tick method
+        <Function test_execute_order>
+          Test order execution
+      <Class TestHFTRLEnv>
+        Test HFT RL Environment
+        <Function test_initialization>
+          Test RL environment initialization
+        <Function test_reset>
+          Test environment reset
+      <Class TestAutoMLEngine>
+        Test AutoML Engine
+        <Function test_genome_creation>
+          Test strategy genome creation
+        <Function test_genome_mutation>
+          Test genome mutation
+        <Function test_genome_crossover>
+          Test genome crossover
+        <Function test_automl_evolver>
+          Test AutoML evolver
+      <Class TestMultiAgentMarket>
+        Test Multi-Agent Market Simulator
+        <Function test_market_agent>
+          Test market agent creation
+        <Function test_market_maker>
+          Test market maker agent
+        <Function test_taker>
+          Test taker agent
+        <Function test_arbitrageur>
+          Test arbitrageur agent
+        <Function test_multi_agent_market>
+          Test multi-agent market creation
+      <Class TestMetaEvolution>
+        Test Meta-Evolution Engine
+        <Function test_hybrid_agent>
+          Test hybrid agent creation
+        <Function test_meta_evolution_engine>
+          Test meta evolution engine
+        <Function test_gp_component>
+          Test GP component
+      <Class TestMultiMarketEvolution>
+        Test Multi-Market Evolution
+        <Function test_market_creation>
+          Test market creation
+        <Function test_market_simulator>
+          Test market simulator
+        <Function test_migrating_agent>
+          Test migrating agent
+        <Function test_multi_market_evolution>
+          Test multi-market evolution engine
+      <Class TestEmergentCommunication>
+        Test Emergent Communication Engine
+        <Function test_communication_agent>
+          Test communication agent
+        <Function test_send_message>
+          Test message sending
+        <Function test_communication_evolution>
+          Test communication evolution
+    <Module test_cache_routes.py>
+      Tests for cache management API routes.
+      <Function test_destructive_endpoint_requires_admin_key>
+      <Function test_missing_admin_secret_denies_access_fail_secure>
+      <Function test_clear_redis_rejects_pattern_outside_namespace>
+      <Function test_clear_redis_uses_scan_and_unlink>
+      <Function test_clear_all_clears_in_memory_and_namespaced_redis>
+    <Module test_decision_engine.py>
+      Unit tests for Decision Engine with ML integration
+      <UnitTestCase TestDecisionEngine>
+        Test cases for DecisionEngine with ML blackbox integration
+        <TestCaseFunction test_calculate_confidence_with_ml>
+          Test _calculate_confidence includes ML confidence
+        <TestCaseFunction test_combine_factors_with_ml>
+          Test _combine_factors includes ML score
+        <TestCaseFunction test_decision_engine_initialization>
+          Test DecisionEngine initialization with ML
+        <TestCaseFunction test_is_ml_ready>
+          Test ML readiness check
+        <TestCaseFunction test_ml_enabled_property>
+          Test ML enable/disable functionality
+        <TestCaseFunction test_ml_prediction_in_signal>
+          Test that ML prediction is included in signal
+        <TestCaseFunction test_trading_signal_ml_score_field>
+          Test TradingSignal has ml_score field
+      <UnitTestCase TestSignalGenerator>
+        Test cases for SignalGenerator in signals.py
+        <TestCaseFunction test_calculate_confidence_with_ml>
+          Test calculate_confidence includes ML confidence
+        <TestCaseFunction test_calculate_price_levels>
+          Test price levels calculation
+        <TestCaseFunction test_combine_factors_with_ml>
+          Test combine_factors includes ML score
+        <TestCaseFunction test_determine_action>
+          Test action determination
+        <TestCaseFunction test_get_strength_label>
+          Test strength label conversion
+      <UnitTestCase TestMLModelPersistence>
+        Test cases for ML model save/load functionality
+        <TestCaseFunction test_ml_model_persistence_methods>
+          Test ML model can be serialized
+        <TestCaseFunction test_ml_model_save_load_exists>
+          Check if ML model has save/load methods
+    <Module test_edge_cases.py>
+      Edge Case Integration Tests for AI Trading System
+      Tests for boundary conditions, error handling, and unusual scenarios
+      <Class TestEdgeCasesRiskEngine>
+        Edge case tests for Risk Engine.
+        <Function test_empty_portfolio_risk_check>
+          Test risk check with empty portfolio.
+        <Function test_zero_quantity_order>
+          Test order with zero quantity.
+        <Function test_negative_quantity_order>
+          Test order with negative quantity.
+        <Function test_zero_price_order>
+          Test order with zero price.
+        <Function test_extreme_price_order>
+          Test order with extreme price.
+        <Function test_extreme_quantity_order>
+          Test order with extreme quantity.
+      <Class TestEdgeCasesOrderManager>
+        Edge case tests for Order Manager.
+        <Function test_duplicate_order_id>
+          Test handling of duplicate order IDs.
+        <Function test_invalid_symbol_format>
+          Test handling of invalid symbol formats.
+        <Function test_concurrent_order_modification>
+          Test concurrent modification of same order.
+      <Class TestEdgeCasesPortfolioManager>
+        Edge case tests for Portfolio Manager.
+        <Function test_negative_cash_balance>
+          Test handling of negative cash balance.
+        <Function test_position_over_leverage>
+          Test position exceeding leverage limits.
+        <Function test_simultaneous_position_close>
+          Test closing same position from multiple sources.
+      <Class TestEdgeCasesDataCollector>
+        Edge case tests for Data Collector.
+        <Function test_empty_response_handling>
+          Test handling of empty API responses.
+        <Function test_malformed_data_handling>
+          Test handling of malformed market data.
+        <Function test_rate_limit_handling>
+          Test handling of API rate limits.
+        <Function test_network_timeout_handling>
+          Test handling of network timeouts.
+      <Class TestEdgeCasesDecisionEngine>
+        Edge case tests for Decision Engine.
+        <Function test_conflicting_signals>
+          Test handling of conflicting signals.
+        <Function test_no_signals>
+          Test handling when no signals are generated.
+        <Function test_all_signals_same_strength>
+          Test when all signals have equal strength.
+      <Class TestEdgeCasesWebSocket>
+        Edge case tests for WebSocket connections.
+        <Function test_reconnection_after_disconnect>
+          Test automatic reconnection after disconnect.
+        <Function test_message_queue_overflow>
+          Test handling of message queue overflow.
+        <Function test_invalid_json_message>
+          Test handling of invalid JSON in WebSocket message.
+      <Class TestEdgeCasesDatabase>
+        Edge case tests for Database operations.
+        <Function test_concurrent_writes>
+          Test concurrent database writes.
+        <Function test_transaction_rollback>
+          Test transaction rollback on error.
+        <Function test_database_connection_loss>
+          Test handling of database connection loss.
+        <Function test_query_timeout>
+          Test handling of query timeout.
+      <Class TestEdgeCasesCache>
+        Edge case tests for Cache operations.
+        <Function test_cache_invalidation_race>
+          Test race condition in cache invalidation.
+        <Function test_cache_memory_limit>
+          Test behavior when cache memory limit is reached.
+        <Function test_stale_cache_data>
+          Test handling of stale cache data.
+      <Class TestEdgeCasesAPI>
+        Edge case tests for API endpoints.
+        <Function test_invalid_api_key>
+          Test handling of invalid API key.
+        <Function test_expired_token>
+          Test handling of expired authentication token.
+        <Function test_request_validation_failure>
+          Test handling of request validation failures.
+      <Class TestStressTests>
+        Stress tests for system components.
+        <Function test_high_frequency_orders>
+          Test system under high order frequency.
+        <Function test_large_data_volume>
+          Test handling of large data volumes.
+        <Function test_memory_usage_under_load>
+          Test memory usage under sustained load.
+        <Function test_cpu_usage_under_load>
+          Test CPU usage under sustained load.
+      <Class TestRecoveryScenarios>
+        Tests for system recovery scenarios.
+        <Function test_recovery_after_crash>
+          Test system recovery after crash.
+        <Function test_partial_order_recovery>
+          Test recovery of partially filled orders.
+        <Function test_state_reconciliation>
+          Test state reconciliation after disconnect.
+    <Module test_event_bus.py>
+      Tests for Event Bus System
+      ===========================
+      Tests for the core event bus system that handles communication between components.
+      <Class TestEventBus>
+        Test the EventBus class.
+        <Function test_initialization>
+          Test EventBus initialization.
+        <Function test_subscribe>
+          Test subscribing to events.
+        <Function test_unsubscribe>
+          Test unsubscribing from events.
+        <Function test_publish>
+          Test publishing events.
+        <Function test_publish_multiple_handlers>
+          Test publishing to multiple handlers.
+        <Function test_publish_error_handling>
+          Test error handling in event handlers.
+        <Function test_event_logging>
+          Test event logging to file.
+        <Function test_get_event_history>
+          Test getting event history.
+        <Function test_get_event_stats>
+          Test getting event statistics.
+        <Function test_event_history_limit>
+          Test event history limit.
+      <Class TestEvent>
+        Test the Event class.
+        <Function test_initialization>
+          Test Event initialization.
+        <Function test_to_dict>
+          Test converting event to dictionary.
+        <Function test_timestamp_default>
+          Test default timestamp.
+      <Class TestEventHandlers>
+        Test event handler classes.
+        <Function test_signal_event_handler>
+          Test SignalEventHandler.
+        <Function test_signal_event_handler_wrong_type>
+          Test SignalEventHandler with wrong event type.
+        <Function test_order_event_handler>
+          Test OrderEventHandler.
+      <Class TestEventBusAsync>
+        Test async features of EventBus.
+        <Coroutine test_publish_async>
+          Test async publishing.
+        <Function test_publish_sync>
+          Test sync publishing.
+    <Module test_evolution.py>
+      Test Suite for Evolution Engine
+      ================================
+      Tests for genetic algorithm-based parameter optimization.
+      <Class TestIndividual>
+        Tests for Individual dataclass.
+        <Function test_individual_creation>
+          Test individual creation.
+        <Function test_individual_serialization>
+          Test individual serialization.
+        <Function test_individual_deserialization>
+          Test individual deserialization.
+      <Class TestEvolutionConfig>
+        Tests for EvolutionConfig.
+        <Function test_config_defaults>
+          Test default config values.
+        <Function test_config_custom>
+          Test custom config values.
+      <Class TestEvolutionEngine>
+        Tests for EvolutionEngine.
+        <Function test_engine_creation>
+          Test engine creation.
+        <Function test_param_space_definition>
+          Test parameter space definition.
+        <Function test_population_initialization>
+          Test population initialization.
+        <Function test_evaluation>
+          Test population evaluation.
+        <Function test_tournament_selection>
+          Test tournament selection.
+        <Function test_crossover>
+          Test crossover operation.
+        <Function test_mutation>
+          Test mutation operation.
+        <Function test_evolution_run>
+          Test full evolution run.
+        <Function test_early_stopping>
+          Test early stopping.
+        <Function test_diversity_calculation>
+          Test diversity calculation.
+        <Function test_get_best_params>
+          Test getting best parameters.
+        <Function test_get_top_individuals>
+          Test getting top individuals.
+        <Function test_checkpoint_save_load>
+          Test checkpoint save and load.
+      <Class TestStrategyOptimizer>
+        Tests for StrategyOptimizer.
+        <Function test_optimizer_creation>
+          Test optimizer creation.
+        <Function test_param_definition>
+          Test parameter definition.
+        <Function test_optimization_run>
+          Test optimization run.
+      <Class TestEvolutionIntegration>
+        Integration tests for evolution engine.
+        <Function test_full_optimization_workflow>
+          Test full optimization workflow.
+    <Module test_new_modules.py>
+      Test Suite for New Modules - Updated
+      ====================================
+      Tests for recently added modules (aligned with actual implementations):
+      - Feature Store
+      - Alpha Lab
+      - Best Execution (TWAP/VWAP)
+      - Security (JWT)
+      - Rate Limiter
+      - RBAC
+      
+      Author: AI Trading System
+      <Class TestFeatureStore>
+        Tests for Feature Store module.
+        <Function test_feature_store_initialization>
+          Test feature store initializes correctly.
+        <Function test_register_feature>
+          Test feature registration.
+        <Function test_compute_returns>
+          Test returns computation.
+        <Function test_compute_rsi>
+          Test RSI computation.
+        <Function test_store_and_retrieve_features>
+          Test storing and retrieving feature vectors.
+      <Class TestAlphaLab>
+        Tests for Alpha Lab module.
+        <Function test_alpha_lab_initialization>
+          Test alpha lab initializes correctly.
+        <Function test_compute_momentum_alpha>
+          Test momentum alpha computation.
+        <Function test_compute_mean_reversion_alpha>
+          Test mean reversion alpha computation.
+        <Function test_compute_rsi_alpha>
+          Test RSI alpha computation.
+        <Function test_backtest_alpha>
+          Test alpha backtesting.
+        <Function test_rank_alphas>
+          Test alpha ranking.
+        <Function test_run_experiment>
+          Test running a complete experiment.
+      <Class TestBestExecution>
+        Tests for Best Execution module.
+        <Function test_twap_algorithm_initialization>
+          Test TWAP algorithm initialization.
+        <Function test_twap_generate_slices>
+          Test TWAP slice generation.
+        <Function test_vwap_algorithm_initialization>
+          Test VWAP algorithm initialization.
+        <Function test_pov_algorithm_initialization>
+          Test POV algorithm initialization.
+        <Function test_execution_engine_create_plan>
+          Test execution engine plan creation.
+      <Class TestSecurity>
+        Tests for Security module.
+        <Function test_jwt_manager_initialization>
+          Test JWT manager initializes correctly.
+        <Function test_create_user>
+          Test user creation.
+        <Function test_authenticate_user>
+          Test user authentication.
+        <Function test_authenticate_wrong_password>
+          Test authentication with wrong password.
+        <Function test_create_access_token>
+          Test JWT token creation.
+        <Function test_verify_token>
+          Test JWT token verification.
+        <Function test_invalid_token_verification>
+          Test invalid token verification.
+        <Function test_password_hashing>
+          Test password hashing.
+        <Function test_password_verification_failure>
+          Test password verification failure.
+      <Class TestRateLimiter>
+        Tests for Rate Limiter module.
+        <Function test_rate_limiter_initialization>
+          Test rate limiter initializes correctly.
+        <Function test_allow_request>
+          Test request allowance.
+        <Function test_rate_limit_enforcement>
+          Test rate limit enforcement.
+        <Function test_rate_limit_reset>
+          Test rate limit reset.
+      <Class TestRBAC>
+        Tests for RBAC module.
+        <Function test_rbac_initialization>
+          Test RBAC initializes correctly.
+        <Function test_role_permissions>
+          Test role has correct permissions.
+        <Function test_trader_permissions>
+          Test trader has correct permissions.
+        <Function test_viewer_permissions>
+          Test viewer has correct permissions.
+        <Function test_create_user_with_role>
+          Test creating user with role.
+        <Function test_permission_decorator>
+          Test permission decorator.
+      <Class TestIntegration>
+        Integration tests for new modules.
+        <Function test_alpha_lab_alphas_registered>
+          Test that Alpha Lab has alphas registered.
+        <Function test_security_jwt_flow>
+          Test complete JWT flow.
+        <Function test_rbac_user_management>
+          Test RBAC user management.
+    <Module test_production_features.py>
+      Tests for Production Features
+      =============================
+      Tests for TimescaleDB models, production logging, and hardened risk engine.
+      <Class TestTimescaleDBModels>
+        Tests for TimescaleDB time-series models.
+        <Function test_ohlcv_bar_creation>
+          Test OHLCV bar model creation.
+        <Function test_trade_tick_creation>
+          Test trade tick model creation.
+        <Function test_orderbook_snapshot_creation>
+          Test orderbook snapshot model creation.
+        <Function test_portfolio_history_creation>
+          Test portfolio history model creation.
+        <Function test_risk_metrics_history_creation>
+          Test risk metrics history model creation.
+      <Class TestProductionLogging>
+        Tests for production-grade structured logging.
+        <Function test_json_formatter_basic>
+          Test JSON formatter basic output.
+        <Function test_json_formatter_with_extra>
+          Test JSON formatter with extra fields.
+        <Function test_json_formatter_sensitive_masking>
+          Test that sensitive fields are masked.
+        <Function test_correlation_id>
+          Test correlation ID tracking.
+        <Function test_trading_logger_order_logging>
+          Test trading logger order logging.
+      <Class TestHardenedRiskEngine>
+        Tests for hardened risk engine.
+        <Function test_risk_engine_initialization>
+          Test risk engine initialization.
+        <Function test_circuit_breaker_initialization>
+          Test circuit breakers are initialized.
+        <Function test_kill_switch_initialization>
+          Test kill switches are initialized.
+        <Function test_order_risk_check_approved>
+          Test order risk check approval.
+        <Function test_order_risk_check_rejected_position_size>
+          Test order rejection due to position size.
+        <Function test_circuit_breaker_trip>
+          Test circuit breaker trip on threshold breach.
+        <Function test_kill_switch_activation>
+          Test kill switch activation.
+        <Function test_kill_switch_blocks_orders>
+          Test that active kill switch blocks orders.
+        <Function test_emergency_stop>
+          Test emergency stop functionality.
+        <Function test_risk_status>
+          Test risk status reporting.
+        <Function test_drawdown_calculation>
+          Test drawdown calculation.
+        <Function test_leverage_calculation>
+          Test leverage calculation.
+        <Function test_var_calculation>
+          Test VaR calculation.
+        <Function test_circuit_breaker_reset>
+          Test circuit breaker reset.
+        <Function test_kill_switch_deactivation>
+          Test kill switch deactivation.
+        <Function test_limits_tracking_update>
+          Test risk limits tracking update.
+        <Function test_callback_registration>
+          Test callback registration.
+      <Class TestProductionIntegration>
+        Integration tests for production features.
+        <Function test_logging_with_risk_engine>
+          Test logging integration with risk engine.
+        <Function test_risk_engine_with_kill_switch_workflow>
+          Test complete workflow with kill switch.
+    <Module test_security.py>
+      Tests for Security Module (JWT Authentication)
+      ===============================================
+      Tests for JWT token generation, validation, and user management.
+      <Class TestSecurityConfig>
+        Test SecurityConfig class.
+        <Function test_default_initialization>
+          Test default SecurityConfig initialization.
+        <Function test_custom_initialization>
+          Test custom SecurityConfig initialization.
+        <Function test_from_env>
+          Test creating SecurityConfig from environment variables.
+        <Function test_from_env_defaults>
+          Test creating SecurityConfig from environment with defaults.
+      <Class TestJWTManager>
+        Test JWTManager class.
+        <Function test_initialization>
+          Test JWTManager initialization.
+        <Function test_hash_password>
+          Test password hashing.
+        <Function test_verify_password_correct>
+          Test password verification with correct password.
+        <Function test_verify_password_incorrect>
+          Test password verification with incorrect password.
+        <Function test_create_user>
+          Test user creation.
+        <Function test_create_user_default_role>
+          Test user creation with default role.
+        <Function test_authenticate_success>
+          Test successful authentication.
+        <Function test_authenticate_wrong_password>
+          Test authentication with wrong password.
+        <Function test_authenticate_nonexistent_user>
+          Test authentication with nonexistent user.
+        <Function test_authenticate_inactive_user>
+          Test authentication with inactive user.
+        <Function test_create_access_token>
+          Test access token creation.
+        <Function test_create_refresh_token>
+          Test refresh token creation.
+        <Function test_verify_token_valid>
+          Test token verification with valid token.
+        <Function test_verify_token_invalid>
+          Test token verification with invalid token.
+        <Function test_verify_token_expired>
+          Test token verification with expired token.
+        <Function test_get_user_from_token>
+          Test getting user from token.
+        <Function test_get_user_from_invalid_token>
+          Test getting user from invalid token.
+        <Function test_refresh_access_token>
+          Test refreshing access token.
+      <Class TestUserRole>
+        Test UserRole enum.
+        <Function test_roles>
+          Test all user roles.
+      <Class TestTokenPayload>
+        Test TokenPayload dataclass.
+        <Function test_initialization>
+          Test TokenPayload initialization.
+        <Function test_to_dict>
+          Test converting TokenPayload to dictionary.
+    <Module test_strategies.py>
+      Test Suite for Strategy Modules
+      ===============================
+      Comprehensive tests for all strategy implementations.
+      <Class TestTradingSignal>
+        Tests for TradingSignal dataclass.
+        <Function test_signal_creation>
+          Test signal creation.
+        <Function test_signal_to_dict>
+          Test signal serialization.
+      <Class TestStrategyContext>
+        Tests for StrategyContext.
+        <Function test_context_creation>
+          Test context creation.
+        <Function test_context_with_indicators>
+          Test context with indicators.
+      <Class TestBaseStrategy>
+        Tests for BaseStrategy.
+        <Function test_strategy_creation>
+          Test strategy creation.
+        <Function test_strategy_enable_disable>
+          Test strategy enable/disable.
+        <Function test_signal_strength_classification>
+          Test signal strength classification.
+        <Function test_create_signal>
+          Test signal creation.
+        <Function test_performance_tracking>
+          Test performance tracking.
+      <Class TestMomentumStrategy>
+        Tests for MomentumStrategy.
+        <Function test_strategy_creation>
+          Test momentum strategy creation.
+        <Function test_momentum_calculation>
+          Test momentum calculation.
+        <Function test_signal_generation_uptrend>
+          Test signal generation in uptrend.
+        <Function test_signal_generation_downtrend>
+          Test signal generation in downtrend.
+        <Function test_disabled_strategy>
+          Test disabled strategy returns no signal.
+        <Function test_volume_confirmation>
+          Test volume confirmation check.
+        <Function test_parameter_update>
+          Test parameter update.
+      <Class TestMeanReversionStrategy>
+        Tests for MeanReversionStrategy.
+        <Function test_strategy_creation>
+          Test mean reversion strategy creation.
+        <Function test_z_score_calculation>
+          Test z-score calculation.
+        <Function test_signal_generation_oversold>
+          Test signal generation when oversold.
+        <Function test_signal_generation_overbought>
+          Test signal generation when overbought.
+        <Function test_rsi_confirmation>
+          Test RSI confirmation.
+        <Function test_bollinger_check>
+          Test Bollinger Band check.
+        <Function test_parameter_update>
+          Test parameter update.
+      <Class TestStrategyValidation>
+        Tests for strategy validation.
+        <Function test_confidence_threshold>
+          Test minimum confidence threshold.
+        <Function test_critical_risk_rejection>
+          Test signal rejection on critical risk.
+    <Module test_strategy_evolution.py>
+      Test Suite for Strategy and Evolution Modules
+      ==============================================
+      Tests for trading strategies and AutoML evolution.
+      <Class TestSignal>
+        Tests for Signal dataclass.
+        <Function test_signal_creation>
+          Test signal creation.
+        <Function test_signal_to_dict>
+          Test signal serialization.
+      <Class TestBaseStrategy>
+        Tests for BaseStrategy.
+        <Function test_strategy_initialization>
+          Test strategy initialization.
+        <Function test_start_stop>
+          Test strategy start/stop.
+        <Function test_position_size_calculation>
+          Test position size calculation.
+        <Function test_stop_loss_calculation>
+          Test stop loss calculation.
+        <Function test_take_profit_calculation>
+          Test take profit calculation.
+        <Function test_strength_determination>
+          Test signal strength determination.
+        <Function test_metrics_update>
+          Test metrics update.
+      <Class TestMomentumStrategy>
+        Tests for MomentumStrategy.
+        <Function test_strategy_initialization>
+          Test strategy initialization.
+        <Function test_required_data>
+          Test required data keys.
+        <Function test_momentum_calculation>
+          Test momentum calculation.
+        <Function test_volume_ratio_calculation>
+          Test volume ratio calculation.
+        <Function test_ma_signal_calculation>
+          Test MA signal calculation.
+        <Function test_signal_generation>
+          Test signal generation.
+        <Function test_signal_with_weak_momentum>
+          Test signal with weak momentum.
+      <Class TestIndividual>
+        Tests for Individual dataclass.
+        <Function test_individual_creation>
+          Test individual creation.
+        <Function test_individual_to_dict>
+          Test individual serialization.
+      <Class TestEvolutionEngine>
+        Tests for EvolutionEngine.
+        <Function test_engine_initialization>
+          Test engine initialization.
+        <Function test_population_initialization>
+          Test population initialization.
+        <Function test_evolution>
+          Test evolution process.
+        <Function test_tournament_selection>
+          Test tournament selection.
+        <Function test_crossover>
+          Test crossover operation.
+        <Function test_mutation>
+          Test mutation operation.
+        <Function test_statistics>
+          Test statistics retrieval.
+        <Function test_best_params>
+          Test best params retrieval.
+      <Class TestParamRanges>
+        Tests for parameter range creation.
+        <Function test_momentum_params>
+          Test momentum parameter ranges.
+        <Function test_mean_reversion_params>
+          Test mean reversion parameter ranges.
+        <Function test_breakout_params>
+          Test breakout parameter ranges.
+        <Function test_unknown_params>
+          Test unknown strategy type.
+    <Module test_technical_analysis.py>
+      Unit tests for technical analysis module
+      <UnitTestCase TestTechnicalAnalysis>
+        Test cases for TechnicalAnalyzer
+        <TestCaseFunction test_analysis_output>
+          Test that analysis returns all expected fields
+        <TestCaseFunction test_bollinger_bands>
+          Test Bollinger Bands calculation
+        <TestCaseFunction test_ema_calculation>
+          Test EMA calculation
+        <TestCaseFunction test_macd>
+          Test MACD calculation
+        <TestCaseFunction test_rsi_calculation>
+          Test RSI calculation
+      <UnitTestCase TestDataCollector>
+        Test cases for DataCollector
+        <TestCaseFunction test_initialization>
+          Test DataCollector initialization
+        <TestCaseFunction test_price_fetch>
+          Test fetching current price
+        <TestCaseFunction test_supported_symbols>
+          Test getting supported symbols
+      <UnitTestCase TestDecisionEngine>
+        Test cases for DecisionEngine
+        <TestCaseFunction test_signal_attributes>
+          Test that signals have required attributes
+        <TestCaseFunction test_signal_generation>
+          Test signal generation
+      <UnitTestCase TestTradingSimulator>
+        Test cases for TradingSimulator
+        <TestCaseFunction test_initialization>
+          Test simulator initialization
+        <TestCaseFunction test_portfolio_state>
+          Test getting portfolio state
+    <Module test_timescale_aggregates.py>
+      Tests for TimescaleDB Continuous Aggregates
+      ===========================================
+      Tests for hypertables, continuous aggregates, and retention policies.
+      <Class TestTimescaleModels>
+        Test TimescaleDB model definitions.
+        <Function test_ohlcv_bar_model>
+          Test OHLCVBar model has correct columns.
+        <Function test_trade_tick_model>
+          Test TradeTick model has correct columns.
+        <Function test_portfolio_history_model>
+          Test PortfolioHistory model has correct columns.
+        <Function test_risk_metrics_history_model>
+          Test RiskMetricsHistory model has correct columns.
+        <Function test_signal_timeseries_model>
+          Test SignalTimeseries model has correct columns.
+      <Class TestContinuousAggregates>
+        Test continuous aggregate definitions.
+        <Function test_aggregates_list_not_empty>
+          Test that aggregates list is defined and not empty.
+        <Function test_aggregates_use_time_bucket>
+          Test that aggregates use TimescaleDB time_bucket function.
+        <Function test_daily_signals_aggregate_structure>
+          Test daily_signals aggregate has correct structure.
+        <Function test_weekly_performance_aggregate_structure>
+          Test weekly_performance aggregate has correct structure.
+      <Class TestRefreshPolicies>
+        Test refresh policy definitions.
+        <Function test_refresh_policies_defined>
+          Test that refresh policies are defined.
+        <Function test_refresh_intervals_appropriate>
+          Test that refresh intervals are appropriate for each aggregate.
+      <Class TestRetentionPolicies>
+        Test retention policy definitions.
+        <Function test_retention_policies_defined>
+          Test that retention policies are defined.
+        <Function test_retention_periods_appropriate>
+          Test that retention periods are appropriate for each data type.
+      <Class TestHypertableCreation>
+        Test hypertable creation methods.
+        <Function test_ohlcv_create_hypertable_method>
+          Test OHLCVBar has create_hypertable classmethod.
+        <Function test_trade_tick_create_hypertable_method>
+          Test TradeTick has create_hypertable classmethod.
+        <Function test_portfolio_history_create_hypertable_method>
+          Test PortfolioHistory has create_hypertable classmethod.
+        <Function test_signal_timeseries_create_hypertable_method>
+          Test SignalTimeseries has create_hypertable classmethod.
+        <Function test_hypertable_creation_handles_exception>
+          Test that hypertable creation handles exceptions gracefully.
+      <Class TestInitTimescaleDB>
+        Test TimescaleDB initialization function.
+        <Function test_init_function_exists>
+          Test that init_timescaledb function exists.
+        <Function test_init_creates_all_hypertables>
+          Test that init_timescaledb creates all hypertables.
+      <Class TestTimeSeriesQueries>
+        Test time-series query helpers.
+        <Function test_query_class_exists>
+          Test that TimeSeriesQueries class exists.
+        <Function test_get_ohlcv_range_method>
+          Test get_ohlcv_range method exists.
+        <Function test_get_recent_trades_method>
+          Test get_recent_trades method exists.
+        <Function test_get_portfolio_history_method>
+          Test get_portfolio_history method exists.
+
+======================== 388 tests collected in 21.09s ========================
