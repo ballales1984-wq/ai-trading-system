@@ -18,12 +18,13 @@ import type {
 
 
 // Use environment variable for API base URL
-// In production (Vercel), this points to the deployed backend
-// Backend URL: https://deploy-temp-jdc83uwka-alessios-projects-f1d56018.vercel.app
+// In production (Vercel), set VITE_API_BASE_URL to your backend URL
+// Local: http://localhost:8000/api/v1 (via vite proxy)
+// Vercel: Set VITE_API_BASE_URL environment variable in Vercel dashboard
 const defaultApiBase =
   typeof window !== 'undefined' && ['5173', '3000'].includes(window.location.port)
     ? 'http://localhost:8000/api/v1'
-    : 'https://deploy-temp-jdc83uwka-alessios-projects-f1d56018.vercel.app/api/v1';
+    : import.meta.env.VITE_API_BASE_URL || 'https://tonita-deposable-manneristically.ngrok-free.dev/api/v1';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || defaultApiBase;
 

@@ -30,9 +30,10 @@ class Settings(BaseSettings):
     debug: bool = True
     api_prefix: str = "/api/v1"
     
-    # CORS - Allow Vercel frontend and local development
+    # CORS - Allow Vercel frontend, ngrok and local development
     cors_origins: List[str] = [
         "https://*.vercel.app",  # Vercel deployments
+        "https://*.ngrok-free.app",  # Ngrok tunnels
         "http://localhost:3000",  # Local React dev server
         "http://localhost:5173",  # Local Vite dev server
     ]
