@@ -193,20 +193,21 @@ export default function Portfolio() {
             <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
               <div className="bg-border/20 rounded p-2">
                 <span className="text-text-muted">Portfolio Beta:</span>
-                <span className="ml-2 text-text font-semibold">{riskMetrics.beta.toFixed(2)}</span>
+                <span className="ml-2 text-text font-semibold">{riskMetrics.beta?.toFixed(2) || 'N/A'}</span>
               </div>
               <div className="bg-border/20 rounded p-2">
                 <span className="text-text-muted">Leverage:</span>
-                <span className="ml-2 text-text font-semibold">{riskMetrics.leverage.toFixed(1)}x</span>
+                <span className="ml-2 text-text font-semibold">{riskMetrics.leverage?.toFixed(1) || '1.0'}x</span>
               </div>
               <div className="bg-border/20 rounded p-2">
                 <span className="text-text-muted">Sharpe:</span>
-                <span className="ml-2 text-text font-semibold">{riskMetrics.sharpe_ratio.toFixed(2)}</span>
+                <span className="ml-2 text-text font-semibold">{riskMetrics.sharpe_ratio?.toFixed(2) || 'N/A'}</span>
               </div>
               <div className="bg-border/20 rounded p-2">
                 <span className="text-text-muted">Margin:</span>
-                <span className="ml-2 text-text font-semibold">{(riskMetrics.margin_utilization * 100).toFixed(0)}%</span>
+                <span className="ml-2 text-text font-semibold">{((riskMetrics.margin_utilization || 0) * 100).toFixed(0)}%</span>
               </div>
+
             </div>
           )}
         </div>
@@ -319,7 +320,7 @@ export default function Portfolio() {
           <div className="mt-4 flex items-center gap-4 text-xs text-text-muted">
             <div className="flex items-center gap-1">
               <span className="w-3 h-3 rounded bg-[rgba(63,185,80,0.3)]"></span>
-              <span>Low (less than 0.4)</span>
+              <span>Low (below 0.4)</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="w-3 h-3 rounded bg-[rgba(210,153,34,0.3)]"></span>
@@ -327,7 +328,7 @@ export default function Portfolio() {
             </div>
             <div className="flex items-center gap-1">
               <span className="w-3 h-3 rounded bg-[rgba(248,81,73,0.3)]"></span>
-              <span>High (greater than 0.7)</span>
+              <span>High (above 0.7)</span>
             </div>
           </div>
         </div>
