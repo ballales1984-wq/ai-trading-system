@@ -43,20 +43,25 @@ class DatabaseManager:
     def __init__(
         self,
         database_url: str = None,
-        pool_size: int = 10,
-        max_overflow: int = 20,
+        pool_size: int = None,
+        max_overflow: int = None,
         pool_timeout: int = 30,
-        pool_recycle: int = 3600,
+        pool_recycle: int = None,
         echo: bool = False,
     ):
         self.database_url = database_url or settings.database_url
-        self.pool_size = pool_size
-        self.max_overflow = max_overflow
+        self.pool_size = pool_size or settings.db_pool_size
+        self.max_overflow = max_overflow or settings.db_max_overflow
         self.pool_timeout = pool_timeout
-        self.pool_recycle = pool_recycle
+        self.pool_recycle = pool_recycle or settings.db_pool_recycle
         self.echo = echo
         
+        # TimescaleDB settings from config
+        self.timescaledb_url = settings.timescaledb_url
+        self.timescaledb_enabled = settings.timescaledb_enabled
+        
         self._engine = None
+        self._timescale_engine = None
         self._session_factory = None
         self._connected = False
         

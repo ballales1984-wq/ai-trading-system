@@ -47,6 +47,22 @@ class Settings(BaseSettings):
         default="postgresql://user:password@localhost:5432/hedge_fund",
         env="DATABASE_URL"
     )
+    
+    # TimescaleDB (Time-series database)
+    timescaledb_url: Optional[str] = Field(
+        default=None,
+        env="TIMESCALEDB_URL"
+    )
+    timescaledb_enabled: bool = Field(
+        default=False,
+        env="TIMESCALEDB_ENABLED"
+    )
+    
+    # Database pool settings
+    db_pool_size: int = 20
+    db_max_overflow: int = 40
+    db_pool_recycle: int = 3600
+    
     redis_url: str = Field(
         default="redis://localhost:6379/0",
         env="REDIS_URL"
