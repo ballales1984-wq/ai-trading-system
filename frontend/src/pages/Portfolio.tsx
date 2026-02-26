@@ -1,10 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
 import { portfolioApi, riskApi } from '../services/api';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, AreaChart, Area, CartesianGrid } from 'recharts';
-import { Wallet, TrendingUp, TrendingDown, Target, Shield, Activity } from 'lucide-react';
-
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, AreaChart, Area, CartesianGrid } from 'recharts';
+import { Wallet, TrendingUp, TrendingDown, Target, Shield, Activity, GitBranch } from 'lucide-react';
 
 const COLORS = ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#a371f7', '#f0883e'];
+
+interface SummaryCardProps {
+  title: string;
+  value: string;
+  icon: React.ElementType;
+  valueColor?: string;
+}
+
+function SummaryCard({ title, value, icon: Icon, valueColor = 'text-text' }: SummaryCardProps) {
+  return (
+    <div className="bg-surface border border-border rounded-lg p-4">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-text-muted text-sm">{title}</span>
+        <Icon className="w-5 h-5 text-primary" />
+      </div>
+      <div className={`text-xl font-bold ${valueColor}`}>{value}</div>
+    </div>
+  );
+}
 
 export default function Portfolio() {
   const { data: summary, isLoading: summaryLoading } = useQuery({
@@ -37,6 +55,10 @@ export default function Portfolio() {
     queryFn: riskApi.getMetrics,
   });
 
+  const { data: correlationMatrix } = useQuery({
+    queryKey: ['correlation-matrix'],
+    queryFn: riskApi.getCorrelationMatrix,
+  });
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -68,8 +90,6 @@ export default function Portfolio() {
     { name: 'CVaR 1D', value: riskMetrics.cvar_1d, color: '#a371f7' },
     { name: 'Volatility', value: riskMetrics.volatility * 100, color: '#58a6ff' },
   ] : [];
-
-
 
   return (
     <div className="p-6">
@@ -189,7 +209,6 @@ export default function Portfolio() {
               </div>
             </div>
           )}
-
         </div>
       </div>
 
@@ -209,7 +228,7 @@ export default function Portfolio() {
                   outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }: { name: string; percent: number }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   labelLine={false}
                 >
                   {pieData.map((_, index) => (
@@ -243,6 +262,76 @@ export default function Portfolio() {
         </div>
       </div>
 
+      {/* Correlation Matrix */}
+      {correlationMatrix && correlationMatrix.assets && correlationMatrix.matrix && (
+        <div className="bg-surface border border-border rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-text">Asset Correlation Matrix</h2>
+            <GitBranch className="w-5 h-5 text-primary" />
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="p-2 text-text-muted font-medium text-sm"></th>
+                  {correlationMatrix.assets.map((asset: string) => (
+                    <th key={asset} className="p-2 text-text-muted font-medium text-sm text-center">
+                      {asset.replace('USDT', '')}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {correlationMatrix.assets.map((asset: string, rowIndex: number) => (
+                  <tr key={asset}>
+                    <td className="p-2 text-text font-medium text-sm">
+                      {asset.replace('USDT', '')}
+                    </td>
+                    {correlationMatrix.matrix[rowIndex].map((value: number, colIndex: number) => (
+                      <td
+                        key={`${rowIndex}-${colIndex}`}
+                        className="p-2 text-center text-sm font-medium"
+                        style={{
+                          backgroundColor: rowIndex === colIndex 
+                            ? '#21262d' 
+                            : value > 0.7 
+                              ? 'rgba(248, 81, 73, 0.3)' 
+                              : value > 0.4 
+                                ? 'rgba(210, 153, 34, 0.3)' 
+                                : 'rgba(63, 185, 80, 0.3)',
+                          color: rowIndex === colIndex 
+                            ? '#8b949e' 
+                            : value > 0.7 
+                              ? '#f85149' 
+                              : value > 0.4 
+                                ? '#d29922' 
+                                : '#3fb950',
+                        }}
+                      >
+                        {value.toFixed(2)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-4 flex items-center gap-4 text-xs text-text-muted">
+            <div className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded bg-[rgba(63,185,80,0.3)]"></span>
+              <span>Low (less than 0.4)</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded bg-[rgba(210,153,34,0.3)]"></span>
+              <span>Medium (0.4-0.7)</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded bg-[rgba(248,81,73,0.3)]"></span>
+              <span>High (greater than 0.7)</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Positions Table */}
       <div className="bg-surface border border-border rounded-lg p-4">
@@ -287,28 +376,6 @@ export default function Portfolio() {
           </table>
         </div>
       </div>
-    </div>
-  );
-}
-
-function SummaryCard({ 
-  title, 
-  value, 
-  icon: Icon, 
-  valueColor = 'text-text' 
-}: { 
-  title: string; 
-  value: string; 
-  icon: React.ElementType; 
-  valueColor?: string;
-}) {
-  return (
-    <div className="bg-surface border border-border rounded-lg p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-text-muted text-sm">{title}</span>
-        <Icon className="w-5 h-5 text-primary" />
-      </div>
-      <div className={`text-xl font-bold ${valueColor}`}>{value}</div>
     </div>
   );
 }
