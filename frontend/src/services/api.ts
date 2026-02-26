@@ -11,7 +11,10 @@ import type {
   Order,
   OrderCreate,
   MarketSentiment,
+  NewsListResponse,
+  NewsBySymbolResponse,
 } from '../types';
+
 
 
 // Use environment variable for API base URL
@@ -254,6 +257,36 @@ export const paymentApi = {
     } else {
       console.error('Stripe payment link not configured');
     }
+  },
+};
+
+// News API
+export const newsApi = {
+  /**
+   * Get latest crypto news feed
+   * Returns news items with sentiment analysis and related symbols
+   */
+  getNews: async (params?: {
+    limit?: number;
+    sentiment?: string;
+    category?: string;
+  }): Promise<NewsListResponse> => {
+    const { data } = await api.get<NewsListResponse>('/news', { params });
+    return data;
+  },
+
+  /**
+   * Get news filtered by trading symbol
+   * Returns news items related to a specific cryptocurrency
+   */
+  getNewsBySymbol: async (
+    symbol: string,
+    limit?: number
+  ): Promise<NewsBySymbolResponse> => {
+    const { data } = await api.get<NewsBySymbolResponse>(`/news/${symbol}`, {
+      params: { limit },
+    });
+    return data;
   },
 };
 

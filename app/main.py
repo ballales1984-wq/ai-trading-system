@@ -16,7 +16,8 @@ from fastapi.exceptions import RequestValidationError
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
 from app.api.routes import health, orders, portfolio, strategy, risk, market, waitlist
-from app.api.routes import cache
+from app.api.routes import cache, news
+
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -189,6 +190,13 @@ app.include_router(
     tags=["Cache"]
 )
 
+app.include_router(
+    news.router,
+    prefix=f"{settings.api_prefix}/news",
+    tags=["News"]
+)
+
+
 # Serve landing page
 LANDING_DIR = Path(__file__).parent.parent / "landing"
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend" / "dist"
@@ -262,4 +270,3 @@ if __name__ == "__main__":
         port=8000,
         reload=settings.debug
     )
-

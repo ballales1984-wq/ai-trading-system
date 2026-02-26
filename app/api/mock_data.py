@@ -535,8 +535,120 @@ def get_market_sentiment() -> Dict[str, Any]:
     }
 
 
-# Export all functions
+def get_news(symbol: Optional[str] = None, limit: int = 10) -> List[Dict[str, Any]]:
+    """Get mock crypto news feed."""
+    all_news = [
+        {
+            "id": "news-001",
+            "title": "Bitcoin Surges Past $67K as Institutional Adoption Accelerates",
+            "source": "CoinDesk",
+            "url": "https://coindesk.com/bitcoin-surge",
+            "summary": "Major financial institutions continue to add Bitcoin to their portfolios, driving prices to new highs.",
+            "sentiment": "positive",
+            "sentiment_score": 0.85,
+            "symbols": ["BTC/USDT"],
+            "published_at": (datetime.utcnow() - timedelta(hours=2)).isoformat(),
+            "category": "market",
+        },
+        {
+            "id": "news-002",
+            "title": "Ethereum Layer 2 Solutions See Record Transaction Volume",
+            "source": "Cointelegraph",
+            "url": "https://cointelegraph.com/eth-l2",
+            "summary": "Arbitrum and Optimism process record number of transactions as gas fees remain low.",
+            "sentiment": "positive",
+            "sentiment_score": 0.78,
+            "symbols": ["ETH/USDT"],
+            "published_at": (datetime.utcnow() - timedelta(hours=4)).isoformat(),
+            "category": "technology",
+        },
+        {
+            "id": "news-003",
+            "title": "Solana Network Experiences Brief Outage, Quickly Recovered",
+            "source": "CryptoPanic",
+            "url": "https://cryptopanic.com/solana-outage",
+            "summary": "Network downtime lasted approximately 20 minutes before validators restored consensus.",
+            "sentiment": "negative",
+            "sentiment_score": -0.45,
+            "symbols": ["SOL/USDT"],
+            "published_at": (datetime.utcnow() - timedelta(hours=6)).isoformat(),
+            "category": "network",
+        },
+        {
+            "id": "news-004",
+            "title": "SEC Approves New Spot Bitcoin ETF Applications",
+            "source": "Bloomberg Crypto",
+            "url": "https://bloomberg.com/sec-etf",
+            "summary": "Regulatory approval paves way for increased institutional investment in cryptocurrency markets.",
+            "sentiment": "positive",
+            "sentiment_score": 0.92,
+            "symbols": ["BTC/USDT", "ETH/USDT"],
+            "published_at": (datetime.utcnow() - timedelta(hours=8)).isoformat(),
+            "category": "regulation",
+        },
+        {
+            "id": "news-005",
+            "title": "DeFi Protocol Launches Revolutionary Yield Farming Strategy",
+            "source": "DeFi Pulse",
+            "url": "https://defipulse.com/yield-farming",
+            "summary": "New automated strategy promises 15-20% APY with reduced impermanent loss risk.",
+            "sentiment": "positive",
+            "sentiment_score": 0.65,
+            "symbols": ["ETH/USDT", "SOL/USDT"],
+            "published_at": (datetime.utcnow() - timedelta(hours=12)).isoformat(),
+            "category": "defi",
+        },
+        {
+            "id": "news-006",
+            "title": "Major Exchange Announces Trading Fee Reduction",
+            "source": "CryptoNews",
+            "url": "https://cryptonews.com/fee-reduction",
+            "summary": "Competition among exchanges heats up as trading fees drop by 25% across spot markets.",
+            "sentiment": "positive",
+            "sentiment_score": 0.55,
+            "symbols": ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT"],
+            "published_at": (datetime.utcnow() - timedelta(hours=16)).isoformat(),
+            "category": "exchange",
+        },
+        {
+            "id": "news-007",
+            "title": "Crypto Market Volatility Expected Ahead of Fed Decision",
+            "source": "Reuters",
+            "url": "https://reuters.com/crypto-fed",
+            "summary": "Analysts predict increased volatility as Federal Reserve prepares interest rate announcement.",
+            "sentiment": "neutral",
+            "sentiment_score": 0.0,
+            "symbols": ["BTC/USDT", "ETH/USDT"],
+            "published_at": (datetime.utcnow() - timedelta(hours=20)).isoformat(),
+            "category": "macro",
+        },
+        {
+            "id": "news-008",
+            "title": "New Blockchain Bridge Connects Ethereum and Solana",
+            "source": "TechCrunch",
+            "url": "https://techcrunch.com/blockchain-bridge",
+            "summary": "Cross-chain interoperability solution enables seamless asset transfers between major networks.",
+            "sentiment": "positive",
+            "sentiment_score": 0.72,
+            "symbols": ["ETH/USDT", "SOL/USDT"],
+            "published_at": (datetime.utcnow() - timedelta(hours=24)).isoformat(),
+            "category": "technology",
+        },
+    ]
+    
+    # Filter by symbol if provided
+    if symbol:
+        symbol_normalized = symbol.replace("USDT", "/USDT") if "/" not in symbol else symbol
+        filtered = [n for n in all_news if symbol_normalized in n.get("symbols", [])]
+    else:
+        filtered = all_news
+    
+    # Sort by published date (newest first) and apply limit
+    filtered.sort(key=lambda x: x["published_at"], reverse=True)
+    return filtered[:limit]
 
+
+# Export all functions
 __all__ = [
     "DEMO_MODE",
     "get_portfolio_summary",
@@ -551,4 +663,5 @@ __all__ = [
     "get_risk_metrics",
     "get_strategy_signals",
     "get_market_sentiment",
+    "get_news",
 ]

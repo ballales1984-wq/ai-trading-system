@@ -133,3 +133,29 @@ export interface MarketSentiment {
   market_momentum: number;
   last_updated: string;
 }
+
+export interface NewsItem {
+  id: string;
+  title: string;
+  source: string;
+  url: string;
+  summary: string;
+  sentiment: 'positive' | 'negative' | 'neutral';
+  sentiment_score: number;
+  symbols: string[];
+  published_at: string;
+  category: string;
+}
+
+export interface NewsListResponse {
+  news: NewsItem[];
+  total: number;
+  last_updated: string;
+}
+
+export interface NewsBySymbolResponse {
+  symbol: string;
+  news: NewsItem[];
+  total: number;
+  last_updated: string;
+}

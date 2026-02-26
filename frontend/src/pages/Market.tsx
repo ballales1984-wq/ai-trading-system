@@ -4,6 +4,8 @@ import { marketApi } from '../services/api';
 import type { MarketSentiment } from '../types';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { TrendingUp, TrendingDown, AlertTriangle, Brain } from 'lucide-react';
+import NewsFeed from '../components/NewsFeed';
+
 
 
 // TypeScript interfaces for type safety
@@ -254,8 +256,14 @@ export default function Market() {
         </div>
       </div>
 
+      {/* News Feed */}
+      <div className="mt-6">
+        <NewsFeed limit={6} />
+      </div>
+
       {/* All Markets Table */}
       <div className="mt-6 bg-surface border border-border rounded-lg p-4">
+
         <h2 className="text-lg font-semibold text-text mb-4">All Markets</h2>
         <div className="overflow-x-auto">
           <table className="w-full">
