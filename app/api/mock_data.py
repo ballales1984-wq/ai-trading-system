@@ -17,8 +17,9 @@ import os
 DEMO_MODE = os.getenv("DEMO_MODE", "true").lower() == "true"
 
 
-# Base prices for demo assets
+# Base prices for demo assets - 30+ assets including crypto, forex, and commodities
 BASE_PRICES = {
+    # Major Cryptocurrencies (10)
     "BTC/USDT": 67500.00,
     "ETH/USDT": 3450.00,
     "SOL/USDT": 145.00,
@@ -27,7 +28,39 @@ BASE_PRICES = {
     "ADA/USDT": 0.45,
     "DOGE/USDT": 0.12,
     "AVAX/USDT": 35.50,
+    "DOT/USDT": 7.20,
+    "MATIC/USDT": 0.58,
+    "LINK/USDT": 14.80,
+    "UNI/USDT": 6.90,
+    "LTC/USDT": 72.00,
+    "BCH/USDT": 340.00,
+    "XLM/USDT": 0.11,
+    "VET/USDT": 0.025,
+    "FIL/USDT": 5.40,
+    "TRX/USDT": 0.11,
+    "ETC/USDT": 18.50,
+    "XMR/USDT": 165.00,
+    # Forex Pairs (8)
+    "EUR/USD": 1.0850,
+    "GBP/USD": 1.2650,
+    "USD/JPY": 148.50,
+    "USD/CHF": 0.8850,
+    "AUD/USD": 0.6650,
+    "USD/CAD": 1.3450,
+    "NZD/USD": 0.6250,
+    "EUR/GBP": 0.8580,
+    # Commodities (4)
+    "XAU/USD": 2025.00,
+    "XAG/USD": 22.80,
+    "USOIL": 72.50,
+    "BRENT": 77.20,
+    # Indices (4)
+    "US30": 37500.00,
+    "US500": 4780.00,
+    "USTEC": 16800.00,
+    "DE30": 16600.00,
 }
+
 
 # Initial portfolio state
 INITIAL_PORTFOLIO_VALUE = 100000.00
@@ -443,17 +476,49 @@ def get_orders(status: Optional[str] = None) -> List[Dict[str, Any]]:
 
 def get_risk_metrics() -> Dict[str, Any]:
     """Get demo risk metrics."""
+    # Generate correlation matrix for all assets
+    assets = list(BASE_PRICES.keys())
+    n = len(assets)
+    
+    # Create realistic correlation matrix
+    matrix = []
+    for i in range(n):
+        row = []
+        for j in range(n):
+            if i == j:
+                row.append(1.0)
+            else:
+                # Crypto assets are highly correlated with each other
+                asset_i = assets[i]
+                asset_j = assets[j]
+                
+                # Same category correlations
+                if "/USDT" in asset_i and "/USDT" in asset_j:
+                    corr = random.uniform(0.65, 0.95)  # Crypto-crypto
+                elif ("/USD" in asset_i and "/USD" in asset_j and "XAU" not in asset_i and "XAG" not in asset_i and "USOIL" not in asset_i and "BRENT" not in asset_i):
+                    corr = random.uniform(0.40, 0.85)  # Forex-forex
+                elif ("US30" in asset_i or "US500" in asset_i or "USTEC" in asset_i or "DE30" in asset_i) and \
+                     ("US30" in asset_j or "US500" in asset_j or "USTEC" in asset_j or "DE30" in asset_j):
+                    corr = random.uniform(0.70, 0.95)  # Indices-indices
+                elif ("XAU" in asset_i or "XAG" in asset_i) and ("XAU" in asset_j or "XAG" in asset_j):
+                    corr = random.uniform(0.75, 0.90)  # Gold-Silver
+                elif ("USOIL" in asset_i or "BRENT" in asset_i) and ("USOIL" in asset_j or "BRENT" in asset_j):
+                    corr = random.uniform(0.85, 0.98)  # Oil-Oil
+                else:
+                    # Cross-category correlations (lower)
+                    corr = random.uniform(-0.15, 0.35)
+                
+                row.append(round(corr, 2))
+        matrix.append(row)
+    
     return {
         "var_95": 2500.00,  # Value at Risk (95% confidence)
         "var_99": 4200.00,  # Value at Risk (99% confidence)
         "cvar_95": 3100.00,  # Conditional VaR
         "portfolio_beta": 1.15,
         "volatility_annualized": 0.35,
-        "correlation_matrix": {
-            "BTC/ETH": 0.85,
-            "BTC/SOL": 0.72,
-            "ETH/SOL": 0.78,
-        },
+        "assets": assets,
+        "correlation_matrix": matrix,
         "concentration_risk": {
             "max_position_pct": 50.0,
             "top_3_positions_pct": 86.3,
@@ -463,6 +528,7 @@ def get_risk_metrics() -> Dict[str, Any]:
         "liquidation_price": None,
         "last_updated": datetime.utcnow().isoformat(),
     }
+
 
 
 def get_strategy_signals() -> List[Dict[str, Any]]:
