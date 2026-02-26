@@ -105,3 +105,10 @@ Thumbs.db
 # Project specific
 *.md
 !README.md
+
+# Large files
+ECOSYSTEM_MAP.txt
+*.log
+build
+dist
+tmp
