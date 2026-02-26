@@ -1,0 +1,107 @@
+# Virtual environments
+.venv
+venv
+env
+ENV
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Large directories
+src
+tests
+docs
+plans
+migrations
+docker
+infra
+scripts
+dashboard
+desktop_app
+agent_coordination
+decision_engine
+public
+htmlcov
+node_modules
+.pytest_cache
+.mypy_cache
+.ruff_cache
+coverage
+.tox
+.nox
+.hypothesis
+
+# App subdirectories not needed for API
+app/core
+app/database
+app/execution
+app/market_data
+app/portfolio
+app/risk
+app/strategies
+
+# Data and models
+data
+logs
+cache
+models
+*.pkl
+*.joblib
+*.h5
+*.onnx
+*.parquet
+*.feather
+*.hdf5
+*.npy
+*.npz
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+
+# Database files
+*.csv
+*.db
+*.sqlite
+*.sqlite3
+
+# Test files
+test_*.py
+*_test.py
+
+# Build artifacts
+*.spec
+*.log
+*.tmp
+*.bak
+*.old
+*.orig
+*.rej
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.md
+!README.md

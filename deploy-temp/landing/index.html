@@ -5,17 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Trading System - Professional Trading with Monte Carlo Risk Analysis</title>
     <meta name="description" content="Professional-grade trading platform with Monte Carlo simulations, multi-asset support, and institutional risk management.">
-    
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-M4QGHSYJ41"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-M4QGHSYJ41');
-    </script>
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -642,8 +631,8 @@
             const messageDiv = document.getElementById('form-message');
             
             try {
-                // Send to API endpoint - using full ngrok URL
-                const response = await fetch('https://tonita-deposable-manneristically.ngrok-free.dev/api/v1/waitlist', {
+                // Send to API endpoint
+                const response = await fetch('/api/v1/waitlist', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

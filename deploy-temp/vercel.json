@@ -1,0 +1,40 @@
+{
+	"version": 2,
+	"framework": null,
+	"buildCommand": null,
+	"outputDirectory": null,
+	"installCommand": "pip install --break-system-packages -r api/requirements.txt",
+	"rewrites": [
+		{
+			"source": "/api/(.*)",
+			"destination": "/api/index.py"
+		},
+		{
+			"source": "/(.*)",
+			"destination": "/api/index.py"
+		}
+	],
+	"headers": [
+		{
+			"source": "/api/(.*)",
+			"headers": [
+				{
+					"key": "Cache-Control",
+					"value": "no-store, must-revalidate"
+				},
+				{
+					"key": "Access-Control-Allow-Origin",
+					"value": "*"
+				},
+				{
+					"key": "Access-Control-Allow-Methods",
+					"value": "GET, POST, PUT, DELETE, OPTIONS"
+				},
+				{
+					"key": "Access-Control-Allow-Headers",
+					"value": "Content-Type, Authorization"
+				}
+			]
+		}
+	]
+}

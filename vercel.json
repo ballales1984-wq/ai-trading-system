@@ -1,24 +1,17 @@
 {
 	"version": 2,
 	"framework": null,
-	"buildCommand": "cd frontend && npm install && npm run build",
-	"outputDirectory": "frontend/dist",
-	"installCommand": "pip install --break-system-packages -r api/requirements.txt",
+	"buildCommand": "echo 'Static site - no build needed'",
+	"outputDirectory": "landing",
+	"installCommand": "echo 'No install needed'",
 	"rewrites": [
 		{
-			"source": "/((?!api|assets).*)",
-			"destination": "/index.html"
-		}
-	],
-	"headers": [
-		{
 			"source": "/api/(.*)",
-			"headers": [
-				{
-					"key": "Cache-Control",
-					"value": "no-store, must-revalidate"
-				}
-			]
+			"destination": "https://tonita-deposable-manneristically.ngrok-free.dev/api/$1"
+		},
+		{
+			"source": "/((?!api).*)",
+			"destination": "/index.html"
 		}
 	]
 }
