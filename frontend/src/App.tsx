@@ -1,5 +1,6 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Portfolio from './pages/Portfolio';
@@ -18,6 +19,7 @@ function App() {
           <Route path="orders" element={<Orders />} />
         </Route>
       </Routes>
+      <Analytics />
     </BrowserRouter>
   );
 }
