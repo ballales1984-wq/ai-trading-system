@@ -17,6 +17,7 @@ from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
 from app.api.routes import health, orders, portfolio, strategy, risk, market, waitlist
 from app.api.routes import cache, news, auth
+from app.api.routes import payments
 
 
 from fastapi.staticfiles import StaticFiles
@@ -200,6 +201,13 @@ app.include_router(
     auth.router,
     prefix=f"{settings.api_prefix}/auth",
     tags=["Authentication"]
+)
+
+# Include payments router
+app.include_router(
+    payments.router,
+    prefix=f"{settings.api_prefix}/payments",
+    tags=["Payments"]
 )
 
 
