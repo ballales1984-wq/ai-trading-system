@@ -12,6 +12,12 @@ from enum import Enum
 from functools import wraps
 import logging
 
+try:
+    from fastapi import Request
+except ImportError:
+    # For when FastAPI is not available
+    Request = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -392,6 +398,38 @@ rbac_manager.create_user("trader", Role.TRADER)
 rbac_manager.create_user("viewer", Role.VIEWER)
 rbac_manager.create_user("risk_manager", Role.RISK_MANAGER)
 rbac_manager.create_user("api_user", Role.API_USER)
+
+
+# FastAPI integration
+def get_current_user(request: Request) -> User:
+    """
+    Get current user from request.
+    This function extracts user info from the request headers or state.
+    
+    In production, this would validate JWT tokens or session cookies.
+    For now, it returns a mock user for development.
+    """
+    # Try to get user from request state (set by auth middleware)
+    if hasattr(request.state, "user"):
+        return request.state.user
+    
+    # Try to get from authorization header
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+        # In production, validate token and return user
+        # For now, return a default user
+        user = rbac_manager.get_user("admin")
+        if user:
+            return user
+    
+    # Return default user for development
+    user = rbac_manager.get_user("admin")
+    if user:
+        return user
+    
+    # Last resort: create a basic user
+    return rbac_manager.create_user("anonymous", Role.VIEWER)
 
 
 # FastAPI integration example:

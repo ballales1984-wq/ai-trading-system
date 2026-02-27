@@ -15,6 +15,7 @@ from fastapi import FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, Field
+import hashlib
 
 # Import auth routes
 from app.api.routes import auth
@@ -81,6 +82,23 @@ class ClientEvent(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class RegisterRequest(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: Dict[str, Any]
+
+
 _positions: List[Position] = [
     Position(
         position_id=str(uuid4()),
@@ -117,6 +135,28 @@ _positions: List[Position] = [
 _orders: Dict[str, Dict[str, Any]] = {}
 _waitlist: List[Dict[str, Any]] = []
 _client_events: List[Dict[str, Any]] = []
+
+# Mock users for authentication
+_mocks_users: Dict[str, Dict[str, Any]] = {
+    "admin": {
+        "email": "admin@aitrading.com",
+        "password_hash": hashlib.sha256("admin123".encode()).hexdigest(),
+        "role": "admin",
+        "name": "Admin User"
+    },
+    "trader": {
+        "email": "trader@aitrading.com",
+        "password_hash": hashlib.sha256("trader123".encode()).hexdigest(),
+        "role": "trader",
+        "name": "Test Trader"
+    },
+    "ballales1984": {
+        "email": "ballales1984@email.com",
+        "password_hash": hashlib.sha256("password123".encode()).hexdigest(),
+        "role": "trader",
+        "name": "Alessio Ballarè"
+    }
+}
 
 try:
     import stripe
@@ -155,6 +195,72 @@ async def health_root() -> Dict[str, str]:
 @app.get("/api/v1/health")
 async def health_api() -> Dict[str, str]:
     return {"status": "healthy", "service": "ai-trading-system"}
+
+
+@app.post("/api/v1/auth/login", response_model=AuthResponse)
+async def login(request: LoginRequest) -> AuthResponse:
+    """Login endpoint - accepts username and password"""
+    username = request.username.lower().strip()
+    password_hash = hashlib.sha256(request.password.encode()).hexdigest()
+    
+    # Check if user exists
+    user = _mocks_users.get(username)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    
+    # Verify password
+    if user["password_hash"] != password_hash:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    
+    # Generate mock token
+    token = f"mock_token_{username}_{uuid4().hex[:16]}"
+    
+    return AuthResponse(
+        access_token=token,
+        user={
+            "username": username,
+            "email": user["email"],
+            "role": user["role"],
+            "name": user["name"]
+        }
+    )
+
+
+@app.post("/api/v1/auth/register", response_model=AuthResponse)
+async def register(request: RegisterRequest) -> AuthResponse:
+    """Register endpoint - creates a new user"""
+    username = request.username.lower().strip()
+    
+    # Check if user already exists
+    if username in _mocks_users:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    
+    # Check if email already exists
+    for user in _mocks_users.values():
+        if user["email"].lower() == request.email.lower():
+            raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Create new user
+    password_hash = hashlib.sha256(request.password.encode()).hexdigest()
+    _mocks_users[username] = {
+        "email": request.email.lower(),
+        "password_hash": password_hash,
+        "role": "trader",
+        "name": username.title()
+    }
+    
+    # Generate mock token
+    token = f"mock_token_{username}_{uuid4().hex[:16]}"
+    
+    return AuthResponse(
+        access_token=token,
+        user={
+            "username": username,
+            "email": request.email.lower(),
+            "role": "trader",
+            "name": username.title()
+        }
+    )
 
 
 @app.get("/api/v1/risk/metrics")
@@ -363,6 +469,39 @@ async def market_news(query: str = Query("crypto"), limit: int = Query(8, ge=1, 
     return {"query": query, "count": len(items), "items": items}
 
 
+@app.get("/api/v1/news")
+async def news(limit: int = Query(6, ge=1, le=50)) -> Dict[str, Any]:
+    """News endpoint for the dashboard"""
+    now = datetime.utcnow().isoformat()
+    items = [
+        {
+            "id": f"news-{idx}",
+            "title": f"Crypto Market Update #{idx}: Bitcoin shows strong momentum",
+            "summary": "Recent market analysis suggests continued growth in the cryptocurrency sector.",
+            "source": "AI Trading System",
+            "url": "https://example.com/news",
+            "sentiment": "bullish" if idx % 2 == 0 else "neutral",
+            "timestamp": now,
+        }
+        for idx in range(1, limit + 1)
+    ]
+    return {"items": items, "count": len(items)}
+
+
+@app.get("/api/v1/market/sentiment")
+async def market_sentiment() -> Dict[str, Any]:
+    """Market sentiment endpoint"""
+    now = datetime.utcnow().isoformat()
+    return {
+        "overall": "bullish",
+        "score": 0.72,
+        "fear_greed_index": 65,
+        "bitcoin_sentiment": "bullish",
+        "ethereum_sentiment": "neutral",
+        "last_updated": now,
+    }
+
+
 @app.post("/api/v1/payments/stripe/checkout-session", response_model=CreateCheckoutResponse)
 async def create_checkout_session(payload: CreateCheckoutRequest) -> CreateCheckoutResponse:
     if stripe is None:
@@ -439,6 +578,13 @@ async def stripe_webhook(request: Request) -> Dict[str, Any]:
 @app.get("/api/v1/orders")
 async def list_orders() -> List[Dict[str, Any]]:
     return list(_orders.values())
+
+
+@app.get("/api/v1/orders/history")
+async def orders_history(limit: int = Query(50, ge=1, le=200)) -> Dict[str, Any]:
+    """Get order history for the dashboard"""
+    orders = list(_orders.values())
+    return {"orders": orders, "total": len(orders)}
 
 
 @app.get("/api/v1/orders/{order_id}")
