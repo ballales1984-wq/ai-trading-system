@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse, JSONResponse
 from pydantic import BaseModel
 
-from app.core.security import get_current_user
+from app.core.rbac import get_current_user
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
