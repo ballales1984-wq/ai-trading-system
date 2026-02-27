@@ -16,7 +16,8 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 import logging
 
-from app.core.security import jwt_manager, User, UserRole
+from app.core.security import jwt_manager, User, UserRole, SubscriptionPlan, SubscriptionStatus
+from app.core.unified_config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     username: Optional[str] = None
+    enable_trial: bool = True  # Enable 7-day trial by default
 
 
 class RegisterResponse(BaseModel):
@@ -146,13 +148,14 @@ async def login(request: LoginRequest):
     )
 
 
-# Register endpoint (for new users)
+# Register endpoint (for new users with optional trial)
 @router.post("/register", response_model=RegisterResponse)
 async def register(request: RegisterRequest):
     """
-    Register a new user.
+    Register a new user with optional 7-day trial.
     
-    Creates a new user with VIEWER role by default.
+    By default, new users get a 7-day free trial.
+    Set enable_trial=False to register without trial.
     """
     # Use provided username or derive from email
     username = request.username or request.email.split('@')[0]
@@ -165,17 +168,22 @@ async def register(request: RegisterRequest):
             detail="Username already exists"
         )
     
-    # Create new user with TRADER role (can be changed to VIEWER)
+    # Determine trial days
+    trial_days = settings.trial_days if request.enable_trial else 0
+    
+    # Create new user with TRADER role and optional trial
     user = jwt_manager.create_user(
         username=username,
         password=request.password,
-        role=UserRole.TRADER
+        role=UserRole.TRADER,
+        email=request.email,
+        trial_days=trial_days
     )
     
-    logger.info(f"New user registered: {username}")
+    logger.info(f"New user registered: {username}, trial_days: {trial_days}")
     
     return RegisterResponse(
-        message="User registered successfully",
+        message="User registered successfully" + (f" with {trial_days}-day trial" if trial_days > 0 else ""),
         user_id=user.user_id,
         username=user.username
     )
@@ -280,3 +288,97 @@ async def auth_health():
         "service": "authentication",
         "users_count": len(jwt_manager._users)
     }
+
+
+# ==================== SUBSCRIPTION ENDPOINTS ====================
+
+
+class SubscriptionCheckResponse(BaseModel):
+    """Subscription status response."""
+    plan: str
+    status: str
+    is_active: bool
+    is_trial: bool
+    trial_days_remaining: int
+    current_period_end: Optional[str] = None
+    cancel_at_period_end: bool = False
+
+
+class UpgradePlanRequest(BaseModel):
+    """Request to purchase lifetime license."""
+    # For one-time purchase, no plan selection needed
+
+
+@router.get("/subscription", response_model=SubscriptionCheckResponse)
+async def get_subscription(current_user: User = Depends(get_current_user)):
+    """
+    Get current user's subscription status.
+    
+    Returns plan, status, trial days remaining, etc.
+    """
+    # Check and update subscription status (handles trial expiration)
+    subscription_info = jwt_manager.check_subscription(current_user)
+    
+    return SubscriptionCheckResponse(**subscription_info)
+
+
+@router.post("/subscription/purchase")
+async def purchase_lifetime(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Purchase lifetime license (one-time payment 49.99€).
+    
+    This converts the user from trial to lifetime access.
+    """
+    from app.core.security import SubscriptionPlan
+    
+    # Activate lifetime subscription
+    jwt_manager.activate_subscription(
+        user=current_user,
+        plan=SubscriptionPlan.LIFETIME,
+        trial_days=0
+    )
+    
+    logger.info(f"User {current_user.username} purchased lifetime license")
+    
+    return {
+        "message": "Successfully purchased lifetime license",
+        "plan": "lifetime",
+        "price": "49.99€"
+    }
+
+
+# ==================== TRIAL ENDPOINTS ====================
+
+
+class TrialStatusResponse(BaseModel):
+    """Trial status response."""
+    is_active: bool
+    days_remaining: int
+    end_date: Optional[str] = None
+
+
+@router.get("/trial/status", response_model=TrialStatusResponse)
+async def get_trial_status(current_user: User = Depends(get_current_user)):
+    """
+    Get current user's trial status.
+    
+    Returns whether trial is active and days remaining.
+    """
+    # Check and update subscription status
+    subscription_info = jwt_manager.check_subscription(current_user)
+    
+    is_trial = subscription_info.get("is_trial", False)
+    days_remaining = subscription_info.get("trial_days_remaining", 0)
+    
+    # Get trial end date
+    end_date = None
+    if current_user.subscription.trial_end_date:
+        end_date = current_user.subscription.trial_end_date.isoformat()
+    
+    return TrialStatusResponse(
+        is_active=is_trial,
+        days_remaining=days_remaining,
+        end_date=end_date
+    )

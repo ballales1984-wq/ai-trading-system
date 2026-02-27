@@ -122,6 +122,9 @@ class CreateCheckoutRequest(BaseModel):
     email: Optional[EmailStr] = None
     price_id: Optional[str] = None
     quantity: int = 1
+    # Trial configuration
+    enable_trial: bool = False
+    trial_days: int = 7
 
 
 class CreateCheckoutResponse(BaseModel):
@@ -373,15 +376,26 @@ async def create_checkout_session(payload: CreateCheckoutRequest) -> CreateCheck
         raise HTTPException(status_code=503, detail="Stripe redirect URLs not configured.")
 
     stripe.api_key = secret
+    
+    # Get trial days from settings if not provided
+    trial_days = payload.trial_days if payload.enable_trial else 0
+    
     try:
-        session = stripe.checkout.Session.create(
-            mode="payment",
-            line_items=[{"price": price_id, "quantity": max(1, payload.quantity)}],
-            success_url=success_url,
-            cancel_url=cancel_url,
-            customer_email=payload.email or None,
-            metadata={"source": "web_access_gate"},
-        )
+        # Create checkout session for one-time payment (lifetime license)
+        session_params = {
+            "mode": "payment",  # One-time payment
+            "line_items": [{"price": price_id, "quantity": max(1, payload.quantity)}],
+            "success_url": success_url,
+            "cancel_url": cancel_url,
+            "customer_email": payload.email or None,
+            "metadata": {
+                "source": "web_access_gate",
+                "trial_days": str(trial_days),
+                "type": "lifetime_license"
+            },
+        }
+        
+        session = stripe.checkout.Session.create(**session_params)
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Unable to create Stripe checkout session: {exc}") from exc
 

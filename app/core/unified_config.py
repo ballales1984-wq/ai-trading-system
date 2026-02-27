@@ -187,11 +187,14 @@ class Settings(BaseSettings):
     stripe_success_url: str = Field(default="", env="STRIPE_SUCCESS_URL")
     stripe_cancel_url: str = Field(default="", env="STRIPE_CANCEL_URL")
     
-    # Pricing plans
-    plan_basic_price: float = 19.0  # EUR/month
-    plan_pro_price: float = 49.0  # EUR/month
-    plan_enterprise_price: float = 199.0  # EUR/month
+    # Pricing - One-time purchase
+    lifetime_price: float = 49.99  # EUR one-time
     trial_days: int = 7
+    
+    # Stripe Price IDs (from Stripe Dashboard)
+    stripe_lifetime_price_id: str = Field(default="", env="STRIPE_LIFETIME_PRICE_ID")
+    # Stripe Trial Price ID (for 7-day trial)
+    stripe_trial_price_id: str = Field(default="", env="STRIPE_TRIAL_PRICE_ID")
     
     # Multi-tenancy
     max_users_per_instance: int = 100
