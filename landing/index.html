@@ -175,6 +175,40 @@
         /* Email Form */
         .email-form {
             background: var(--dark-light);
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 400px;
+            margin: 2rem auto;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.75rem;
+            background: transparent;
+            border: 1px solid var(--gray-dark);
+            color: var(--gray);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
             padding: 60px 40px;
             border-radius: 16px;
             max-width: 500px;
@@ -529,6 +563,10 @@
                 <div class="email-form" id="signup">
                     <h3>🚀 Start Free Trial</h3>
                     <p>Get 7 days free trial. No credit card required.</p>
+                    <div class="auth-tabs">
+                        <button type="button" class="tab-btn active" data-tab="register">Register</button>
+                        <button type="button" class="tab-btn" data-tab="login">Login</button>
+                    </div>
                     <form id="register-form">
                         <div class="form-group">
                             <input type="email" id="email" autocomplete="email" placeholder="Enter your email" required>
@@ -536,6 +574,14 @@
                             <button type="submit" class="btn btn-primary">Start Trial</button>
                         </div>
                         <div class="form-message" id="form-message"></div>
+                    </form>
+                    <form id="login-form" style="display:none;">
+                        <div class="form-group">
+                            <input type="email" id="login-email" autocomplete="email" placeholder="Enter your email" required>
+                            <input type="password" id="login-password" autocomplete="current-password" placeholder="Enter password" required>
+                            <button type="submit" class="btn btn-primary">Login</button>
+                        </div>
+                        <div class="form-message" id="login-message"></div>
                     </form>
                     <div id="success-content" style="display:none;">
                         <div class="success-box">
@@ -676,6 +722,59 @@
     </footer>
     
     <script>
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tab = this.dataset.tab;
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                if (tab === 'register') {
+                    document.getElementById('register-form').style.display = 'block';
+                    document.getElementById('login-form').style.display = 'none';
+                } else {
+                    document.getElementById('register-form').style.display = 'none';
+                    document.getElementById('login-form').style.display = 'block';
+                }
+            });
+        });
+
+        // Login form handling
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const messageDiv = document.getElementById('login-message');
+            
+            messageDiv.textContent = 'Logging in...';
+            messageDiv.className = 'form-message';
+            
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Store auth data
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('refresh_token', data.refresh_token);
+                    localStorage.setItem('user_id', data.user.user_id);
+                    localStorage.setItem('username', data.user.username);
+                    messageDiv.textContent = 'Login successful! Redirecting...';
+                    messageDiv.className = 'form-message success';
+                    setTimeout(() => window.location.href = '/dashboard', 1000);
+                } else {
+                    messageDiv.textContent = data.detail || 'Login failed';
+                    messageDiv.className = 'form-message error';
+                }
+            } catch (err) {
+                messageDiv.textContent = 'Network error. Please try again.';
+                messageDiv.className = 'form-message error';
+            }
+        });
+
         // Registration form handling
         document.getElementById('register-form').addEventListener('submit', async function(e) {
             e.preventDefault();
