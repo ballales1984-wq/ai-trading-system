@@ -8,7 +8,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -217,8 +217,25 @@ if FRONTEND_DIR.exists():
 
 
 # Root endpoint - serve landing page or frontend
-@app.get("/")
-async def root():
+@app.get("/", methods=["GET", "HEAD"])
+async def root(request: Request):
+    """Root endpoint - serve landing page if available."""
+    # Handle HEAD request - return same response as GET but without body
+    if request.method == "HEAD":
+        landing_file = LANDING_DIR / "index.html"
+        if landing_file.exists():
+            return FileResponse(str(landing_file), media_type="text/html")
+        
+        frontend_file = FRONTEND_DIR / "index.html"
+        if frontend_file.exists():
+            return FileResponse(str(frontend_file), media_type="text/html")
+        
+        return JSONResponse(
+            status_code=200,
+            content={"name": settings.app_name, "version": settings.app_version, "status": "running", "docs": "/docs"}
+        )
+    
+    # GET request handler
     """Root endpoint - serve landing page if available."""
     landing_file = LANDING_DIR / "index.html"
     if landing_file.exists():
@@ -254,6 +271,13 @@ async def serve_spa():
         return FileResponse(str(frontend_file))
     
     return {"error": "Frontend not built"}
+
+
+# Favicon handler - return 204 No Content to avoid 404
+@app.get("/favicon.ico", methods=["GET", "HEAD"])
+async def favicon():
+    """Serve favicon or return empty response."""
+    return Response(status_code=204)
 
 
 # Health check

@@ -370,8 +370,8 @@ async def create_checkout_session(payload: CreateCheckoutRequest) -> CreateCheck
     if not price_id:
         raise HTTPException(status_code=400, detail="Missing Stripe price id (STRIPE_DEFAULT_PRICE_ID).")
 
-    success_url = (os.getenv("STRIPE_SUCCESS_URL", "") or "").strip()
-    cancel_url = (os.getenv("STRIPE_CANCEL_URL", "") or "").strip()
+    success_url = (payload.success_url or os.getenv("STRIPE_SUCCESS_URL", "") or "https://ai-trading-system-kappa.vercel.app/success").strip()
+    cancel_url = (payload.cancel_url or os.getenv("STRIPE_CANCEL_URL", "") or "https://ai-trading-system-kappa.vercel.app/cancel").strip()
     if not success_url or not cancel_url:
         raise HTTPException(status_code=503, detail="Stripe redirect URLs not configured.")
 
