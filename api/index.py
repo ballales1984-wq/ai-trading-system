@@ -77,7 +77,7 @@ class ClientEvent(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    username: str
+    email: str
     password: str
 
 
@@ -89,6 +89,7 @@ class RegisterRequest(BaseModel):
 
 class AuthResponse(BaseModel):
     access_token: str
+    refresh_token: Optional[str] = None
     token_type: str = "bearer"
     user: Dict[str, Any]
 
@@ -149,6 +150,12 @@ _mocks_users: Dict[str, Dict[str, Any]] = {
         "password_hash": hashlib.sha256("password123".encode()).hexdigest(),
         "role": "trader",
         "name": "Alessio Ballarè"
+    },
+    "ballales1984@gmail.com": {
+        "email": "ballales1984@gmail.com",
+        "password_hash": hashlib.sha256("password123".encode()).hexdigest(),
+        "role": "trader",
+        "name": "Alessio Ballarè"
     }
 }
 
@@ -193,25 +200,29 @@ async def health_api() -> Dict[str, str]:
 
 @app.post("/api/v1/auth/login", response_model=AuthResponse)
 async def login(request: LoginRequest) -> AuthResponse:
-    """Login endpoint - accepts username and password"""
-    username = request.username.lower().strip()
+    """Login endpoint - accepts email and password"""
+    # Extract username from email (e.g., "user@example.com" -> "user")
+    email = request.email.lower().strip()
+    username = email.split('@')[0] if '@' in email else email
     password_hash = hashlib.sha256(request.password.encode()).hexdigest()
     
-    # Check if user exists
-    user = _mocks_users.get(username)
+    # Check if user exists (try both email and username as key)
+    user = _mocks_users.get(email) or _mocks_users.get(username)
     if not user:
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
     
     # Verify password
     if user["password_hash"] != password_hash:
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
     
     # Generate mock token
     token = f"mock_token_{username}_{uuid4().hex[:16]}"
     
     return AuthResponse(
         access_token=token,
+        refresh_token=token,
         user={
+            "user_id": username,
             "username": username,
             "email": user["email"],
             "role": user["role"],
