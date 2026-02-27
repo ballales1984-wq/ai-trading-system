@@ -217,7 +217,7 @@ if FRONTEND_DIR.exists():
 
 
 # Root endpoint - serve landing page or frontend
-@app.get("/", methods=["GET", "HEAD"])
+@app.route("/", methods=["GET", "HEAD"])
 async def root(request: Request):
     """Root endpoint - serve landing page if available."""
     # Handle HEAD request - return same response as GET but without body
@@ -274,8 +274,8 @@ async def serve_spa():
 
 
 # Favicon handler - return 204 No Content to avoid 404
-@app.get("/favicon.ico", methods=["GET", "HEAD"])
-async def favicon():
+@app.route("/favicon.ico", methods=["GET", "HEAD"])
+async def favicon(request: Request):
     """Serve favicon or return empty response."""
     return Response(status_code=204)
 
