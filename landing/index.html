@@ -235,6 +235,49 @@
             background: rgba(239, 68, 68, 0.1);
             color: #ef4444;
             border: 1px solid #ef4444;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+        
+        /* Password input */
+        .form-group input[type="password"] {
+            margin-top: 10px;
+        }
+        
+        /* Success Box */
+        .success-box {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+        
+        .success-box h4 {
+            color: #10b981;
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        
+        .trial-info {
+            color: var(--gray);
+            margin: 16px 0;
+        }
+        
+        .trial-info strong {
+            color: #10b981;
+        }
+        
+        .success-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .success-actions .btn {
+            flex: 1;
         }
         
         /* Features */
@@ -484,15 +527,27 @@
                 </div>
                 
                 <div class="email-form" id="signup">
-                    <h3>🚀 Join the Beta</h3>
-                    <p>Get early access and 7 days free trial. No credit card required.</p>
-                    <form id="waitlist-form">
+                    <h3>🚀 Start Free Trial</h3>
+                    <p>Get 7 days free trial. No credit card required.</p>
+                    <form id="register-form">
                         <div class="form-group">
                             <input type="email" id="email" autocomplete="email" placeholder="Enter your email" required>
-                            <button type="submit" class="btn btn-primary">Join</button>
+                            <input type="password" id="password" autocomplete="new-password" placeholder="Create password" required minlength="6">
+                            <button type="submit" class="btn btn-primary">Start Trial</button>
                         </div>
                         <div class="form-message" id="form-message"></div>
                     </form>
+                    <div id="success-content" style="display:none;">
+                        <div class="success-box">
+                            <h4>🎉 Account Created!</h4>
+                            <p>Your 7-day free trial is now active.</p>
+                            <p class="trial-info">Trial ends in <strong>7 days</strong></p>
+                            <div class="success-actions">
+                                <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
+                                <button id="upgrade-btn" class="btn btn-secondary">Upgrade to Lifetime</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -576,43 +631,30 @@
                 
                 <div class="pricing-grid">
                     <div class="pricing-card">
-                        <h3>Basic</h3>
-                        <div class="price">€19<span>/month</span></div>
+                        <h3>Free Trial</h3>
+                        <div class="price">€0<span></span></div>
                         <ul>
-                            <li>5 assets monitoring</li>
-                            <li>Basic Monte Carlo</li>
-                            <li>Email alerts</li>
-                            <li>Daily reports</li>
-                            <li>Community support</li>
+                            <li>7 days free trial</li>
+                            <li>All features included</li>
+                            <li>Monte Carlo simulations</li>
+                            <li>Real-time dashboard</li>
+                            <li>Email support</li>
                         </ul>
                         <a href="#signup" class="btn btn-secondary" style="width: 100%;">Start Free Trial</a>
                     </div>
                     
                     <div class="pricing-card featured">
-                        <h3>Pro</h3>
-                        <div class="price">€49<span>/month</span></div>
+                        <h3>Lifetime Access</h3>
+                        <div class="price">€49.99<span></span></div>
                         <ul>
-                            <li>Unlimited assets</li>
+                            <li>One-time payment</li>
+                            <li>Lifetime access</li>
+                            <li>All features included</li>
                             <li>Advanced Monte Carlo (5 levels)</li>
-                            <li>Telegram + Email alerts</li>
-                            <li>Real-time dashboard</li>
-                            <li>API access</li>
                             <li>Priority support</li>
+                            <li>API access</li>
                         </ul>
-                        <a href="#signup" class="btn btn-primary" style="width: 100%;">Start Free Trial</a>
-                    </div>
-                    
-                    <div class="pricing-card">
-                        <h3>Enterprise</h3>
-                        <div class="price">€199<span>/month</span></div>
-                        <ul>
-                            <li>Everything in Pro</li>
-                            <li>Custom strategies</li>
-                            <li>Dedicated support</li>
-                            <li>White-label options</li>
-                            <li>SLA guarantee</li>
-                        </ul>
-                        <a href="#signup" class="btn btn-secondary" style="width: 100%;">Contact Sales</a>
+                        <a href="#signup" class="btn btn-primary" style="width: 100%;">Get Lifetime Access</a>
                     </div>
                 </div>
             </div>
@@ -634,42 +676,93 @@
     </footer>
     
     <script>
-        // Email form handling
-        document.getElementById('waitlist-form').addEventListener('submit', async function(e) {
+        // Registration form handling
+        document.getElementById('register-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
             const messageDiv = document.getElementById('form-message');
+            const form = document.getElementById('register-form');
+            const successContent = document.getElementById('success-content');
+            
+            messageDiv.textContent = 'Creating your account...';
+            messageDiv.className = 'form-message';
             
             try {
-                // Send to API endpoint - using full ngrok URL
-                const response = await fetch('https://tonita-deposable-manneristically.ngrok-free.dev/api/v1/waitlist', {
+                // Call registration API
+                const response = await fetch('/api/v1/auth/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ email: email })
+                    body: JSON.stringify({ 
+                        email: email, 
+                        password: password,
+                        enable_trial: true
+                    })
                 });
                 
+                const data = await response.json();
+                
                 if (response.ok) {
-                    messageDiv.className = 'form-message success';
-                    messageDiv.textContent = '🎉 Thanks! You\'re on the list. We\'ll be in touch soon.';
-                    document.getElementById('email').value = '';
+                    // Store auth data
+                    localStorage.setItem('user_email', email);
+                    localStorage.setItem('user_id', data.user_id);
+                    
+                    // Hide form, show success
+                    form.style.display = 'none';
+                    successContent.style.display = 'block';
                 } else {
-                    // Fallback: store locally
-                    localStorage.setItem('waitlist_email', email);
-                    messageDiv.className = 'form-message success';
-                    messageDiv.textContent = '🎉 Thanks! You\'re on the list. We\'ll be in touch soon.';
-                    document.getElementById('email').value = '';
+                    messageDiv.className = 'form-message error';
+                    messageDiv.textContent = data.detail || 'Registration failed. Please try again.';
                 }
             } catch (error) {
-                // Fallback for offline/demo
-                localStorage.setItem('waitlist_email', email);
-                messageDiv.className = 'form-message success';
-                messageDiv.textContent = '🎉 Thanks! You\'re on the list. We\'ll be in touch soon.';
-                document.getElementById('email').value = '';
+                messageDiv.className = 'form-message error';
+                messageDiv.textContent = 'Connection error. Please try again.';
             }
         });
+        
+        // Upgrade to lifetime button
+        document.getElementById('upgrade-btn')?.addEventListener('click', async function() {
+            const userId = localStorage.getItem('user_id');
+            
+            if (!userId) {
+                alert('Please register first');
+                return;
+            }
+            
+            try {
+                // Call Stripe checkout
+                const response = await fetch('/api/v1/payments/stripe/checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: localStorage.getItem('user_email'),
+                        enable_trial: false
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.checkout_url) {
+                    // Redirect to Stripe
+                    window.location.href = data.checkout_url;
+                } else {
+                    alert('Payment not available. Please try again later.');
+                }
+            } catch (error) {
+                alert('Payment error. Please try again later.');
+            }
+        });
+        
+        // Check for existing session
+        if (localStorage.getItem('user_id')) {
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('success-content').style.display = 'block';
+        }
         
         // Smooth scroll
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
