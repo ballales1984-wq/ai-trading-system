@@ -3,11 +3,6 @@
   "installCommand": "cd api && pip install -r requirements.txt",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
-  "functions": {
-    "api/index.py": {
-      "runtime": "python3"
-    }
-  },
   "routes": [
     {
       "src": "/api/(.*)",
