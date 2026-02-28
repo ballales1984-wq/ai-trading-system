@@ -1,5 +1,6 @@
 {
   "buildCommand": "cd frontend && npm install && npm run build",
+  "installCommand": "pip install -r api/requirements.txt",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
   "routes": [
