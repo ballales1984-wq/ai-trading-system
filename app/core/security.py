@@ -446,13 +446,6 @@ jwt_manager.create_user(
     role=UserRole.VIEWER
 )
 
-# Create user's account
-jwt_manager.create_user(
-    username="ballales1984@gmail.com",
-    password="Johnlennon1984",
-    role=UserRole.TRADER
-)
-
 
 # FastAPI integration example:
 """
