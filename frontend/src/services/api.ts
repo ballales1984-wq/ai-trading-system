@@ -20,11 +20,17 @@ import type {
 // Use environment variable for API base URL
 // In production (Vercel), set VITE_API_BASE_URL to your backend URL
 // Local: http://localhost:8000/api/v1 (via vite proxy)
-// Vercel: The API is served from the same domain, so use relative path
+// Vercel with ngrok: https://your-ngrok-url.ngrok.io/api/v1
 const isLocalhost = typeof window !== 'undefined' && ['5173', '3000'].includes(window.location.port);
 
+// Environment variable takes priority (for Vercel -> ngrok setup)
+const envApiUrl = import.meta.env.VITE_API_BASE_URL;
+
 let API_BASE: string;
-if (isLocalhost) {
+if (envApiUrl) {
+  // Production: use configured URL (ngrok or other backend)
+  API_BASE = envApiUrl;
+} else if (isLocalhost) {
   // Local development - use localhost:8000
   API_BASE = 'http://localhost:8000/api/v1';
 } else {

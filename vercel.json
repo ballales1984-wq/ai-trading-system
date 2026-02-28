@@ -3,6 +3,9 @@
   "installCommand": "cd api && pip install --break-system-packages -r requirements.txt",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
+  "env": {
+    "VITE_API_BASE_URL": "@api-base-url"
+  },
   "routes": [
     {
       "src": "/api/(.*)",
