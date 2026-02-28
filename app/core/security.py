@@ -422,20 +422,28 @@ class TokenRequired:
         return wrapper
 
 
+import os
+
 # Default instance
 jwt_manager = JWTManager()
 
+# Get users from environment variables (for production)
+admin_user = os.getenv("ADMIN_USER", "admin")
+admin_pass = os.getenv("ADMIN_PASSWORD", "admin123")
+trader_user = os.getenv("TRADER_USER", "trader")
+trader_pass = os.getenv("TRADER_PASSWORD", "trader123")
+
 # Create default admin user
 jwt_manager.create_user(
-    username="admin",
-    password="admin123",
+    username=admin_user,
+    password=admin_pass,
     role=UserRole.ADMIN
 )
 
 # Create default trader user
 jwt_manager.create_user(
-    username="trader",
-    password="trader123",
+    username=trader_user,
+    password=trader_pass,
     role=UserRole.TRADER
 )
 
