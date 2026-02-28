@@ -6,9 +6,13 @@
     {
       "src": "/api/(.*)",
       "dest": "/api/index.py"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/dist/$1"
     }
-  ],
-  "python": {
-    "install": "pip install -r api/requirements.txt"
-  }
+  ]
 }
