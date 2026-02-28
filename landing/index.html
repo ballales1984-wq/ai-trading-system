@@ -788,20 +788,23 @@
             const form = document.getElementById('register-form');
             const successContent = document.getElementById('success-content');
             
+            // Extract username from email (e.g., "user@example.com" -> "user")
+            const username = email.split('@')[0].toLowerCase();
+            
             messageDiv.textContent = 'Creating your account...';
             messageDiv.className = 'form-message';
             
             try {
-                // Call registration API
+                // Call registration API - now includes username
                 const response = await fetch('/api/v1/auth/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ 
+                        username: username,
                         email: email, 
-                        password: password,
-                        enable_trial: true
+                        password: password
                     })
                 });
                 
@@ -810,7 +813,8 @@
                 if (response.ok) {
                     // Store auth data
                     localStorage.setItem('user_email', email);
-                    localStorage.setItem('user_id', data.user_id);
+                    localStorage.setItem('user_id', data.user?.username || username);
+                    localStorage.setItem('username', data.user?.username || username);
                     
                     // Hide form, show success
                     form.style.display = 'none';
@@ -828,11 +832,16 @@
         // Upgrade to lifetime button
         document.getElementById('upgrade-btn')?.addEventListener('click', async function() {
             const userId = localStorage.getItem('user_id');
+            const upgradeBtn = this;
+            const originalText = upgradeBtn.textContent;
             
             if (!userId) {
                 alert('Please register first');
                 return;
             }
+            
+            upgradeBtn.textContent = 'Processing...';
+            upgradeBtn.disabled = true;
             
             try {
                 // Call Stripe checkout
@@ -852,11 +861,20 @@
                 if (response.ok && data.checkout_url) {
                     // Redirect to Stripe
                     window.location.href = data.checkout_url;
+                } else if (response.status === 503) {
+                    // Stripe not configured - show helpful message
+                    alert('Payment system is temporarily unavailable. Please try again later or contact support.');
+                } else if (response.status === 400) {
+                    // Missing configuration
+                    alert('Payment configuration error. Please contact support.');
                 } else {
-                    alert('Payment not available. Please try again later.');
+                    alert('Payment not available: ' + (data.detail || 'Please try again later.'));
                 }
             } catch (error) {
                 alert('Payment error. Please try again later.');
+            } finally {
+                upgradeBtn.textContent = originalText;
+                upgradeBtn.disabled = false;
             }
         });
         
