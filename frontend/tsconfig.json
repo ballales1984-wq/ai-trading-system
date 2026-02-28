@@ -15,6 +15,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    "types": ["node"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
@@ -23,4 +24,3 @@
   },
   "include": ["src"]
 }
-
