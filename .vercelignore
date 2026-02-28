@@ -12,7 +12,7 @@ __pycache__
 .Python
 
 # Large directories
-src
+# src  # Don't ignore - needed for frontend
 tests
 docs
 plans
