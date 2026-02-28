@@ -4,7 +4,7 @@
   "outputDirectory": "frontend/dist",
   "framework": "vite",
   "env": {
-    "VITE_API_BASE_URL": "@api-base-url"
+    "VITE_API_BASE_URL": "https://tonita-deposable-manneristically.ngrok-free.dev/api/v1"
   },
   "routes": [
     {
