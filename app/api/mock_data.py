@@ -603,9 +603,18 @@ def get_market_sentiment() -> Dict[str, Any]:
 
 
 
-def get_news(symbol: Optional[str] = None, limit: int = 10) -> List[Dict[str, Any]]:
-    """Get mock crypto news feed."""
-    all_news = [
+def get_news(symbol: Optional[str] = None, limit: int = 10, refresh: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Get mock crypto news feed.
+    
+    When refresh is provided, generates dynamic data with varied timestamps and slightly
+    randomized sentiment scores to simulate fresh news.
+    """
+    # Use refresh parameter to generate dynamic data
+    import time
+    seed = int(time.time() // 60) if refresh else 0  # Change every minute
+    
+    # Dynamic news variations based on time seed
+    news_variations = [
         {
             "id": "news-001",
             "title": "Bitcoin Surges Past $67K as Institutional Adoption Accelerates",
@@ -702,7 +711,71 @@ def get_news(symbol: Optional[str] = None, limit: int = 10) -> List[Dict[str, An
             "published_at": (datetime.utcnow() - timedelta(hours=24)).isoformat(),
             "category": "technology",
         },
+        # Additional dynamic news that appear when refresh is used
+        {
+            "id": "news-009",
+            "title": "Bitcoin ETF Inflows Reach Record $500 Million in Single Day",
+            "source": "CoinDesk",
+            "url": "https://coindesk.com/etf-inflows",
+            "summary": "Spot Bitcoin ETFs see massive institutional demand as market sentiment turns bullish.",
+            "sentiment": "positive",
+            "sentiment_score": 0.88,
+            "symbols": ["BTC/USDT"],
+            "published_at": (datetime.utcnow() - timedelta(minutes=30)).isoformat(),
+            "category": "market",
+        },
+        {
+            "id": "news-010",
+            "title": "Ethereum Staking Yields Increase as Network Activity Rises",
+            "source": "Cointelegraph",
+            "url": "https://cointelegraph.com/eth-staking",
+            "summary": "Staking rewards reach 5% APY as Ethereum network transaction volume increases significantly.",
+            "sentiment": "positive",
+            "sentiment_score": 0.75,
+            "symbols": ["ETH/USDT"],
+            "published_at": (datetime.utcnow() - timedelta(minutes=45)).isoformat(),
+            "category": "defi",
+        },
+        {
+            "id": "news-011",
+            "title": "Regulatory Concerns Rise as Stablecoin Market Cap Hits $150B",
+            "source": "Bloomberg",
+            "url": "https://bloomberg.com/stablecoins",
+            "summary": "Global regulators increasing scrutiny on stablecoins following rapid market growth.",
+            "sentiment": "negative",
+            "sentiment_score": -0.35,
+            "symbols": ["USDT/USDT", "USDC/USDT"],
+            "published_at": (datetime.utcnow() - timedelta(hours=1)).isoformat(),
+            "category": "regulation",
+        },
+        {
+            "id": "news-012",
+            "title": "AI Crypto Tokens Surge as NVIDIA Announces New Chipset",
+            "source": "CryptoNews",
+            "url": "https://cryptonews.com/ai-tokens",
+            "summary": "AI-related cryptocurrency tokens rally 20%+ on news of AI hardware advancement.",
+            "sentiment": "positive",
+            "sentiment_score": 0.82,
+            "symbols": ["FET/USDT", "AGIX/USDT", "RNDR/USDT"],
+            "published_at": (datetime.utcnow() - timedelta(hours=1, minutes=30)).isoformat(),
+            "category": "technology",
+        },
     ]
+    
+    # When refresh is used, shuffle and vary the news based on time seed
+    if refresh and seed > 0:
+        import random
+        random.seed(seed)
+        random.shuffle(news_variations)
+        # Vary timestamps slightly for freshness perception
+        for i, news in enumerate(news_variations):
+            # Adjust time to appear more recent when refreshing
+            hours_offset = i * 0.5  # Spread articles by 30 min intervals
+            news["published_at"] = (datetime.utcnow() - timedelta(minutes=int(hours_offset * 60))).isoformat()
+            # Add slight variation to sentiment score
+            news["sentiment_score"] = round(news["sentiment_score"] + random.uniform(-0.1, 0.1), 2)
+    
+    all_news = news_variations
     
     # Filter by symbol if provided
     if symbol:

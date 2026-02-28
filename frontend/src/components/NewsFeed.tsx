@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { newsApi } from '../services/api';
 import type { NewsItem } from '../types';
-import { Newspaper, ExternalLink, TrendingUp, TrendingDown, Minus, Clock } from 'lucide-react';
+import { Newspaper, ExternalLink, TrendingUp, TrendingDown, Minus, Clock, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
 
 interface NewsFeedProps {
   symbol?: string;
@@ -10,15 +11,21 @@ interface NewsFeedProps {
 }
 
 export default function NewsFeed({ symbol, limit = 10, showFilters = true }: NewsFeedProps) {
-  const { data, isLoading, error } = useQuery({
-    queryKey: symbol ? ['news', symbol, limit] : ['news', limit],
+  const [lastRefresh, setLastRefresh] = useState<number>(Date.now());
+  
+  const { data, isLoading, error, isRefetching } = useQuery({
+    queryKey: symbol ? ['news', symbol, limit, lastRefresh] : ['news', limit, lastRefresh],
     queryFn: () => 
       symbol 
-        ? newsApi.getNewsBySymbol(symbol, limit).then(r => r.news)
-        : newsApi.getNews({ limit }).then(r => r.news),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 10 * 60 * 1000, // 10 minutes
+        ? newsApi.getNewsBySymbol(symbol, limit, String(lastRefresh)).then(r => r.news)
+        : newsApi.getNews({ limit, refresh: String(lastRefresh) }).then(r => r.news),
+    staleTime: 30 * 1000, // 30 seconds - data is fresh for 30s
+    refetchInterval: 60 * 1000, // 1 minute - auto-refresh every minute
   });
+
+  const handleRefresh = () => {
+    setLastRefresh(Date.now());
+  };
 
   if (isLoading) {
     return (
@@ -63,6 +70,15 @@ export default function NewsFeed({ symbol, limit = 10, showFilters = true }: New
         </div>
         {showFilters && (
           <div className="flex gap-2">
+            <button
+              onClick={handleRefresh}
+              disabled={isRefetching}
+              className="flex items-center gap-1 text-xs text-text-muted hover:text-primary transition-colors disabled:opacity-50"
+              title="Refresh news"
+            >
+              <RefreshCw className={`w-3 h-3 ${isRefetching ? 'animate-spin' : ''}`} />
+              {isRefetching ? 'Refreshing...' : 'Refresh'}
+            </button>
             <span className="text-xs text-text-muted bg-background px-2 py-1 rounded">
               {news.length} articles
             </span>

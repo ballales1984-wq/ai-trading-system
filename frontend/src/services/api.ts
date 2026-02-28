@@ -1,4 +1,4 @@
-import axios from 'axios';
+ import axios from 'axios';
 import type {
   PortfolioSummary,
   Position,
@@ -283,6 +283,7 @@ export const newsApi = {
     limit?: number;
     sentiment?: string;
     category?: string;
+    refresh?: string;
   }): Promise<NewsListResponse> => {
     const { data } = await api.get<NewsListResponse>('/news', { params });
     return data;
@@ -294,10 +295,11 @@ export const newsApi = {
    */
   getNewsBySymbol: async (
     symbol: string,
-    limit?: number
+    limit?: number,
+    refresh?: string
   ): Promise<NewsBySymbolResponse> => {
     const { data } = await api.get<NewsBySymbolResponse>(`/news/${symbol}`, {
-      params: { limit },
+      params: { limit, refresh },
     });
     return data;
   },

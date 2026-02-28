@@ -10,7 +10,10 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, status, Query
 from pydantic import BaseModel, Field
 
-from app.api.mock_data import DEMO_MODE, get_news as mock_get_news
+from app.api.mock_data import get_news as mock_get_news
+
+# Import demo mode functions from portfolio (they share the same state)
+from app.api.routes.portfolio import get_demo_mode
 
 router = APIRouter()
 
@@ -57,16 +60,18 @@ async def get_news(
     limit: int = Query(10, ge=1, le=50, description="Maximum number of news items to return"),
     sentiment: Optional[str] = Query(None, description="Filter by sentiment: positive, negative, neutral"),
     category: Optional[str] = Query(None, description="Filter by category: market, technology, regulation, defi, exchange, macro, network"),
+    refresh: Optional[str] = Query(None, description="Force refresh with new data (use 'true' or timestamp)"),
 ) -> NewsListResponse:
     """
     Get latest crypto news feed.
     
     Returns a list of news items with sentiment analysis and related symbols.
     Supports filtering by sentiment and category.
+    Use refresh parameter to get fresh data with varied news.
     """
     # Use mock data if demo mode is enabled
-    if DEMO_MODE:
-        news_data = mock_get_news(limit=limit)
+    if get_demo_mode():
+        news_data = mock_get_news(limit=limit, refresh=refresh)
         
         # Apply sentiment filter if provided
         if sentiment:
@@ -89,7 +94,7 @@ async def get_news(
     
     # Production mode: would fetch from real news API
     # For now, return mock data as fallback
-    news_data = mock_get_news(limit=limit)
+    news_data = mock_get_news(limit=limit, refresh=refresh)
     news_items = [NewsItem(**n) for n in news_data]
     
     return NewsListResponse(
@@ -103,6 +108,7 @@ async def get_news(
 async def get_news_by_symbol(
     symbol: str,
     limit: int = Query(10, ge=1, le=50, description="Maximum number of news items to return"),
+    refresh: Optional[str] = Query(None, description="Force refresh with new data"),
 ) -> NewsBySymbolResponse:
     """
     Get news filtered by trading symbol.
@@ -113,8 +119,8 @@ async def get_news_by_symbol(
     symbol_upper = symbol.upper()
     
     # Use mock data if demo mode is enabled
-    if DEMO_MODE:
-        news_data = mock_get_news(symbol=symbol_upper, limit=limit)
+    if get_demo_mode():
+        news_data = mock_get_news(symbol=symbol_upper, limit=limit, refresh=refresh)
         news_items = [NewsItem(**n) for n in news_data]
         
         return NewsBySymbolResponse(
@@ -125,7 +131,7 @@ async def get_news_by_symbol(
         )
     
     # Production mode: would fetch from real news API with symbol filter
-    news_data = mock_get_news(symbol=symbol_upper, limit=limit)
+    news_data = mock_get_news(symbol=symbol_upper, limit=limit, refresh=refresh)
     news_items = [NewsItem(**n) for n in news_data]
     
     return NewsBySymbolResponse(
@@ -144,7 +150,7 @@ async def get_sentiment_overview() -> dict:
     Returns aggregated sentiment statistics from the latest news items.
     """
     # Use mock data if demo mode is enabled
-    if DEMO_MODE:
+    if get_demo_mode():
         news_data = mock_get_news(limit=20)
         
         # Calculate sentiment statistics
