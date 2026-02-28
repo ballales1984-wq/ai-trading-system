@@ -4,6 +4,8 @@ Portfolio Routes
 REST API for portfolio management and positions.
 """
 
+import os
+import random
 from datetime import datetime
 from typing import List, Optional
 from uuid import uuid4
@@ -24,10 +26,94 @@ from app.api.mock_data import (
 
 router = APIRouter()
 
+# ============================================================================
+# CONFIGURABLE PORTFOLIO BALANCE
+# ============================================================================
 
-# ============================================================================
-# DATA MODELS
-# ============================================================================
+# Get initial balance from environment variable or use default
+PAPER_INITIAL_BALANCE = float(os.getenv("PAPER_INITIAL_BALANCE", "500000"))
+
+# In-memory portfolio store (can be updated via API)
+portfolio_data = {
+    "cash_balance": PAPER_INITIAL_BALANCE,
+    "positions": [],
+    "initialized": False,
+}
+
+
+def _initialize_default_positions():
+    """Initialize default positions based on initial balance."""
+    if not portfolio_data["initialized"]:
+        # Create default positions based on balance
+        cash = portfolio_data["cash_balance"]
+        
+        # BTC position (30% of portfolio)
+        btc_value = cash * 0.30
+        btc_price = 66461.78  # Current BTC price
+        btc_qty = btc_value / btc_price
+        
+        # ETH position (20% of portfolio)
+        eth_value = cash * 0.20
+        eth_price = 3333.52  # Current ETH price
+        eth_qty = eth_value / eth_price
+        
+        # SOL position (10% of portfolio)
+        sol_value = cash * 0.10
+        sol_price = 152.12
+        sol_qty = sol_value / sol_price
+        
+        portfolio_data["positions"] = [
+            {
+                "position_id": str(uuid4()),
+                "symbol": "BTCUSDT",
+                "side": "LONG",
+                "quantity": round(btc_qty, 4),
+                "entry_price": btc_price * 0.95,  # Buy at 5% discount
+                "current_price": btc_price,
+                "market_value": btc_value,
+                "unrealized_pnl": btc_value * 0.05,
+                "realized_pnl": 0.0,
+                "leverage": 1.0,
+                "margin_used": btc_value,
+                "opened_at": "2026-02-15T10:00:00",
+                "updated_at": "2026-02-28T18:00:00",
+            },
+            {
+                "position_id": str(uuid4()),
+                "symbol": "ETHUSDT",
+                "side": "LONG",
+                "quantity": round(eth_qty, 4),
+                "entry_price": eth_price * 0.95,
+                "current_price": eth_price,
+                "market_value": eth_value,
+                "unrealized_pnl": eth_value * 0.05,
+                "realized_pnl": 0.0,
+                "leverage": 1.0,
+                "margin_used": eth_value,
+                "opened_at": "2026-02-16T14:30:00",
+                "updated_at": "2026-02-28T18:00:00",
+            },
+            {
+                "position_id": str(uuid4()),
+                "symbol": "SOLUSDT",
+                "side": "LONG",
+                "quantity": round(sol_qty, 4),
+                "entry_price": sol_price * 0.95,
+                "current_price": sol_price,
+                "market_value": sol_value,
+                "unrealized_pnl": sol_value * 0.05,
+                "realized_pnl": 0.0,
+                "leverage": 1.0,
+                "margin_used": sol_value,
+                "opened_at": "2026-02-17T09:00:00",
+                "updated_at": "2026-02-28T18:00:00",
+            },
+        ]
+        portfolio_data["initialized"] = True
+
+
+# Initialize default positions
+_initialize_default_positions()
 
 class Position(BaseModel):
     """Portfolio position model."""
@@ -98,47 +184,46 @@ class PortfolioHistory(BaseModel):
 # IN-MEMORY PORTFOLIO STORE
 # ============================================================================
 
-# Sample portfolio data
-portfolio_data = {
-    "cash_balance": 500000.0,
-    "positions": [
-        {
-            "position_id": str(uuid4()),
-            "symbol": "BTCUSDT",
-            "side": "LONG",
-            "quantity": 1.5,
-            "entry_price": 42000.0,
-            "current_price": 43500.0,
-            "market_value": 65250.0,
-            "unrealized_pnl": 2250.0,
-            "realized_pnl": 0.0,
-            "leverage": 1.0,
-            "margin_used": 31500.0,
-            "opened_at": "2026-02-15T10:00:00",
-            "updated_at": "2026-02-18T22:00:00",
-        },
-        {
-            "position_id": str(uuid4()),
-            "symbol": "ETHUSDT",
-            "side": "LONG",
-            "quantity": 15.0,
-            "entry_price": 2200.0,
-            "current_price": 2350.0,
-            "market_value": 35250.0,
-            "unrealized_pnl": 2250.0,
-            "realized_pnl": 0.0,
-            "leverage": 1.0,
-            "margin_used": 16500.0,
-            "opened_at": "2026-02-16T14:30:00",
-            "updated_at": "2026-02-18T22:00:00",
-        },
-    ]
-}
+# Note: portfolio_data is already initialized above with _initialize_default_positions()
+# Do NOT redefine it here or it will reset the positions
 
 
 # ============================================================================
 # ROUTES
 # ============================================================================
+
+# Endpoint to update paper trading balance
+@router.post("/balance", status_code=200)
+async def update_balance(new_balance: float = Query(..., ge=1000, le=100000000, description="New initial balance for paper trading")):
+    """
+    Update the paper trading initial balance.
+    This allows changing the portfolio value without restarting the server.
+    """
+    global portfolio_data
+    
+    # Update the balance
+    portfolio_data["cash_balance"] = new_balance
+    portfolio_data["initialized"] = False  # Reinitialize positions
+    
+    # Reinitialize with new balance
+    _initialize_default_positions()
+    
+    return {
+        "success": True,
+        "message": f"Balance updated to ${new_balance:,.2f}",
+        "new_balance": new_balance,
+        "positions_count": len(portfolio_data["positions"])
+    }
+
+
+@router.get("/balance")
+async def get_balance():
+    """Get current paper trading balance."""
+    return {
+        "current_balance": portfolio_data["cash_balance"],
+        "positions_count": len(portfolio_data["positions"])
+    }
+
 
 @router.get("/summary", response_model=PortfolioSummary)
 async def get_portfolio_summary() -> PortfolioSummary:
@@ -147,6 +232,36 @@ async def get_portfolio_summary() -> PortfolioSummary:
     
     Returns total portfolio value, cash, positions, and P&L.
     """
+    # When DEMO_MODE is true but we have custom portfolio_data (via /balance endpoint)
+    # use the custom portfolio_data instead of mock data
+    if DEMO_MODE and len(portfolio_data.get("positions", [])) > 0:
+        # Use our configurable portfolio
+        positions = portfolio_data["positions"]
+        cash = portfolio_data["cash_balance"]
+        market_value = sum(p.get("market_value", 0) for p in positions)
+        unrealized_pnl = sum(p.get("unrealized_pnl", 0) for p in positions)
+        
+        total_value = cash + market_value
+        total_pnl = unrealized_pnl
+        daily_pnl = total_value * 0.02  # 2% daily assumption
+        daily_return_pct = 2.0
+        total_return_pct = (total_pnl / total_value) * 100 if total_value > 0 else 0
+        
+        return PortfolioSummary(
+            total_value=total_value,
+            cash_balance=cash,
+            market_value=market_value,
+            total_pnl=total_pnl,
+            unrealized_pnl=unrealized_pnl,
+            realized_pnl=0.0,
+            daily_pnl=daily_pnl,
+            daily_return_pct=daily_return_pct,
+            total_return_pct=total_return_pct,
+            leverage=1.0,
+            buying_power=total_value,
+            num_positions=len(positions)
+        )
+    
     # Use mock data if demo mode is enabled
     if DEMO_MODE:
         data = mock_portfolio_summary()
@@ -228,6 +343,29 @@ async def list_positions(
     """
     List all open positions.
     """
+    # When DEMO_MODE is true but we have custom portfolio_data, use it
+    if DEMO_MODE and len(portfolio_data.get("positions", [])) > 0:
+        positions = portfolio_data["positions"]
+        if symbol:
+            positions = [p for p in positions if p["symbol"] == symbol]
+        if side:
+            positions = [p for p in positions if p["side"] == side]
+        return [Position(
+            position_id=p["position_id"],
+            symbol=p["symbol"],
+            side=p["side"],
+            quantity=p["quantity"],
+            entry_price=p["entry_price"],
+            current_price=p["current_price"],
+            market_value=p["market_value"],
+            unrealized_pnl=p.get("unrealized_pnl", 0),
+            realized_pnl=0.0,
+            leverage=1.0,
+            margin_used=p.get("margin_used", p["market_value"]),
+            opened_at=datetime.fromisoformat(p["opened_at"]),
+            updated_at=datetime.fromisoformat(p["updated_at"]),
+        ) for p in positions]
+    
     # Use mock data if demo mode is enabled
     if DEMO_MODE:
         positions = mock_positions()
