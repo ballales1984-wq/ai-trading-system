@@ -3,6 +3,12 @@
   "installCommand": "cd api && pip install --break-system-packages -r requirements.txt",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
+  "functions": {
+    "api/*.py": {
+      "runtime": "python3.11",
+      "maxDuration": 30
+    }
+  },
   "env": {
     "VITE_API_BASE_URL": "@vercel.url/api/v1"
   }
