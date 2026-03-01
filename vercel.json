@@ -3,9 +3,11 @@
   "installCommand": "cd api && pip install --break-system-packages -r requirements.txt",
   "outputDirectory": "frontend/dist",
   "functions": {
-    "api/*.py": {
-      "runtime": "python3.11",
-      "maxDuration": 30
+    "api/index.py": {
+      "runtime": "python3.11"
+    },
+    "api/test.py": {
+      "runtime": "python3.11"
     }
   }
 }
