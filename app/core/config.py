@@ -28,6 +28,13 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     debug: bool = True
+    
+    @field_validator('debug', mode='before')
+    @classmethod
+    def parse_debug(cls, v):
+        if isinstance(v, str):
+            return v.lower() in ('true', '1', 'yes', 'on')
+        return bool(v)
     api_prefix: str = "/api/v1"
     
     # CORS - Allow Vercel frontend, ngrok and local development

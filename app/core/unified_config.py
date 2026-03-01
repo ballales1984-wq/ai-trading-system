@@ -15,7 +15,7 @@ from pathlib import Path
 from functools import lru_cache
 from typing import Dict, List, Optional, Any
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator, validator
 from pydantic_settings import BaseSettings
 from pydantic.config import ConfigDict
 
@@ -98,6 +98,13 @@ class Settings(BaseSettings):
     app_version: str = "2.1.0"
     environment: str = Field(default="development", env="ENVIRONMENT")
     debug: bool = Field(default=True, env="DEBUG")
+    
+    @field_validator('debug', mode='before')
+    @classmethod
+    def parse_debug(cls, v):
+        if isinstance(v, str):
+            return v.lower() in ('true', '1', 'yes', 'on')
+        return bool(v)
     
     # ==================== SERVER ====================
     host: str = "0.0.0.0"
