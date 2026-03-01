@@ -1,5 +1,6 @@
 {
   "buildCommand": "cd frontend && npm install && npm run build",
   "installCommand": "cd api && pip install --break-system-packages -r requirements.txt",
-  "outputDirectory": "frontend/dist"
+  "outputDirectory": "frontend/dist",
+  "framework": "vite"
 }
