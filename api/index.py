@@ -193,12 +193,12 @@ async def health_root() -> Dict[str, str]:
     return {"status": "healthy", "service": "ai-trading-system"}
 
 
-@app.get("/api/v1/health")
+@app.get("/v1/health")
 async def health_api() -> Dict[str, str]:
     return {"status": "healthy", "service": "ai-trading-system"}
 
 
-@app.post("/api/v1/auth/login", response_model=AuthResponse)
+@app.post("/v1/auth/login", response_model=AuthResponse)
 async def login(request: LoginRequest) -> AuthResponse:
     """Login endpoint - accepts email and password"""
     # Extract username from email (e.g., "user@example.com" -> "user")
@@ -231,7 +231,7 @@ async def login(request: LoginRequest) -> AuthResponse:
     )
 
 
-@app.post("/api/v1/auth/register", response_model=AuthResponse)
+@app.post("/v1/auth/register", response_model=AuthResponse)
 async def register(request: RegisterRequest) -> AuthResponse:
     """Register endpoint - creates a new user"""
     username = request.username.lower().strip()
@@ -268,7 +268,7 @@ async def register(request: RegisterRequest) -> AuthResponse:
     )
 
 
-@app.get("/api/v1/risk/metrics")
+@app.get("/v1/risk/metrics")
 async def risk_metrics() -> Dict[str, Any]:
     return {
         "var_1d": 2500.0,
@@ -282,7 +282,7 @@ async def risk_metrics() -> Dict[str, Any]:
     }
 
 
-@app.get("/api/v1/risk/correlation")
+@app.get("/v1/risk/correlation")
 async def risk_correlation() -> Dict[str, Any]:
     assets = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT", "DOGEUSDT", "AVAXUSDT"]
     n = len(assets)
@@ -306,7 +306,7 @@ async def risk_correlation() -> Dict[str, Any]:
 
 
 
-@app.get("/api/v1/portfolio/summary")
+@app.get("/v1/portfolio/summary")
 async def portfolio_summary() -> Dict[str, Any]:
     cash = 500000.0
     market_value = sum(p.market_value for p in _positions)
@@ -330,7 +330,7 @@ async def portfolio_summary() -> Dict[str, Any]:
     }
 
 
-@app.get("/api/v1/portfolio/positions")
+@app.get("/v1/portfolio/positions")
 async def portfolio_positions(symbol: Optional[str] = Query(None)) -> List[Dict[str, Any]]:
     positions = _positions
     if symbol:
@@ -338,7 +338,7 @@ async def portfolio_positions(symbol: Optional[str] = Query(None)) -> List[Dict[
     return [p.model_dump() for p in positions]
 
 
-@app.get("/api/v1/portfolio/performance")
+@app.get("/v1/portfolio/performance")
 async def portfolio_performance() -> Dict[str, Any]:
     return {
         "total_return": 50000.0,
@@ -358,7 +358,7 @@ async def portfolio_performance() -> Dict[str, Any]:
     }
 
 
-@app.get("/api/v1/portfolio/allocation")
+@app.get("/v1/portfolio/allocation")
 async def portfolio_allocation() -> Dict[str, Any]:
     return {
         "by_asset_class": {"crypto": 100.0},
@@ -367,7 +367,7 @@ async def portfolio_allocation() -> Dict[str, Any]:
     }
 
 
-@app.get("/api/v1/portfolio/history")
+@app.get("/v1/portfolio/history")
 async def portfolio_history(days: int = Query(30, ge=1, le=365)) -> Dict[str, Any]:
     base = 1_000_000.0
     history = []
@@ -378,7 +378,7 @@ async def portfolio_history(days: int = Query(30, ge=1, le=365)) -> Dict[str, An
     return {"history": history}
 
 
-@app.get("/api/v1/market/prices")
+@app.get("/v1/market/prices")
 async def market_prices() -> Dict[str, Any]:
     now = datetime.utcnow().isoformat()
     return {
@@ -408,7 +408,7 @@ async def market_prices() -> Dict[str, Any]:
     }
 
 
-@app.get("/api/v1/market/price/{symbol}")
+@app.get("/v1/market/price/{symbol}")
 async def market_price(symbol: str) -> Dict[str, Any]:
     now = datetime.utcnow().isoformat()
     price = 45000.0 if symbol.upper().startswith("BTC") else 3000.0
@@ -424,7 +424,7 @@ async def market_price(symbol: str) -> Dict[str, Any]:
     }
 
 
-@app.get("/api/v1/market/candles/{symbol}")
+@app.get("/v1/market/candles/{symbol}")
 async def market_candles(
     symbol: str, interval: str = Query("1h"), limit: int = Query(100, ge=1, le=1000)
 ) -> List[Dict[str, Any]]:
@@ -446,7 +446,7 @@ async def market_candles(
     return candles
 
 
-@app.get("/api/v1/market/orderbook/{symbol}")
+@app.get("/v1/market/orderbook/{symbol}")
 async def market_orderbook(symbol: str) -> Dict[str, Any]:
     base = 45000.0 if symbol.upper().startswith("BTC") else 3000.0
     return {
@@ -457,7 +457,7 @@ async def market_orderbook(symbol: str) -> Dict[str, Any]:
     }
 
 
-@app.get("/api/v1/market/news")
+@app.get("/v1/market/news")
 async def market_news(query: str = Query("crypto"), limit: int = Query(8, ge=1, le=50)) -> Dict[str, Any]:
     now = datetime.utcnow().isoformat()
     items = [
@@ -474,7 +474,7 @@ async def market_news(query: str = Query("crypto"), limit: int = Query(8, ge=1, 
     return {"query": query, "count": len(items), "items": items}
 
 
-@app.get("/api/v1/news")
+@app.get("/v1/news")
 async def news(limit: int = Query(6, ge=1, le=50)) -> Dict[str, Any]:
     """News endpoint for the dashboard"""
     now = datetime.utcnow().isoformat()
@@ -493,7 +493,7 @@ async def news(limit: int = Query(6, ge=1, le=50)) -> Dict[str, Any]:
     return {"items": items, "count": len(items)}
 
 
-@app.get("/api/v1/market/sentiment")
+@app.get("/v1/market/sentiment")
 async def market_sentiment() -> Dict[str, Any]:
     """Market sentiment endpoint"""
     now = datetime.utcnow().isoformat()
@@ -507,7 +507,7 @@ async def market_sentiment() -> Dict[str, Any]:
     }
 
 
-@app.post("/api/v1/payments/stripe/checkout-session", response_model=CreateCheckoutResponse)
+@app.post("/v1/payments/stripe/checkout-session", response_model=CreateCheckoutResponse)
 async def create_checkout_session(payload: CreateCheckoutRequest) -> CreateCheckoutResponse:
     if stripe is None:
         raise HTTPException(status_code=503, detail="Stripe SDK not installed on server.")
@@ -555,7 +555,7 @@ async def create_checkout_session(payload: CreateCheckoutRequest) -> CreateCheck
     return CreateCheckoutResponse(checkout_url=session.url, session_id=session.id)
 
 
-@app.post("/api/v1/payments/stripe/webhook")
+@app.post("/v1/payments/stripe/webhook")
 async def stripe_webhook(request: Request) -> Dict[str, Any]:
     if stripe is None:
         raise HTTPException(status_code=503, detail="Stripe SDK not installed on server.")
@@ -580,19 +580,19 @@ async def stripe_webhook(request: Request) -> Dict[str, Any]:
     return {"received": True, "type": event_type}
 
 
-@app.get("/api/v1/orders")
+@app.get("/v1/orders")
 async def list_orders() -> List[Dict[str, Any]]:
     return list(_orders.values())
 
 
-@app.get("/api/v1/orders/history")
+@app.get("/v1/orders/history")
 async def orders_history(limit: int = Query(50, ge=1, le=200)) -> Dict[str, Any]:
     """Get order history for the dashboard"""
     orders = list(_orders.values())
     return {"orders": orders, "total": len(orders)}
 
 
-@app.get("/api/v1/orders/{order_id}")
+@app.get("/v1/orders/{order_id}")
 async def get_order(order_id: str) -> Dict[str, Any]:
     order = _orders.get(order_id)
     if not order:
@@ -600,7 +600,7 @@ async def get_order(order_id: str) -> Dict[str, Any]:
     return order
 
 
-@app.post("/api/v1/orders", status_code=status.HTTP_201_CREATED)
+@app.post("/v1/orders", status_code=status.HTTP_201_CREATED)
 async def create_order(order: OrderCreate) -> Dict[str, Any]:
     now = datetime.utcnow().isoformat()
     order_id = str(uuid4())
@@ -626,7 +626,7 @@ async def create_order(order: OrderCreate) -> Dict[str, Any]:
     return row
 
 
-@app.delete("/api/v1/orders/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/v1/orders/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def cancel_order(order_id: str) -> None:
     if order_id not in _orders:
         raise HTTPException(status_code=404, detail=f"Order {order_id} not found")
@@ -634,7 +634,7 @@ async def cancel_order(order_id: str) -> None:
     _orders[order_id]["updated_at"] = datetime.utcnow().isoformat()
 
 
-@app.post("/api/v1/orders/{order_id}/execute")
+@app.post("/v1/orders/{order_id}/execute")
 async def execute_order(order_id: str) -> Dict[str, Any]:
     if order_id not in _orders:
         raise HTTPException(status_code=404, detail=f"Order {order_id} not found")
@@ -645,7 +645,7 @@ async def execute_order(order_id: str) -> Dict[str, Any]:
     return _orders[order_id]
 
 
-@app.post("/api/v1/waitlist")
+@app.post("/v1/waitlist")
 async def join_waitlist(entry: WaitlistEntry) -> Dict[str, Any]:
     email = entry.email.lower().strip()
 
@@ -673,12 +673,12 @@ async def join_waitlist(entry: WaitlistEntry) -> Dict[str, Any]:
     }
 
 
-@app.get("/api/v1/waitlist/count")
+@app.get("/v1/waitlist/count")
 async def waitlist_count() -> Dict[str, int]:
     return {"count": len(_waitlist)}
 
 
-@app.post("/api/v1/health/client-events")
+@app.post("/v1/health/client-events")
 async def health_client_events(event: ClientEvent) -> Dict[str, Any]:
     row = {
         "id": str(uuid4()),

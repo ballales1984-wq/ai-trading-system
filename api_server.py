@@ -4,6 +4,7 @@ Provides JSON endpoints for the Java Spring Boot frontend
 """
 
 import logging
+from datetime import datetime
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import config
@@ -42,11 +43,11 @@ def get_market_data():
         return jsonify({
             'symbol': symbol,
             'price': market_data.current_price,
-            'bid': market_data.bid,
-            'ask': market_data.ask,
+            'bid': market_data.current_price * 0.9999,  # Approximate bid
+            'ask': market_data.current_price * 1.0001,  # Approximate ask
             'volume': market_data.volume_24h,
-            'change_24h': getattr(market_data, 'change_24h', 0),
-            'timestamp': market_data.timestamp.isoformat() if hasattr(market_data, 'timestamp') else None
+            'change_24h': market_data.price_change_24h,
+            'timestamp': datetime.now().isoformat()
         })
     except Exception as e:
         logger.error(f"Error getting market data: {e}")
