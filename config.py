@@ -382,7 +382,7 @@ LOGGING_CONFIG: Dict[str, Any] = {
 
 # ==================== SIMULATION MODE ====================
 # If True, use simulated prices instead of real API calls
-SIMULATION_MODE: bool = os.getenv('SIMULATION_MODE', 'false').lower() != 'false'
+SIMULATION_MODE: bool = os.getenv('SIMULATION_MODE', 'true').lower() != 'false'
 
 # ==================== BINANCE API CONFIGURATION ====================
 # Get your API keys from: https://www.binance.com/en/my/settings/api-management

@@ -13,7 +13,10 @@ from fastapi import APIRouter, HTTPException, status, Query
 
 from pydantic import BaseModel, Field
 from app.core.data_adapter import get_data_adapter
-from app.api.mock_data import DEMO_MODE, get_orders as mock_orders
+from app.api.mock_data import get_orders as mock_orders
+
+# Import demo mode functions from portfolio (they share the same state)
+from app.api.routes.portfolio import get_demo_mode
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +119,7 @@ async def create_order(order: OrderCreate) -> OrderResponse:
     now = datetime.utcnow()
     
     # Demo mode: Create a mock order
-    if DEMO_MODE:
+    if get_demo_mode():
         # Simulate order creation in demo mode
         order_response = OrderResponse(
             order_id=order_id,
@@ -258,7 +261,7 @@ async def list_orders(
             limit_val = int(limit) if limit is not None else 100
     
     # Use mock data if demo mode is enabled
-    if DEMO_MODE:
+    if get_demo_mode():
         mock_data = mock_orders(status=status_val)
         orders = [OrderResponse(
             order_id=o["id"],
@@ -354,7 +357,7 @@ async def get_trade_history(
             limit_val = int(limit) if limit is not None else 100
     
     # Use mock data if demo mode is enabled
-    if DEMO_MODE:
+    if get_demo_mode():
         from app.api.mock_data import get_orders as mock_get_orders
         
         mock_orders = mock_get_orders(status=status_val)
@@ -430,7 +433,7 @@ async def get_order(order_id: str) -> OrderResponse:
     Get order by ID.
     """
     # Demo mode: Check demo orders first
-    if DEMO_MODE:
+    if get_demo_mode():
         if order_id in demo_orders_db:
             return demo_orders_db[order_id]
         
@@ -479,7 +482,7 @@ async def update_order(order_id: str, update: OrderUpdate) -> OrderResponse:
     Only PENDING orders can be modified.
     """
     # Demo mode
-    if DEMO_MODE:
+    if get_demo_mode():
         if order_id not in demo_orders_db:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -543,7 +546,7 @@ async def cancel_order(order_id: str) -> None:
     Cancel a pending order.
     """
     # Demo mode
-    if DEMO_MODE:
+    if get_demo_mode():
         if order_id not in demo_orders_db:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -599,7 +602,7 @@ async def execute_order(order_id: str) -> OrderResponse:
         )
     
     # Demo mode
-    if DEMO_MODE:
+    if get_demo_mode():
         if order_id not in demo_orders_db:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -668,7 +671,7 @@ async def emergency_stop(request: EmergencyStopRequest) -> EmergencyStopResponse
     
     # Cancel all pending orders
     if request.cancel_all_orders:
-        if DEMO_MODE:
+        if get_demo_mode():
             for order_id, order in list(demo_orders_db.items()):
                 if order.status == "PENDING":
                     order.status = "CANCELLED"

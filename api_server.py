@@ -24,7 +24,7 @@ CORS(app)
 # Initialize components
 data_collector = DataCollector(simulation=True)
 decision_engine = DecisionEngine(data_collector=data_collector)
-trading_simulator = TradingSimulator(initial_balance=10000)
+trading_simulator = TradingSimulator(initial_balance=500000)
 sentiment_analyzer = SentimentAnalyzer()
 technical_analyzer = TechnicalAnalyzer()
 
@@ -89,36 +89,16 @@ def get_signals():
 def get_portfolio():
     """Get current portfolio"""
     try:
-        portfolio = trading_simulator.get_portfolio()
+        portfolio = trading_simulator.check_portfolio()
         
         return jsonify({
-            'balance': portfolio.total_balance,
-            'initial_balance': portfolio.initial_balance,
-            'total_pnl': portfolio.total_pnl,
-            'total_pnl_percent': portfolio.total_pnl_percent,
-            'positions': [
-                {
-                    'symbol': p.symbol,
-                    'quantity': p.quantity,
-                    'entry_price': p.entry_price,
-                    'current_price': p.current_price,
-                    'unrealized_pnl': p.unrealized_pnl,
-                    'entry_time': p.entry_time.isoformat() if hasattr(p, 'entry_time') and p.entry_time else None
-                }
-                for p in portfolio.positions
-            ],
-            'trades': [
-                {
-                    'id': t.id,
-                    'symbol': t.symbol,
-                    'action': t.action,
-                    'quantity': t.quantity,
-                    'price': t.price,
-                    'pnl': t.pnl,
-                    'timestamp': t.timestamp.isoformat() if hasattr(t, 'timestamp') else None
-                }
-                for t in portfolio.trades[-20:]  # Last 20 trades
-            ]
+            'balance': portfolio.get('balance', 0),
+            'total_value': portfolio.get('total_value', 0),
+            'initial_balance': portfolio.get('initial_balance', 0),
+            'total_pnl': portfolio.get('total_pnl', 0),
+            'total_pnl_percent': portfolio.get('pnl_percent', 0),
+            'positions': [],
+            'trades': []
         })
     except Exception as e:
         logger.error(f"Error getting portfolio: {e}")

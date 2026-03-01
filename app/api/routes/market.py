@@ -14,12 +14,14 @@ from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel, Field
 
 from app.api.mock_data import (
-    DEMO_MODE,
     get_market_prices as mock_market_prices,
     get_price_data as mock_price_data,
     get_candle_data as mock_candle_data,
     get_market_sentiment as mock_market_sentiment,
 )
+
+# Import demo mode functions from portfolio
+from app.api.routes.portfolio import get_demo_mode
 
 # Import Cloudflare Radar client
 try:
@@ -104,7 +106,7 @@ async def get_price(symbol: str) -> PriceData:
     Get current price for a symbol.
     """
     # Use mock data if demo mode is enabled
-    if DEMO_MODE:
+    if get_demo_mode():
         data = mock_price_data(symbol)
         return PriceData(
             symbol=data["symbol"],
@@ -147,7 +149,7 @@ async def get_all_prices() -> MarketOverview:
     Get prices for all tracked symbols.
     """
     # Use mock data if demo mode is enabled
-    if DEMO_MODE:
+    if get_demo_mode():
         data = mock_market_prices()
         markets = []
         for m in data["markets"]:
@@ -189,7 +191,7 @@ async def get_candles(
     Get OHLCV candle data for a symbol.
     """
     # Use mock data if demo mode is enabled
-    if DEMO_MODE:
+    if get_demo_mode():
         data = mock_candle_data(symbol, interval, limit)
         return [CandleData(
             timestamp=datetime.fromisoformat(c["timestamp"]),
@@ -320,7 +322,7 @@ async def get_market_sentiment() -> MarketSentiment:
     - Market momentum score
     """
     # Use mock data if demo mode is enabled
-    if DEMO_MODE:
+    if get_demo_mode():
         data = mock_market_sentiment()
         return MarketSentiment(
             fear_greed_index=data["fear_greed_index"],

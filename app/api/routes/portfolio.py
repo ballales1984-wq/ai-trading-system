@@ -15,7 +15,6 @@ from pydantic import BaseModel, Field
 
 from app.core.data_adapter import get_data_adapter
 from app.api.mock_data import (
-    DEMO_MODE,
     get_portfolio_summary as mock_portfolio_summary,
     get_positions as mock_positions,
     get_performance_metrics as mock_performance,
@@ -25,6 +24,23 @@ from app.api.mock_data import (
 
 
 router = APIRouter()
+
+# ============================================================================
+# CONFIGURABLE DEMO MODE (can be changed at runtime)
+# ============================================================================
+
+# Start with environment variable, but allow runtime changes
+_demo_mode = os.getenv("DEMO_MODE", "true").lower() == "true"
+
+def get_demo_mode() -> bool:
+    """Get current DEMO_MODE setting."""
+    return _demo_mode
+
+def set_demo_mode(value: bool) -> None:
+    """Set DEMO_MODE at runtime."""
+    global _demo_mode
+    _demo_mode = value
+
 
 # ============================================================================
 # CONFIGURABLE PORTFOLIO BALANCE
@@ -181,16 +197,34 @@ class PortfolioHistory(BaseModel):
 
 
 # ============================================================================
-# IN-MEMORY PORTFOLIO STORE
-# ============================================================================
-
-# Note: portfolio_data is already initialized above with _initialize_default_positions()
-# Do NOT redefine it here or it will reset the positions
-
-
-# ============================================================================
 # ROUTES
 # ============================================================================
+
+# Endpoint to get current DEMO_MODE status
+@router.get("/mode")
+async def get_demo_mode_status():
+    """Get current demo mode status."""
+    return {
+        "demo_mode": get_demo_mode(),
+        "description": "When true, uses simulated portfolio. When false, uses real exchange data."
+    }
+
+
+# Endpoint to toggle DEMO_MODE
+@router.post("/mode")
+async def set_demo_mode_status(enabled: bool = Query(..., description="Enable or disable demo mode")):
+    """
+    Set demo mode at runtime.
+    - true: Use simulated portfolio with fake data ($500k)
+    - false: Use real Binance data (requires API keys)
+    """
+    set_demo_mode(enabled)
+    return {
+        "success": True,
+        "demo_mode": get_demo_mode(),
+        "message": f"Demo mode {'enabled' if enabled else 'disabled'}"
+    }
+
 
 # Endpoint to update paper trading balance
 @router.post("/balance", status_code=200)
@@ -234,7 +268,7 @@ async def get_portfolio_summary() -> PortfolioSummary:
     """
     # When DEMO_MODE is true but we have custom portfolio_data (via /balance endpoint)
     # use the custom portfolio_data instead of mock data
-    if DEMO_MODE and len(portfolio_data.get("positions", [])) > 0:
+    if get_demo_mode() and len(portfolio_data.get("positions", [])) > 0:
         # Use our configurable portfolio
         positions = portfolio_data["positions"]
         cash = portfolio_data["cash_balance"]
@@ -263,7 +297,7 @@ async def get_portfolio_summary() -> PortfolioSummary:
         )
     
     # Use mock data if demo mode is enabled
-    if DEMO_MODE:
+    if get_demo_mode():
         data = mock_portfolio_summary()
         return PortfolioSummary(
             total_value=data["total_value"],
@@ -344,7 +378,7 @@ async def list_positions(
     List all open positions.
     """
     # When DEMO_MODE is true but we have custom portfolio_data, use it
-    if DEMO_MODE and len(portfolio_data.get("positions", [])) > 0:
+    if get_demo_mode() and len(portfolio_data.get("positions", [])) > 0:
         positions = portfolio_data["positions"]
         if symbol:
             positions = [p for p in positions if p["symbol"] == symbol]
@@ -367,7 +401,7 @@ async def list_positions(
         ) for p in positions]
     
     # Use mock data if demo mode is enabled
-    if DEMO_MODE:
+    if get_demo_mode():
         positions = mock_positions()
         if symbol:
             positions = [p for p in positions if p["symbol"] == symbol]
@@ -429,7 +463,7 @@ async def get_performance_metrics() -> PerformanceMetrics:
     Returns Sharpe ratio, max drawdown, win rate, etc.
     """
     # Use mock data if demo mode is enabled
-    if DEMO_MODE:
+    if get_demo_mode():
         data = mock_performance()
         return PerformanceMetrics(
             total_return=data["total_return_pct"] * 1000,  # Approximate
@@ -473,7 +507,7 @@ async def get_allocation() -> dict:
     Get portfolio allocation by asset class and sector.
     """
     # Use mock data if demo mode is enabled
-    if DEMO_MODE:
+    if get_demo_mode():
         data = mock_allocation()
         return {
             "by_asset_class": {
@@ -518,7 +552,7 @@ async def get_portfolio_history(
     Default is 30 days if not specified.
     """
     # Use mock data if demo mode is enabled
-    if DEMO_MODE:
+    if get_demo_mode():
         data = mock_history(days)
         history = [HistoryEntry(
             date=h["date"],
@@ -555,3 +589,4 @@ async def get_portfolio_history(
             ))
     
     return PortfolioHistory(history=history)
+

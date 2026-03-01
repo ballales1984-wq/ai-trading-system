@@ -73,7 +73,7 @@ class TradingSimulator:
     Uses paper trading (no real money).
     """
     
-    def __init__(self, initial_balance: float = 10000.0):
+    def __init__(self, initial_balance: float = 500000.0):
         """
         Initialize the simulator.
         
