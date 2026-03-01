@@ -2,5 +2,21 @@
   "buildCommand": "cd frontend && npm install && npm run build",
   "installCommand": "cd api && pip install --break-system-packages -r requirements.txt",
   "outputDirectory": "frontend/dist",
-  "framework": "vite"
+  "framework": "vite",
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.py",
+      "headers": {
+        "x-match": "route"
+      }
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/dist/$1"
+    }
+  ]
 }
