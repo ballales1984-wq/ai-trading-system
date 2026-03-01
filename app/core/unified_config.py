@@ -1,4 +1,4 @@
-"""
+ma"""
 Unified Configuration for AI Trading System
 ===========================================
 Centralized configuration management combining:
@@ -159,7 +159,10 @@ class Settings(BaseSettings):
     bybit_secret_key: str = Field(default="", env="BYBIT_SECRET_KEY")
     bybit_testnet: bool = Field(default=True, env="BYBIT_TESTNET")
     
-    # ==================== PAPER TRADING ====================
+    # ==================== CLOUDFLARE RADAR ====================
+    cloudflare_radar_api_key: str = Field(default="", env="CLOUDFLARE_RADAR_API_KEY")
+    
+    # ==================== PAPER TRADING
     paper_trading: bool = Field(default=True, env="PAPER_TRADING")
     paper_initial_balance: float = 1000000.0
     
