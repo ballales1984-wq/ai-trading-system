@@ -151,7 +151,7 @@ const PortfolioValue = () => (
 
 ## 🎯 Metriche Target WCAG 2.1 AA
 
-### Obiettivi di Accessibilità:
+### Obiettivi di Accessibilità
 - **Color Contrast**: 4.5:1 ratio minimo
 - **Keyboard Accessible**: Tutte le funzioni accessibili da tastiera
 - **Screen Reader**: Content descritto correttamente
