@@ -1,4 +1,6 @@
 """
+
+
 Portfolio Routes
 ================
 REST API for portfolio management and positions.
@@ -6,8 +8,9 @@ REST API for portfolio management and positions.
 
 import os
 import random
+import requests
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, status, Query
@@ -24,6 +27,62 @@ from app.api.mock_data import (
 
 
 router = APIRouter()
+
+# ============================================================================
+# REAL-TIME PRICE FETCHING FROM BINANCE
+# ============================================================================
+
+# Cache for real-time prices (avoid too many API calls)
+_price_cache: Dict[str, tuple] = {}  # {symbol: (price, timestamp)}
+CACHE_DURATION_SECONDS = 10  # Cache prices for 10 seconds
+
+def get_binance_price(symbol: str) -> Optional[float]:
+    """
+    Get real-time price from Binance API.
+    Returns None if the API call fails.
+    """
+    global _price_cache
+    
+    # Check cache first
+    current_time = datetime.now().timestamp()
+    if symbol in _price_cache:
+        cached_price, cached_time = _price_cache[symbol]
+        if current_time - cached_time < CACHE_DURATION_SECONDS:
+            return cached_price
+    
+    try:
+        # Use Binance public API (no key needed for price data)
+        url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol.upper()}"
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            price = float(data.get('price', 0))
+            if price > 0:
+                _price_cache[symbol] = (price, current_time)
+                return price
+    except Exception:
+        pass
+    
+    return None
+
+def get_binance_prices(symbols: List[str]) -> Dict[str, float]:
+    """
+    Get real-time prices for multiple symbols from Binance.
+    Returns a dictionary of symbol -> price.
+    """
+    prices = {}
+    for symbol in symbols:
+        price = get_binance_price(symbol)
+        if price:
+            prices[symbol.upper()] = price
+    return prices
+
+# Default symbols for real-time prices
+TRACKED_SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT", "DOGEUSDT"]
+
+def get_realtime_prices() -> Dict[str, float]:
+    """Get all tracked prices in real-time from Binance."""
+    return get_binance_prices(TRACKED_SYMBOLS)
 
 # ============================================================================
 # CONFIGURABLE DEMO MODE (can be changed at runtime)
@@ -265,18 +324,42 @@ async def get_portfolio_summary() -> PortfolioSummary:
     Get portfolio summary.
     
     Returns total portfolio value, cash, positions, and P&L.
+    Uses real-time prices from Binance.
     """
     # When DEMO_MODE is true but we have custom portfolio_data (via /balance endpoint)
     # use the custom portfolio_data instead of mock data
     if get_demo_mode() and len(portfolio_data.get("positions", [])) > 0:
-        # Use our configurable portfolio
+        # Get real-time prices from Binance
+        realtime_prices = get_realtime_prices()
+        
+        # Calculate portfolio with real-time prices
         positions = portfolio_data["positions"]
         cash = portfolio_data["cash_balance"]
-        market_value = sum(p.get("market_value", 0) for p in positions)
-        unrealized_pnl = sum(p.get("unrealized_pnl", 0) for p in positions)
         
-        total_value = cash + market_value
-        total_pnl = unrealized_pnl
+        # Recalculate market_value and unrealized_pnl with real-time prices
+        total_market_value = 0.0
+        total_unrealized_pnl = 0.0
+        
+        for p in positions:
+            symbol = p.get("symbol", "")
+            quantity = p.get("quantity", 0)
+            entry_price = p.get("entry_price", 0)
+            
+            # Get real-time price or fallback to stored price
+            current_price = realtime_prices.get(symbol, p.get("current_price", 0))
+            
+            if current_price > 0 and quantity > 0:
+                market_value = current_price * quantity
+                unrealized_pnl = (current_price - entry_price) * quantity
+            else:
+                market_value = p.get("market_value", 0)
+                unrealized_pnl = p.get("unrealized_pnl", 0)
+            
+            total_market_value += market_value
+            total_unrealized_pnl += unrealized_pnl
+        
+        total_value = cash + total_market_value
+        total_pnl = total_unrealized_pnl
         daily_pnl = total_value * 0.02  # 2% daily assumption
         daily_return_pct = 2.0
         total_return_pct = (total_pnl / total_value) * 100 if total_value > 0 else 0
@@ -284,9 +367,9 @@ async def get_portfolio_summary() -> PortfolioSummary:
         return PortfolioSummary(
             total_value=total_value,
             cash_balance=cash,
-            market_value=market_value,
+            market_value=total_market_value,
             total_pnl=total_pnl,
-            unrealized_pnl=unrealized_pnl,
+            unrealized_pnl=total_unrealized_pnl,
             realized_pnl=0.0,
             daily_pnl=daily_pnl,
             daily_return_pct=daily_return_pct,
@@ -379,20 +462,24 @@ async def list_positions(
     """
     # When DEMO_MODE is true but we have custom portfolio_data, use it
     if get_demo_mode() and len(portfolio_data.get("positions", [])) > 0:
+        # Get real-time prices from Binance
+        realtime_prices = get_realtime_prices()
+        
         positions = portfolio_data["positions"]
         if symbol:
             positions = [p for p in positions if p["symbol"] == symbol]
         if side:
             positions = [p for p in positions if p["side"] == side]
+        
         return [Position(
             position_id=p["position_id"],
             symbol=p["symbol"],
             side=p["side"],
             quantity=p["quantity"],
             entry_price=p["entry_price"],
-            current_price=p["current_price"],
-            market_value=p["market_value"],
-            unrealized_pnl=p.get("unrealized_pnl", 0),
+            current_price=realtime_prices.get(p["symbol"], p["current_price"]),
+            market_value=p["quantity"] * realtime_prices.get(p["symbol"], p["current_price"]),
+            unrealized_pnl=(realtime_prices.get(p["symbol"], p["current_price"]) - p["entry_price"]) * p["quantity"],
             realized_pnl=0.0,
             leverage=1.0,
             margin_used=p.get("margin_used", p["market_value"]),

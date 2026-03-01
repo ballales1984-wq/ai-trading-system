@@ -1,13 +1,5 @@
 {
   "buildCommand": "cd frontend && npm install && npm run build",
   "installCommand": "cd api && pip install --break-system-packages -r requirements.txt",
-  "outputDirectory": "frontend/dist",
-  "functions": {
-    "api/index.py": {
-      "runtime": "python3.11"
-    },
-    "api/test.py": {
-      "runtime": "python3.11"
-    }
-  }
+  "outputDirectory": "frontend/dist"
 }
