@@ -1,4 +1,4 @@
-ma"""
+"""
 Unified Configuration for AI Trading System
 ===========================================
 Centralized configuration management combining:
