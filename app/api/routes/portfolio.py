@@ -227,6 +227,13 @@ class PortfolioSummary(BaseModel):
     leverage: float
     buying_power: float
     num_positions: int
+    account_type: str = "real"  # "real" or "simulated"
+
+
+class DualPortfolioSummary(BaseModel):
+    """Dual portfolio summary with both real and simulated accounts."""
+    real: PortfolioSummary
+    simulated: PortfolioSummary
 
 
 class PerformanceMetrics(BaseModel):
@@ -455,7 +462,110 @@ async def get_portfolio_summary() -> PortfolioSummary:
         total_return_pct=total_return_pct,
         leverage=1.0,
         buying_power=cash + margin_used,
-        num_positions=len(positions)
+        num_positions=len(positions),
+        account_type="real"
+    )
+
+
+# New endpoint: Get both real and simulated portfolio summaries
+@router.get("/summary/dual", response_model=DualPortfolioSummary)
+async def get_dual_portfolio_summary() -> DualPortfolioSummary:
+    """
+    Get both real and simulated portfolio summaries.
+    
+    Returns two portfolio summaries:
+    - real: From the live trading system or database
+    - simulated: From paper trading / demo mode
+    """
+    
+    # Get simulated portfolio (always available)
+    # Use the existing logic from get_portfolio_summary but force simulated data
+    simulated_data = _get_simulated_portfolio_summary()
+    
+    # Get real portfolio (from live trading system)
+    real_data = _get_real_portfolio_summary()
+    
+    return DualPortfolioSummary(
+        real=real_data,
+        simulated=simulated_data
+    )
+
+
+def _get_simulated_portfolio_summary() -> PortfolioSummary:
+    """Get simulated/paper trading portfolio summary."""
+    # Use mock data for simulated
+    data = mock_portfolio_summary()
+    return PortfolioSummary(
+        total_value=data["total_value"],
+        cash_balance=data["cash"],
+        market_value=data["invested"],
+        total_pnl=data["unrealized_pnl"],
+        unrealized_pnl=data["unrealized_pnl"],
+        realized_pnl=0.0,
+        daily_pnl=data["daily_pnl"],
+        daily_return_pct=data["daily_return_pct"],
+        total_return_pct=data["total_return_pct"],
+        leverage=1.0,
+        buying_power=data["total_value"],
+        num_positions=data["num_positions"],
+        account_type="simulated"
+    )
+
+
+def _get_real_portfolio_summary() -> PortfolioSummary:
+    """Get real/live trading portfolio summary."""
+    # Try to get real data from the trading system
+    adapter = get_data_adapter()
+    real_data = adapter.get_portfolio_summary()
+    
+    # Check if we have real data
+    if real_data.get('total_value', 0) > 0 or real_data.get('num_positions', 0) > 0:
+        positions = adapter.get_positions()
+        cash = real_data.get('cash_balance', 0)
+    else:
+        # No real data - return zero values
+        return PortfolioSummary(
+            total_value=0.0,
+            cash_balance=0.0,
+            market_value=0.0,
+            total_pnl=0.0,
+            unrealized_pnl=0.0,
+            realized_pnl=0.0,
+            daily_pnl=0.0,
+            daily_return_pct=0.0,
+            total_return_pct=0.0,
+            leverage=1.0,
+            buying_power=0.0,
+            num_positions=0,
+            account_type="real"
+        )
+    
+    # Calculate values from real data
+    market_value = real_data.get('market_value', sum(p.get('market_value', 0) for p in positions))
+    unrealized_pnl = real_data.get('unrealized_pnl', sum(p.get('unrealized_pnl', 0) for p in positions))
+    realized_pnl = real_data.get('realized_pnl', sum(p.get('realized_pnl', 0) for p in positions))
+    margin_used = sum(p.get('margin_used', 0) for p in positions)
+    
+    total_value = real_data.get('total_value', cash + market_value)
+    total_pnl = real_data.get('total_pnl', unrealized_pnl + realized_pnl)
+    daily_pnl = real_data.get('daily_pnl', 0)
+    daily_return_pct = real_data.get('daily_return_pct', 0)
+    total_return_pct = real_data.get('total_return_pct', 0)
+    
+    return PortfolioSummary(
+        total_value=total_value,
+        cash_balance=cash,
+        market_value=market_value,
+        total_pnl=total_pnl,
+        unrealized_pnl=unrealized_pnl,
+        realized_pnl=realized_pnl,
+        daily_pnl=daily_pnl,
+        daily_return_pct=daily_return_pct,
+        total_return_pct=total_return_pct,
+        leverage=1.0,
+        buying_power=cash + margin_used,
+        num_positions=len(positions),
+        account_type="real"
     )
 
 

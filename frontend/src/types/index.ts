@@ -29,6 +29,12 @@ export interface PortfolioSummary {
   leverage: number;
   buying_power: number;
   num_positions: number;
+  account_type?: string;  // "real" or "simulated"
+}
+
+export interface DualPortfolioSummary {
+  real: PortfolioSummary;
+  simulated: PortfolioSummary;
 }
 
 export interface PerformanceMetrics {

@@ -1,6 +1,7 @@
  import axios from 'axios';
 import type {
   PortfolioSummary,
+  DualPortfolioSummary,
   Position,
   PerformanceMetrics,
   Allocation,
@@ -70,6 +71,11 @@ api.interceptors.response.use(
 export const portfolioApi = {
   getSummary: async (): Promise<PortfolioSummary> => {
     const { data } = await api.get<PortfolioSummary>('/portfolio/summary');
+    return data;
+  },
+
+  getDualSummary: async (): Promise<DualPortfolioSummary> => {
+    const { data } = await api.get<DualPortfolioSummary>('/portfolio/summary/dual');
     return data;
   },
 

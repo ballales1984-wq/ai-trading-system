@@ -6,9 +6,9 @@ import { DashboardSkeleton } from '../components/ui/Skeleton';
 import { ErrorState } from '../components/ui/EmptyState';
 
 export default function Dashboard() {
-  const { data: summary, isLoading: summaryLoading, error: summaryError } = useQuery({
-    queryKey: ['portfolio-summary'],
-    queryFn: portfolioApi.getSummary,
+  const { data: dualSummary, isLoading: summaryLoading, error: summaryError } = useQuery({
+    queryKey: ['portfolio-dual-summary'],
+    queryFn: portfolioApi.getDualSummary,
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
@@ -27,6 +27,10 @@ export default function Dashboard() {
     queryFn: marketApi.getAllPrices,
     refetchInterval: 15000, // Refresh every 15 seconds
   });
+
+  // Extract real and simulated summaries
+  const realSummary = dualSummary?.real;
+  const simulatedSummary = dualSummary?.simulated;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -75,29 +79,62 @@ export default function Dashboard() {
         <p className="text-text-muted">Overview of your trading portfolio</p>
       </div>
 
-      {/* Key Metrics */}
+      {/* Key Metrics - Real Account */}
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-text">Real Account</h3>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <MetricCard
           title="Total Value"
-          value={summaryLoading ? '...' : formatCurrency(summary?.total_value || 0)}
+          value={summaryLoading ? '...' : formatCurrency(realSummary?.total_value || 0)}
           icon={DollarSign}
-          trend={summary?.daily_return_pct}
+          trend={realSummary?.daily_return_pct}
         />
         <MetricCard
           title="Daily P&L"
-          value={summaryLoading ? '...' : formatCurrency(summary?.daily_pnl || 0)}
+          value={summaryLoading ? '...' : formatCurrency(realSummary?.daily_pnl || 0)}
           icon={Activity}
-          trend={summary?.daily_return_pct}
+          trend={realSummary?.daily_return_pct}
         />
         <MetricCard
           title="Unrealized P&L"
-          value={summaryLoading ? '...' : formatCurrency(summary?.unrealized_pnl || 0)}
+          value={summaryLoading ? '...' : formatCurrency(realSummary?.unrealized_pnl || 0)}
           icon={TrendingUp}
-          trend={summary?.total_return_pct}
+          trend={realSummary?.total_return_pct}
         />
         <MetricCard
           title="Positions"
-          value={summaryLoading ? '...' : String(summary?.num_positions || 0)}
+          value={summaryLoading ? '...' : String(realSummary?.num_positions || 0)}
+          icon={Wallet}
+        />
+      </div>
+
+      {/* Key Metrics - Simulated Account */}
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-text">Simulated Account</h3>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <MetricCard
+          title="Total Value"
+          value={summaryLoading ? '...' : formatCurrency(simulatedSummary?.total_value || 0)}
+          icon={DollarSign}
+          trend={simulatedSummary?.daily_return_pct}
+        />
+        <MetricCard
+          title="Daily P&L"
+          value={summaryLoading ? '...' : formatCurrency(simulatedSummary?.daily_pnl || 0)}
+          icon={Activity}
+          trend={simulatedSummary?.daily_return_pct}
+        />
+        <MetricCard
+          title="Unrealized P&L"
+          value={summaryLoading ? '...' : formatCurrency(simulatedSummary?.unrealized_pnl || 0)}
+          icon={TrendingUp}
+          trend={simulatedSummary?.total_return_pct}
+        />
+        <MetricCard
+          title="Positions"
+          value={summaryLoading ? '...' : String(simulatedSummary?.num_positions || 0)}
           icon={Wallet}
         />
       </div>
