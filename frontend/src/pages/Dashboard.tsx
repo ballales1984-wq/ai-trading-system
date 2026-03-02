@@ -54,7 +54,7 @@ export default function Dashboard() {
   }));
 
   // Show loading skeleton
-  if (summaryLoading && !summary) {
+  if (summaryLoading && !dualSummary) {
     return <DashboardSkeleton />;
   }
 
