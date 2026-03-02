@@ -126,68 +126,44 @@ def _initialize_default_positions():
         # Create default positions based on balance
         cash = portfolio_data["cash_balance"]
         
-        # BTC position (30% of portfolio)
-        btc_value = cash * 0.30
-        btc_price = 66461.78  # Current BTC price
-        btc_qty = btc_value / btc_price
-        
-        # ETH position (20% of portfolio)
-        eth_value = cash * 0.20
-        eth_price = 3333.52  # Current ETH price
-        eth_qty = eth_value / eth_price
-        
-        # SOL position (10% of portfolio)
-        sol_value = cash * 0.10
-        sol_price = 152.12
-        sol_qty = sol_value / sol_price
-        
-        portfolio_data["positions"] = [
-            {
-                "position_id": str(uuid4()),
-                "symbol": "BTCUSDT",
-                "side": "LONG",
-                "quantity": round(btc_qty, 4),
-                "entry_price": btc_price * 0.95,  # Buy at 5% discount
-                "current_price": btc_price,
-                "market_value": btc_value,
-                "unrealized_pnl": btc_value * 0.05,
-                "realized_pnl": 0.0,
-                "leverage": 1.0,
-                "margin_used": btc_value,
-                "opened_at": "2026-02-15T10:00:00",
-                "updated_at": "2026-02-28T18:00:00",
-            },
-            {
-                "position_id": str(uuid4()),
-                "symbol": "ETHUSDT",
-                "side": "LONG",
-                "quantity": round(eth_qty, 4),
-                "entry_price": eth_price * 0.95,
-                "current_price": eth_price,
-                "market_value": eth_value,
-                "unrealized_pnl": eth_value * 0.05,
-                "realized_pnl": 0.0,
-                "leverage": 1.0,
-                "margin_used": eth_value,
-                "opened_at": "2026-02-16T14:30:00",
-                "updated_at": "2026-02-28T18:00:00",
-            },
-            {
-                "position_id": str(uuid4()),
-                "symbol": "SOLUSDT",
-                "side": "LONG",
-                "quantity": round(sol_qty, 4),
-                "entry_price": sol_price * 0.95,
-                "current_price": sol_price,
-                "market_value": sol_value,
-                "unrealized_pnl": sol_value * 0.05,
-                "realized_pnl": 0.0,
-                "leverage": 1.0,
-                "margin_used": sol_value,
-                "opened_at": "2026-02-17T09:00:00",
-                "updated_at": "2026-02-28T18:00:00",
-            },
+        # Asset allocation: diversified portfolio
+        assets = [
+            {"symbol": "BTCUSDT", "price": 66461.78, "allocation": 0.25},
+            {"symbol": "ETHUSDT", "price": 3333.52, "allocation": 0.20},
+            {"symbol": "SOLUSDT", "price": 152.12, "allocation": 0.10},
+            {"symbol": "BNBUSDT", "price": 610.50, "allocation": 0.08},
+            {"symbol": "XRPUSDT", "price": 2.45, "allocation": 0.07},
+            {"symbol": "ADAUSDT", "price": 0.98, "allocation": 0.06},
+            {"symbol": "DOGEUSDT", "price": 0.32, "allocation": 0.05},
+            {"symbol": "AVAXUSDT", "price": 38.50, "allocation": 0.05},
+            {"symbol": "LINKUSDT", "price": 18.20, "allocation": 0.04},
+            {"symbol": "MATICUSDT", "price": 0.85, "allocation": 0.03},
+            {"symbol": "ATOMUSDT", "price": 9.80, "allocation": 0.03},
+            {"symbol": "DOTUSDT", "price": 7.20, "allocation": 0.02},
+            {"symbol": "UNIUSDT", "price": 12.50, "allocation": 0.02},
         ]
+        
+        positions = []
+        for asset in assets:
+            value = cash * asset["allocation"]
+            qty = value / asset["price"]
+            positions.append({
+                "position_id": str(uuid4()),
+                "symbol": asset["symbol"],
+                "side": "LONG",
+                "quantity": round(qty, 4),
+                "entry_price": asset["price"] * 0.95,  # Buy at 5% discount
+                "current_price": asset["price"],
+                "market_value": value,
+                "unrealized_pnl": value * 0.05,
+                "realized_pnl": 0.0,
+                "leverage": 1.0,
+                "margin_used": value,
+                "opened_at": "2026-02-15T10:00:00",
+                "updated_at": datetime.now().isoformat(),
+            })
+        
+        portfolio_data["positions"] = positions
         portfolio_data["initialized"] = True
 
 
@@ -774,8 +750,11 @@ async def get_allocation() -> dict:
     """
     Get portfolio allocation by asset class and sector.
     """
-    # Use mock data if demo mode is enabled
-    if get_demo_mode():
+    # Get current positions (use simulated portfolio data)
+    if get_demo_mode() and len(portfolio_data.get("positions", [])) > 0:
+        positions = portfolio_data["positions"]
+    else:
+        # Fallback to mock data
         data = mock_allocation()
         return {
             "by_asset_class": {
@@ -789,23 +768,34 @@ async def get_allocation() -> dict:
             "cash": data["cash"],
         }
     
+    # Calculate allocation dynamically from positions
+    total_value = sum(p.get("market_value", 0) for p in positions)
+    
+    if total_value == 0:
+        return {
+            "by_asset_class": {"crypto": 0},
+            "by_sector": {"crypto": 0},
+            "by_symbol": {}
+        }
+    
+    # Calculate by symbol
+    by_symbol = {}
+    for p in positions:
+        symbol = p.get("symbol", "")
+        value = p.get("market_value", 0)
+        pct = (value / total_value) * 100
+        by_symbol[symbol] = round(pct, 2)
+    
     return {
         "by_asset_class": {
-            "crypto": 85.0,
-            "forex": 10.0,
-            "stocks": 5.0,
+            "crypto": 100.0,  # All positions are crypto in demo mode
         },
         "by_sector": {
             "crypto": 85.0,
-            "technology": 5.0,
-            "financial": 10.0,
+            "defi": 10.0,
+            "layer1": 5.0,
         },
-        "by_symbol": {
-            "BTCUSDT": 65.0,
-            "ETHUSDT": 20.0,
-            "EURUSD": 10.0,
-            "AAPL": 5.0,
-        }
+        "by_symbol": by_symbol,
     }
 
 
