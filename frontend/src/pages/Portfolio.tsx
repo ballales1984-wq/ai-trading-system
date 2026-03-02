@@ -25,34 +25,44 @@ function SummaryCard({ title, value, icon: Icon, valueColor = 'text-text' }: Sum
 }
 
 export default function Portfolio() {
-  const { data: summary, isLoading: summaryLoading } = useQuery({
-    queryKey: ['portfolio-summary'],
-    queryFn: portfolioApi.getSummary,
+  const { data: dualSummary, isLoading: summaryLoading } = useQuery({
+    queryKey: ['portfolio-dual-summary'],
+    queryFn: portfolioApi.getDualSummary,
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
+
+  // Extract real and simulated summaries
+  const summary = dualSummary?.simulated; // Default to simulated for portfolio page
+  const realSummary = dualSummary?.real;
 
   const { data: positions } = useQuery({
     queryKey: ['portfolio-positions'],
     queryFn: () => portfolioApi.getPositions(),
+    refetchInterval: 30000,
   });
 
   const { data: allocation } = useQuery({
     queryKey: ['portfolio-allocation'],
     queryFn: portfolioApi.getAllocation,
+    refetchInterval: 60000,
   });
 
   const { data: performance } = useQuery({
     queryKey: ['portfolio-performance'],
     queryFn: portfolioApi.getPerformance,
+    refetchInterval: 60000,
   });
 
   const { data: history } = useQuery({
     queryKey: ['portfolio-history'],
     queryFn: () => portfolioApi.getHistory(30),
+    refetchInterval: 60000,
   });
 
   const { data: riskMetrics } = useQuery({
     queryKey: ['risk-metrics'],
     queryFn: riskApi.getMetrics,
+    refetchInterval: 30000,
   });
 
   const { data: correlationMatrix } = useQuery({
@@ -99,7 +109,39 @@ export default function Portfolio() {
         <p className="text-text-muted">Manage your positions and allocations</p>
       </div>
 
-      {/* Summary Cards */}
+      {/* Real Account Summary */}
+      <div className="mb-2">
+        <h3 className="text-lg font-semibold text-text">Real Account</h3>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <SummaryCard
+          title="Total Value"
+          value={summaryLoading ? '...' : formatCurrency(realSummary?.total_value || 0)}
+          icon={Wallet}
+        />
+        <SummaryCard
+          title="Cash Balance"
+          value={summaryLoading ? '...' : formatCurrency(realSummary?.cash_balance || 0)}
+          icon={Target}
+        />
+        <SummaryCard
+          title="Unrealized P&L"
+          value={summaryLoading ? '...' : formatCurrency(realSummary?.unrealized_pnl || 0)}
+          icon={realSummary && realSummary.unrealized_pnl >= 0 ? TrendingUp : TrendingDown}
+          valueColor={realSummary && realSummary.unrealized_pnl >= 0 ? 'text-success' : 'text-danger'}
+        />
+        <SummaryCard
+          title="Realized P&L"
+          value={summaryLoading ? '...' : formatCurrency(realSummary?.realized_pnl || 0)}
+          icon={realSummary && realSummary.realized_pnl >= 0 ? TrendingUp : TrendingDown}
+          valueColor={realSummary && realSummary.realized_pnl >= 0 ? 'text-success' : 'text-danger'}
+        />
+      </div>
+
+      {/* Simulated Account Summary */}
+      <div className="mb-2">
+        <h3 className="text-lg font-semibold text-text">Simulated Account</h3>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <SummaryCard
           title="Total Value"

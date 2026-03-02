@@ -327,7 +327,75 @@ async def portfolio_summary() -> Dict[str, Any]:
         "leverage": 1.0,
         "buying_power": cash,
         "num_positions": len(_positions),
+        "account_type": "real",
     }
+
+
+@app.get("/v1/portfolio/summary/dual")
+async def portfolio_summary_dual() -> Dict[str, Any]:
+    """
+    Get both real and simulated portfolio summaries.
+
+    Returns two portfolio summaries:
+    - real: From the live trading system (or best available data)
+    - simulated: Paper trading / demo account with mock data
+    """
+    # --- Real account ---
+    cash_real = 500000.0
+    market_value_real = sum(p.market_value for p in _positions)
+    unrealized_real = sum(p.unrealized_pnl for p in _positions)
+    realized_real = sum(p.realized_pnl for p in _positions)
+    total_value_real = cash_real + market_value_real
+    total_pnl_real = unrealized_real + realized_real
+
+    real = {
+        "total_value": total_value_real,
+        "cash_balance": cash_real,
+        "market_value": market_value_real,
+        "total_pnl": total_pnl_real,
+        "unrealized_pnl": unrealized_real,
+        "realized_pnl": realized_real,
+        "daily_pnl": 250.0,
+        "daily_return_pct": 0.025,
+        "total_return_pct": (total_pnl_real / total_value_real * 100) if total_value_real > 0 else 0.0,
+        "leverage": 1.0,
+        "buying_power": cash_real,
+        "num_positions": len(_positions),
+        "account_type": "real",
+    }
+
+    # --- Simulated / paper trading account ---
+    # Uses a separate simulated balance with different positions
+    cash_sim = 1_000_000.0
+    sim_positions = [
+        {"symbol": "BTCUSDT", "quantity": 3.0, "entry_price": 40000.0, "current_price": 45000.0},
+        {"symbol": "ETHUSDT", "quantity": 30.0, "entry_price": 2000.0, "current_price": 3000.0},
+        {"symbol": "SOLUSDT", "quantity": 500.0, "entry_price": 80.0, "current_price": 98.5},
+    ]
+    market_value_sim = sum(p["quantity"] * p["current_price"] for p in sim_positions)
+    unrealized_sim = sum(
+        (p["current_price"] - p["entry_price"]) * p["quantity"] for p in sim_positions
+    )
+    total_value_sim = cash_sim + market_value_sim
+    daily_pnl_sim = total_value_sim * 0.018  # ~1.8% daily simulated
+
+    simulated = {
+        "total_value": total_value_sim,
+        "cash_balance": cash_sim,
+        "market_value": market_value_sim,
+        "total_pnl": unrealized_sim,
+        "unrealized_pnl": unrealized_sim,
+        "realized_pnl": 0.0,
+        "daily_pnl": round(daily_pnl_sim, 2),
+        "daily_return_pct": 1.8,
+        "total_return_pct": round((unrealized_sim / total_value_sim * 100) if total_value_sim > 0 else 0.0, 2),
+        "leverage": 1.0,
+        "buying_power": cash_sim,
+        "num_positions": len(sim_positions),
+        "account_type": "simulated",
+    }
+
+    return {"real": real, "simulated": simulated}
 
 
 @app.get("/v1/portfolio/positions")
