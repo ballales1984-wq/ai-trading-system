@@ -315,7 +315,18 @@ function PriceCard({ title, value, icon: Icon, valueColor = 'text-text' }: { tit
 }
 
 function SentimentGauge({ sentiment }: { sentiment: MarketSentiment }) {
-  const { fear_greed_index, sentiment_label, sentiment_emoji, btc_dominance, market_momentum } = sentiment;
+  const { 
+    fear_greed_index = 50, 
+    sentiment_label = 'Neutral', 
+    sentiment_emoji = '😐', 
+    btc_dominance = 0, 
+    market_momentum = 0 
+  } = sentiment || {};
+
+  // Handle undefined values safely
+  const fgi = typeof fear_greed_index === 'number' ? fear_greed_index : 50;
+  const btc = typeof btc_dominance === 'number' ? btc_dominance : 0;
+  const momentum = typeof market_momentum === 'number' ? market_momentum : 0;
 
   // Calculate color based on index (0-100)
   const getColor = (index: number) => {
@@ -340,18 +351,18 @@ function SentimentGauge({ sentiment }: { sentiment: MarketSentiment }) {
       <div className="bg-background border border-border rounded-lg p-4">
         <div className="text-center">
           <div className="text-3xl mb-2">{sentiment_emoji}</div>
-          <div className={`text-4xl font-bold ${getColor(fear_greed_index)}`}>
-            {fear_greed_index}
+          <div className={`text-4xl font-bold ${getColor(fgi)}`}>
+            {fgi}
           </div>
           <div className="text-text-muted text-sm mt-1">Fear & Greed Index</div>
-          <div className={`font-medium mt-2 ${getColor(fear_greed_index)}`}>
+          <div className={`font-medium mt-2 ${getColor(fgi)}`}>
             {sentiment_label}
           </div>
           {/* Progress bar */}
           <div className="mt-3 h-2 bg-border rounded-full overflow-hidden">
             <div
-              className={`h-full ${getBgColor(fear_greed_index)} transition-all duration-500`}
-              style={{ width: `${fear_greed_index}%` }}
+              className={`h-full ${getBgColor(fgi)} transition-all duration-500`}
+              style={{ width: `${fgi}%` }}
             />
           </div>
           <div className="flex justify-between text-xs text-text-muted mt-1">
@@ -366,7 +377,7 @@ function SentimentGauge({ sentiment }: { sentiment: MarketSentiment }) {
         <div className="text-center">
           <div className="text-3xl mb-2">₿</div>
           <div className="text-4xl font-bold text-primary">
-            {btc_dominance.toFixed(1)}%
+            {btc.toFixed(1)}%
           </div>
           <div className="text-text-muted text-sm mt-1">BTC Dominance</div>
           <div className="text-text text-sm mt-2">
@@ -379,12 +390,12 @@ function SentimentGauge({ sentiment }: { sentiment: MarketSentiment }) {
       <div className="bg-background border border-border rounded-lg p-4">
         <div className="text-center">
           <div className="text-3xl mb-2">📈</div>
-          <div className={`text-4xl font-bold ${market_momentum >= 0 ? 'text-success' : 'text-danger'}`}>
-            {market_momentum >= 0 ? '+' : ''}{market_momentum.toFixed(2)}%
+          <div className={`text-4xl font-bold ${momentum >= 0 ? 'text-success' : 'text-danger'}`}>
+            {momentum >= 0 ? '+' : ''}{momentum.toFixed(2)}%
           </div>
           <div className="text-text-muted text-sm mt-1">Market Momentum</div>
           <div className="text-text text-sm mt-2">
-            {market_momentum >= 0 ? 'Bullish trend' : 'Bearish trend'}
+            {momentum >= 0 ? 'Bullish trend' : 'Bearish trend'}
           </div>
         </div>
       </div>
@@ -394,7 +405,7 @@ function SentimentGauge({ sentiment }: { sentiment: MarketSentiment }) {
         <div className="text-center">
           <div className="text-3xl mb-2">🎯</div>
           <div className="text-lg font-bold text-text">
-            {fear_greed_index <= 40 ? 'Consider Buying' : fear_greed_index >= 60 ? 'Consider Selling' : 'Hold Position'}
+            {fgi <= 40 ? 'Consider Buying' : fgi >= 60 ? 'Consider Selling' : 'Hold Position'}
           </div>
           <div className="text-text-muted text-sm mt-1">AI Recommendation</div>
           <div className="text-text text-xs mt-2">

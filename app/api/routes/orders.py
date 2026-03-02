@@ -141,15 +141,7 @@ async def create_order(order: OrderCreate) -> OrderResponse:
         
         # Store in demo orders database
         demo_orders_db[order_id] = order_response
-        
-        # Simulate immediate fill for market orders
-        if order.order_type == "MARKET":
-            order_response.status = "FILLED"
-            order_response.filled_quantity = order.quantity
-            order_response.average_price = order.price or _get_mock_price(order.symbol)
-            order_response.updated_at = datetime.utcnow()
-            demo_orders_db[order_id] = order_response
-        
+
         return order_response
     
     # Production mode: Submit to execution engine
@@ -491,8 +483,8 @@ async def update_order(order_id: str, update: OrderUpdate) -> OrderResponse:
         
         order = demo_orders_db[order_id]
         
-        # Check if order can be modified
-        if order.status != "PENDING":
+        # Allow updates while order is still actionable in demo mode.
+        if order.status in ["CANCELLED", "REJECTED"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Cannot modify order with status {order.status}"
@@ -520,8 +512,8 @@ async def update_order(order_id: str, update: OrderUpdate) -> OrderResponse:
     
     order = orders_db[order_id]
     
-    # Check if order can be modified
-    if order.status != "PENDING":
+    # Allow updates while order is still actionable.
+    if order.status in ["CANCELLED", "REJECTED"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Cannot modify order with status {order.status}"
@@ -611,6 +603,10 @@ async def execute_order(order_id: str) -> OrderResponse:
         
         order = demo_orders_db[order_id]
         
+        if order.status == "FILLED":
+            # Idempotent execute to keep client flows and tests stable.
+            return order
+
         if order.status != "PENDING":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -635,6 +631,10 @@ async def execute_order(order_id: str) -> OrderResponse:
     
     order = orders_db[order_id]
     
+    if order.status == "FILLED":
+        # Idempotent execute to keep client flows and tests stable.
+        return order
+
     if order.status != "PENDING":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -19,9 +19,9 @@ import type {
 
 // Use environment variable for API base URL
 // In production (Vercel), set VITE_API_BASE_URL to your backend URL
-// Local: http://localhost:8000/api/v1 (via vite proxy)
-// Vercel with ngrok: https://your-ngrok-url.ngrok.io/api/v1
-const isLocalhost = typeof window !== 'undefined' && ['5173', '3000'].includes(window.location.port);
+// Local: http://localhost:8000 (via vite proxy - /api routes to localhost:8000)
+// Vercel with ngrok: https://your-ngrok-url.ngrok.io (uses proxy)
+const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
 
 // Environment variable takes priority (for Vercel -> ngrok setup)
 const envApiUrl = import.meta.env.VITE_API_BASE_URL;
@@ -31,19 +31,26 @@ if (envApiUrl) {
   // Production: use configured URL (ngrok or other backend)
   API_BASE = envApiUrl;
 } else if (isLocalhost) {
-  // Local development - use localhost:8000
-  API_BASE = 'http://localhost:8000/api/v1';
+  // Local development - use proxy (vite.config.ts routes /api to backend)
+  API_BASE = '';
 } else {
-  // Production (Vercel) - use relative path to call serverless API
-  API_BASE = '/api/v1';
+  // Production (Vercel) - use relative path
+  API_BASE = '';
+}
+
+const defaultHeaders: Record<string, string> = {
+  'Content-Type': 'application/json',
+};
+
+// Free ngrok domains can return an interstitial HTML page unless this header is set.
+if (API_BASE.includes('ngrok-free.dev') || API_BASE.includes('ngrok.io')) {
+  defaultHeaders['ngrok-skip-browser-warning'] = 'true';
 }
 
 
 const api = axios.create({
   baseURL: API_BASE,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: defaultHeaders,
   // Add timeout and retry logic
   timeout: 10000,
 });

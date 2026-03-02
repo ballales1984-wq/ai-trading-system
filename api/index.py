@@ -404,6 +404,36 @@ async def market_prices() -> Dict[str, Any]:
                 "volume_24h": 800000.0,
                 "timestamp": now,
             },
+            {
+                "symbol": "SOLUSDT",
+                "price": 98.50,
+                "change_24h": -2.50,
+                "change_pct_24h": -2.5,
+                "high_24h": 102.00,
+                "low_24h": 95.00,
+                "volume_24h": 500000.0,
+                "timestamp": now,
+            },
+            {
+                "symbol": "BNBUSDT",
+                "price": 315.20,
+                "change_24h": 5.20,
+                "change_pct_24h": 1.68,
+                "high_24h": 320.00,
+                "low_24h": 308.50,
+                "volume_24h": 150000.0,
+                "timestamp": now,
+            },
+            {
+                "symbol": "EURUSD",
+                "price": 1.0850,
+                "change_24h": 0.0015,
+                "change_pct_24h": 0.14,
+                "high_24h": 1.0900,
+                "low_24h": 1.0800,
+                "volume_24h": 50000.0,
+                "timestamp": now,
+            },
         ],
     }
 
@@ -493,16 +523,42 @@ async def news(limit: int = Query(6, ge=1, le=50)) -> Dict[str, Any]:
     return {"items": items, "count": len(items)}
 
 
+@app.get("/market")
+async def market_root() -> Dict[str, Any]:
+    """Market root endpoint - redirects to prices"""
+    return await market_prices()
+
+
 @app.get("/v1/market/sentiment")
 async def market_sentiment() -> Dict[str, Any]:
-    """Market sentiment endpoint"""
+    """Market sentiment endpoint - returns data matching frontend types"""
     now = datetime.utcnow().isoformat()
+    fear_greed_index = 65
+    
+    # Determine sentiment label and emoji based on index
+    if fear_greed_index <= 20:
+        sentiment_label = "Extreme Fear"
+        sentiment_emoji = "😱"
+    elif fear_greed_index <= 40:
+        sentiment_label = "Fear"
+        sentiment_emoji = "😰"
+    elif fear_greed_index <= 60:
+        sentiment_label = "Neutral"
+        sentiment_emoji = "😐"
+    elif fear_greed_index <= 80:
+        sentiment_label = "Greed"
+        sentiment_emoji = "😏"
+    else:
+        sentiment_label = "Extreme Greed"
+        sentiment_emoji = "🤑"
+    
     return {
-        "overall": "bullish",
-        "score": 0.72,
-        "fear_greed_index": 65,
-        "bitcoin_sentiment": "bullish",
-        "ethereum_sentiment": "neutral",
+        "fear_greed_index": fear_greed_index,
+        "sentiment_label": sentiment_label,
+        "sentiment_emoji": sentiment_emoji,
+        "trading_indicator": "bullish" if fear_greed_index >= 50 else "bearish",
+        "btc_dominance": 52.5,
+        "market_momentum": 2.35,
         "last_updated": now,
     }
 

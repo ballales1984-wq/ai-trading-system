@@ -9,6 +9,8 @@ REST API for portfolio management and positions.
 import os
 import random
 import requests
+import math
+import statistics
 from datetime import datetime
 from typing import List, Optional, Dict
 from uuid import uuid4
@@ -53,7 +55,8 @@ def get_binance_price(symbol: str) -> Optional[float]:
     try:
         # Use Binance public API (no key needed for price data)
         url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol.upper()}"
-        response = requests.get(url, timeout=5)
+        # Keep this endpoint responsive even if Binance is slow/unreachable.
+        response = requests.get(url, timeout=0.8)
         if response.status_code == 200:
             data = response.json()
             price = float(data.get('price', 0))
@@ -88,8 +91,9 @@ def get_realtime_prices() -> Dict[str, float]:
 # CONFIGURABLE DEMO MODE (can be changed at runtime)
 # ============================================================================
 
-# Start with environment variable, but allow runtime changes
-_demo_mode = os.getenv("DEMO_MODE", "true").lower() == "true"
+# Start with environment variable, but allow runtime changes.
+# Default to real mode (false) for production use.
+_demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
 
 def get_demo_mode() -> bool:
     """Get current DEMO_MODE setting."""
@@ -329,8 +333,11 @@ async def get_portfolio_summary() -> PortfolioSummary:
     # When DEMO_MODE is true but we have custom portfolio_data (via /balance endpoint)
     # use the custom portfolio_data instead of mock data
     if get_demo_mode() and len(portfolio_data.get("positions", [])) > 0:
-        # Get real-time prices from Binance
-        realtime_prices = get_realtime_prices()
+        # Fetch only symbols that are actually in portfolio to reduce latency.
+        portfolio_symbols = [
+            p.get("symbol", "").upper() for p in portfolio_data["positions"] if p.get("symbol")
+        ]
+        realtime_prices = get_binance_prices(portfolio_symbols)
         
         # Calculate portfolio with real-time prices
         positions = portfolio_data["positions"]
@@ -462,8 +469,11 @@ async def list_positions(
     """
     # When DEMO_MODE is true but we have custom portfolio_data, use it
     if get_demo_mode() and len(portfolio_data.get("positions", [])) > 0:
-        # Get real-time prices from Binance
-        realtime_prices = get_realtime_prices()
+        # Fetch only symbols that are actually in the returned positions to reduce latency.
+        symbols_in_positions = [
+            p.get("symbol", "").upper() for p in portfolio_data["positions"] if p.get("symbol")
+        ]
+        realtime_prices = get_binance_prices(symbols_in_positions)
         
         positions = portfolio_data["positions"]
         if symbol:
@@ -569,22 +579,99 @@ async def get_performance_metrics() -> PerformanceMetrics:
             num_losing_trades=data["losing_trades"],
         )
     
-    # Simulated performance data
+    # Real mode: derive metrics from available portfolio/history data.
+    adapter = get_data_adapter()
+    summary = adapter.get_portfolio_summary()
+    history = adapter.get_portfolio_history(days=60)
+
+    values = []
+    for h in history:
+        try:
+            v = float(h.get("value", 0))
+            if v > 0:
+                values.append(v)
+        except Exception:
+            continue
+
+    returns = []
+    for i in range(1, len(values)):
+        prev = values[i - 1]
+        cur = values[i]
+        if prev > 0:
+            returns.append((cur - prev) / prev)
+
+    if returns:
+        mean_ret = statistics.fmean(returns)
+        vol_daily = statistics.pstdev(returns) if len(returns) > 1 else 0.0
+        sharpe = (mean_ret / vol_daily * math.sqrt(252)) if vol_daily > 1e-9 else 0.0
+
+        downside = [r for r in returns if r < 0]
+        downside_dev = statistics.pstdev(downside) if len(downside) > 1 else 0.0
+        sortino = (mean_ret / downside_dev * math.sqrt(252)) if downside_dev > 1e-9 else sharpe
+
+        peak = values[0]
+        max_drawdown = 0.0
+        for v in values:
+            if v > peak:
+                peak = v
+            dd = (v - peak) / peak if peak > 0 else 0.0
+            if dd < max_drawdown:
+                max_drawdown = dd
+
+        total_return = values[-1] - values[0]
+        total_return_pct = ((values[-1] - values[0]) / values[0] * 100) if values[0] > 0 else 0.0
+        max_drawdown_pct = max_drawdown * 100
+        calmar = ((total_return_pct / 100) / abs(max_drawdown)) if max_drawdown < 0 else 0.0
+
+        wins = [r for r in returns if r > 0]
+        losses = [r for r in returns if r < 0]
+        win_rate = len(wins) / len(returns) if returns else 0.0
+        profit_factor = (
+            (sum(wins) / abs(sum(losses))) if losses and abs(sum(losses)) > 1e-12 else (99.0 if wins else 1.0)
+        )
+        num_trades = len(returns)
+        num_winning = len(wins)
+        num_losing = len(losses)
+
+        total_pnl = float(summary.get("total_pnl", total_return))
+        avg_win = (total_pnl / num_winning) if num_winning > 0 else 0.0
+        avg_loss = -(abs(total_pnl) / num_losing) if num_losing > 0 else 0.0
+
+        return PerformanceMetrics(
+            total_return=total_return,
+            total_return_pct=total_return_pct,
+            sharpe_ratio=sharpe,
+            sortino_ratio=sortino,
+            max_drawdown=max_drawdown * (values[-1] if values else 0.0),
+            max_drawdown_pct=max_drawdown_pct,
+            calmar_ratio=calmar,
+            win_rate=win_rate,
+            profit_factor=profit_factor,
+            avg_win=avg_win,
+            avg_loss=avg_loss,
+            num_trades=num_trades,
+            num_winning_trades=num_winning,
+            num_losing_trades=num_losing,
+        )
+
+    # Fallback when historical series is not available yet.
+    total_return_pct = float(summary.get("total_return_pct", 0.0))
+    total_return = float(summary.get("total_pnl", 0.0))
     return PerformanceMetrics(
-        total_return=50000.0,
-        total_return_pct=5.0,
-        sharpe_ratio=1.85,
-        sortino_ratio=2.34,
-        max_drawdown=-8500.0,
-        max_drawdown_pct=-8.5,
-        calmar_ratio=1.2,
-        win_rate=0.62,
-        profit_factor=1.75,
-        avg_win=2500.0,
-        avg_loss=-1200.0,
-        num_trades=45,
-        num_winning_trades=28,
-        num_losing_trades=17,
+        total_return=total_return,
+        total_return_pct=total_return_pct,
+        sharpe_ratio=0.0,
+        sortino_ratio=0.0,
+        max_drawdown=0.0,
+        max_drawdown_pct=0.0,
+        calmar_ratio=0.0,
+        win_rate=0.0,
+        profit_factor=1.0,
+        avg_win=0.0,
+        avg_loss=0.0,
+        num_trades=0,
+        num_winning_trades=0,
+        num_losing_trades=0,
     )
 
 

@@ -128,6 +128,7 @@ export interface PortfolioHistory {
 export interface MarketSentiment {
   fear_greed_index: number;
   sentiment_label: string;
+  sentiment_emoji?: string;
   trading_indicator: string;
   btc_dominance: number;
   market_momentum: number;
