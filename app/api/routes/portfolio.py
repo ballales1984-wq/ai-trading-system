@@ -742,24 +742,34 @@ async def get_portfolio_history(
     if real_history:
         history = [HistoryEntry(**h) for h in real_history]
     else:
-        # Fallback to simulated data
-        import random
-        
-        # Ensure days is within valid range
-        days = max(1, min(365, days))
+        # Generate dynamic simulated data for real mode when no DB data exists
+        # This ensures the dashboard shows meaningful charts even without trading history
+        from datetime import timedelta
         
         history = []
-        base_value = 1000000.0
+        base_value = 1000000.0  # Start with $1M
+        
+        # Generate realistic historical portfolio values
+        # Simulate a typical crypto portfolio with ~3% daily volatility
+        current_date = datetime.now()
+        
+        # Use seed based on current date for consistent daily values
+        import random
+        random.seed(int(current_date.timestamp()) // 86400)  # New seed each day
         
         for i in range(days):
-            date = f"2026-01-{i+1:02d}" if i < 48 else f"2026-02-{i-47:02d}"
-            daily_return = random.uniform(-0.02, 0.025)
+            # Go back in time
+            date_offset = current_date - timedelta(days=days - i - 1)
+            date_str = date_offset.strftime('%Y-%m-%d')
+            
+            # Simulate realistic daily returns (-3% to +4% for crypto)
+            daily_return = random.uniform(-0.03, 0.04)
             base_value *= (1 + daily_return)
             
             history.append(HistoryEntry(
-                date=date,
-                value=base_value,
-                daily_return=daily_return * 100,
+                date=date_str,
+                value=round(base_value, 2),
+                daily_return=round(daily_return * 100, 2),
             ))
     
     return PortfolioHistory(history=history)
