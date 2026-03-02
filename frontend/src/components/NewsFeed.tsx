@@ -17,8 +17,8 @@ export default function NewsFeed({ symbol, limit = 10, showFilters = true }: New
     queryKey: symbol ? ['news', symbol, limit, lastRefresh] : ['news', limit, lastRefresh],
     queryFn: () => 
       symbol 
-        ? newsApi.getNewsBySymbol(symbol, limit, String(lastRefresh)).then(r => r.news)
-        : newsApi.getNews({ limit, refresh: String(lastRefresh) }).then(r => r.news),
+        ? newsApi.getNewsBySymbol(symbol, limit, String(lastRefresh)).then(r => r.news ?? [])
+        : newsApi.getNews({ limit, refresh: String(lastRefresh) }).then(r => r.news ?? []),
     staleTime: 30 * 1000, // 30 seconds - data is fresh for 30s
     refetchInterval: 60 * 1000, // 1 minute - auto-refresh every minute
   });

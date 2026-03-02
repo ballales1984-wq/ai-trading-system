@@ -81,6 +81,12 @@ if errorlevel 1 (
 :: Avvio ngrok in nuova finestra
 echo.
 echo [🌐] Avvio ngrok tunnel...
+tasklist /FI "IMAGENAME eq ngrok.exe" | find /I "ngrok.exe" >nul
+if not errorlevel 1 (
+    echo [INFO] Trovato ngrok gia attivo, lo chiudo per evitare conflitti endpoint...
+    taskkill /F /IM ngrok.exe >nul 2>&1
+    timeout /t 1 /nobreak >nul
+)
 start "🌐 ngrok Tunnel" cmd /k "cd /d %~dp0.. && echo [🌐] Avvio ngrok... && echo. && echo ============================================ && echo   COPIA QUESTO URL SU VERCEL: && echo ============================================ && echo. && ngrok http 8000"
 
 :: Avvio browser con dashboard

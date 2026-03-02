@@ -50,6 +50,12 @@ echo ==========================================
 echo  CONFIGURA QUESTO URL SU VERCEL:
 echo ==========================================
 echo.
+tasklist /FI "IMAGENAME eq ngrok.exe" | find /I "ngrok.exe" >nul
+if not errorlevel 1 (
+    echo [INFO] Trovato ngrok gia attivo, lo chiudo per evitare conflitti endpoint...
+    taskkill /F /IM ngrok.exe >nul 2>&1
+    timeout /t 1 /nobreak >nul
+)
 start "ngrok" cmd /k "ngrok http 8000"
 timeout /t 2 /nobreak >nul
 
