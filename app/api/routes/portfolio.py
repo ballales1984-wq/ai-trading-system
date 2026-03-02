@@ -80,8 +80,12 @@ def get_binance_prices(symbols: List[str]) -> Dict[str, float]:
             prices[symbol.upper()] = price
     return prices
 
-# Default symbols for real-time prices
-TRACKED_SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT", "DOGEUSDT"]
+# Default symbols for real-time prices (matching portfolio assets)
+TRACKED_SYMBOLS = [
+    "BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", 
+    "ADAUSDT", "DOGEUSDT", "AVAXUSDT", "LINKUSDT", "MATICUSDT",
+    "ATOMUSDT", "DOTUSDT", "UNIUSDT"
+]
 
 def get_realtime_prices() -> Dict[str, float]:
     """Get all tracked prices in real-time from Binance."""
