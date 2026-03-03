@@ -115,9 +115,12 @@ def set_demo_mode(value: bool) -> None:
 
 # Get initial balance from environment variable or use default
 PAPER_INITIAL_BALANCE = float(os.getenv("PAPER_INITIAL_BALANCE", "500000"))
+# Fraction of paper balance invested into positions at initialization.
+DEMO_INVESTMENT_RATIO = float(os.getenv("DEMO_INVESTMENT_RATIO", "0.75"))
 
 # In-memory portfolio store (can be updated via API)
 portfolio_data = {
+    "initial_balance": PAPER_INITIAL_BALANCE,
     "cash_balance": PAPER_INITIAL_BALANCE,
     "positions": [],
     "initialized": False,
@@ -128,7 +131,10 @@ def _initialize_default_positions():
     """Initialize default positions based on initial balance."""
     if not portfolio_data["initialized"]:
         # Create default positions based on balance
-        cash = portfolio_data["cash_balance"]
+        initial_balance = portfolio_data.get("initial_balance", portfolio_data["cash_balance"])
+        investment_ratio = min(max(DEMO_INVESTMENT_RATIO, 0.0), 1.0)
+        invested_capital = initial_balance * investment_ratio
+        remaining_cash = initial_balance - invested_capital
         
         # Asset allocation: diversified portfolio
         assets = [
@@ -149,7 +155,7 @@ def _initialize_default_positions():
         
         positions = []
         for asset in assets:
-            value = cash * asset["allocation"]
+            value = invested_capital * asset["allocation"]
             qty = value / asset["price"]
             positions.append({
                 "position_id": str(uuid4()),
@@ -167,8 +173,111 @@ def _initialize_default_positions():
                 "updated_at": datetime.now().isoformat(),
             })
         
+        portfolio_data["cash_balance"] = round(remaining_cash, 2)
         portfolio_data["positions"] = positions
         portfolio_data["initialized"] = True
+
+
+def _build_performance_metrics_from_mock() -> PerformanceMetrics:
+    """Map mock performance payload to API response model."""
+    data = mock_performance()
+    summary = mock_portfolio_summary()
+
+    total_value = float(summary.get("total_value", 0.0))
+    total_return = float(summary.get("unrealized_pnl", 0.0))
+    total_return_pct = float(data.get("total_return_pct", 0.0))
+    max_drawdown_pct = float(data.get("max_drawdown_pct", 0.0))
+
+    # Keep sign convention: drawdown is typically negative.
+    max_drawdown = (max_drawdown_pct / 100.0) * total_value if total_value > 0 else 0.0
+
+    return PerformanceMetrics(
+        total_return=total_return,
+        total_return_pct=total_return_pct,
+        sharpe_ratio=float(data.get("sharpe_ratio", 0.0)),
+        sortino_ratio=float(data.get("sortino_ratio", 0.0)),
+        max_drawdown=max_drawdown,
+        max_drawdown_pct=max_drawdown_pct,
+        calmar_ratio=float(data.get("calmar_ratio", 0.0)),
+        win_rate=float(data.get("win_rate", 0.0)),
+        profit_factor=float(data.get("profit_factor", 0.0)),
+        avg_win=float(data.get("avg_win", 0.0)),
+        avg_loss=float(data.get("avg_loss", 0.0)),
+        num_trades=int(data.get("total_trades", 0)),
+        num_winning_trades=int(data.get("winning_trades", 0)),
+        num_losing_trades=int(data.get("losing_trades", 0)),
+    )
+
+
+def _compute_simulated_portfolio_summary(use_realtime_prices: bool = True) -> PortfolioSummary:
+    """
+    Build simulated portfolio summary from in-memory paper portfolio.
+    Falls back to mock summary when no positions are available.
+    """
+    positions = portfolio_data.get("positions", [])
+    if not positions:
+        data = mock_portfolio_summary()
+        return PortfolioSummary(
+            total_value=data["total_value"],
+            cash_balance=data["cash"],
+            market_value=data["invested"],
+            total_pnl=data["unrealized_pnl"],
+            unrealized_pnl=data["unrealized_pnl"],
+            realized_pnl=0.0,
+            daily_pnl=data["daily_pnl"],
+            daily_return_pct=data["daily_return_pct"],
+            total_return_pct=data["total_return_pct"],
+            leverage=1.0,
+            buying_power=data["total_value"],
+            num_positions=data["num_positions"],
+            account_type="simulated",
+        )
+
+    portfolio_symbols = [p.get("symbol", "").upper() for p in positions if p.get("symbol")]
+    realtime_prices = get_binance_prices(portfolio_symbols) if use_realtime_prices else {}
+
+    cash = float(portfolio_data.get("cash_balance", 0.0))
+    initial_balance = float(portfolio_data.get("initial_balance", cash))
+    total_market_value = 0.0
+    total_unrealized_pnl = 0.0
+
+    for p in positions:
+        symbol = p.get("symbol", "")
+        quantity = float(p.get("quantity", 0))
+        entry_price = float(p.get("entry_price", 0))
+
+        current_price = float(realtime_prices.get(symbol, p.get("current_price", 0)))
+        if current_price > 0 and quantity > 0:
+            market_value = current_price * quantity
+            unrealized_pnl = (current_price - entry_price) * quantity
+        else:
+            market_value = float(p.get("market_value", 0))
+            unrealized_pnl = float(p.get("unrealized_pnl", 0))
+
+        total_market_value += market_value
+        total_unrealized_pnl += unrealized_pnl
+
+    total_value = cash + total_market_value
+    total_pnl = total_unrealized_pnl
+    daily_pnl = 0.0
+    daily_return_pct = 0.0
+    total_return_pct = ((total_value - initial_balance) / initial_balance * 100) if initial_balance > 0 else 0.0
+
+    return PortfolioSummary(
+        total_value=total_value,
+        cash_balance=cash,
+        market_value=total_market_value,
+        total_pnl=total_pnl,
+        unrealized_pnl=total_unrealized_pnl,
+        realized_pnl=0.0,
+        daily_pnl=daily_pnl,
+        daily_return_pct=daily_return_pct,
+        total_return_pct=total_return_pct,
+        leverage=1.0,
+        buying_power=total_value,
+        num_positions=len(positions),
+        account_type="simulated",
+    )
 
 
 # Initialize default positions
@@ -286,6 +395,7 @@ async def update_balance(new_balance: float = Query(..., ge=1000, le=100000000, 
     global portfolio_data
     
     # Update the balance
+    portfolio_data["initial_balance"] = new_balance
     portfolio_data["cash_balance"] = new_balance
     portfolio_data["initialized"] = False  # Reinitialize positions
     
@@ -304,6 +414,7 @@ async def update_balance(new_balance: float = Query(..., ge=1000, le=100000000, 
 async def get_balance():
     """Get current paper trading balance."""
     return {
+        "initial_balance": portfolio_data.get("initial_balance", PAPER_INITIAL_BALANCE),
         "current_balance": portfolio_data["cash_balance"],
         "positions_count": len(portfolio_data["positions"])
     }
@@ -320,58 +431,7 @@ async def get_portfolio_summary() -> PortfolioSummary:
     # When DEMO_MODE is true but we have custom portfolio_data (via /balance endpoint)
     # use the custom portfolio_data instead of mock data
     if get_demo_mode() and len(portfolio_data.get("positions", [])) > 0:
-        # Fetch only symbols that are actually in portfolio to reduce latency.
-        portfolio_symbols = [
-            p.get("symbol", "").upper() for p in portfolio_data["positions"] if p.get("symbol")
-        ]
-        realtime_prices = get_binance_prices(portfolio_symbols)
-        
-        # Calculate portfolio with real-time prices
-        positions = portfolio_data["positions"]
-        cash = portfolio_data["cash_balance"]
-        
-        # Recalculate market_value and unrealized_pnl with real-time prices
-        total_market_value = 0.0
-        total_unrealized_pnl = 0.0
-        
-        for p in positions:
-            symbol = p.get("symbol", "")
-            quantity = p.get("quantity", 0)
-            entry_price = p.get("entry_price", 0)
-            
-            # Get real-time price or fallback to stored price
-            current_price = realtime_prices.get(symbol, p.get("current_price", 0))
-            
-            if current_price > 0 and quantity > 0:
-                market_value = current_price * quantity
-                unrealized_pnl = (current_price - entry_price) * quantity
-            else:
-                market_value = p.get("market_value", 0)
-                unrealized_pnl = p.get("unrealized_pnl", 0)
-            
-            total_market_value += market_value
-            total_unrealized_pnl += unrealized_pnl
-        
-        total_value = cash + total_market_value
-        total_pnl = total_unrealized_pnl
-        daily_pnl = total_value * 0.02  # 2% daily assumption
-        daily_return_pct = 2.0
-        total_return_pct = (total_pnl / total_value) * 100 if total_value > 0 else 0
-        
-        return PortfolioSummary(
-            total_value=total_value,
-            cash_balance=cash,
-            market_value=total_market_value,
-            total_pnl=total_pnl,
-            unrealized_pnl=total_unrealized_pnl,
-            realized_pnl=0.0,
-            daily_pnl=daily_pnl,
-            daily_return_pct=daily_return_pct,
-            total_return_pct=total_return_pct,
-            leverage=1.0,
-            buying_power=total_value,
-            num_positions=len(positions)
-        )
+        return _compute_simulated_portfolio_summary(use_realtime_prices=True)
     
     # Use mock data if demo mode is enabled
     if get_demo_mode():
@@ -473,23 +533,7 @@ async def get_dual_portfolio_summary() -> DualPortfolioSummary:
 
 def _get_simulated_portfolio_summary() -> PortfolioSummary:
     """Get simulated/paper trading portfolio summary."""
-    # Use mock data for simulated
-    data = mock_portfolio_summary()
-    return PortfolioSummary(
-        total_value=data["total_value"],
-        cash_balance=data["cash"],
-        market_value=data["invested"],
-        total_pnl=data["unrealized_pnl"],
-        unrealized_pnl=data["unrealized_pnl"],
-        realized_pnl=0.0,
-        daily_pnl=data["daily_pnl"],
-        daily_return_pct=data["daily_return_pct"],
-        total_return_pct=data["total_return_pct"],
-        leverage=1.0,
-        buying_power=data["total_value"],
-        num_positions=data["num_positions"],
-        account_type="simulated"
-    )
+    return _compute_simulated_portfolio_summary(use_realtime_prices=True)
 
 
 def _get_real_portfolio_summary() -> PortfolioSummary:
@@ -549,6 +593,10 @@ def _get_real_portfolio_summary() -> PortfolioSummary:
     )
 
 
+def _mock_position_id(symbol: str) -> str:
+    return f"mock_{symbol.replace('/', '').lower()}"
+
+
 @router.get("/positions", response_model=List[Position])
 async def list_positions(
     symbol: Optional[str] = Query(None, description="Filter by symbol"),
@@ -595,7 +643,7 @@ async def list_positions(
         if side:
             positions = [p for p in positions if p["side"] == side]
         return [Position(
-            position_id=str(uuid4()),
+            position_id=_mock_position_id(p["symbol"]),
             symbol=p["symbol"],
             side=p["side"],
             quantity=p["quantity"],
@@ -635,6 +683,30 @@ async def get_position(position_id: str) -> Position:
     for p in portfolio_data["positions"]:
         if p["position_id"] == position_id:
             return Position(**p)
+
+    if get_demo_mode():
+        for p in mock_positions():
+            if _mock_position_id(p["symbol"]) == position_id:
+                return Position(
+                    position_id=_mock_position_id(p["symbol"]),
+                    symbol=p["symbol"],
+                    side=p["side"],
+                    quantity=p["quantity"],
+                    entry_price=p["entry_price"],
+                    current_price=p["current_price"],
+                    market_value=p["market_value"],
+                    unrealized_pnl=p["unrealized_pnl"],
+                    realized_pnl=0.0,
+                    leverage=1.0,
+                    margin_used=p["market_value"],
+                    opened_at=datetime.fromisoformat(p["opened_at"]),
+                    updated_at=datetime.utcnow(),
+                )
+
+    adapter = get_data_adapter()
+    for p in adapter.get_positions():
+        if p.get("position_id") == position_id:
+            return Position(**p)
     
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -651,23 +723,7 @@ async def get_performance_metrics() -> PerformanceMetrics:
     """
     # Use mock data if demo mode is enabled
     if get_demo_mode():
-        data = mock_performance()
-        return PerformanceMetrics(
-            total_return=data["total_return_pct"] * 1000,  # Approximate
-            total_return_pct=data["total_return_pct"],
-            sharpe_ratio=data["sharpe_ratio"],
-            sortino_ratio=data["sortino_ratio"],
-            max_drawdown=data["max_drawdown_pct"] * 1000,  # Approximate
-            max_drawdown_pct=data["max_drawdown_pct"],
-            calmar_ratio=data["calmar_ratio"],
-            win_rate=data["win_rate"],
-            profit_factor=data["profit_factor"],
-            avg_win=data["avg_win"],
-            avg_loss=data["avg_loss"],
-            num_trades=data["total_trades"],
-            num_winning_trades=data["winning_trades"],
-            num_losing_trades=data["losing_trades"],
-        )
+        return _build_performance_metrics_from_mock()
     
     # Real mode: derive metrics from available portfolio/history data.
     adapter = get_data_adapter()
@@ -746,7 +802,7 @@ async def get_performance_metrics() -> PerformanceMetrics:
 
     # Fallback when historical series is not available yet.
     # Use simulated performance data so dashboard always shows moving counters
-    return mock_performance()
+    return _build_performance_metrics_from_mock()
 
 
 @router.get("/allocation")
@@ -772,8 +828,18 @@ async def get_allocation() -> dict:
             "cash": data["cash"],
         }
     
-    # Calculate allocation dynamically from positions
-    total_value = sum(p.get("market_value", 0) for p in positions)
+    # Calculate allocation dynamically from positions (use real-time prices when available)
+    symbols = [p.get("symbol", "").upper() for p in positions if p.get("symbol")]
+    realtime_prices = get_binance_prices(symbols)
+    values_by_symbol = {}
+    for p in positions:
+        symbol = p.get("symbol", "")
+        qty = float(p.get("quantity", 0))
+        current_price = float(realtime_prices.get(symbol, p.get("current_price", 0)))
+        value = current_price * qty if current_price > 0 and qty > 0 else float(p.get("market_value", 0))
+        values_by_symbol[symbol] = values_by_symbol.get(symbol, 0.0) + value
+
+    total_value = sum(values_by_symbol.values())
     
     if total_value == 0:
         return {
@@ -784,9 +850,7 @@ async def get_allocation() -> dict:
     
     # Calculate by symbol
     by_symbol = {}
-    for p in positions:
-        symbol = p.get("symbol", "")
-        value = p.get("market_value", 0)
+    for symbol, value in values_by_symbol.items():
         pct = (value / total_value) * 100
         by_symbol[symbol] = round(pct, 2)
     

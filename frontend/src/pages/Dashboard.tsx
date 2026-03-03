@@ -264,7 +264,7 @@ function MetricCard({ title, value, icon: Icon, trend }: { title: string; value:
 
 function PerformanceItem({ label, value }: { label: string; value: string }) {
   const isPositive = value.startsWith('+');
-  const isNegative = value.startsWith('-') && !value.includes('%');
+  const isNegative = value.startsWith('-');
   const valueColor = isPositive ? 'text-success' : isNegative ? 'text-danger' : 'text-text';
 
   return (

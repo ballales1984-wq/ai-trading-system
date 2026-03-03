@@ -395,7 +395,11 @@ export default function Portfolio() {
             </thead>
             <tbody>
               {positionsList.map((position) => {
-                const pnlPercent = ((position.current_price - position.entry_price) / position.entry_price) * 100;
+                const priceDelta = position.current_price - position.entry_price;
+                const signedDelta = position.side === 'SHORT' ? -priceDelta : priceDelta;
+                const pnlPercent = position.entry_price > 0
+                  ? (signedDelta / position.entry_price) * 100
+                  : 0;
                 return (
                   <tr key={position.position_id} className="border-b border-border/50 hover:bg-border/20">
                     <td className="py-3 px-4 font-medium text-text">{position.symbol}</td>

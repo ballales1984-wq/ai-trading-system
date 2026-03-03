@@ -341,34 +341,24 @@ def calculate_all_performance_metrics(
     ann_vol = annual_volatility(returns, periods_per_year)
     
     # Risk metrics
-    from src.risk import max_drawdown as mdd
+    from src.risk import (
+        max_drawdown as mdd,
+        value_at_risk,
+        conditional_var,
+        sharpe_ratio as risk_sharpe_ratio,
+        sortino_ratio as risk_sortino_ratio,
+        calmar_ratio as risk_calmar_ratio,
+    )
     max_dd, _, _ = mdd(equity_curve)
+
+    # Risk-adjusted ratios from unified risk module
+    sharpe = risk_sharpe_ratio(returns, risk_free_rate, periods_per_year)
+    sortino = risk_sortino_ratio(returns, risk_free_rate, periods_per_year)
+    calmar = risk_calmar_ratio(returns, equity_curve, periods_per_year)
     
-    # Calculate downside deviation for Sortino
-    downside_returns = returns[returns < 0]
-    downside_std = downside_returns.std() * np.sqrt(periods_per_year) if len(downside_returns) > 0 else 0
-    
-    # Sharpe Ratio
-    if ann_vol > 0:
-        sharpe = (ann_ret - risk_free_rate) / ann_vol
-    else:
-        sharpe = 0.0
-    
-    # Sortino Ratio
-    if downside_std > 0:
-        sortino = ann_ret / downside_std
-    else:
-        sortino = 0.0
-    
-    # Calmar Ratio
-    if max_dd != 0:
-        calmar = ann_ret / abs(max_dd)
-    else:
-        calmar = 0.0
-    
-    # VaR and CVaR
-    var_95 = np.percentile(returns, 5)
-    cvar_95 = returns[returns <= var_95].mean() if len(returns[returns <= var_95]) > 0 else var_95
+    # VaR and CVaR (reported as non-negative loss magnitudes)
+    var_95 = value_at_risk(returns, 0.95)
+    cvar_95 = conditional_var(returns, 0.95)
     
     # Trade statistics
     winning_trades = returns[returns > 0]

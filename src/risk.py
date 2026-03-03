@@ -16,7 +16,22 @@ Version: 1.0.0
 
 import pandas as pd
 import numpy as np
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Any
+
+
+def annualized_return(returns: pd.Series, periods_per_year: int = 252) -> float:
+    """
+    Calculate annualized compounded return (CAGR-style).
+    """
+    if len(returns) == 0:
+        return 0.0
+
+    total_return = (1 + returns).prod() - 1
+    n_years = len(returns) / periods_per_year
+    if n_years <= 0:
+        return 0.0
+
+    return (1 + total_return) ** (1 / n_years) - 1
 
 
 def sharpe_ratio(returns: pd.Series, risk_free: float = 0.0, periods_per_year: int = 252) -> float:
@@ -36,11 +51,20 @@ def sharpe_ratio(returns: pd.Series, risk_free: float = 0.0, periods_per_year: i
     --------
     float : Sharpe Ratio
     """
-    if len(returns) == 0 or returns.std() == 0:
+    if len(returns) == 0:
         return 0.0
     
-    excess_returns = returns - risk_free / periods_per_year
-    return np.sqrt(periods_per_year) * excess_returns.mean() / excess_returns.std()
+    # Use np.isclose to handle floating point comparison
+    std_dev = returns.std()
+    if np.isclose(std_dev, 0.0, atol=1e-10):
+        return 0.0
+    
+    ann_return = annualized_return(returns, periods_per_year)
+    ann_vol = returns.std() * np.sqrt(periods_per_year)
+    if np.isclose(ann_vol, 0.0, atol=1e-12):
+        return 0.0
+
+    return (ann_return - risk_free) / ann_vol
 
 
 def sortino_ratio(returns: pd.Series, risk_free: float = 0.0, periods_per_year: int = 252) -> float:
@@ -68,11 +92,16 @@ def sortino_ratio(returns: pd.Series, risk_free: float = 0.0, periods_per_year: 
     
     if len(downside_returns) == 0 or downside_returns.std() == 0:
         return 0.0
-    
-    return np.sqrt(periods_per_year) * excess_returns.mean() / downside_returns.std()
+
+    ann_return = annualized_return(returns, periods_per_year)
+    downside_std = downside_returns.std() * np.sqrt(periods_per_year)
+    if np.isclose(downside_std, 0.0, atol=1e-12):
+        return 0.0
+
+    return (ann_return - risk_free) / downside_std
 
 
-def max_drawdown(equity_curve: pd.Series) -> Tuple[float, int, int]:
+def max_drawdown(equity_curve: pd.Series) -> Tuple[float, Any, Any]:
     """
     Calculate Maximum Drawdown - largest peak-to-trough decline.
     
@@ -91,16 +120,24 @@ def max_drawdown(equity_curve: pd.Series) -> Tuple[float, int, int]:
     # Calculate running maximum (peak)
     peak = equity_curve.expanding(min_periods=1).max()
     
-    # Calculate drawdown
-    drawdown = (equity_curve - peak) / peak
+    # Calculate drawdown robustly if peak contains zeros
+    safe_peak = peak.replace(0, np.nan)
+    drawdown = ((equity_curve - safe_peak) / safe_peak).fillna(0.0)
     
     # Find maximum drawdown
     max_dd = drawdown.min()
     trough_idx = drawdown.idxmin()
     
-    # Find corresponding peak (last index before trough where equity = peak)
-    peak_at_trough = peak.loc[trough_idx]
-    peak_idx = equity_curve[:trough_idx].idxmax()
+    # Handle edge case: if max_dd is 0 (no drawdown), return first index as peak and last as trough
+    if np.isclose(max_dd, 0.0, atol=1e-10):
+        return 0.0, equity_curve.index[0], equity_curve.index[-1]
+    
+    # Get indices before trough
+    before_trough = equity_curve[:trough_idx]
+    if len(before_trough) > 0:
+        peak_idx = before_trough.idxmax()
+    else:
+        peak_idx = trough_idx
     
     return max_dd, peak_idx, trough_idx
 
@@ -127,8 +164,8 @@ def calmar_ratio(returns: pd.Series, equity_curve: pd.Series, periods_per_year: 
     if max_dd == 0:
         return 0.0
     
-    # Annualized return
-    annual_return = returns.mean() * periods_per_year
+    # Annualized compounded return
+    annual_return = annualized_return(returns, periods_per_year)
     
     return annual_return / abs(max_dd)
 
@@ -150,8 +187,11 @@ def value_at_risk(returns: pd.Series, confidence: float = 0.95) -> float:
     """
     if len(returns) == 0:
         return 0.0
-    
-    return -np.percentile(returns, (1 - confidence) * 100)
+
+    var = -np.percentile(returns, (1 - confidence) * 100)
+
+    # VaR is reported as a non-negative loss magnitude
+    return max(0.0, float(var))
 
 
 def conditional_var(returns: pd.Series, confidence: float = 0.95) -> float:
@@ -177,8 +217,9 @@ def conditional_var(returns: pd.Series, confidence: float = 0.95) -> float:
     
     if len(tail_returns) == 0:
         return var
-    
-    return -tail_returns.mean()
+
+    cvar = -tail_returns.mean()
+    return max(var, float(cvar))
 
 
 def information_ratio(returns: pd.Series, benchmark_returns: pd.Series, periods_per_year: int = 252) -> float:
@@ -198,16 +239,18 @@ def information_ratio(returns: pd.Series, benchmark_returns: pd.Series, periods_
     --------
     float : Information Ratio
     """
-    if len(returns) != len(benchmark_returns):
-        raise ValueError("Returns and benchmark must have same length")
-    
-    active_returns = returns - benchmark_returns
+    aligned = pd.concat([returns, benchmark_returns], axis=1, join='inner').dropna()
+    if len(aligned) == 0:
+        return 0.0
+
+    active_returns = aligned.iloc[:, 0] - aligned.iloc[:, 1]
     tracking_error = active_returns.std() * np.sqrt(periods_per_year)
     
-    if tracking_error == 0:
+    if np.isclose(tracking_error, 0.0, atol=1e-12):
         return 0.0
     
-    return (active_returns.mean() * periods_per_year) / tracking_error
+    active_return = annualized_return(active_returns, periods_per_year)
+    return active_return / tracking_error
 
 
 def beta(returns: pd.Series, benchmark_returns: pd.Series) -> float:
@@ -225,13 +268,17 @@ def beta(returns: pd.Series, benchmark_returns: pd.Series) -> float:
     --------
     float : Beta coefficient
     """
-    if len(returns) != len(benchmark_returns):
-        raise ValueError("Returns and benchmark must have same length")
+    aligned = pd.concat([returns, benchmark_returns], axis=1, join='inner').dropna()
+    if len(aligned) == 0:
+        return 0.0
+
+    strategy = aligned.iloc[:, 0]
+    benchmark = aligned.iloc[:, 1]
+
+    covariance = strategy.cov(benchmark)
+    benchmark_variance = benchmark.var()
     
-    covariance = returns.cov(benchmark_returns)
-    benchmark_variance = benchmark_returns.var()
-    
-    if benchmark_variance == 0:
+    if np.isclose(benchmark_variance, 0.0, atol=1e-12):
         return 0.0
     
     return covariance / benchmark_variance
@@ -256,10 +303,17 @@ def alpha(returns: pd.Series, benchmark_returns: pd.Series, risk_free: float = 0
     --------
     float : Alpha (annualized)
     """
-    b = beta(returns, benchmark_returns)
+    aligned = pd.concat([returns, benchmark_returns], axis=1, join='inner').dropna()
+    if len(aligned) == 0:
+        return 0.0
+
+    strategy = aligned.iloc[:, 0]
+    benchmark = aligned.iloc[:, 1]
+
+    b = beta(strategy, benchmark)
     
-    strategy_return = returns.mean() * periods_per_year
-    benchmark_return = benchmark_returns.mean() * periods_per_year
+    strategy_return = annualized_return(strategy, periods_per_year)
+    benchmark_return = annualized_return(benchmark, periods_per_year)
     
     return strategy_return - (risk_free + b * (benchmark_return - risk_free))
 
@@ -315,8 +369,11 @@ def calculate_all_risk_metrics(
     metrics = {}
     
     # Basic metrics
-    metrics['total_return'] = (equity_curve.iloc[-1] / equity_curve.iloc[0] - 1) if len(equity_curve) > 0 else 0
-    metrics['annual_return'] = returns.mean() * periods_per_year
+    if len(equity_curve) > 0 and not np.isclose(float(equity_curve.iloc[0]), 0.0, atol=1e-12):
+        metrics['total_return'] = equity_curve.iloc[-1] / equity_curve.iloc[0] - 1
+    else:
+        metrics['total_return'] = 0.0
+    metrics['annual_return'] = annualized_return(returns, periods_per_year)
     metrics['volatility'] = volatility(returns, periods_per_year)
     
     # Risk-adjusted ratios
@@ -336,10 +393,14 @@ def calculate_all_risk_metrics(
     metrics['cvar_99'] = conditional_var(returns, 0.99)
     
     # Benchmark-relative metrics
-    if benchmark_returns is not None and len(benchmark_returns) == len(returns):
-        metrics['beta'] = beta(returns, benchmark_returns)
-        metrics['alpha'] = alpha(returns, benchmark_returns, risk_free, periods_per_year)
-        metrics['information_ratio'] = information_ratio(returns, benchmark_returns, periods_per_year)
+    if benchmark_returns is not None:
+        aligned = pd.concat([returns, benchmark_returns], axis=1, join='inner').dropna()
+        if len(aligned) > 0:
+            strategy = aligned.iloc[:, 0]
+            benchmark = aligned.iloc[:, 1]
+            metrics['beta'] = beta(strategy, benchmark)
+            metrics['alpha'] = alpha(strategy, benchmark, risk_free, periods_per_year)
+            metrics['information_ratio'] = information_ratio(strategy, benchmark, periods_per_year)
     
     # Win rate
     metrics['win_rate'] = (returns > 0).sum() / len(returns) if len(returns) > 0 else 0
