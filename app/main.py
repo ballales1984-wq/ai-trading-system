@@ -15,9 +15,9 @@ from fastapi.exceptions import RequestValidationError
 
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
-from app.api.routes import health, orders, portfolio, strategy, risk, market, waitlist
+from app.api.routes import health, orders, portfolio, strategy, market, waitlist
 from app.api.routes import cache, news, auth
-from app.api.routes import payments
+from app.api.routes.payments import router as payments
 
 
 from fastapi.staticfiles import StaticFiles
@@ -144,140 +144,112 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # Include routers
 app.include_router(
-    health.router,
+    health,
     prefix=settings.api_prefix,
     tags=["Health"]
 )
 
 app.include_router(
-    orders.router,
+    orders,
     prefix=f"{settings.api_prefix}/orders",
     tags=["Orders"]
 )
 
 app.include_router(
-    portfolio.router,
+    portfolio,
     prefix=f"{settings.api_prefix}/portfolio",
     tags=["Portfolio"]
 )
 
 app.include_router(
-    strategy.router,
+    strategy,
     prefix=f"{settings.api_prefix}/strategy",
     tags=["Strategy"]
 )
 
 app.include_router(
-    risk.router,
-    prefix=f"{settings.api_prefix}/risk",
-    tags=["Risk"]
-)
-
-app.include_router(
-    market.router,
+    market,
     prefix=f"{settings.api_prefix}/market",
     tags=["Market"]
 )
 
 app.include_router(
-    waitlist.router,
+    waitlist,
     prefix=f"{settings.api_prefix}",
     tags=["Waitlist"]
 )
 
 app.include_router(
-    cache.router,
+    cache,
     prefix=f"{settings.api_prefix}/cache",
     tags=["Cache"]
 )
 
 app.include_router(
-    news.router,
+    news,
     prefix=f"{settings.api_prefix}/news",
     tags=["News"]
 )
 
 app.include_router(
-    auth.router,
+    auth,
     prefix=f"{settings.api_prefix}/auth",
     tags=["Authentication"]
 )
 
 # Include payments router
 app.include_router(
-    payments.router,
+    payments,
     prefix=f"{settings.api_prefix}/payments",
     tags=["Payments"]
 )
 
 
-# Serve landing page
-LANDING_DIR = Path(__file__).parent.parent / "landing"
+@app.on_event("startup")
+async def startup_event():
+    """Log startup information."""
+    logger.info("Application starting up...")
+    
+    # Log all registered routes
+    for route in app.routes:
+        if hasattr(route, 'path'):
+            logger.info(f"Registered route: {route.path}")
+
+
+# Serve frontend static files
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend" / "dist"
+logger.info(f"FRONTEND_DIR: {FRONTEND_DIR}, exists: {FRONTEND_DIR.exists()}")
 
-if LANDING_DIR.exists():
-    app.mount("/landing", StaticFiles(directory=str(LANDING_DIR), html=True), name="landing")
-
-# Serve frontend in production
 if FRONTEND_DIR.exists():
-    app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+    # Mount static assets first (lower priority than explicit routes)
     app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR / "assets")), name="assets")
 
 
-# Root endpoint - serve landing page or frontend
-@app.route("/", methods=["GET", "HEAD"])
-async def root(request: Request):
-    """Root endpoint - serve landing page if available."""
-    # Handle HEAD request - return same response as GET but without body
-    if request.method == "HEAD":
-        landing_file = LANDING_DIR / "index.html"
-        if landing_file.exists():
-            return FileResponse(str(landing_file), media_type="text/html")
-        
-        frontend_file = FRONTEND_DIR / "index.html"
-        if frontend_file.exists():
-            return FileResponse(str(frontend_file), media_type="text/html")
-        
-        return JSONResponse(
-            status_code=200,
-            content={"name": settings.app_name, "version": settings.app_version, "status": "running", "docs": "/docs"}
-        )
-    
-    # GET request handler
-    """Root endpoint - serve landing page if available."""
-    landing_file = LANDING_DIR / "index.html"
-    if landing_file.exists():
-        return FileResponse(str(landing_file))
-    
-    # Fallback to frontend
-    frontend_file = FRONTEND_DIR / "index.html"
-    if frontend_file.exists():
-        return FileResponse(str(frontend_file))
-    
-    return {
-        "name": settings.app_name,
-        "version": settings.app_version,
-        "status": "running",
-        "docs": "/docs"
-    }
-
-
 # Serve frontend for SPA routes
+@app.get("/")
 @app.get("/dashboard")
 @app.get("/portfolio")
 @app.get("/market")
 @app.get("/orders")
-async def serve_spa():
+@app.get("/login")
+@app.get("/payment")
+async def serve_spa(request: Request):
     """Serve frontend SPA for client-side routes."""
+    logger.info(f"serve_spa called: {request.url}")
+    
+    # First check the relative path
     frontend_file = FRONTEND_DIR / "index.html"
     if frontend_file.exists():
+        logger.info(f"Serving from relative path: {frontend_file}")
         return FileResponse(str(frontend_file))
     
-    # Try to serve from /frontend path
-    frontend_file = Path("/app/frontend/dist/index.html")
+    # Try to serve from absolute path
+    frontend_file = Path("c:/ai-trading-system/frontend/dist/index.html")
     if frontend_file.exists():
+        logger.info(f"Serving from absolute path: {frontend_file}")
         return FileResponse(str(frontend_file))
     
+    logger.warning("Frontend not built - index.html not found")
     return {"error": "Frontend not built"}
 
 
