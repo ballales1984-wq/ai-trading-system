@@ -12,7 +12,7 @@ for /f "tokens=5" %a in ('netstat -aon ^| findstr :8000 ^| findstr LISTENING') d
 )
 
 echo [2/2] Avvia API avanzata su porta 8000...
-start "API Avanzata" cmd /k "cd /d c:\ai-trading-system && python -m uvicorn api.index:app --host 0.0.0.0 --port 8000"
+start "API Avanzata" cmd /k "cd /d c:\ai-trading-system && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
 echo.
 echo ==========================================

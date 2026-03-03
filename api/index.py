@@ -306,6 +306,90 @@ async def risk_correlation() -> Dict[str, Any]:
 
 
 
+# ===========================================
+# API v1 ENDPOINTS (with /api prefix for production)
+# ===========================================
+# Duplicate routes with /api prefix for Vercel/production compatibility
+
+@app.get("/api/v1/portfolio/summary")
+async def portfolio_summary_api() -> Dict[str, Any]:
+    return await portfolio_summary()
+
+
+@app.get("/api/v1/portfolio/summary/dual")
+async def portfolio_summary_dual_api() -> Dict[str, Any]:
+    return await portfolio_summary_dual()
+
+
+@app.get("/api/v1/portfolio/positions")
+async def portfolio_positions_api(symbol: Optional[str] = Query(None)) -> List[Dict[str, Any]]:
+    return await portfolio_positions(symbol)
+
+
+@app.get("/api/v1/portfolio/performance")
+async def portfolio_performance_api() -> Dict[str, Any]:
+    return await portfolio_performance()
+
+
+@app.get("/api/v1/portfolio/allocation")
+async def portfolio_allocation_api() -> Dict[str, Any]:
+    return await portfolio_allocation()
+
+
+@app.get("/api/v1/portfolio/history")
+async def portfolio_history_api(days: int = Query(30, ge=1, le=365)) -> Dict[str, Any]:
+    return await portfolio_history(days)
+
+
+@app.get("/api/v1/market/prices")
+async def market_prices_api() -> Dict[str, Any]:
+    return await market_prices()
+
+
+@app.get("/api/v1/market/sentiment")
+async def market_sentiment_api() -> Dict[str, Any]:
+    return await market_sentiment()
+
+
+@app.get("/api/v1/news")
+async def news_api(limit: int = Query(6, ge=1, le=50)) -> Dict[str, Any]:
+    return await news(limit)
+
+
+@app.get("/api/v1/risk/metrics")
+async def risk_metrics_api() -> Dict[str, Any]:
+    return await risk_metrics()
+
+
+@app.get("/api/v1/risk/correlation")
+async def risk_correlation_api() -> Dict[str, Any]:
+    return await risk_correlation()
+
+
+@app.get("/api/v1/market/candles/{symbol}")
+async def market_candles_api(symbol: str, interval: str = Query("1h"), limit: int = Query(100, ge=1, le=1000)) -> List[Dict[str, Any]]:
+    return await market_candles(symbol, interval, limit)
+
+
+@app.get("/api/v1/market/price/{symbol}")
+async def market_price_api(symbol: str) -> Dict[str, Any]:
+    return await market_price(symbol)
+
+
+@app.get("/api/v1/market/orderbook/{symbol}")
+async def market_orderbook_api(symbol: str) -> Dict[str, Any]:
+    return await market_orderbook(symbol)
+
+
+@app.get("/api/v1/orders")
+async def list_orders_api() -> List[Dict[str, Any]]:
+    return await list_orders()
+
+
+# ===========================================
+# Original v1 ENDPOINTS (without /api prefix)
+# ===========================================
+
 @app.get("/v1/portfolio/summary")
 async def portfolio_summary() -> Dict[str, Any]:
     cash = 500000.0

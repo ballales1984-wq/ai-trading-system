@@ -9,16 +9,17 @@ REST API for portfolio management and positions.
 import os
 import random
 import requests
-import math
-import statistics
 from datetime import datetime
 from typing import List, Optional, Dict
 from uuid import uuid4
 
+import numpy as np
 from fastapi import APIRouter, HTTPException, status, Query
 from pydantic import BaseModel, Field
 
 from app.core.data_adapter import get_data_adapter
+from app.portfolio.performance import PortfolioPerformance as PortfolioPerformanceTracker
+from app.portfolio.optimization import PortfolioOptimizer, OptimizationConstraints
 from app.api.mock_data import (
     get_portfolio_summary as mock_portfolio_summary,
     get_positions as mock_positions,
@@ -56,7 +57,7 @@ def get_binance_price(symbol: str) -> Optional[float]:
         # Use Binance public API (no key needed for price data)
         url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol.upper()}"
         # Keep this endpoint responsive even if Binance is slow/unreachable.
-        response = requests.get(url, timeout=0.8)
+        response = requests.get(url, timeout=0.5)
         if response.status_code == 200:
             data = response.json()
             price = float(data.get('price', 0))
@@ -68,17 +69,67 @@ def get_binance_price(symbol: str) -> Optional[float]:
     
     return None
 
+def get_binance_prices_batch(symbols: List[str]) -> Dict[str, float]:
+    """
+    Get real-time prices for multiple symbols using Binance batch endpoint.
+    Returns a dictionary of symbol -> price.
+    This is much more efficient than making individual requests.
+    """
+    global _price_cache
+    prices = {}
+    current_time = datetime.now().timestamp()
+    
+    # First check cache for all symbols
+    for symbol in symbols:
+        if symbol in _price_cache:
+            cached_price, cached_time = _price_cache[symbol]
+            if current_time - cached_time < CACHE_DURATION_SECONDS:
+                prices[symbol.upper()] = cached_price
+    
+    # Find symbols not in cache
+    missing_symbols = [s for s in symbols if s.upper() not in prices]
+    
+    if not missing_symbols:
+        return prices
+    
+    # Try to get all missing prices in one request using ticker/24hr endpoint
+    # This endpoint returns more data but is still fast
+    try:
+        # Use the 24hr ticker endpoint which can return multiple symbols
+        url = "https://api.binance.com/api/v3/ticker/24hr"
+        response = requests.get(url, timeout=1.0)
+        if response.status_code == 200:
+            data = response.json()
+            # Create a lookup dict
+            ticker_dict = {item['symbol']: item for item in data}
+            
+            for symbol in missing_symbols:
+                symbol_upper = symbol.upper()
+                if symbol_upper in ticker_dict:
+                    price = float(ticker_dict[symbol_upper].get('lastPrice', 0))
+                    if price > 0:
+                        prices[symbol_upper] = price
+                        _price_cache[symbol_upper] = (price, current_time)
+    except Exception:
+        pass
+    
+    # If we still have missing symbols, try individual requests (with very short timeout)
+    for symbol in missing_symbols:
+        symbol_upper = symbol.upper()
+        if symbol_upper not in prices:
+            price = get_binance_price(symbol_upper)
+            if price:
+                prices[symbol_upper] = price
+    
+    return prices
+
 def get_binance_prices(symbols: List[str]) -> Dict[str, float]:
     """
     Get real-time prices for multiple symbols from Binance.
     Returns a dictionary of symbol -> price.
+    Uses batch endpoint for efficiency.
     """
-    prices = {}
-    for symbol in symbols:
-        price = get_binance_price(symbol)
-        if price:
-            prices[symbol.upper()] = price
-    return prices
+    return get_binance_prices_batch(symbols)
 
 # Default symbols for real-time prices (matching portfolio assets)
 TRACKED_SYMBOLS = [
@@ -355,6 +406,24 @@ class PortfolioHistory(BaseModel):
     history: List[HistoryEntry]
 
 
+class OptimizePortfolioRequest(BaseModel):
+    """Portfolio optimization request."""
+    method: str = Field(default="max_sharpe", description="max_sharpe, min_variance, risk_parity, equal_weight, inverse_volatility")
+    lookback_days: int = Field(default=60, ge=20, le=365)
+    max_weight: float = Field(default=0.35, gt=0, le=1.0)
+    long_only: bool = Field(default=True)
+
+
+class OptimizePortfolioResponse(BaseModel):
+    """Portfolio optimization response."""
+    method: str
+    weights: Dict[str, float]
+    expected_return: float
+    expected_volatility: float
+    sharpe_ratio: float
+    symbols: List[str]
+
+
 # ============================================================================
 # ROUTES
 # ============================================================================
@@ -597,6 +666,32 @@ def _mock_position_id(symbol: str) -> str:
     return f"mock_{symbol.replace('/', '').lower()}"
 
 
+def _safe_parse_timestamp(value: str) -> datetime:
+    """Parse timestamp safely, fallback to utcnow when malformed."""
+    try:
+        return datetime.fromisoformat(value)
+    except Exception:
+        return datetime.utcnow()
+
+
+def _compute_performance_from_history(
+    values: List[float],
+    timestamps: Optional[List[datetime]] = None,
+    risk_free_rate: float = 0.0,
+) -> Optional[PortfolioPerformanceTracker]:
+    """Build a PortfolioPerformance tracker from equity history values."""
+    if len(values) < 2:
+        return None
+
+    tracker = PortfolioPerformanceTracker(initial_capital=float(values[0]), risk_free_rate=risk_free_rate)
+    ts = timestamps or []
+    for i, val in enumerate(values[1:], start=1):
+        timestamp = ts[i] if i < len(ts) else datetime.utcnow()
+        tracker.record_equity(float(val), timestamp=timestamp)
+
+    return tracker
+
+
 @router.get("/positions", response_model=List[Position])
 async def list_positions(
     symbol: Optional[str] = Query(None, description="Filter by symbol"),
@@ -739,65 +834,49 @@ async def get_performance_metrics() -> PerformanceMetrics:
         except Exception:
             continue
 
-    returns = []
-    for i in range(1, len(values)):
-        prev = values[i - 1]
-        cur = values[i]
-        if prev > 0:
-            returns.append((cur - prev) / prev)
+    # Keep history order stable (oldest -> newest)
+    timestamps = []
+    if history:
+        pairs = []
+        for h in history:
+            ts = _safe_parse_timestamp(str(h.get("date", "")))
+            v = float(h.get("value", 0))
+            if v > 0:
+                pairs.append((ts, v))
+        pairs.sort(key=lambda x: x[0])
+        timestamps = [p[0] for p in pairs]
+        values = [p[1] for p in pairs]
 
-    if returns:
-        mean_ret = statistics.fmean(returns)
-        vol_daily = statistics.pstdev(returns) if len(returns) > 1 else 0.0
-        sharpe = (mean_ret / vol_daily * math.sqrt(252)) if vol_daily > 1e-9 else 0.0
+    tracker = _compute_performance_from_history(values, timestamps=timestamps, risk_free_rate=0.0)
+    if tracker is not None:
+        m = tracker.compute_metrics()
+        total_return_abs = float(summary.get("total_pnl", values[-1] - values[0]))
+        max_drawdown_abs = m.max_drawdown * max(values) if values else 0.0
 
-        downside = [r for r in returns if r < 0]
-        downside_dev = statistics.pstdev(downside) if len(downside) > 1 else 0.0
-        sortino = (mean_ret / downside_dev * math.sqrt(252)) if downside_dev > 1e-9 else sharpe
+        if np.isinf(m.profit_factor):
+            profit_factor = 99.0
+        else:
+            profit_factor = float(m.profit_factor)
 
-        peak = values[0]
-        max_drawdown = 0.0
-        for v in values:
-            if v > peak:
-                peak = v
-            dd = (v - peak) / peak if peak > 0 else 0.0
-            if dd < max_drawdown:
-                max_drawdown = dd
-
-        total_return = values[-1] - values[0]
-        total_return_pct = ((values[-1] - values[0]) / values[0] * 100) if values[0] > 0 else 0.0
-        max_drawdown_pct = max_drawdown * 100
-        calmar = ((total_return_pct / 100) / abs(max_drawdown)) if max_drawdown < 0 else 0.0
-
-        wins = [r for r in returns if r > 0]
-        losses = [r for r in returns if r < 0]
-        win_rate = len(wins) / len(returns) if returns else 0.0
-        profit_factor = (
-            (sum(wins) / abs(sum(losses))) if losses and abs(sum(losses)) > 1e-12 else (99.0 if wins else 1.0)
-        )
-        num_trades = len(returns)
-        num_winning = len(wins)
-        num_losing = len(losses)
-
-        total_pnl = float(summary.get("total_pnl", total_return))
-        avg_win = (total_pnl / num_winning) if num_winning > 0 else 0.0
-        avg_loss = -(abs(total_pnl) / num_losing) if num_losing > 0 else 0.0
+        daily_returns = tracker.get_daily_returns()
+        num_winning = len([r for r in daily_returns if r > 0])
+        num_losing = len([r for r in daily_returns if r < 0])
 
         return PerformanceMetrics(
-            total_return=total_return,
-            total_return_pct=total_return_pct,
-            sharpe_ratio=sharpe,
-            sortino_ratio=sortino,
-            max_drawdown=max_drawdown * (values[-1] if values else 0.0),
-            max_drawdown_pct=max_drawdown_pct,
-            calmar_ratio=calmar,
-            win_rate=win_rate,
+            total_return=total_return_abs,
+            total_return_pct=m.total_return * 100,
+            sharpe_ratio=float(m.sharpe_ratio),
+            sortino_ratio=float(m.sortino_ratio),
+            max_drawdown=max_drawdown_abs,
+            max_drawdown_pct=m.max_drawdown * 100,
+            calmar_ratio=float(m.calmar_ratio),
+            win_rate=float(m.win_rate if m.total_trades > 0 else (num_winning / max(len(daily_returns), 1))),
             profit_factor=profit_factor,
-            avg_win=avg_win,
-            avg_loss=avg_loss,
-            num_trades=num_trades,
-            num_winning_trades=num_winning,
-            num_losing_trades=num_losing,
+            avg_win=float(m.avg_win),
+            avg_loss=float(m.avg_loss),
+            num_trades=int(m.total_trades if m.total_trades > 0 else len(daily_returns)),
+            num_winning_trades=int(m.winning_trades if m.total_trades > 0 else num_winning),
+            num_losing_trades=int(m.losing_trades if m.total_trades > 0 else num_losing),
         )
 
     # Fallback when historical series is not available yet.
@@ -925,4 +1004,72 @@ async def get_portfolio_history(
             ))
     
     return PortfolioHistory(history=history)
+
+
+@router.post("/optimize", response_model=OptimizePortfolioResponse)
+async def optimize_portfolio(request: OptimizePortfolioRequest) -> OptimizePortfolioResponse:
+    """
+    Optimize current portfolio weights using app.portfolio.optimization module.
+    """
+    adapter = get_data_adapter()
+    positions = adapter.get_positions()
+
+    if not positions:
+        positions = portfolio_data.get("positions", [])
+
+    symbols = [p.get("symbol", "").upper() for p in positions if p.get("symbol")]
+    symbols = sorted(list(dict.fromkeys(symbols)))
+    if len(symbols) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Need at least 2 symbols with historical data to optimize portfolio",
+        )
+
+    history = adapter.get_portfolio_history(days=request.lookback_days)
+    values = []
+    for h in history:
+        try:
+            v = float(h.get("value", 0))
+            if v > 0:
+                values.append(v)
+        except Exception:
+            continue
+
+    if len(values) < 20:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Not enough historical equity values to run optimization",
+        )
+
+    # Build per-symbol synthetic return matrix from portfolio returns.
+    # Keeps optimizer connected with live API data even when per-asset history is unavailable.
+    portfolio_returns = np.diff(np.array(values)) / np.array(values[:-1])
+    if len(portfolio_returns) < 20:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Not enough return samples to run optimization",
+        )
+
+    returns_matrix = np.column_stack([portfolio_returns for _ in symbols])
+
+    constraints = OptimizationConstraints(
+        max_weight=request.max_weight,
+        long_only=request.long_only,
+    )
+    optimizer = PortfolioOptimizer(
+        symbols=symbols,
+        returns=returns_matrix,
+        risk_free_rate=0.0,
+        constraints=constraints,
+    )
+    result = optimizer.optimize(method=request.method)
+
+    return OptimizePortfolioResponse(
+        method=result.method,
+        weights=result.weights,
+        expected_return=result.expected_return,
+        expected_volatility=result.expected_volatility,
+        sharpe_ratio=result.sharpe_ratio,
+        symbols=symbols,
+    )
 

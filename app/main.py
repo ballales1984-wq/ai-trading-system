@@ -18,6 +18,7 @@ from app.core.logging import setup_logging, get_logger
 from app.api.routes import health, orders, portfolio, strategy, market, waitlist
 from app.api.routes import cache, news, auth
 from app.api.routes.payments import router as payments
+from app.api.routes.risk import router as risk
 
 
 from fastapi.staticfiles import StaticFiles
@@ -202,6 +203,13 @@ app.include_router(
     payments,
     prefix=f"{settings.api_prefix}/payments",
     tags=["Payments"]
+)
+
+# Include risk router
+app.include_router(
+    risk,
+    prefix=f"{settings.api_prefix}/risk",
+    tags=["Risk"]
 )
 
 
