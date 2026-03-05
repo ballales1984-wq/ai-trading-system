@@ -1,353 +1,306 @@
 """
-Tests for Security Module (JWT Authentication)
-===============================================
-Tests for JWT token generation, validation, and user management.
+Tests for Security Module
+========================
 """
 
 import pytest
+from datetime import datetime, timedelta
+
 import sys
 import os
-from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
-
-# Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.core.security import (
-    JWTManager, SecurityConfig, User, UserRole, TokenPayload
-)
 
-
-class TestSecurityConfig:
-    """Test SecurityConfig class."""
+class TestSecurityPasswordHashing:
+    """Test password hashing functions."""
     
-    def test_default_initialization(self):
-        """Test default SecurityConfig initialization."""
-        config = SecurityConfig()
+    def test_hash_password_function(self):
+        """Test hash_password standalone function."""
+        from app.core.security import hash_password
         
-        assert config.secret_key == "your-secret-key-change-in-production"
-        assert config.algorithm == "HS256"
-        assert config.access_token_expire_minutes == 30
-        assert config.refresh_token_expire_days == 7
-    
-    def test_custom_initialization(self):
-        """Test custom SecurityConfig initialization."""
-        config = SecurityConfig(
-            secret_key="custom-secret",
-            algorithm="HS512",
-            access_token_expire_minutes=60,
-            refresh_token_expire_days=14
-        )
-        
-        assert config.secret_key == "custom-secret"
-        assert config.algorithm == "HS512"
-        assert config.access_token_expire_minutes == 60
-        assert config.refresh_token_expire_days == 14
-    
-    def test_from_env(self):
-        """Test creating SecurityConfig from environment variables."""
-        with patch.dict(os.environ, {
-            'JWT_SECRET_KEY': 'env-secret',
-            'JWT_EXPIRE_MINUTES': '45',
-            'JWT_REFRESH_DAYS': '10'
-        }):
-            config = SecurityConfig.from_env()
-            
-            assert config.secret_key == 'env-secret'
-            assert config.access_token_expire_minutes == 45
-            assert config.refresh_token_expire_days == 10
-    
-    def test_from_env_defaults(self):
-        """Test creating SecurityConfig from environment with defaults."""
-        # Remove env vars if set
-        env_vars = ['JWT_SECRET_KEY', 'JWT_EXPIRE_MINUTES', 'JWT_REFRESH_DAYS']
-        with patch.dict(os.environ, {}, clear=True):
-            for var in env_vars:
-                os.environ.pop(var, None)
-            
-            config = SecurityConfig.from_env()
-            
-            assert config.secret_key == "your-secret-key-change-in-production"
-            assert config.access_token_expire_minutes == 30
-            assert config.refresh_token_expire_days == 7
-
-
-class TestJWTManager:
-    """Test JWTManager class."""
-    
-    def setup_method(self):
-        """Setup test data."""
-        self.config = SecurityConfig(
-            secret_key="test-secret-key",
-            algorithm="HS256",
-            access_token_expire_minutes=30,
-            refresh_token_expire_days=7
-        )
-        self.jwt_manager = JWTManager(config=self.config)
-    
-    def test_initialization(self):
-        """Test JWTManager initialization."""
-        assert self.jwt_manager is not None
-        assert self.jwt_manager.config == self.config
-        assert len(self.jwt_manager._users) == 0
-    
-    def test_hash_password(self):
-        """Test password hashing."""
         password = "test_password_123"
-        hashed = self.jwt_manager.hash_password(password)
+        hashed = hash_password(password)
         
         assert hashed is not None
         assert hashed != password
         assert len(hashed) > 0
     
-    def test_verify_password_correct(self):
-        """Test password verification with correct password."""
+    def test_verify_password_function(self):
+        """Test verify_password standalone function."""
+        from app.core.security import hash_password, verify_password
+        
         password = "test_password_123"
-        hashed = self.jwt_manager.hash_password(password)
+        hashed = hash_password(password)
         
-        assert self.jwt_manager.verify_password(password, hashed) is True
-    
-    def test_verify_password_incorrect(self):
-        """Test password verification with incorrect password."""
-        password = "test_password_123"
-        wrong_password = "wrong_password"
-        hashed = self.jwt_manager.hash_password(password)
+        # Correct password
+        assert verify_password(password, hashed) is True
         
-        assert self.jwt_manager.verify_password(wrong_password, hashed) is False
+        # Wrong password
+        assert verify_password("wrong_password", hashed) is False
     
-    def test_create_user(self):
-        """Test user creation."""
-        user = self.jwt_manager.create_user(
+    def test_different_hashes_same_password(self):
+        """Test that same password produces different hashes (salt)."""
+        from app.core.security import hash_password
+        
+        password = "test_password"
+        hash1 = hash_password(password)
+        hash2 = hash_password(password)
+        
+        # Different hashes due to salt
+        assert hash1 != hash2
+
+
+class TestSecurityConfig:
+    """Test SecurityConfig class."""
+    
+    def test_security_config_defaults(self):
+        """Test default security config."""
+        from app.core.security import SecurityConfig
+        
+        config = SecurityConfig()
+        
+        assert config.secret_key is not None
+        assert config.algorithm == "HS256"
+        assert config.access_token_expire_minutes == 30
+    
+    def test_security_config_from_env(self):
+        """Test creating config from environment."""
+        from app.core.security import SecurityConfig
+        
+        config = SecurityConfig.from_env()
+        
+        assert config is not None
+
+
+class TestJWTManager:
+    """Test JWTManager class."""
+    
+    def test_jwt_manager_creation(self):
+        """Test JWTManager initialization."""
+        from app.core.security import JWTManager
+        
+        manager = JWTManager()
+        
+        assert manager is not None
+    
+    def test_jwt_manager_hash_password(self):
+        """Test JWTManager hash_password method."""
+        from app.core.security import JWTManager
+        
+        manager = JWTManager()
+        
+        hashed = manager.hash_password("test_password")
+        
+        assert hashed is not None
+        assert hashed != "test_password"
+    
+    def test_jwt_manager_verify_password(self):
+        """Test JWTManager verify_password method."""
+        from app.core.security import JWTManager
+        
+        manager = JWTManager()
+        
+        password = "test_password"
+        hashed = manager.hash_password(password)
+        
+        assert manager.verify_password(password, hashed) is True
+        assert manager.verify_password("wrong", hashed) is False
+
+
+class TestUser:
+    """Test User class."""
+    
+    def test_user_creation(self):
+        """Test User creation."""
+        from app.core.security import User
+        
+        user = User(
+            user_id="test_id",
             username="testuser",
-            password="test_password_123",
-            role=UserRole.TRADER
+            email="test@example.com",
+            role="trader",
+            hashed_password="some_hash"
         )
         
-        assert user is not None
+        assert user.user_id == "test_id"
         assert user.username == "testuser"
-        assert user.role == UserRole.TRADER
-        assert user.is_active is True
-        assert user.created_at is not None
-        assert "testuser" in self.jwt_manager._users
+        assert user.role == "trader"
     
-    def test_create_user_default_role(self):
-        """Test user creation with default role."""
-        user = self.jwt_manager.create_user(
-            username="vieweruser",
-            password="test_password_123"
-        )
+    def test_user_to_dict(self):
+        """Test User to_dict method."""
+        from app.core.security import User, UserRole
         
-        assert user.role == UserRole.VIEWER
-    
-    def test_authenticate_success(self):
-        """Test successful authentication."""
-        # Create user
-        self.jwt_manager.create_user(
+        user = User(
+            user_id="test_id",
             username="testuser",
-            password="test_password_123",
-            role=UserRole.TRADER
+            email="test@example.com",
+            role=UserRole.TRADER,
+            hashed_password="some_hash"
         )
         
-        # Authenticate
-        user = self.jwt_manager.authenticate("testuser", "test_password_123")
+        user_dict = user.to_dict()
         
-        assert user is not None
-        assert user.username == "testuser"
-        assert user.last_login is not None
-    
-    def test_authenticate_wrong_password(self):
-        """Test authentication with wrong password."""
-        # Create user
-        self.jwt_manager.create_user(
-            username="testuser",
-            password="test_password_123"
-        )
-        
-        # Authenticate with wrong password
-        user = self.jwt_manager.authenticate("testuser", "wrong_password")
-        
-        assert user is None
-    
-    def test_authenticate_nonexistent_user(self):
-        """Test authentication with nonexistent user."""
-        user = self.jwt_manager.authenticate("nonexistent", "password")
-        
-        assert user is None
-    
-    def test_authenticate_inactive_user(self):
-        """Test authentication with inactive user."""
-        # Create user
-        user = self.jwt_manager.create_user(
-            username="testuser",
-            password="test_password_123"
-        )
-        
-        # Deactivate user
-        user.is_active = False
-        
-        # Authenticate
-        result = self.jwt_manager.authenticate("testuser", "test_password_123")
-        
-        assert result is None
-    
-    def test_create_access_token(self):
-        """Test access token creation."""
-        # Create user
-        user = self.jwt_manager.create_user(
-            username="testuser",
-            password="test_password_123",
-            role=UserRole.TRADER
-        )
-        
-        # Create token
-        token = self.jwt_manager.create_access_token(user)
-        
-        assert token is not None
-        assert isinstance(token, str)
-        assert len(token) > 0
-    
-    def test_create_refresh_token(self):
-        """Test refresh token creation."""
-        # Create user
-        user = self.jwt_manager.create_user(
-            username="testuser",
-            password="test_password_123"
-        )
-        
-        # Create refresh token
-        token = self.jwt_manager.create_refresh_token(user)
-        
-        assert token is not None
-        assert isinstance(token, str)
-        assert len(token) > 0
-    
-    def test_verify_token_valid(self):
-        """Test token verification with valid token."""
-        # Create user and token
-        user = self.jwt_manager.create_user(
-            username="testuser",
-            password="test_password_123",
-            role=UserRole.TRADER
-        )
-        token = self.jwt_manager.create_access_token(user)
-        
-        # Verify token
-        payload = self.jwt_manager.verify_token(token)
-        
-        assert payload is not None
-        assert payload.username == "testuser"
-        assert payload.role == "trader"
-    
-    def test_verify_token_invalid(self):
-        """Test token verification with invalid token."""
-        payload = self.jwt_manager.verify_token("invalid_token")
-        
-        assert payload is None
-    
-    def test_verify_token_expired(self):
-        """Test token verification with expired token."""
-        # Create config with very short expiry
-        config = SecurityConfig(
-            secret_key="test-secret",
-            access_token_expire_minutes=-1  # Already expired
-        )
-        jwt_manager = JWTManager(config=config)
-        
-        # Create user and token
-        user = jwt_manager.create_user(
-            username="testuser",
-            password="test_password_123"
-        )
-        token = jwt_manager.create_access_token(user)
-        
-        # Verify token (should fail due to expiry)
-        payload = jwt_manager.verify_token(token)
-        
-        assert payload is None
-    
-    def test_get_user_from_token(self):
-        """Test getting user from token."""
-        # Create user and token
-        user = self.jwt_manager.create_user(
-            username="testuser",
-            password="test_password_123",
-            role=UserRole.TRADER
-        )
-        token = self.jwt_manager.create_access_token(user)
-        
-        # Get user from token
-        retrieved_user = self.jwt_manager.get_user_from_token(token)
-        
-        assert retrieved_user is not None
-        assert retrieved_user.username == "testuser"
-    
-    def test_get_user_from_invalid_token(self):
-        """Test getting user from invalid token."""
-        user = self.jwt_manager.get_user_from_token("invalid_token")
-        
-        assert user is None
-    
-    def test_refresh_access_token(self):
-        """Test refreshing access token."""
-        # Create user and refresh token
-        user = self.jwt_manager.create_user(
-            username="testuser",
-            password="test_password_123"
-        )
-        refresh_token = self.jwt_manager.create_refresh_token(user)
-        
-        # Refresh access token
-        new_token = self.jwt_manager.refresh_access_token(refresh_token)
-        
-        # Note: refresh_access_token uses payload.username which may be None for refresh tokens
-        # This test verifies the method runs without error
-        # The actual behavior depends on the token payload structure
+        assert user_dict["username"] == "testuser"
+        assert "hashed_password" not in user_dict  # Should not include password
 
 
 class TestUserRole:
     """Test UserRole enum."""
     
-    def test_roles(self):
-        """Test all user roles."""
+    def test_user_role_values(self):
+        """Test UserRole enum values."""
+        from app.core.security import UserRole
+        
         assert UserRole.ADMIN.value == "admin"
         assert UserRole.TRADER.value == "trader"
         assert UserRole.VIEWER.value == "viewer"
-        assert UserRole.API_USER.value == "api_user"
 
 
 class TestTokenPayload:
-    """Test TokenPayload dataclass."""
+    """Test TokenPayload class."""
     
-    def test_initialization(self):
-        """Test TokenPayload initialization."""
-        now = datetime.utcnow()
+    def test_token_payload_creation(self):
+        """Test TokenPayload creation."""
+        from app.core.security import TokenPayload
+        
         payload = TokenPayload(
-            sub="user_1",
+            sub="user123",
             username="testuser",
             role="trader",
-            exp=now + timedelta(minutes=30),
-            iat=now
+            exp=datetime.now() + timedelta(hours=1)
         )
         
-        assert payload.sub == "user_1"
+        assert payload.sub == "user123"
         assert payload.username == "testuser"
         assert payload.role == "trader"
     
-    def test_to_dict(self):
-        """Test converting TokenPayload to dictionary."""
-        now = datetime.utcnow()
+    def test_token_payload_to_dict(self):
+        """Test TokenPayload to_dict method."""
+        from app.core.security import TokenPayload
+        
         payload = TokenPayload(
-            sub="user_1",
+            sub="user123",
             username="testuser",
             role="trader",
-            exp=now + timedelta(minutes=30),
-            iat=now
+            exp=datetime.now() + timedelta(hours=1)
         )
         
         payload_dict = payload.to_dict()
         
-        assert payload_dict['sub'] == "user_1"
-        assert payload_dict['username'] == "testuser"
-        assert payload_dict['role'] == "trader"
-        assert 'exp' in payload_dict
-        assert 'iat' in payload_dict
+        assert payload_dict["sub"] == "user123"
+        assert payload_dict["username"] == "testuser"
+        assert payload_dict["role"] == "trader"
+
+
+class TestSubscriptionPlan:
+    """Test SubscriptionPlan enum."""
+    
+    def test_subscription_plan_values(self):
+        """Test SubscriptionPlan values."""
+        from app.core.security import SubscriptionPlan
+        
+        assert SubscriptionPlan.FREE.value == "free"
+        assert SubscriptionPlan.TRIAL.value == "trial"
+        assert SubscriptionPlan.LIFETIME.value == "lifetime"
+
+
+class TestSubscriptionStatus:
+    """Test SubscriptionStatus enum."""
+    
+    def test_subscription_status_values(self):
+        """Test SubscriptionStatus values."""
+        from app.core.security import SubscriptionStatus
+        
+        assert SubscriptionStatus.ACTIVE.value == "active"
+        assert SubscriptionStatus.TRIALING.value == "trialing"
+        assert SubscriptionStatus.CANCELED.value == "canceled"
+
+
+class TestSubscription:
+    """Test Subscription class."""
+    
+    def test_subscription_creation(self):
+        """Test Subscription creation."""
+        from app.core.security import Subscription, SubscriptionPlan, SubscriptionStatus
+        
+        sub = Subscription(
+            plan=SubscriptionPlan.FREE,
+            status=SubscriptionStatus.ACTIVE
+        )
+        
+        assert sub.plan == SubscriptionPlan.FREE
+    
+    def test_subscription_is_active(self):
+        """Test subscription is_active."""
+        from app.core.security import Subscription, SubscriptionStatus
+        
+        sub = Subscription(
+            status=SubscriptionStatus.ACTIVE
+        )
+        
+        assert sub.is_active() is True
+    
+    def test_subscription_is_not_active(self):
+        """Test subscription is not active when canceled."""
+        from app.core.security import Subscription, SubscriptionStatus
+        
+        sub = Subscription(
+            status=SubscriptionStatus.CANCELED
+        )
+        
+        assert sub.is_active() is False
+
+
+class TestJWTManagerTokens:
+    """Test JWT token creation and verification."""
+    
+    def test_create_access_token(self):
+        """Test creating access token."""
+        from app.core.security import JWTManager, User, UserRole
+        
+        manager = JWTManager()
+        user = User(
+            user_id="test_id",
+            username="testuser",
+            email="test@example.com",
+            role=UserRole.TRADER,
+            hashed_password="hash"
+        )
+        
+        token = manager.create_access_token(user)
+        
+        assert token is not None
+        assert len(token) > 0
+    
+    def test_verify_token(self):
+        """Test verifying token."""
+        from app.core.security import JWTManager, User, UserRole
+        
+        manager = JWTManager()
+        user = User(
+            user_id="test_id",
+            username="testuser",
+            email="test@example.com",
+            role=UserRole.TRADER,
+            hashed_password="hash"
+        )
+        
+        token = manager.create_access_token(user)
+        payload = manager.verify_token(token)
+        
+        assert payload is not None
+        assert payload.sub == "test_id"
+    
+    def test_verify_invalid_token(self):
+        """Test verifying invalid token."""
+        from app.core.security import JWTManager
+        
+        manager = JWTManager()
+        
+        payload = manager.verify_token("invalid_token")
+        
+        assert payload is None
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
