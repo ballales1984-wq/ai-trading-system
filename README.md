@@ -3,7 +3,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/Status-Production Ready-green.svg" alt="Status">
-  <img src="https://img.shields.io/badge/Tests-311 Passed-success.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-592 Passed-success.svg" alt="Tests">
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
 </p>
 
@@ -51,7 +51,7 @@ ai-trading-system/
 │   ├── research/         # Alpha Lab, Feature Store
 │   └── external/         # API integrations
 │
-├── tests/                # Test suite (311 tests)
+├── tests/                # Test suite (592 tests)
 ├── dashboard/            # Dash dashboard
 ├── frontend/             # React frontend
 ├── docker/               # Docker configs
