@@ -1,6 +1,7 @@
 """Tests for cache management API routes."""
 
 from fastapi.testclient import TestClient
+import sys
 
 
 class FakeRedisCacheManager:
@@ -50,10 +51,18 @@ def _build_client(monkeypatch, admin_key="secret123", prefix="cache:"):
     monkeypatch.setenv("REDIS_CACHE_PREFIX", prefix)
 
     import app.main as main_module
-    cache_routes = main_module.cache
-    monkeypatch.setattr(cache_routes, "CACHE_NAMESPACE_PREFIX", prefix)
+    
+    # Get the actual module from sys.modules - this ensures we get the module, not something else
+    cache_routes_module = sys.modules.get('app.api.routes.cache')
+    if cache_routes_module is None:
+        import importlib
+        cache_routes_module = importlib.import_module('app.api.routes.cache')
+    
+    # Directly set the prefix on the module
+    cache_routes_module.CACHE_NAMESPACE_PREFIX = prefix
+    
     app = main_module.app
-    return app, cache_routes, TestClient(app)
+    return app, cache_routes_module, TestClient(app)
 
 
 def test_destructive_endpoint_requires_admin_key(monkeypatch):
