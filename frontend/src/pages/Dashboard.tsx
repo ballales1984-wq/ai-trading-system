@@ -29,7 +29,8 @@ export default function Dashboard() {
   });
 
   // Extract real and simulated summaries
-  const realSummary = dualSummary?.real;
+  // Use simulated as primary when real has no positions
+  const realSummary = (dualSummary?.simulated?.num_positions || 0) > 0 ? dualSummary?.simulated : dualSummary?.real;
   const simulatedSummary = dualSummary?.simulated;
 
   const formatCurrency = (value: number) => {

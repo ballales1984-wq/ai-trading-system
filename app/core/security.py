@@ -455,6 +455,33 @@ jwt_manager.create_user(
 )
 
 
+# Standalone functions for password hashing (for backward compatibility)
+def hash_password(password: str) -> str:
+    """Hash a password using bcrypt."""
+    return jwt_manager.hash_password(password)
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against its hash."""
+    return jwt_manager.verify_password(plain_password, hashed_password)
+
+
+__all__ = [
+    "SubscriptionPlan",
+    "SubscriptionStatus", 
+    "Subscription",
+    "UserRole",
+    "TokenPayload",
+    "User",
+    "SecurityConfig",
+    "JWTManager",
+    "TokenRequired",
+    "jwt_manager",
+    "hash_password",
+    "verify_password",
+]
+
+
 # FastAPI integration example:
 """
 from fastapi import FastAPI, HTTPException, Depends

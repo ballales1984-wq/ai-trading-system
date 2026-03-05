@@ -360,3 +360,7 @@ class PortfolioPerformance:
             for k, v in metrics.__dict__.items()
             if v is not None
         }
+
+
+# Alias for backward compatibility
+PerformanceTracker = PortfolioPerformance

@@ -484,3 +484,7 @@ class TradingRepository:
     def close(self):
         """Close the session."""
         self.session.close()
+
+
+# Alias for backward compatibility
+Repository = TradingRepository

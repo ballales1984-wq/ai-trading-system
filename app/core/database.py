@@ -479,7 +479,7 @@ async def close_async_db_manager() -> None:
 
 
 # =============================================================================
-# DEPENDENCY INJECTION
+# FASTAPI DEPENDENCY INJECTION
 # =============================================================================
 
 def get_session_dependency() -> Generator[Session, None, None]:
@@ -501,3 +501,26 @@ async def get_async_session_dependency() -> AsyncGenerator[AsyncSession, None]:
     db = await init_async_db()
     async with db.session() as session:
         yield session
+
+
+# Alias for backward compatibility
+def get_db() -> Generator[Session, None, None]:
+    """
+    FastAPI dependency for database sessions.
+    This is an alias for get_session_dependency for backward compatibility.
+    """
+    return get_session_dependency()
+
+
+__all__ = [
+    "DatabaseManager",
+    "AsyncDatabaseManager", 
+    "get_db_manager",
+    "get_async_db_manager",
+    "init_async_db",
+    "close_db_manager",
+    "close_async_db_manager",
+    "get_session_dependency",
+    "get_async_session_dependency",
+    "get_db",
+]

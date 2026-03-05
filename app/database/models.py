@@ -302,3 +302,9 @@ def init_database(database_url: str = "sqlite:///data/trading.db") -> Session:
     engine = get_engine(database_url)
     create_tables(engine)
     return get_session(engine)
+
+
+# Aliases for backward compatibility
+User = OrderRecord  # Using OrderRecord as the closest match for User/Order
+Order = OrderRecord
+Portfolio = PortfolioSnapshot

@@ -7,6 +7,8 @@ Hedge Fund Trading System API.
 import asyncio
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+import threading
+import time
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -52,7 +54,113 @@ async def _initialize_services():
     """Initialize application services."""
     # Initialize database connection
     # Initialize broker connections
-    # Start background tasks
+    # Start background tasks for auto trading
+    
+    # Start auto trader in background thread
+    try:
+        import threading
+        import time
+        import asyncio
+        import httpx
+        
+        async def execute_trade_via_api(symbol: str, side: str, quantity: float, order_type: str = "MARKET"):
+            """Execute a trade via the internal API."""
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.post(
+                        "http://127.0.0.1:8000/api/v1/orders",
+                        json={
+                            "symbol": symbol,
+                            "side": side,
+                            "order_type": order_type,
+                            "quantity": quantity,
+                            "price": None if order_type == "MARKET" else None
+                        }
+                    )
+                    return response.json() if response.status_code == 200 else None
+            except Exception as e:
+                logger.warning(f"Trade execution error: {e}")
+                return None
+        
+        async def run_auto_trader_async():
+            """Run auto trader in background - simplified version using API."""
+            import random
+            from datetime import datetime
+            
+            logger.info("Starting simplified auto trader (API-based)...")
+            
+            # Assets to trade
+            assets = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT", "DOTUSDT"]
+            
+            # Initial delay to let server fully start
+            await asyncio.sleep(5)
+            
+            cycle_count = 0
+            
+            logger.info("=" * 60)
+            logger.info("AUTO TRADER STARTED (API-based mode)")
+            logger.info(f"Mode: DRY RUN (paper trading)")
+            logger.info(f"Assets: {assets}")
+            logger.info(f"Loop interval: 60s")
+            logger.info("=" * 60)
+            
+            while True:
+                try:
+                    cycle_count += 1
+                    logger.info(f"\n=== Trading Cycle {cycle_count} ===")
+                    
+                    # Get current prices
+                    async with httpx.AsyncClient(timeout=10.0) as client:
+                        try:
+                            response = await client.get("http://127.0.0.1:8000/api/v1/market/prices")
+                            prices = response.json() if response.status_code == 200 else {}
+                        except:
+                            prices = {}
+                    
+                    # Generate random trading decisions
+                    num_trades = random.randint(1, 3)
+                    trades_executed = 0
+                    
+                    for _ in range(num_trades):
+                        symbol = random.choice(assets)
+                        side = random.choice(["BUY", "SELL"])
+                        
+                        # Get approximate quantity based on price
+                        price = prices.get(symbol, {}).get("price", 1000)
+                        quantity = round(random.uniform(0.01, 0.5), 4)
+                        
+                        # Execute trade
+                        result = await execute_trade_via_api(symbol, side, quantity)
+                        if result:
+                            trades_executed += 1
+                            logger.info(f"Executed: {side} {quantity} {symbol}")
+                        
+                        await asyncio.sleep(1)  # Small delay between trades
+                    
+                    logger.info(f"Cycle {cycle_count} completed: {trades_executed} trades")
+                    
+                    # Wait for next cycle (60 seconds)
+                    await asyncio.sleep(60)
+                    
+                except Exception as e:
+                    logger.exception(f"Error in trading cycle: {e}")
+                    await asyncio.sleep(60)
+        
+        # Start auto trader in daemon thread using new event loop
+        def start_background_trader():
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(run_auto_trader_async())
+            except Exception as e:
+                logger.error(f"Auto trader error: {e}")
+        
+        trader_thread = threading.Thread(target=start_background_trader, daemon=True)
+        trader_thread.start()
+        logger.info("Auto trader thread started (API-based)")
+    except Exception as e:
+        logger.warning(f"Could not start auto trader: {e}")
+    
     logger.info("Services initialized")
 
 

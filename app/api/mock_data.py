@@ -464,6 +464,192 @@ def get_orders(status: Optional[str] = None) -> List[Dict[str, Any]]:
             "pnl": 0.00,
             "pnl_pct": 0.00,
         },
+        # Additional crypto orders
+        {
+            "id": "ORD-008",
+            "symbol": "LTC/USDT",
+            "side": "BUY",
+            "type": "MARKET",
+            "quantity": 10.0,
+            "price": 68.00,
+            "filled_quantity": 10.0,
+            "status": "FILLED",
+            "created_at": (datetime.utcnow() - timedelta(days=12)).isoformat(),
+            "filled_at": (datetime.utcnow() - timedelta(days=12)).isoformat(),
+            "pnl": 40.00,  # (72 - 68) * 10
+            "pnl_pct": 5.88,
+        },
+        {
+            "id": "ORD-009",
+            "symbol": "LINK/USDT",
+            "side": "BUY",
+            "type": "LIMIT",
+            "quantity": 50.0,
+            "price": 13.50,
+            "filled_quantity": 50.0,
+            "status": "FILLED",
+            "created_at": (datetime.utcnow() - timedelta(days=8)).isoformat(),
+            "filled_at": (datetime.utcnow() - timedelta(days=8)).isoformat(),
+            "pnl": 65.00,  # (14.80 - 13.50) * 50
+            "pnl_pct": 9.63,
+        },
+        {
+            "id": "ORD-010",
+            "symbol": "ADA/USDT",
+            "side": "BUY",
+            "type": "LIMIT",
+            "quantity": 1000.0,
+            "price": 0.42,
+            "filled_quantity": 1000.0,
+            "status": "FILLED",
+            "created_at": (datetime.utcnow() - timedelta(days=6)).isoformat(),
+            "filled_at": (datetime.utcnow() - timedelta(days=6)).isoformat(),
+            "pnl": 30.00,  # (0.45 - 0.42) * 1000
+            "pnl_pct": 7.14,
+        },
+        {
+            "id": "ORD-011",
+            "symbol": "DOT/USDT",
+            "side": "BUY",
+            "type": "MARKET",
+            "quantity": 100.0,
+            "price": 6.80,
+            "filled_quantity": 100.0,
+            "status": "FILLED",
+            "created_at": (datetime.utcnow() - timedelta(days=4)).isoformat(),
+            "filled_at": (datetime.utcnow() - timedelta(days=4)).isoformat(),
+            "pnl": 40.00,  # (7.20 - 6.80) * 100
+            "pnl_pct": 5.88,
+        },
+        {
+            "id": "ORD-012",
+            "symbol": "MATIC/USDT",
+            "side": "BUY",
+            "type": "LIMIT",
+            "quantity": 500.0,
+            "price": 0.55,
+            "filled_quantity": 500.0,
+            "status": "FILLED",
+            "created_at": (datetime.utcnow() - timedelta(days=2)).isoformat(),
+            "filled_at": (datetime.utcnow() - timedelta(days=2)).isoformat(),
+            "pnl": 15.00,  # (0.58 - 0.55) * 500
+            "pnl_pct": 5.45,
+        },
+        # Forex orders
+        {
+            "id": "ORD-013",
+            "symbol": "EUR/USD",
+            "side": "BUY",
+            "type": "LIMIT",
+            "quantity": 10000.0,
+            "price": 1.0800,
+            "filled_quantity": 10000.0,
+            "status": "FILLED",
+            "created_at": (datetime.utcnow() - timedelta(days=11)).isoformat(),
+            "filled_at": (datetime.utcnow() - timedelta(days=11)).isoformat(),
+            "pnl": 50.00,  # (1.0850 - 1.0800) * 10000
+            "pnl_pct": 0.46,
+        },
+        {
+            "id": "ORD-014",
+            "symbol": "GBP/USD",
+            "side": "BUY",
+            "type": "LIMIT",
+            "quantity": 8000.0,
+            "price": 1.2500,
+            "filled_quantity": 8000.0,
+            "status": "FILLED",
+            "created_at": (datetime.utcnow() - timedelta(days=9)).isoformat(),
+            "filled_at": (datetime.utcnow() - timedelta(days=9)).isoformat(),
+            "pnl": 120.00,  # (1.2650 - 1.2500) * 8000
+            "pnl_pct": 1.20,
+        },
+        {
+            "id": "ORD-015",
+            "symbol": "USD/JPY",
+            "side": "SELL",
+            "type": "LIMIT",
+            "quantity": 1000.0,
+            "price": 150.00,
+            "filled_quantity": 0,
+            "status": "PENDING",
+            "created_at": (datetime.utcnow() - timedelta(hours=1)).isoformat(),
+            "filled_at": None,
+            "pnl": 0.00,
+            "pnl_pct": 0.00,
+        },
+        # Commodities orders
+        {
+            "id": "ORD-016",
+            "symbol": "XAU/USD",
+            "side": "BUY",
+            "type": "LIMIT",
+            "quantity": 10.0,
+            "price": 1980.00,
+            "filled_quantity": 10.0,
+            "status": "FILLED",
+            "created_at": (datetime.utcnow() - timedelta(days=14)).isoformat(),
+            "filled_at": (datetime.utcnow() - timedelta(days=14)).isoformat(),
+            "pnl": 450.00,  # (2025 - 1980) * 10
+            "pnl_pct": 2.27,
+        },
+        {
+            "id": "ORD-017",
+            "symbol": "XAG/USD",
+            "side": "BUY",
+            "type": "MARKET",
+            "quantity": 100.0,
+            "price": 22.00,
+            "filled_quantity": 100.0,
+            "status": "FILLED",
+            "created_at": (datetime.utcnow() - timedelta(days=3)).isoformat(),
+            "filled_at": (datetime.utcnow() - timedelta(days=3)).isoformat(),
+            "pnl": 80.00,  # (22.80 - 22.00) * 100
+            "pnl_pct": 3.64,
+        },
+        {
+            "id": "ORD-018",
+            "symbol": "USOIL",
+            "side": "BUY",
+            "type": "LIMIT",
+            "quantity": 50.0,
+            "price": 70.00,
+            "filled_quantity": 50.0,
+            "status": "FILLED",
+            "created_at": (datetime.utcnow() - timedelta(days=7)).isoformat(),
+            "filled_at": (datetime.utcnow() - timedelta(days=7)).isoformat(),
+            "pnl": 125.00,  # (72.50 - 70.00) * 50
+            "pnl_pct": 3.57,
+        },
+        # Indices orders
+        {
+            "id": "ORD-019",
+            "symbol": "US500",
+            "side": "BUY",
+            "type": "LIMIT",
+            "quantity": 5.0,
+            "price": 4650.00,
+            "filled_quantity": 5.0,
+            "status": "FILLED",
+            "created_at": (datetime.utcnow() - timedelta(days=13)).isoformat(),
+            "filled_at": (datetime.utcnow() - timedelta(days=13)).isoformat(),
+            "pnl": 650.00,  # (4780 - 4650) * 5
+            "pnl_pct": 2.80,
+        },
+        {
+            "id": "ORD-020",
+            "symbol": "US30",
+            "side": "BUY",
+            "type": "MARKET",
+            "quantity": 1.0,
+            "price": 37000.00,
+            "filled_quantity": 1.0,
+            "status": "FILLED",
+            "created_at": (datetime.utcnow() - timedelta(days=5)).isoformat(),
+            "filled_at": (datetime.utcnow() - timedelta(days=5)).isoformat(),
+            "pnl": 500.00,  # (37500 - 37000) * 1
+            "pnl_pct": 1.35,
+        },
     ]
     
     if status_str:
@@ -806,3 +992,40 @@ __all__ = [
     "get_market_sentiment",
     "get_news",
 ]
+
+# Backward compatibility aliases
+MOCK_PRICES = BASE_PRICES
+
+
+def get_mock_ticker(symbol: str):
+    """Get mock ticker data."""
+    return get_price_data(symbol)
+
+
+def get_mock_orderbook(symbol: str, depth: int = 10):
+    """Get mock orderbook data."""
+    import random
+    ticker = get_price_data(symbol)
+    if "error" in ticker:
+        return ticker
+    
+    price = ticker.get("price", 100.0)
+    
+    bids = []
+    asks = []
+    for i in range(depth):
+        bid_price = price * (1 - 0.001 * (i + 1))
+        ask_price = price * (1 + 0.001 * (i + 1))
+        bids.append([round(bid_price, 2), round(random.uniform(100, 10000), 2)])
+        asks.append([round(ask_price, 2), round(random.uniform(100, 10000), 2)])
+    
+    return {
+        "symbol": symbol,
+        "bids": bids,
+        "asks": asks,
+    }
+
+
+def get_mock_ohlcv(symbol: str, interval: str = "1h", limit: int = 100):
+    """Get mock OHLCV data."""
+    return get_candle_data(symbol, interval, limit)

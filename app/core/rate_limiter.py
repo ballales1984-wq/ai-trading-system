@@ -114,9 +114,35 @@ class RateLimiter:
     Multi-strategy rate limiter for API endpoints.
     """
     
-    def __init__(self, config: Optional[RateLimitConfig] = None):
-        """Initialize rate limiter."""
-        self.config = config or RateLimitConfig()
+    def __init__(
+        self,
+        config: Optional[RateLimitConfig] = None,
+        max_requests: Optional[int] = None,
+        window_seconds: Optional[int] = None,
+    ):
+        """
+        Initialize rate limiter.
+        
+        Args:
+            config: RateLimitConfig object
+            max_requests: Alternative to config - max requests per window
+            window_seconds: Alternative to config - window size in seconds
+        """
+        # Support both config-based and direct parameter initialization
+        if config is not None:
+            self.config = config
+        elif max_requests is not None and window_seconds is not None:
+            # Convert to RateLimitConfig
+            self.config = RateLimitConfig(
+                requests_per_minute=max_requests,
+                requests_per_hour=max_requests * 60,
+                requests_per_day=max_requests * 60 * 24,
+                burst_size=max_requests,
+            )
+            self._window_seconds = window_seconds
+        else:
+            self.config = RateLimitConfig()
+            self._window_seconds = 60
         
         # Track requests per client
         self._client_limits: Dict[str, RateLimitEntry] = defaultdict(RateLimitEntry)
@@ -273,6 +299,22 @@ class RateLimiter:
             "blocked": entry.blocked_until is not None,
             "blocked_until": entry.blocked_until.isoformat() if entry.blocked_until else None,
         }
+    
+    def allow(self, identifier: str) -> bool:
+        """
+        Check if request is allowed (alias for check_rate_limit).
+        
+        Args:
+            identifier: Client identifier
+            
+        Returns:
+            True if allowed
+        """
+        try:
+            self.check_rate_limit(identifier)
+            return True
+        except RateLimitExceeded:
+            return False
 
 
 class AsyncRateLimiter:

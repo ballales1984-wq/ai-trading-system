@@ -650,3 +650,16 @@ def cached(
         
         return wrapper
     return decorator
+
+
+# Alias for backward compatibility
+Cache = RedisCacheManager
+
+
+__all__ = [
+    "RedisCacheManager",
+    "Cache",
+    "get_cache_manager",
+    "close_cache_manager",
+    "cached",
+]

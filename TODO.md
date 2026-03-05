@@ -24,9 +24,13 @@
 - [x] Feature store - `src/research/feature_store.py` ✅
 - [x] Alpha lab - `src/research/alpha_lab.py` ✅
 
-### 5. Test Coverage - PRIORITÀ 5
-- [ ] Portare coverage al 80%+
-- [ ] Aggiungere test mancanti
+### 5. Test Coverage - PRIORITÀ 5 🔄 IN CORSO
+- [x] Test fix: test_event_bus.py (logging + history limit)
+- [x] Aggiunti test API routes (19 test passati)
+- [x] Aggiunti test core modules (15 test passati)
+- [x] Nuovi test totali: ~60
+- [x] Totale test raccolti: 428+
+- [ ] Portare coverage al 80%+ (richiede più test)
 
 ### 6. Infrastructure Connections - PRIORITÀ 6 ✅ COMPLETATO
 - [x] Broker Connections (Binance, Bybit, Paper Trading) - `app/execution/broker_connector.py` ✅

@@ -114,3 +114,7 @@ class MarketDataFeed:
 # Singleton instance
 market_data_feed = MarketDataFeed()
 
+
+# Alias for backward compatibility
+DataFeed = MarketDataFeed
+

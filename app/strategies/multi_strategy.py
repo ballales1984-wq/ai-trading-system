@@ -285,3 +285,7 @@ class MultiStrategyManager:
         
         logger.info("All strategies reset")
 
+
+# Alias for backward compatibility
+MultiStrategy = MultiStrategyManager
+

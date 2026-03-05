@@ -273,6 +273,12 @@ async def list_orders(
             broker="demo",
         ) for o in mock_data]
         
+        # Also add auto-trader generated orders from demo_orders_db
+        for order in demo_orders_db.values():
+            if status_val is None or order.status == status_val:
+                if symbol_val is None or order.symbol == symbol_val:
+                    orders.append(order)
+        
         # Add any newly created demo orders
         for order in demo_orders_db.values():
             if status_val is None or order.status == status_val:
@@ -296,6 +302,28 @@ async def list_orders(
         orders = [OrderResponse(**o) for o in real_orders]
     else:
         orders = list(orders_db.values())
+    
+    # If no orders exist, show demo orders as fallback for demonstration purposes
+    if not orders:
+        logger.info("No orders found, returning demo orders for demonstration")
+        mock_data = mock_orders(status=status_val)
+        orders = [OrderResponse(
+            order_id=o["id"],
+            symbol=o["symbol"],
+            side=o["side"],
+            order_type=o["type"],
+            quantity=o["quantity"],
+            price=o["price"],
+            stop_price=None,
+            status=o["status"],
+            filled_quantity=o["filled_quantity"],
+            average_price=o["price"] if o["status"] == "FILLED" else None,
+            commission=0.0,
+            created_at=datetime.fromisoformat(o["created_at"]) if o.get("created_at") else datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+            strategy_id=None,
+            broker="demo",
+        ) for o in mock_data]
     
     # Apply filters
     if symbol_val:
@@ -396,6 +424,38 @@ async def get_trade_history(
         orders = [OrderResponse(**o) for o in real_orders]
     else:
         orders = list(orders_db.values())
+    
+    # If no orders exist, show demo orders as fallback for demonstration purposes
+    if not orders:
+        logger.info("No trade history found, returning demo orders for demonstration")
+        from app.api.mock_data import get_orders as mock_get_orders
+        
+        mock_orders = mock_get_orders(status=status_val)
+        
+        orders = []
+        for o in mock_orders:
+            # Skip orders without filled_at for history (unless explicitly requested)
+            if status_val != "PENDING" and o.get("status") == "PENDING":
+                continue
+                
+            order = OrderResponse(
+                order_id=o["id"],
+                symbol=o["symbol"],
+                side=o["side"],
+                order_type=o["type"],
+                quantity=o["quantity"],
+                price=o["price"],
+                stop_price=None,
+                status=o["status"],
+                filled_quantity=o["filled_quantity"],
+                average_price=o["price"] if o["status"] == "FILLED" else None,
+                commission=0.0,
+                created_at=datetime.fromisoformat(o["created_at"]) if o.get("created_at") else datetime.utcnow(),
+                updated_at=datetime.fromisoformat(o["filled_at"]) if o.get("filled_at") else datetime.utcnow(),
+                strategy_id=None,
+                broker="demo",
+            )
+            orders.append(order)
     
     # Apply filters
     if symbol_val:

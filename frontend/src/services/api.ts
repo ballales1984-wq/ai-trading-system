@@ -101,6 +101,17 @@ export const portfolioApi = {
     });
     return data;
   },
+
+  // Demo mode control - toggle between simulation and live trading
+  getDemoMode: async (): Promise<{ demo_mode: boolean; description: string }> => {
+    const { data } = await api.get('/portfolio/mode');
+    return data;
+  },
+
+  setDemoMode: async (enabled: boolean): Promise<{ success: boolean; demo_mode: boolean; message: string }> => {
+    const { data } = await api.post(`/portfolio/mode?enabled=${enabled}`);
+    return data;
+  },
 };
 
 // Market API
