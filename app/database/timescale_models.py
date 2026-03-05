@@ -781,3 +781,25 @@ class TimeSeriesQueries:
             }
             for r in results
         ]
+
+
+# Aliases for backward compatibility
+OHLCVCandle = OHLCVBar
+TickData = TradeTick
+SignalHistory = SignalTimeseries
+
+
+class ExecutionMetrics(Base):
+    """Execution metrics for performance tracking."""
+    __tablename__ = "execution_metrics"
+    
+    id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    order_id = Column(String(50))
+    symbol = Column(String(20))
+    side = Column(String(10))
+    quantity = Column(Float)
+    price = Column(Float)
+    commission = Column(Float, default=0.0)
+    latency_ms = Column(Float)
+    execution_type = Column(String(20))

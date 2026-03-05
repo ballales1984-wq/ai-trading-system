@@ -782,3 +782,18 @@ class BrokerFactory:
             return PaperTradingConnector()
         else:
             raise ValueError(f"Unsupported broker: {broker}")
+
+# Aliases for backward compatibility
+Order = BrokerOrder
+
+class OrderSide(str, Enum):
+    """Order side enum for backward compatibility."""
+    BUY = "BUY"
+    SELL = "SELL"
+
+class OrderType(str, Enum):
+    """Order type enum for backward compatibility."""
+    MARKET = "MARKET"
+    LIMIT = "LIMIT"
+    STOP = "STOP"
+    STOP_LIMIT = "STOP_LIMIT"

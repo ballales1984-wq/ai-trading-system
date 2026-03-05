@@ -200,6 +200,15 @@ class RBACManager:
         
         logger.info("RBAC Manager initialized")
     
+    @property
+    def roles(self) -> List[Role]:
+        """Get list of all available roles."""
+        return list(Role)
+    
+    def get_roles(self) -> List[Role]:
+        """Get list of all available roles."""
+        return list(Role)
+    
     def create_user(
         self,
         username: str,
@@ -469,4 +478,7 @@ def list_users(
     users = rbac_manager.list_users()
     return {"users": [{"username": u.username, "role": u.role.value} for u in users]}
 """
+
+# Alias for backward compatibility
+RBAC = RBACManager
 
