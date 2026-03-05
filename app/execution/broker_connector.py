@@ -786,6 +786,12 @@ class BrokerFactory:
 # Aliases for backward compatibility
 Order = BrokerOrder
 
+
+def create_broker_connector(broker: str, api_key: str = "", secret_key: str = "", testnet: bool = True) -> BrokerConnector:
+    """Create a broker connector instance (backward compatibility alias)."""
+    return BrokerFactory.create_broker(broker, api_key, secret_key, testnet)
+
+
 class OrderSide(str, Enum):
     """Order side enum for backward compatibility."""
     BUY = "BUY"
