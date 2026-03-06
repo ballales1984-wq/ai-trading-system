@@ -378,8 +378,104 @@ class StateManager:
             
             conn.commit()
             
-# Event
+            # Key-Value store table - for generic state storage
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS kv_store (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                )
+            """)
+            
+            conn.commit()
     
+    # Key-Value Store Methods
+    
+    def set(self, key: str, value: Any) -> None:
+        """
+        Save a value to the key-value store.
+        
+        Args:
+            key: The key to store the value under
+            value: The value to store (will be JSON serialized)
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT OR REPLACE INTO kv_store (key, value, updated_at)
+                VALUES (?, ?, ?)
+            """, (
+                key,
+                json.dumps(value, default=json_serializer),
+                datetime.now().isoformat()
+            ))
+            conn.commit()
+        
+        logger.debug(f"KV store: set {key}")
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """
+        Retrieve a value from the key-value store.
+        
+        Args:
+            key: The key to retrieve
+            default: Default value if key not found
+            
+        Returns:
+            The stored value, or default if not found
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT value FROM kv_store WHERE key = ?",
+                (key,)
+            )
+            row = cursor.fetchone()
+            
+            if row:
+                try:
+                    return json.loads(row['value'])
+                except json.JSONDecodeError:
+                    return row['value']
+        
+        return default
+
+    def delete(self, key: str) -> bool:
+        """
+        Delete a key from the key-value store.
+        
+        Args:
+            key: The key to delete
+            
+        Returns:
+            True if key was deleted, False if not found
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM kv_store WHERE key = ?", (key,))
+            conn.commit()
+            return cursor.rowcount > 0
+
+    def keys(self, pattern: str = "*") -> List[str]:
+        """
+        Get all keys from the key-value store.
+        
+        Args:
+            pattern: SQL LIKE pattern (default "*" matches all)
+            
+        Returns:
+            List of keys matching the pattern
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            # Convert * to % for SQL LIKE
+            sql_pattern = pattern.replace('*', '%')
+            cursor.execute(
+                "SELECT key FROM kv_store WHERE key LIKE ?",
+                (sql_pattern,)
+            )
+            return [row['key'] for row in cursor.fetchall()]
+
     # Portfolio methods
     def save_portfolio_state(self, state: PortfolioState):
         """Save portfolio state."""

@@ -1,7 +1,7 @@
 # 🤖 AI Trading System — Mini Hedge Fund Infrastructure
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/Tests-604Passed-green.svg)](#)
+[![Tests](https://img.shields.io/badge/Tests-604Passed-green.svg)](tests)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## 🎯 Why This Project Exists
@@ -136,6 +136,8 @@ Flash Crash    Low    Circuit breakers
 Exchange Hack    Very Low    Cold storage, diversification
 ## ⚡ Execution Model
 Slippage Model
+
+```python
 def estimate_slippage(order_size, avg_volume, volatility):
     """
     Square-root impact model (Almgren-Chriss inspired)
@@ -144,6 +146,8 @@ def estimate_slippage(order_size, avg_volume, volatility):
     temporary_impact = 0.1 * volatility * (participation_rate ** 0.5)
     permanent_impact = 0.05 * volatility * (participation_rate ** 0.5)
     return temporary_impact + permanent_impact
+```
+
 ## Market Impact Parameters
 Asset    Avg Daily Volume    Impact Coefficient
 BTC/USDT    $10B+    0.05
