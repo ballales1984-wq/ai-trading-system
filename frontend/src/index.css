@@ -1,8 +1,22 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Base styles */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #0d1117;
+  color: #c9d1d9;
+  margin: 0;
+  padding: 0;
+}
 
-/* CSS custom properties for theming - aligned with tailwind.config.js */
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* CSS custom properties for theming */
 :root {
   --bg-primary: #0d1117;
   --bg-secondary: #161b22;
@@ -15,30 +29,18 @@
   --accent-yellow: #d29922;
 }
 
-/* Base styles - Tailwind Preflight handles reset, only add what's needed */
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  min-height: 100vh;
-}
-
-#root {
-  min-height: 100vh;
-}
-
-/* Custom scrollbar styles */
+/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-primary);
+  background: #161b22;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: #30363d;
   border-radius: 4px;
 }
 
@@ -46,108 +48,8 @@ body {
   background: #484f58;
 }
 
-/* Component classes using Tailwind's @layer for proper ordering */
-@layer components {
-  .card {
-    @apply bg-surface border border-border rounded-lg p-6;
-  }
-
-  .btn {
-    @apply inline-flex items-center justify-center py-2 px-4 rounded-md font-medium cursor-pointer;
-  }
-
-  .btn-primary {
-    @apply bg-primary text-white;
-  }
-
-  .table {
-    @apply w-full border-collapse;
-  }
-
-  .table th,
-  .table td {
-    @apply py-3 px-4 text-left border-b border-border;
-  }
-
-  .badge {
-    @apply inline-flex py-1 px-2 rounded-full text-xs;
-  }
-
-  .badge-success {
-    @apply bg-success/15 text-success;
-  }
-
-  .badge-danger {
-    @apply bg-danger/15 text-danger;
-  }
-
-  /* Skeleton animation */
-  .skeleton {
-    background-color: rgba(88, 166, 255, 0.2);
-    border-radius: 0.25rem;
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
+/* Selection styling */
+::selection {
+  background-color: #58a6ff;
+  color: #ffffff;
 }
-
-/* Live indicator pulse animation - now defined in tailwind.config.js */
-/* Use class "animate-live-pulse" for the animation */
-
-/* Custom animations */
-@keyframes slide-in {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes pulse-slow {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-.animate-slide-in {
-  animation: slide-in 0.3s ease-out;
-}
-
-.animate-pulse-slow {
-  animation: pulse-slow 2s ease-in-out infinite;
-}
-
-/* Loading skeleton animation */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.skeleton {
-  background: linear-gradient(90deg, #161b22 25%, #30363d 50%, #161b22 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 4px;
-}
-
-/* Mobile responsive adjustments */
-@media (max-width: 1024px) {
-  .main-content {
-    padding-top: 4rem;
-  }
-}
-
-/* Table responsive wrapper */
-.table-responsive {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
