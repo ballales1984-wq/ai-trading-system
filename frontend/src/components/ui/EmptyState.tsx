@@ -23,7 +23,7 @@ export function EmptyState({ icon: Icon, title, description, action }: EmptyStat
       {action && (
         <button
           onClick={action.onClick}
-          className="btn btn-primary"
+          className="px-4 py-2 bg-primary hover:bg-primary/80 text-white font-medium rounded-lg transition-colors"
         >
           {action.label}
         </button>
@@ -49,7 +49,7 @@ export function ErrorState({ title = 'Something went wrong', message, retry }: E
       {retry && (
         <button
           onClick={retry}
-          className="btn btn-primary"
+          className="px-4 py-2 bg-primary hover:bg-primary/80 text-white font-medium rounded-lg transition-colors"
         >
           Try Again
         </button>

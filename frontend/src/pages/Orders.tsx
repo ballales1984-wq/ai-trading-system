@@ -76,6 +76,19 @@ export default function Orders() {
   const historyList = Array.isArray(tradeHistory) ? tradeHistory : [];
 
 
+  const getStatusBadge = (status: string) => {
+    const badgeClass = {
+      'FILLED': 'badge-success',
+      'COMPLETED': 'badge-success',
+      'PENDING': 'badge-warning',
+      'PARTIALLY_FILLED': 'badge-warning',
+      'CANCELLED': 'badge-danger',
+      'REJECTED': 'badge-danger',
+    }[status] || 'badge-info';
+    
+    return <span className={`badge ${badgeClass}`}>{status}</span>;
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'FILLED':

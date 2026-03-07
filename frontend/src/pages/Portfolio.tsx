@@ -13,13 +13,18 @@ interface SummaryCardProps {
 }
 
 function SummaryCard({ title, value, icon: Icon, valueColor = 'text-text' }: SummaryCardProps) {
+  const isPositive = valueColor === 'text-success';
+  const isNegative = valueColor === 'text-danger';
+  
   return (
-    <div className="bg-surface border border-border rounded-lg p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-text-muted text-sm">{title}</span>
-        <Icon className="w-5 h-5 text-primary" />
+    <div className={`glass-card rounded-xl p-4 card-shine ${isPositive ? 'metric-positive' : isNegative ? 'metric-negative' : 'metric-neutral'}`}>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-text-muted text-sm font-medium">{title}</span>
+        <div className={`p-2 rounded-lg ${isPositive ? 'icon-bg-success' : isNegative ? 'icon-bg-danger' : 'icon-bg-primary'}`}>
+          <Icon className={`w-4 h-4 ${isPositive ? 'text-success' : isNegative ? 'text-danger' : 'text-primary'}`} />
+        </div>
       </div>
-      <div className={`text-xl font-bold ${valueColor}`}>{value}</div>
+      <div className={`text-2xl font-bold animate-count ${valueColor}`}>{value}</div>
     </div>
   );
 }
@@ -28,11 +33,10 @@ export default function Portfolio() {
   const { data: dualSummary, isLoading: summaryLoading } = useQuery({
     queryKey: ['portfolio-dual-summary'],
     queryFn: portfolioApi.getDualSummary,
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
   });
 
-  // Extract real and simulated summaries
-  const summary = dualSummary?.simulated; // Default to simulated for portfolio page
+  const summary = dualSummary?.simulated;
   const realSummary = dualSummary?.real;
 
   const { data: positions } = useQuery({
@@ -106,13 +110,11 @@ export default function Portfolio() {
 
   return (
     <div className="p-6">
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-text">Portfolio</h1>
         <p className="text-text-muted">Manage your positions and allocations</p>
       </div>
 
-      {/* Real Account Summary */}
       <div className="mb-2">
         <h3 className="text-lg font-semibold text-text">Real Account</h3>
       </div>
@@ -141,7 +143,6 @@ export default function Portfolio() {
         />
       </div>
 
-      {/* Simulated Account Summary */}
       <div className="mb-2">
         <h3 className="text-lg font-semibold text-text">Simulated Account</h3>
       </div>
@@ -170,9 +171,7 @@ export default function Portfolio() {
         />
       </div>
 
-      {/* Charts Row 1: Equity Curve & Risk Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Equity Curve */}
         <div className="bg-surface border border-border rounded-lg p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-text">Equity Curve</h2>
@@ -192,7 +191,6 @@ export default function Portfolio() {
                 <YAxis stroke="#8b949e" tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
-                  formatter={(value: number) => [`$${value.toFixed(2)}`, 'Portfolio Value']}
                 />
                 <Area
                   type="monotone"
@@ -207,7 +205,6 @@ export default function Portfolio() {
           </div>
         </div>
 
-        {/* Risk Metrics */}
         <div className="bg-surface border border-border rounded-lg p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-text">Risk Metrics (VaR/CVaR)</h2>
@@ -221,10 +218,6 @@ export default function Portfolio() {
                 <YAxis stroke="#8b949e" />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
-                  formatter={(value: number, name: string) => {
-                    if (name === 'Volatility') return [`${value.toFixed(2)}%`, name];
-                    return [`$${value.toFixed(2)}`, name];
-                  }}
                 />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                   {riskData.map((entry, index) => (
@@ -252,15 +245,12 @@ export default function Portfolio() {
                 <span className="text-text-muted">Margin:</span>
                 <span className="ml-2 text-text font-semibold">{((riskMetrics.margin_utilization || 0) * 100).toFixed(0)}%</span>
               </div>
-
             </div>
           )}
         </div>
       </div>
 
-      {/* Charts Row 2: Allocation & Trade Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Allocation Pie Chart */}
         <div className="bg-surface border border-border rounded-lg p-4">
           <h2 className="text-lg font-semibold text-text mb-4">Asset Allocation</h2>
           <div className="h-64">
@@ -274,8 +264,6 @@ export default function Portfolio() {
                   outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
-                  label={({ name, percent }: { name: string; percent: number }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={false}
                 >
                   {pieData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -283,14 +271,12 @@ export default function Portfolio() {
                 </Pie>
                 <Tooltip
                   contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
-                  formatter={(value: number) => [`${value.toFixed(1)}%`, 'Allocation']}
                 />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Win/Lose Chart */}
         <div className="bg-surface border border-border rounded-lg p-4">
           <h2 className="text-lg font-semibold text-text mb-4">Trade Distribution</h2>
           {performanceLoading ? (
@@ -319,7 +305,6 @@ export default function Portfolio() {
         </div>
       </div>
 
-      {/* Correlation Matrix */}
       {correlationMatrix && correlationMatrix.assets && correlationMatrix.matrix && (
         <div className="bg-surface border border-border rounded-lg p-4 mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -373,38 +358,26 @@ export default function Portfolio() {
               </tbody>
             </table>
           </div>
-          <div className="mt-4 flex items-center gap-4 text-xs text-text-muted">
-            <div className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-[rgba(63,185,80,0.3)]"></span>
-              <span>Low (below 0.4)</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-[rgba(210,153,34,0.3)]"></span>
-              <span>Medium (0.4-0.7)</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-[rgba(248,81,73,0.3)]"></span>
-              <span>High (above 0.7)</span>
-            </div>
-          </div>
         </div>
       )}
 
-      {/* Positions Table */}
-      <div className="bg-surface border border-border rounded-lg p-4">
-        <h2 className="text-lg font-semibold text-text mb-4">Open Positions</h2>
+      <div className="glass-card rounded-xl p-0 overflow-hidden">
+        <div className="p-4 border-b border-border bg-gradient-to-r from-bg-secondary to-bg-tertiary">
+          <h2 className="text-lg font-semibold text-text">Open Positions</h2>
+          <p className="text-sm text-text-muted">Manage your active positions</p>
+        </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full table-striped table-hover">
             <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-3 px-4 text-text-muted font-medium">Symbol</th>
-                <th className="text-left py-3 px-4 text-text-muted font-medium">Side</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">Quantity</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">Entry Price</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">Current Price</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">Market Value</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">P&L</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">P&L %</th>
+              <tr className="bg-bg-tertiary/70">
+                <th className="text-left py-3 px-4 text-text-muted font-medium text-sm uppercase">Symbol</th>
+                <th className="text-left py-3 px-4 text-text-muted font-medium text-sm uppercase">Side</th>
+                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">Quantity</th>
+                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">Entry Price</th>
+                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">Current Price</th>
+                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">Market Value</th>
+                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">P&L</th>
+                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">P&L %</th>
               </tr>
             </thead>
             <tbody>
@@ -414,20 +387,25 @@ export default function Portfolio() {
                 const pnlPercent = position.entry_price > 0
                   ? (signedDelta / position.entry_price) * 100
                   : 0;
+                const isProfit = position.unrealized_pnl >= 0;
                 return (
-                  <tr key={position.position_id} className="border-b border-border/50 hover:bg-border/20">
-                    <td className="py-3 px-4 font-medium text-text">{position.symbol}</td>
-                    <td className={`py-3 px-4 ${position.side === 'LONG' ? 'text-success' : 'text-danger'}`}>
-                      {position.side}
+                  <tr key={position.position_id} className="border-b border-border/30">
+                    <td className="py-3 px-4">
+                      <span className="font-semibold text-text">{position.symbol}</span>
                     </td>
-                    <td className="py-3 px-4 text-right text-text">{position.quantity.toFixed(4)}</td>
-                    <td className="py-3 px-4 text-right text-text-muted">{formatCurrency(position.entry_price)}</td>
-                    <td className="py-3 px-4 text-right text-text">{formatCurrency(position.current_price)}</td>
-                    <td className="py-3 px-4 text-right text-text">{formatCurrency(position.market_value)}</td>
-                    <td className={`py-3 px-4 text-right ${position.unrealized_pnl >= 0 ? 'text-success' : 'text-danger'}`}>
+                    <td className="py-3 px-4">
+                      <span className={`badge ${position.side === 'LONG' ? 'badge-success' : 'badge-danger'}`}>
+                        {position.side}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right text-text font-mono">{position.quantity.toFixed(4)}</td>
+                    <td className="py-3 px-4 text-right text-text-muted font-mono">{formatCurrency(position.entry_price)}</td>
+                    <td className="py-3 px-4 text-right text-text font-mono">{formatCurrency(position.current_price)}</td>
+                    <td className="py-3 px-4 text-right text-text font-mono">{formatCurrency(position.market_value)}</td>
+                    <td className={`py-3 px-4 text-right font-semibold font-mono ${isProfit ? 'text-success' : 'text-danger'}`}>
                       {formatCurrency(position.unrealized_pnl)}
                     </td>
-                    <td className={`py-3 px-4 text-right ${pnlPercent >= 0 ? 'text-success' : 'text-danger'}`}>
+                    <td className={`py-3 px-4 text-right font-semibold font-mono ${pnlPercent >= 0 ? 'text-success' : 'text-danger'}`}>
                       {pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%
                     </td>
                   </tr>
@@ -440,3 +418,4 @@ export default function Portfolio() {
     </div>
   );
 }
+

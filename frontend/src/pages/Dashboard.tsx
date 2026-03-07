@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { portfolioApi, marketApi, riskApi } from '../services/api';
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { TrendingUp, TrendingDown, DollarSign, Activity, Wallet } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Activity, Wallet, BarChart3 } from 'lucide-react';
 import { DashboardSkeleton } from '../components/ui/Skeleton';
 import { ErrorState } from '../components/ui/EmptyState';
 import CorrelationMatrix from '../components/charts/CorrelationMatrix';
@@ -10,14 +11,18 @@ import DrawdownChart from '../components/charts/DrawdownChart';
 import MonteCarloChart from '../components/charts/MonteCarloChart';
 import RiskReturnScatter from '../components/charts/RiskReturnScatter';
 
+type TabType = 'overview' | 'performance' | 'risk' | 'market';
+
 export default function Dashboard() {
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  
   const { data: dualSummary, isLoading: summaryLoading, error: summaryError } = useQuery({
     queryKey: ['portfolio-dual-summary'],
     queryFn: portfolioApi.getDualSummary,
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
   });
 
-  const { data: performance, isLoading: perfLoading } = useQuery({
+  const { data: performance } = useQuery({
     queryKey: ['portfolio-performance'],
     queryFn: portfolioApi.getPerformance,
   });
@@ -30,16 +35,15 @@ export default function Dashboard() {
   const { data: markets, isLoading: marketsLoading } = useQuery({
     queryKey: ['market-prices'],
     queryFn: marketApi.getAllPrices,
-    refetchInterval: 15000, // Refresh every 15 seconds
+    refetchInterval: 15000,
   });
 
   const { data: correlationData, isLoading: correlationLoading } = useQuery({
     queryKey: ['risk-correlation'],
     queryFn: riskApi.getCorrelationMatrix,
-    refetchInterval: 60000, // Refresh every 60 seconds
+    refetchInterval: 60000,
   });
 
-  // Quantitative Charts Data
   const { data: rollingSharpeData, isLoading: rollingSharpeLoading } = useQuery({
     queryKey: ['risk-rolling-sharpe'],
     queryFn: () => riskApi.getRollingSharpe(30),
@@ -64,10 +68,8 @@ export default function Dashboard() {
     refetchInterval: 60000,
   });
 
-  // Extract real and simulated summaries
-  // Use simulated as primary when real has no positions
-  const realSummary = (dualSummary?.simulated?.num_positions || 0) > 0 ? dualSummary?.simulated : dualSummary?.real;
-  const simulatedSummary = dualSummary?.simulated;
+  // Use simulated as primary (paper trading)
+  const realSummary = dualSummary?.simulated || dualSummary?.real;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -81,6 +83,13 @@ export default function Dashboard() {
     return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
   };
 
+  const formatCompact = (value: number) => {
+    if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
+    if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
+    if (value >= 1e3) return `$${(value / 1e3).toFixed(2)}K`;
+    return formatCurrency(value);
+  };
+
   const historyRows = Array.isArray(history?.history) ? history.history : [];
   const marketRows = Array.isArray(markets?.markets) ? markets.markets : [];
 
@@ -90,12 +99,10 @@ export default function Dashboard() {
     return: entry.daily_return,
   }));
 
-  // Show loading skeleton
   if (summaryLoading && !dualSummary) {
     return <DashboardSkeleton />;
   }
 
-  // Show error state
   if (summaryError) {
     return (
       <div className="p-6">
@@ -108,296 +115,307 @@ export default function Dashboard() {
     );
   }
 
+  const tabs = [
+    { id: 'overview' as const, label: 'Overview', icon: BarChart3 },
+    { id: 'performance' as const, label: 'Performance', icon: TrendingUp },
+    { id: 'risk' as const, label: 'Risk Analysis', icon: Activity },
+    { id: 'market' as const, label: 'Market', icon: DollarSign },
+  ];
+
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-text">Dashboard</h1>
-        <p className="text-text-muted">Overview of your trading portfolio</p>
+    <div className="space-y-6">
+      {/* Tab Navigation */}
+      <div className="flex flex-wrap gap-2 border-b border-border pb-4">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`
+              flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all
+              ${activeTab === tab.id
+                ? 'bg-primary/15 text-primary border border-primary/30'
+                : 'text-text-muted hover:text-text hover:bg-bg-tertiary border border-transparent'
+              }
+            `}
+          >
+            <tab.icon className="w-4 h-4" />
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {/* Key Metrics - Real Account */}
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-text">Real Account</h3>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <MetricCard
-          title="Total Value"
-          value={summaryLoading ? '...' : formatCurrency(realSummary?.total_value || 0)}
-          icon={DollarSign}
-          trend={realSummary?.daily_return_pct}
-        />
-        <MetricCard
-          title="Daily P&L"
-          value={summaryLoading ? '...' : formatCurrency(realSummary?.daily_pnl || 0)}
-          icon={Activity}
-          trend={realSummary?.daily_return_pct}
-        />
-        <MetricCard
-          title="Unrealized P&L"
-          value={summaryLoading ? '...' : formatCurrency(realSummary?.unrealized_pnl || 0)}
-          icon={TrendingUp}
-          trend={realSummary?.total_return_pct}
-        />
-        <MetricCard
-          title="Positions"
-          value={summaryLoading ? '...' : String(realSummary?.num_positions || 0)}
-          icon={Wallet}
-        />
-      </div>
+      {/* Overview Tab */}
+      {activeTab === 'overview' && (
+        <div className="space-y-6">
+          {/* Key Metrics */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <MetricCard
+              title="Total Value"
+              value={formatCurrency(realSummary?.total_value || 0)}
+              icon={DollarSign}
+              trend={realSummary?.daily_return_pct}
+            />
+            <MetricCard
+              title="Daily P&L"
+              value={formatCurrency(realSummary?.daily_pnl || 0)}
+              icon={Activity}
+              trend={realSummary?.daily_return_pct}
+            />
+            <MetricCard
+              title="Unrealized P&L"
+              value={formatCurrency(realSummary?.unrealized_pnl || 0)}
+              icon={TrendingUp}
+              trend={realSummary?.total_return_pct}
+            />
+            <MetricCard
+              title="Positions"
+              value={String(realSummary?.num_positions || 0)}
+              icon={Wallet}
+            />
+          </div>
 
-      {/* Key Metrics - Simulated Account */}
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-text">Simulated Account</h3>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <MetricCard
-          title="Total Value"
-          value={summaryLoading ? '...' : formatCurrency(simulatedSummary?.total_value || 0)}
-          icon={DollarSign}
-          trend={simulatedSummary?.daily_return_pct}
-        />
-        <MetricCard
-          title="Daily P&L"
-          value={summaryLoading ? '...' : formatCurrency(simulatedSummary?.daily_pnl || 0)}
-          icon={Activity}
-          trend={simulatedSummary?.daily_return_pct}
-        />
-        <MetricCard
-          title="Unrealized P&L"
-          value={summaryLoading ? '...' : formatCurrency(simulatedSummary?.unrealized_pnl || 0)}
-          icon={TrendingUp}
-          trend={simulatedSummary?.total_return_pct}
-        />
-        <MetricCard
-          title="Positions"
-          value={summaryLoading ? '...' : String(simulatedSummary?.num_positions || 0)}
-          icon={Wallet}
-        />
-      </div>
+          {/* Equity Curve */}
+          <div className="bg-bg-secondary border border-border rounded-xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-lg font-semibold text-text">Portfolio Equity</h2>
+                <p className="text-sm text-text-muted">30-day portfolio value</p>
+              </div>
+              <div className="flex items-center gap-2 text-success">
+                <TrendingUp className="w-4 h-4" />
+                <span className="text-sm font-medium">{formatPercent(realSummary?.daily_return_pct || 0)}</span>
+              </div>
+            </div>
+            {historyLoading ? (
+              <div className="h-72 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : chartData.length > 0 ? (
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData}>
+                    <defs>
+                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#58a6ff" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#58a6ff" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="date" stroke="#8b949e" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#8b949e" fontSize={12} tickFormatter={(v) => formatCompact(v)} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }}
+                      labelStyle={{ color: '#c9d1d9' }}
+                      formatter={(value: any) => [formatCurrency(Number(value) || 0), 'Value']}
+                    />
+                    <Area type="monotone" dataKey="value" stroke="#58a6ff" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-72 flex items-center justify-center text-text-muted">
+                No historical data available
+              </div>
+            )}
+          </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Equity Curve */}
-        <div className="bg-surface border border-border rounded-lg p-4">
-          <h2 className="text-lg font-semibold text-text mb-4">Equity Curve</h2>
-          {historyLoading ? (
-            <div className="h-64 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : chartData.length > 0 ? (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#58a6ff" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#58a6ff" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="date" stroke="#8b949e" fontSize={12} />
-                  <YAxis stroke="#8b949e" fontSize={12} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
-                    labelStyle={{ color: '#c9d1d9' }}
-                    formatter={(value) => [formatCurrency(Number(value)), 'Value']}
-                  />
-                  <Area type="monotone" dataKey="value" stroke="#58a6ff" fillOpacity={1} fill="url(#colorValue)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="h-64 flex items-center justify-center text-text-muted">
-              No historical data available
-            </div>
-          )}
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <StatCard label="Total Return" value={formatPercent(performance?.total_return_pct || 0)} />
+            <StatCard label="Sharpe Ratio" value={performance?.sharpe_ratio?.toFixed(2) || '0.00'} />
+            <StatCard label="Win Rate" value={`${((performance?.win_rate || 0) * 100).toFixed(1)}%`} />
+            <StatCard label="Max Drawdown" value={formatPercent(performance?.max_drawdown_pct || 0)} />
+            <StatCard label="Sortino" value={performance?.sortino_ratio?.toFixed(2) || '0.00'} />
+            <StatCard label="Calmar" value={performance?.calmar_ratio?.toFixed(2) || '0.00'} />
+          </div>
         </div>
+      )}
 
-        {/* Performance Metrics */}
-        <div className="bg-surface border border-border rounded-lg p-4">
-          <h2 className="text-lg font-semibold text-text mb-4">Performance Metrics</h2>
-          {perfLoading ? (
-            <div className="h-64 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4">
-              <PerformanceItem label="Total Return" value={formatPercent(performance?.total_return_pct || 0)} />
-              <PerformanceItem label="Sharpe Ratio" value={performance?.sharpe_ratio?.toFixed(2) || '0.00'} />
-              <PerformanceItem label="Win Rate" value={`${((performance?.win_rate || 0) * 100).toFixed(1)}%`} />
-              <PerformanceItem label="Max Drawdown" value={formatPercent(performance?.max_drawdown_pct || 0)} />
-              <PerformanceItem label="Sortino Ratio" value={performance?.sortino_ratio?.toFixed(2) || '0.00'} />
-              <PerformanceItem label="Calmar Ratio" value={performance?.calmar_ratio?.toFixed(2) || '0.00'} />
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Performance Tab */}
+      {activeTab === 'performance' && (
+        <div className="space-y-6">
+          {/* Performance Metrics Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <PerformanceCard label="Total Return" value={formatPercent(performance?.total_return_pct || 0)} />
+            <PerformanceCard label="Sharpe Ratio" value={performance?.sharpe_ratio?.toFixed(2) || '0.00'} positive={(performance?.sharpe_ratio || 0) > 1} />
+            <PerformanceCard label="Sortino Ratio" value={performance?.sortino_ratio?.toFixed(2) || '0.00'} positive={(performance?.sortino_ratio || 0) > 1} />
+            <PerformanceCard label="Calmar Ratio" value={performance?.calmar_ratio?.toFixed(2) || '0.00'} positive={(performance?.calmar_ratio || 0) > 1} />
+            <PerformanceCard label="Win Rate" value={`${((performance?.win_rate || 0) * 100).toFixed(1)}%`} positive={(performance?.win_rate || 0) > 0.5} />
+            <PerformanceCard label="Max Drawdown" value={formatPercent(performance?.max_drawdown_pct || 0)} invert />
+            <PerformanceCard label="Profit Factor" value={performance?.profit_factor?.toFixed(2) || '0.00'} positive={(performance?.profit_factor || 0) > 1.5} />
+          </div>
 
-      {/* Market Overview */}
-      <div className="bg-surface border border-border rounded-lg p-4">
-        <h2 className="text-lg font-semibold text-text mb-4">Market Overview</h2>
-        {marketsLoading ? (
-          <div className="h-48 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : marketRows.length > 0 ? (
-          <div className="overflow-x-auto table-responsive">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 text-text-muted font-medium">Symbol</th>
-                  <th className="text-right py-3 px-4 text-text-muted font-medium">Price</th>
-                  <th className="text-right py-3 px-4 text-text-muted font-medium">24h Change</th>
-                  <th className="text-right py-3 px-4 text-text-muted font-medium">24h High</th>
-                  <th className="text-right py-3 px-4 text-text-muted font-medium">24h Low</th>
-                  <th className="text-right py-3 px-4 text-text-muted font-medium">Volume</th>
-                </tr>
-              </thead>
-              <tbody>
-                {marketRows.map((market) => (
-                  <tr key={market.symbol} className="border-b border-border/50 hover:bg-border/20">
-                    <td className="py-3 px-4 font-medium text-text">{market.symbol}</td>
-                    <td className="py-3 px-4 text-right text-text">{formatCurrency(market.price)}</td>
-                    <td className={`py-3 px-4 text-right ${market.change_pct_24h >= 0 ? 'text-success' : 'text-danger'}`}>
-                      {formatPercent(market.change_pct_24h)}
-                    </td>
-                    <td className="py-3 px-4 text-right text-text-muted">{formatCurrency(market.high_24h)}</td>
-                    <td className="py-3 px-4 text-right text-text-muted">{formatCurrency(market.low_24h)}</td>
-                    <td className="py-3 px-4 text-right text-text-muted">{market.volume_24h.toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="h-48 flex items-center justify-center text-text-muted">
-            No market data available
-          </div>
-        )}
-      </div>
-
-      {/* Correlation Matrix */}
-      <div className="bg-surface border border-border rounded-lg p-4 mb-6">
-        <h2 className="text-lg font-semibold text-text mb-4">Asset Correlation Matrix</h2>
-        <p className="text-text-muted text-sm mb-4">
-          Correlation between different assets. Green = positive correlation, Red = negative correlation
-        </p>
-        {correlationLoading ? (
-          <div className="h-80 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : correlationData?.assets && correlationData?.matrix ? (
-          <CorrelationMatrix data={correlationData} height={350} />
-        ) : (
-          <div className="h-80 flex items-center justify-center text-text-muted">
-            No correlation data available
-          </div>
-        )}
-      </div>
-
-      {/* Quantitative Analysis Section */}
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-text mb-4">Quantitative Analysis</h2>
-        
-        {/* Row 1: Rolling Sharpe & Drawdown */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Rolling Sharpe Ratio */}
-          <div className="bg-surface border border-border rounded-lg p-4">
+          {/* Rolling Sharpe */}
+          <div className="bg-bg-secondary border border-border rounded-xl p-6">
             <h3 className="text-lg font-semibold text-text mb-2">Rolling Sharpe Ratio</h3>
-            <p className="text-text-muted text-sm mb-4">
-              30-day rolling Sharpe ratio over time. Green = positive, Red = negative
-            </p>
+            <p className="text-sm text-text-muted mb-6">30-day rolling Sharpe ratio over time</p>
             {rollingSharpeLoading ? (
               <div className="h-72 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : rollingSharpeData && rollingSharpeData.length > 0 ? (
-              <RollingSharpeChart data={rollingSharpeData} height={280} />
+              <div className="h-72">
+                <RollingSharpeChart data={rollingSharpeData} height={280} />
+              </div>
             ) : (
               <div className="h-72 flex items-center justify-center text-text-muted">
-                No rolling sharpe data available
-              </div>
-            )}
-          </div>
-
-          {/* Drawdown Chart */}
-          <div className="bg-surface border border-border rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-text mb-2">Drawdown Analysis</h3>
-            <p className="text-text-muted text-sm mb-4">
-              Portfolio drawdown and equity curve over time
-            </p>
-            {drawdownLoading ? (
-              <div className="h-72 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : drawdownData && drawdownData.length > 0 ? (
-              <DrawdownChart data={drawdownData} height={280} />
-            ) : (
-              <div className="h-72 flex items-center justify-center text-text-muted">
-                No drawdown data available
+                No data available
               </div>
             )}
           </div>
         </div>
+      )}
 
-        {/* Row 2: Monte Carlo & Risk/Return */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Monte Carlo Distribution */}
-          <div className="bg-surface border border-border rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-text mb-2">Monte Carlo Simulation</h3>
-            <p className="text-text-muted text-sm mb-4">
-              1000 simulations - Distribution of potential portfolio outcomes
-            </p>
-            {monteCarloLoading ? (
-              <div className="h-80 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : monteCarloData && monteCarloData.length > 0 ? (
-<MonteCarloChart data={monteCarloData} height={320} />
-            ) : (
-              <div className="h-80 flex items-center justify-center text-text-muted">
-                No monte carlo data available
-              </div>
-            )}
+      {/* Risk Tab */}
+      {activeTab === 'risk' && (
+        <div className="space-y-6">
+          {/* Risk Metrics */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <RiskCard label="Portfolio VaR" value="2.34%" />
+            <RiskCard label="Beta" value="0.85" />
+            <RiskCard label="Volatility" value="18.2%" />
+            <RiskCard label="Correlation" value="0.72" />
           </div>
 
-          {/* Risk/Return Scatter */}
-          <div className="bg-surface border border-border rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-text mb-2">Risk vs Return</h3>
-            <p className="text-text-muted text-sm mb-4">
-              Risk/return profile of portfolio assets. Color indicates Sharpe ratio quality
-            </p>
-            {riskReturnLoading ? (
-              <div className="h-80 flex items-center justify-center">
+          {/* Charts Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Drawdown */}
+            <div className="bg-bg-secondary border border-border rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-text mb-2">Drawdown Analysis</h3>
+              <p className="text-sm text-text-muted mb-4">Portfolio drawdown over time</p>
+              {drawdownLoading ? (
+                <div className="h-72 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : drawdownData && drawdownData.length > 0 ? (
+                <div className="h-72">
+                  <DrawdownChart data={drawdownData} height={280} />
+                </div>
+              ) : (
+                <div className="h-72 flex items-center justify-center text-text-muted">No data</div>
+              )}
+            </div>
+
+            {/* Monte Carlo */}
+            <div className="bg-bg-secondary border border-border rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-text mb-2">Monte Carlo Simulation</h3>
+              <p className="text-sm text-text-muted mb-4">1000 simulations of potential outcomes</p>
+              {monteCarloLoading ? (
+                <div className="h-72 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : monteCarloData && monteCarloData.length > 0 ? (
+                <div className="h-72">
+                  <MonteCarloChart data={monteCarloData} height={280} />
+                </div>
+              ) : (
+                <div className="h-72 flex items-center justify-center text-text-muted">No data</div>
+              )}
+            </div>
+          </div>
+
+          {/* Correlation & Risk-Return */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-bg-secondary border border-border rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-text mb-2">Asset Correlation</h3>
+              <p className="text-sm text-text-muted mb-4">Correlation between assets</p>
+              {correlationLoading ? (
+                <div className="h-80 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : correlationData?.assets && correlationData?.matrix ? (
+                <CorrelationMatrix data={correlationData} height={320} />
+              ) : (
+                <div className="h-80 flex items-center justify-center text-text-muted">No data</div>
+              )}
+            </div>
+
+            <div className="bg-bg-secondary border border-border rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-text mb-2">Risk vs Return</h3>
+              <p className="text-sm text-text-muted mb-4">Asset risk/return profile</p>
+              {riskReturnLoading ? (
+                <div className="h-80 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : riskReturnData && riskReturnData.length > 0 ? (
+                <RiskReturnScatter data={riskReturnData} height={320} />
+              ) : (
+                <div className="h-80 flex items-center justify-center text-text-muted">No data</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Market Tab */}
+      {activeTab === 'market' && (
+        <div className="space-y-6">
+          {/* Market Table */}
+          <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
+            <div className="p-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-text">Live Market Prices</h2>
+              <p className="text-sm text-text-muted">Real-time cryptocurrency prices</p>
+            </div>
+            {marketsLoading ? (
+              <div className="h-96 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
-            ) : riskReturnData && riskReturnData.length > 0 ? (
-              <RiskReturnScatter data={riskReturnData} height={320} />
+            ) : marketRows.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-bg-tertiary/50">
+                      <th className="text-left py-3 px-4 text-text-muted font-medium text-sm">Symbol</th>
+                      <th className="text-right py-3 px-4 text-text-muted font-medium text-sm">Price</th>
+                      <th className="text-right py-3 px-4 text-text-muted font-medium text-sm">24h Change</th>
+                      <th className="text-right py-3 px-4 text-text-muted font-medium text-sm hidden sm:table-cell">24h High</th>
+                      <th className="text-right py-3 px-4 text-text-muted font-medium text-sm hidden sm:table-cell">24h Low</th>
+                      <th className="text-right py-3 px-4 text-text-muted font-medium text-sm hidden md:table-cell">Volume</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {marketRows.map((market) => (
+                      <tr key={market.symbol} className="border-b border-border/50 hover:bg-bg-tertiary/30 transition-colors">
+                        <td className="py-3 px-4">
+                          <div className="font-medium text-text">{market.symbol.replace('USDT', '')}</div>
+                          <div className="text-xs text-text-muted">USDT</div>
+                        </td>
+                        <td className="py-3 px-4 text-right text-text font-mono">{formatCurrency(market.price)}</td>
+                        <td className={`py-3 px-4 text-right font-mono ${market.change_pct_24h >= 0 ? 'text-success' : 'text-danger'}`}>
+                          {formatPercent(market.change_pct_24h)}
+                        </td>
+                        <td className="py-3 px-4 text-right text-text-muted font-mono hidden sm:table-cell">{formatCurrency(market.high_24h)}</td>
+                        <td className="py-3 px-4 text-right text-text-muted font-mono hidden sm:table-cell">{formatCurrency(market.low_24h)}</td>
+                        <td className="py-3 px-4 text-right text-text-muted font-mono hidden md:table-cell">{market.volume_24h.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
-              <div className="h-80 flex items-center justify-center text-text-muted">
-                No risk/return data available
+              <div className="h-96 flex items-center justify-center text-text-muted">
+                No market data available
               </div>
             )}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
 function MetricCard({ title, value, icon: Icon, trend }: { title: string; value: string; icon: React.ElementType; trend?: number }) {
   return (
-    <div className="bg-surface border border-border rounded-lg p-4">
+    <div className="bg-bg-secondary border border-border rounded-xl p-4 hover:border-border-hover transition-colors">
       <div className="flex items-center justify-between mb-2">
         <span className="text-text-muted text-sm">{title}</span>
-        <Icon className="w-5 h-5 text-primary" />
+        <Icon className="w-4 h-4 text-primary" />
       </div>
       <div className="flex items-end justify-between">
         <span className="text-xl font-bold text-text">{value}</span>
         {trend !== undefined && (
-          <span className={`text-sm ${trend >= 0 ? 'text-success' : 'text-danger'}`}>
-            {trend >= 0 ? <TrendingUp className="w-4 h-4 inline" /> : <TrendingDown className="w-4 h-4 inline" />}
-            {' '}{Math.abs(trend).toFixed(2)}%
+          <span className={`text-sm flex items-center gap-1 ${trend >= 0 ? 'text-success' : 'text-danger'}`}>
+            {trend >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+            {Math.abs(trend).toFixed(2)}%
           </span>
         )}
       </div>
@@ -405,15 +423,34 @@ function MetricCard({ title, value, icon: Icon, trend }: { title: string; value:
   );
 }
 
-function PerformanceItem({ label, value }: { label: string; value: string }) {
-  const isPositive = value.startsWith('+');
-  const isNegative = value.startsWith('-');
-  const valueColor = isPositive ? 'text-success' : isNegative ? 'text-danger' : 'text-text';
-
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="p-3 bg-background rounded-lg">
-      <div className="text-text-muted text-sm">{label}</div>
-      <div className={`text-lg font-semibold ${valueColor}`}>{value}</div>
+    <div className="bg-bg-secondary border border-border rounded-lg p-3">
+      <div className="text-text-muted text-xs mb-1">{label}</div>
+      <div className="text-text font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function PerformanceCard({ label, value, positive, invert }: { label: string; value: string; positive?: boolean; invert?: boolean }) {
+  let valueColor = 'text-text';
+  if (positive !== undefined) {
+    valueColor = positive ? 'text-success' : invert ? 'text-danger' : 'text-text';
+  }
+  
+  return (
+    <div className="bg-bg-secondary border border-border rounded-xl p-4">
+      <div className="text-text-muted text-sm mb-1">{label}</div>
+      <div className={`text-2xl font-bold ${valueColor}`}>{value}</div>
+    </div>
+  );
+}
+
+function RiskCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-bg-secondary border border-border rounded-xl p-4">
+      <div className="text-text-muted text-sm mb-1">{label}</div>
+      <div className="text-xl font-bold text-warning">{value}</div>
     </div>
   );
 }

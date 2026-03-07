@@ -6,48 +6,46 @@ export default {
   ],
   theme: {
     extend: {
-      // Colors using CSS variables for theming and future dark/light mode support
+      // Colors using CSS variables
       colors: {
         // Background colors
+        background: 'var(--bg-primary)',
         'bg-primary': 'var(--bg-primary)',
         'bg-secondary': 'var(--bg-secondary)',
-        background: 'var(--bg-primary)',
+        'bg-tertiary': 'var(--bg-tertiary)',
         surface: 'var(--bg-secondary)',
-
-        // Border color
+        
+        // Border colors  
         border: 'var(--border-color)',
-
+        'border-hover': 'var(--border-hover)',
+        
         // Text colors
+        'text': 'var(--text-primary)',
         'text-primary': 'var(--text-primary)',
         'text-secondary': 'var(--text-secondary)',
-        text: 'var(--text-primary)',
-        'text-muted': 'var(--text-secondary)',
-
-        // Accent colors (semantic naming)
+        'text-muted': 'var(--text-muted)',
+        
+        // Accent colors
         primary: 'var(--accent-blue)',
         success: 'var(--accent-green)',
         danger: 'var(--accent-red)',
         warning: 'var(--accent-yellow)',
-
-        // Direct accent color aliases for flexibility
-        'accent-blue': 'var(--accent-blue)',
-        'accent-green': 'var(--accent-green)',
-        'accent-red': 'var(--accent-red)',
-        'accent-yellow': 'var(--accent-yellow)',
+        purple: 'var(--accent-purple)',
+        orange: 'var(--accent-orange)',
       },
-
-      // Border radius extensions
+      
+      // Border radius
       borderRadius: {
         'card': '0.5rem',
       },
-
-      // Animation extensions
+      
+      // Animation
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'live-pulse': 'livePulse 2s ease-in-out infinite',
       },
-
-      // Keyframes for custom animations
+      
+      // Keyframes
       keyframes: {
         livePulse: {
           '0%, 100%': {
@@ -60,8 +58,18 @@ export default {
           },
         },
       },
+      
+      // Spacing
+      spacing: {
+        '18': '4.5rem',
+        '88': '22rem',
+      },
+      
+      // Z-index
+      zIndex: {
+        '50': '50',
+      }
     },
   },
   plugins: [],
 }
-

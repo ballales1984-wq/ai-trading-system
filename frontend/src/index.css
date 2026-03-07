@@ -1,14 +1,24 @@
 /* Base styles */
-body {
+* {
+  box-sizing: border-box;
+}
+
+html {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #0d1117;
-  color: #c9d1d9;
+}
+
+body {
   margin: 0;
   padding: 0;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
 }
 
 code {
@@ -16,18 +26,55 @@ code {
     monospace;
 }
 
-/* CSS custom properties for theming */
+/* CSS custom properties for theming - GitHub Dark Theme */
 :root {
   --bg-primary: #0d1117;
   --bg-secondary: #161b22;
+  --bg-tertiary: #21262d;
   --border-color: #30363d;
+  --border-hover: #484f58;
   --text-primary: #c9d1d9;
   --text-secondary: #8b949e;
+  --text-muted: #6e7681;
   --accent-blue: #58a6ff;
   --accent-green: #3fb950;
   --accent-red: #f85149;
   --accent-yellow: #d29922;
+  --accent-purple: #a371f7;
+  --accent-orange: #f0883e;
+  
+  /* Semantic mappings for Tailwind */
+  --color-background: var(--bg-primary);
+  --color-surface: var(--bg-secondary);
+  --color-border: var(--border-color);
+  --color-text: var(--text-primary);
+  --color-text-muted: var(--text-secondary);
+  --color-primary: var(--accent-blue);
+  --color-success: var(--accent-green);
+  --color-danger: var(--accent-red);
+  --color-warning: var(--accent-yellow);
 }
+
+/* Background colors */
+.bg-background { background-color: var(--bg-primary); }
+.bg-surface { background-color: var(--bg-secondary); }
+.bg-surface-hover:hover { background-color: var(--bg-tertiary); }
+.bg-bg-primary { background-color: var(--bg-primary); }
+.bg-bg-secondary { background-color: var(--bg-secondary); }
+.bg-bg-tertiary { background-color: var(--bg-tertiary); }
+
+/* Text colors */
+.text-text { color: var(--text-primary); }
+.text-text-muted { color: var(--text-secondary); }
+.text-text-primary { color: var(--text-primary); }
+.text-primary { color: var(--accent-blue); }
+.text-success { color: var(--accent-green); }
+.text-danger { color: var(--accent-red); }
+.text-warning { color: var(--accent-yellow); }
+
+/* Border colors */
+.border-border { border-color: var(--border-color); }
+.border-border-hover:hover { border-color: var(--border-hover); }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
@@ -36,20 +83,73 @@ code {
 }
 
 ::-webkit-scrollbar-track {
-  background: #161b22;
+  background: var(--bg-secondary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #30363d;
+  background: var(--border-color);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #484f58;
+  background: var(--border-hover);
 }
 
 /* Selection styling */
 ::selection {
-  background-color: #58a6ff;
+  background-color: var(--accent-blue);
   color: #ffffff;
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+/* Custom animations */
+@keyframes livePulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.7);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 0 8px rgba(63, 185, 80, 0);
+  }
+}
+
+.live-indicator {
+  animation: livePulse 2s ease-in-out infinite;
+}
+
+/* Table styles */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  text-align: left;
+  padding: 0.75rem;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .mobile-hidden {
+    display: none;
+  }
+}
+
+/* Gradient backgrounds for cards */
+.card-gradient {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(22, 27, 34, 0.8);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
 }
