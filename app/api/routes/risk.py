@@ -323,3 +323,120 @@ async def get_correlation_matrix() -> Dict[str, Any]:
             [0.15, 0.12, 0.08, 1.0],
         ],
     }
+
+
+@router.get("/rolling-sharpe")
+async def get_rolling_sharpe(window: int = Query(30, ge=7, le=180)) -> List[Dict[str, Any]]:
+    """
+    Get rolling Sharpe ratio over time.
+    """
+    import random
+    
+    # Generate sample rolling sharpe data
+    np.random.seed(42)
+    dates = []
+    base_date = "2024-01-01"
+    
+    for i in range(90):
+        dates.append(f"2024-{((i // 30) + 1):02d}-{((i % 30) + 1):02d}")
+    
+    rolling_sharpe = []
+    current = 1.5
+    for _ in range(90):
+        current += np.random.normal(0, 0.3)
+        current = max(-2, min(4, current))
+        rolling_sharpe.append(round(current, 2))
+    
+    return [
+        {"date": date, "rolling_sharpe": sharpe}
+        for date, sharpe in zip(dates, rolling_sharpe)
+    ]
+
+
+@router.get("/drawdown")
+async def get_drawdown() -> List[Dict[str, Any]]:
+    """
+    Get drawdown data over time with equity curve.
+    """
+    np.random.seed(42)
+    
+    dates = []
+    base_value = 100000
+    equity = base_value
+    max_equity = base_value
+    
+    data = []
+    
+    for i in range(90):
+        date = f"2024-{((i // 30) + 1):02d}-{((i % 30) + 1):02d}"
+        dates.append(date)
+        
+        # Random walk
+        change = np.random.normal(0.002, 0.03)
+        equity = equity * (1 + change)
+        
+        # Track max equity
+        if equity > max_equity:
+            max_equity = equity
+        
+        # Calculate drawdown
+        drawdown = ((equity - max_equity) / max_equity) * 100
+        
+        data.append({
+            "date": date,
+            "drawdown": round(drawdown, 2),
+            "equity": round(equity, 2)
+        })
+    
+    return data
+
+
+@router.get("/monte-carlo")
+async def get_monte_carlo_distribution(
+    simulations: int = Query(1000, ge=100, le=10000)
+) -> List[Dict[str, Any]]:
+    """
+    Get Monte Carlo simulation distribution percentiles.
+    """
+    np.random.seed(42)
+    
+    # Simulate final portfolio values
+    daily_return = 0.001  # Mean daily return
+    daily_vol = 0.02     # Daily volatility
+    
+    final_values = []
+    for _ in range(simulations):
+        # Simulate 30 days of trading
+        portfolio_value = 100000
+        for _ in range(30):
+            portfolio_value *= (1 + np.random.normal(daily_return, daily_vol))
+        final_values.append(portfolio_value)
+    
+    final_values.sort()
+    
+    percentiles = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95]
+    
+    return [
+        {
+            "percentile": f"P{p}",
+            "value": round(final_values[int(len(final_values) * p / 100)], 2)
+        }
+        for p in percentiles
+    ]
+
+
+@router.get("/risk-return")
+async def get_risk_return_scatter() -> List[Dict[str, Any]]:
+    """
+    Get risk/return data for scatter plot (assets vs portfolio).
+    """
+    return [
+        {"name": "BTC", "risk": 45.2, "return": 28.5},
+        {"name": "ETH", "risk": 52.8, "return": 22.1},
+        {"name": "SOL", "risk": 68.5, "return": 35.2},
+        {"name": "SP500", "risk": 15.2, "return": 12.5},
+        {"name": "Gold", "risk": 12.5, "return": 8.2},
+        {"name": "BTC+ETH", "risk": 38.5, "return": 24.8},
+        {"name": "Portfolio", "risk": 22.5, "return": 18.2},
+        {"name": "Algo Strategy", "risk": 18.2, "return": 22.5},
+    ]

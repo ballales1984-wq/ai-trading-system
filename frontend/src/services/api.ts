@@ -179,6 +179,44 @@ export const riskApi = {
     const { data } = await api.get('/risk/correlation');
     return data;
   },
+
+  // Rolling Sharpe Ratio
+  getRollingSharpe: async (window: number = 30): Promise<{
+    date: string;
+    rolling_sharpe: number;
+  }[]> => {
+    const { data } = await api.get('/risk/rolling-sharpe', { params: { window } });
+    return data;
+  },
+
+  // Drawdown data
+  getDrawdown: async (): Promise<{
+    date: string;
+    drawdown: number;
+    equity: number;
+  }[]> => {
+    const { data } = await api.get('/risk/drawdown');
+    return data;
+  },
+
+  // Monte Carlo simulation
+  getMonteCarlo: async (simulations: number = 1000): Promise<{
+    percentile: string;
+    value: number;
+  }[]> => {
+    const { data } = await api.get('/risk/monte-carlo', { params: { simulations } });
+    return data;
+  },
+
+  // Risk/Return scatter data
+  getRiskReturn: async (): Promise<{
+    name: string;
+    risk: number;
+    return: number;
+  }[]> => {
+    const { data } = await api.get('/risk/risk-return');
+    return data;
+  },
 };
 
 

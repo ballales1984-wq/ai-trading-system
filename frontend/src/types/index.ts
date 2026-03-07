@@ -167,3 +167,8 @@ export interface NewsBySymbolResponse {
   total: number;
   last_updated: string;
 }
+
+export interface CorrelationMatrix {
+  assets: string[];
+  matrix: number[][];
+}

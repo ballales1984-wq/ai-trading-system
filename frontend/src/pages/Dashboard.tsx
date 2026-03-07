@@ -1,9 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { portfolioApi, marketApi } from '../services/api';
+import { portfolioApi, marketApi, riskApi } from '../services/api';
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, Activity, Wallet } from 'lucide-react';
 import { DashboardSkeleton } from '../components/ui/Skeleton';
 import { ErrorState } from '../components/ui/EmptyState';
+import CorrelationMatrix from '../components/charts/CorrelationMatrix';
+import RollingSharpeChart from '../components/charts/RollingSharpeChart';
+import DrawdownChart from '../components/charts/DrawdownChart';
+import MonteCarloChart from '../components/charts/MonteCarloChart';
+import RiskReturnScatter from '../components/charts/RiskReturnScatter';
 
 export default function Dashboard() {
   const { data: dualSummary, isLoading: summaryLoading, error: summaryError } = useQuery({
@@ -26,6 +31,37 @@ export default function Dashboard() {
     queryKey: ['market-prices'],
     queryFn: marketApi.getAllPrices,
     refetchInterval: 15000, // Refresh every 15 seconds
+  });
+
+  const { data: correlationData, isLoading: correlationLoading } = useQuery({
+    queryKey: ['risk-correlation'],
+    queryFn: riskApi.getCorrelationMatrix,
+    refetchInterval: 60000, // Refresh every 60 seconds
+  });
+
+  // Quantitative Charts Data
+  const { data: rollingSharpeData, isLoading: rollingSharpeLoading } = useQuery({
+    queryKey: ['risk-rolling-sharpe'],
+    queryFn: () => riskApi.getRollingSharpe(30),
+    refetchInterval: 60000,
+  });
+
+  const { data: drawdownData, isLoading: drawdownLoading } = useQuery({
+    queryKey: ['risk-drawdown'],
+    queryFn: riskApi.getDrawdown,
+    refetchInterval: 60000,
+  });
+
+  const { data: monteCarloData, isLoading: monteCarloLoading } = useQuery({
+    queryKey: ['risk-monte-carlo'],
+    queryFn: () => riskApi.getMonteCarlo(1000),
+    refetchInterval: 120000,
+  });
+
+  const { data: riskReturnData, isLoading: riskReturnLoading } = useQuery({
+    queryKey: ['risk-return'],
+    queryFn: riskApi.getRiskReturn,
+    refetchInterval: 60000,
   });
 
   // Extract real and simulated summaries
@@ -164,7 +200,7 @@ export default function Dashboard() {
                   <Tooltip
                     contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
                     labelStyle={{ color: '#c9d1d9' }}
-                    formatter={(value: number) => [formatCurrency(value), 'Value']}
+                    formatter={(value) => [formatCurrency(Number(value)), 'Value']}
                   />
                   <Area type="monotone" dataKey="value" stroke="#58a6ff" fillOpacity={1} fill="url(#colorValue)" />
                 </AreaChart>
@@ -238,6 +274,112 @@ export default function Dashboard() {
             No market data available
           </div>
         )}
+      </div>
+
+      {/* Correlation Matrix */}
+      <div className="bg-surface border border-border rounded-lg p-4 mb-6">
+        <h2 className="text-lg font-semibold text-text mb-4">Asset Correlation Matrix</h2>
+        <p className="text-text-muted text-sm mb-4">
+          Correlation between different assets. Green = positive correlation, Red = negative correlation
+        </p>
+        {correlationLoading ? (
+          <div className="h-80 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : correlationData?.assets && correlationData?.matrix ? (
+          <CorrelationMatrix data={correlationData} height={350} />
+        ) : (
+          <div className="h-80 flex items-center justify-center text-text-muted">
+            No correlation data available
+          </div>
+        )}
+      </div>
+
+      {/* Quantitative Analysis Section */}
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-text mb-4">Quantitative Analysis</h2>
+        
+        {/* Row 1: Rolling Sharpe & Drawdown */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Rolling Sharpe Ratio */}
+          <div className="bg-surface border border-border rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-text mb-2">Rolling Sharpe Ratio</h3>
+            <p className="text-text-muted text-sm mb-4">
+              30-day rolling Sharpe ratio over time. Green = positive, Red = negative
+            </p>
+            {rollingSharpeLoading ? (
+              <div className="h-72 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : rollingSharpeData && rollingSharpeData.length > 0 ? (
+              <RollingSharpeChart data={rollingSharpeData} height={280} />
+            ) : (
+              <div className="h-72 flex items-center justify-center text-text-muted">
+                No rolling sharpe data available
+              </div>
+            )}
+          </div>
+
+          {/* Drawdown Chart */}
+          <div className="bg-surface border border-border rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-text mb-2">Drawdown Analysis</h3>
+            <p className="text-text-muted text-sm mb-4">
+              Portfolio drawdown and equity curve over time
+            </p>
+            {drawdownLoading ? (
+              <div className="h-72 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : drawdownData && drawdownData.length > 0 ? (
+              <DrawdownChart data={drawdownData} height={280} />
+            ) : (
+              <div className="h-72 flex items-center justify-center text-text-muted">
+                No drawdown data available
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Row 2: Monte Carlo & Risk/Return */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Monte Carlo Distribution */}
+          <div className="bg-surface border border-border rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-text mb-2">Monte Carlo Simulation</h3>
+            <p className="text-text-muted text-sm mb-4">
+              1000 simulations - Distribution of potential portfolio outcomes
+            </p>
+            {monteCarloLoading ? (
+              <div className="h-80 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : monteCarloData && monteCarloData.length > 0 ? (
+<MonteCarloChart data={monteCarloData} height={320} />
+            ) : (
+              <div className="h-80 flex items-center justify-center text-text-muted">
+                No monte carlo data available
+              </div>
+            )}
+          </div>
+
+          {/* Risk/Return Scatter */}
+          <div className="bg-surface border border-border rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-text mb-2">Risk vs Return</h3>
+            <p className="text-text-muted text-sm mb-4">
+              Risk/return profile of portfolio assets. Color indicates Sharpe ratio quality
+            </p>
+            {riskReturnLoading ? (
+              <div className="h-80 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : riskReturnData && riskReturnData.length > 0 ? (
+              <RiskReturnScatter data={riskReturnData} height={320} />
+            ) : (
+              <div className="h-80 flex items-center justify-center text-text-muted">
+                No risk/return data available
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
