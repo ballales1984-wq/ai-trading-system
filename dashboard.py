@@ -1,33 +1,6 @@
-The user is asking why there are two apps running on localhost:8050 and localhost:8000. This is actually the correct architecture - the system has two separate components:
-
-Port 8000: FastAPI backend (API)
-Port 8050: Dashboard (Dash/React frontend)
-This is by design for the trading system architecture.
-
-
-Task Completed
-✅ È Normale! Architettura del Sistema
-Il sistema ha due componenti separati che lavorano insieme:
-
-Porta	Servizio	Descrizione
-8000	FastAPI Backend	API REST con tutti gli endpoint (auth, portfolio, orders, market, risk)
-8050	Dashboard	Interfaccia grafica per visualizzare dati e fare trading
-Come funziona:
-
-┌─────────────────────────────────────────────────┐
-│                 BROWSER                          │
-│  ┌──────────────┐      ┌──────────────────┐    │
-│  │ :8050        │ ───► │ :8000            │    │
-│  │ Dashboard    │      │ FastAPI Backend  │    │
-│  └──────────────┘      └──────────────────┘    │
-│        UI                   API                │
-└─────────────────────────────────────────────────┘
-La Dashboard (8050) mostra i dati e i grafici
-Il Backend API (8000) gestisce i dati, autenticazione, ordini, ecc.
-Entrambi sono necessari per il corretto funzionamento del sistema!
-✅ Tutto funziona correttamente!"""
+"""
 PRODUCTION TRADING DASHBOARD
-============================
+===========================
 
 Complete production-grade dashboard with:
 1. Portfolio P&L

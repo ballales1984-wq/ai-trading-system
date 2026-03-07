@@ -188,7 +188,7 @@ class ErrorRecovery:
     """Error recovery strategies"""
     
     @staticmethod
-    def retry_with: Callable, max_backoff(func_retries: int = 3, 
+    def retry_with_backoff(func: Callable, max_backoff: float = 2.0, func_retries: int = 3, 
                           initial_delay: float = 1.0) -> Any:
         """
         Retry function with exponential backoff
