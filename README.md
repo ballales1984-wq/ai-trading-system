@@ -1,7 +1,7 @@
 # 🤖 AI Trading System — Mini Hedge Fund Infrastructure
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/Tests-679Passed-green.svg)](tests)
+[![Tests](https://img.shields.io/badge/Tests-927%2B_Passing-green.svg)](tests)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## 🎯 Why This Project Exists

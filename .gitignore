@@ -80,3 +80,4 @@ logs/*.log
 
 # CLI submodule (not tracked)
 cli/
+node_modules/ 
