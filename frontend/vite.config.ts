@@ -12,54 +12,54 @@ export default defineConfig({
     port: 5173,
     allowedHosts: ['tonita-deposable-manneristically.ngrok-free.dev'],
     proxy: {
-      // Proxy for /api routes
+      // Proxy for /api routes to /api/v1
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, ''), // /api/v1 -> /v1
+        rewrite: (path) => '/api/v1' + path.replace(/^\/api/, ''), // /api/v1 -> /api/v1
       },
-      // Proxy for /portfolio -> /v1/portfolio
+      // Proxy for /portfolio -> /api/v1/portfolio
       '/portfolio': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => '/v1' + path, // /portfolio/summary -> /v1/portfolio/summary
+        rewrite: (path) => '/api/v1' + path, // /portfolio/summary -> /api/v1/portfolio/summary
       },
-      // Proxy for /market -> /v1/market
+      // Proxy for /market -> /api/v1/market
       '/market': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => '/v1' + path,
+        rewrite: (path) => '/api/v1' + path,
       },
-      // Proxy for /orders -> /v1/orders
+      // Proxy for /orders -> /api/v1/orders
       '/orders': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => '/v1' + path,
+        rewrite: (path) => '/api/v1' + path,
       },
-      // Proxy for /risk -> /v1/risk
+      // Proxy for /risk -> /api/v1/risk
       '/risk': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => '/v1' + path,
+        rewrite: (path) => '/api/v1' + path,
       },
-      // Proxy for /news -> /v1/news
+      // Proxy for /news -> /api/v1/news
       '/news': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => '/v1' + path,
+        rewrite: (path) => '/api/v1' + path,
       },
-      // Proxy for /auth -> /v1/auth
+      // Proxy for /auth -> /api/v1/auth
       '/auth': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => '/v1' + path,
+        rewrite: (path) => '/api/v1' + path,
       },
     },
   },

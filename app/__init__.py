@@ -9,7 +9,7 @@ Author: AI Trading System
 License: Proprietary
 """
 
-__version__ = "1.0.0"
+__version__ = "2.1.0"
 __author__ = "Hedge Fund Trading Team"
 
 from app.core.config import settings

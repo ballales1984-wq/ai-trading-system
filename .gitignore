@@ -77,3 +77,6 @@ logs/*.log
 # TypeScript build info
 *.tsbuildinfo
 .vercel
+
+# CLI submodule (not tracked)
+cli/

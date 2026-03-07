@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     
     # App Info
     app_name: str = "Hedge Fund Trading System"
-    app_version: str = "1.0.0"
+    app_version: str = "2.1.0"
     environment: str = Field(default="development", env="ENVIRONMENT")
     
     # Server
