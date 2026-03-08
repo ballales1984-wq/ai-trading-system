@@ -5,6 +5,7 @@ Hedge Fund Trading System API.
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
 from app.api.routes import news, market, portfolio, orders, health, strategy, waitlist, cache, auth, risk
@@ -22,6 +23,26 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
+
+# CORS middleware - Allow frontend to communicate with backend
+# Uses the cors_origins list from settings, with fallback to common dev origins
+cors_origins = getattr(settings, 'cors_origins', [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:8000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:8000",
+])
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+logger.info(f"CORS enabled for origins: {cors_origins}")
 
 # Include routers
 app.include_router(
