@@ -10,7 +10,6 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    allowedHosts: ['tonita-deposable-manneristically.ngrok-free.dev'],
     proxy: {
       // Proxy for /api routes to /api/v1
       '/api': {

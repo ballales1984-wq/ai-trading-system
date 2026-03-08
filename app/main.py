@@ -7,7 +7,7 @@ Hedge Fund Trading System API.
 from fastapi import FastAPI
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
-from app.api.routes import news, market, portfolio, orders, health
+from app.api.routes import news, market, portfolio, orders, health, strategy, waitlist, cache, auth, risk
 
 # Setup logging
 setup_logging()
@@ -52,6 +52,36 @@ app.include_router(
     health,
     prefix=settings.api_prefix,
     tags=["Health"]
+)
+
+app.include_router(
+    strategy,
+    prefix=f"{settings.api_prefix}/strategy",
+    tags=["Strategy"]
+)
+
+app.include_router(
+    waitlist,
+    prefix=f"{settings.api_prefix}/waitlist",
+    tags=["Waitlist"]
+)
+
+app.include_router(
+    cache,
+    prefix=f"{settings.api_prefix}/cache",
+    tags=["Cache"]
+)
+
+app.include_router(
+    auth,
+    prefix=f"{settings.api_prefix}/auth",
+    tags=["Auth"]
+)
+
+app.include_router(
+    risk,
+    prefix=f"{settings.api_prefix}/risk",
+    tags=["Risk"]
 )
 
 # Health check
