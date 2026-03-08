@@ -367,4 +367,62 @@ export const newsApi = {
   },
 };
 
+// Cache API
+export interface CacheStats {
+  in_memory: {
+    size: number;
+    hits: number;
+    misses: number;
+    hit_rate: number;
+    available: boolean;
+  };
+  redis: {
+    connected: boolean;
+    keys: number;
+    memory: string;
+  };
+}
+
+export interface CacheClearResponse {
+  success: boolean;
+  message: string;
+  cleared_count: number;
+}
+
+export const cacheApi = {
+  /**
+   * Get cache statistics from all cache backends
+   */
+  getStats: async (): Promise<CacheStats> => {
+    const { data } = await api.get<CacheStats>('/cache/');
+    return data;
+  },
+
+  /**
+   * Clear all caches (in-memory and Redis)
+   */
+  clearAll: async (): Promise<CacheClearResponse> => {
+    const { data } = await api.delete<CacheClearResponse>('/cache/');
+    return data;
+  },
+
+  /**
+   * Clear in-memory cache only
+   */
+  clearInMemory: async (): Promise<CacheClearResponse> => {
+    const { data } = await api.delete<CacheClearResponse>('/cache/in-memory');
+    return data;
+  },
+
+  /**
+   * Clear Redis cache only
+   */
+  clearRedis: async (pattern: string = ''): Promise<CacheClearResponse> => {
+    const { data } = await api.delete<CacheClearResponse>('/cache/redis', {
+      params: { pattern },
+    });
+    return data;
+  },
+};
+
 export default api;
