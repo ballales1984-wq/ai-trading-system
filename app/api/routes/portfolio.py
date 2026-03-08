@@ -18,6 +18,7 @@ from fastapi import APIRouter, HTTPException, status, Query
 from pydantic import BaseModel, Field
 
 from app.core.data_adapter import get_data_adapter
+from app.core.demo_mode import get_demo_mode, set_demo_mode
 from app.portfolio.performance import PortfolioPerformance as PortfolioPerformanceTracker
 from app.portfolio.optimization import PortfolioOptimizer, OptimizationConstraints
 from app.api.mock_data import (
@@ -146,18 +147,7 @@ def get_realtime_prices() -> Dict[str, float]:
 # CONFIGURABLE DEMO MODE (can be changed at runtime)
 # ============================================================================
 
-# Start with environment variable, but allow runtime changes.
-# Default to real mode (false) for production use.
-_demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
-
-def get_demo_mode() -> bool:
-    """Get current DEMO_MODE setting."""
-    return _demo_mode
-
-def set_demo_mode(value: bool) -> None:
-    """Set DEMO_MODE at runtime."""
-    global _demo_mode
-    _demo_mode = value
+# Demo mode is now handled by the shared demo_mode module
 
 
 # ============================================================================
