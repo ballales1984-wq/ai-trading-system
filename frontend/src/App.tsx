@@ -12,7 +12,7 @@ const PaymentTest = lazy(() => import('./pages/PaymentTest'));
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         {/* Public routes - without Layout */}
         <Route path="/login" element={<Suspense fallback={<div>Loading...</div>}><Login /></Suspense>} />

@@ -120,7 +120,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 bg-bg-secondary border border-border rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-text mb-4">Portfolio Equity</h3>
-                <div className="h-64">
+                <div className="h-64 min-w-0">
                   {historyData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={historyData}>
