@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { portfolioApi, marketApi, ordersApi } from '../services/api';
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
-import { TrendingUp, TrendingDown, DollarSign, Wallet, Activity, ArrowUp, ArrowDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Wallet } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Dashboard() {
@@ -10,7 +10,16 @@ export default function Dashboard() {
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'positions', label: 'Positions' },
-    { id: '
+    { id: 'orders', label: 'Orders' },
+    { id: 'performance', label: 'Performance' }
+  ];
+
+  const { data: dualSummary, isLoading: summaryLoading } = useQuery({
+    queryKey: ['portfolio-dual-summary'],
+    queryFn: portfolioApi.getDualSummary,
+    refetchInterval: 30000,
+  });
+
   const { data: history } = useQuery({
     queryKey: ['portfolio-history'],
     queryFn: () => portfolioApi.getHistory(30),
@@ -61,6 +70,7 @@ export default function Dashboard() {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
     );
   }
 
@@ -76,12 +86,13 @@ export default function Dashboard() {
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
           <span className="text-green-500 font-medium">Live</span>
         </div>
+      </div>
 
       {/* Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard title="Total Value" value={formatCurrency(summary?.total_value || 0)} icon={DollarSign} trend={summary?.daily_return_pct} />
-        <MetricCard title="Daily P&L" value={formatCurrency(summary?.daily_pnl || 0)} icon={summary?.daily_pnl >= 0 ? TrendingUp : TrendingDown} color={summary?.daily_pnl >= 0 ? 'green' : 'red'} />
-        <MetricCard title="Unrealized P&L" value={formatCurrency(summary?.unrealized_pnl || 0)} icon={summary?.unrealized_pnl >= 0 ? TrendingUp : TrendingDown} color={summary?.unrealized_pnl >= 0 ? 'green' : 'red'} />
+        <MetricCard title="Daily P&L" value={formatCurrency(summary?.daily_pnl || 0)} icon={summary?.daily_pnl >= 0 ? TrendingUp : TrendingDown} color={summary?.daily_pnl >= 0 ? 'success' : 'danger'} />
+        <MetricCard title="Unrealized P&L" value={formatCurrency(summary?.unrealized_pnl || 0)} icon={summary?.unrealized_pnl >= 0 ? TrendingUp : TrendingDown} color={summary?.unrealized_pnl >= 0 ? 'success' : 'danger'} />
         <MetricCard title="Open Positions" value={String(summary?.num_positions || 0)} icon={Wallet} />
       </div>
 
@@ -89,6 +100,38 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-gray-800 rounded-xl p-4" style={{ minHeight: 300 }}>
           <h3 className="text-lg font-semibold text-gray-100 mb-4">Portfolio Equity</h3>
+          <div className="h-72 w-full min-h-[280px]">
+            {!summaryLoading && historyData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={historyData}>
+                  <defs>
+                    <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3fb950" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#3fb950" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
+                  <XAxis dataKey="date" stroke="#8b949e" fontSize={11} />
+                  <YAxis stroke="#8b949e" fontSize={11} tickFormatter={(v: number) => `$${(v/1000).toFixed(0)}k`} />
+                  <Tooltip contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }} />
+                  <Area type="monotone" dataKey="value" stroke="#3fb950" strokeWidth={2} fillOpacity={1} fill="url(#equityGradient)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-text-muted">No data</div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-bg-secondary border border-border rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-text mb-4">Performance</h3>
+          <div className="space-y-3">
+            <PerfRow label="Total Return" value={formatPercent(performance?.total_return_pct || 0)} positive={(performance?.total_return_pct || 0) >= 0} />
+            <PerfRow label="Sharpe Ratio" value={String(performance?.sharpe_ratio?.toFixed(2) || '0.00')} />
+            <PerfRow label="Win Rate" value={`${((performance?.win_rate || 0) * 100).toFixed(1)}%`} positive={(performance?.win_rate || 0) > 0.5} />
+            <PerfRow label="Max Drawdown" value={formatPercent(performance?.max_drawdown_pct || 0)} inverted />
+            <PerfRow label="Profit Factor" value={String(performance?.profit_factor?.toFixed(2) || '0.00')} />
+          </div>
         </div>
       </div>
 
@@ -121,7 +164,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 bg-bg-secondary border border-border rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-text mb-4">Portfolio Equity</h3>
-<div className="h-72 w-full min-h-[280px]">
+                <div className="h-72 w-full min-h-[280px]">
                   {!summaryLoading && historyData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={historyData}>
@@ -354,5 +397,3 @@ function StatusBadge({ status }: { status: string }) {
     </span>
   );
 }
-
-
