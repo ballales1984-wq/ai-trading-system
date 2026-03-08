@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Settings, LogOut, Menu, X, Bot } from 'lucide-react';
+import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Menu, X, Bot } from 'lucide-react';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -146,3 +146,4 @@ export default function Layout() {
     </div>
   );
 }
+
