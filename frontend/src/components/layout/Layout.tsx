@@ -69,6 +69,7 @@ export default function Layout() {
               <h1 style={{ fontSize: 16, fontWeight: 700, color: '#c9d1d9', margin: 0 }}>AI Trading</h1>
               <p style={{ fontSize: 11, color: '#8b949e', margin: '2px 0 0' }}>Hedge Fund Edition</p>
             </div>
+          </div>
         </div>
 
         {/* Navigation */}
@@ -115,6 +116,7 @@ export default function Layout() {
             />
             <span style={{ fontSize: 12, color: '#8b949e' }}>Live Trading Active</span>
           </div>
+        </div>
       </aside>
 
       {/* Overlay for mobile */}
