@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 from app.api.mock_data import get_news as mock_get_news
 
 # Import demo mode functions from portfolio (they share the same state)
-from app.api.routes.portfolio import get_demo_mode
+from app.core.demo_mode import get_demo_mode
 
 router = APIRouter()
 
