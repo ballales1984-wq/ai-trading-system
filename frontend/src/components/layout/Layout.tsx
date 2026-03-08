@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { 
@@ -10,6 +11,7 @@ import {
   X,
   Settings,
   LogOut,
+  ChevronLeft,
   ChevronRight
 } from 'lucide-react';
 import { ToastContainer, useToast } from '../ui/Toast';
@@ -30,38 +32,39 @@ export default function Layout() {
   const currentPage = navItems.find(item => item.to === location.pathname);
 
   return (
-    <div className="min-h-screen bg-bg-primary flex">
+    <div className="min-h-screen flex bg-[var(--bg-primary)]">
       {/* Sidebar */}
       <aside
         className={`
-          fixed lg:static inset-y-0 left-0 z-40 
-          bg-bg-secondary border-r border-border flex flex-col
+          fixed inset-y-0 left-0 z-50 
+          bg-[var(--bg-secondary)] border-r border-[var(--border-color)] flex flex-col
           transition-all duration-300 ease-in-out
-          ${collapsed ? 'w-20' : 'w-64'}
+          ${collapsed ? 'w-16' : 'w-64'}
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
         {/* Logo */}
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-[var(--border-color)]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Bot className="w-6 h-6 text-primary" />
+            <div className="w-10 h-10 bg-[var(--accent-blue)]/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Bot className="w-6 h-6 text-[var(--accent-blue)]" />
             </div>
             {!collapsed && (
-              <div className="overflow-hidden">
-                <h1 className="text-lg font-bold text-text truncate">AI Trading</h1>
-                <p className="text-xs text-text-muted truncate">Hedge Fund Edition</p>
+              <div className="flex flex-col">
+                <h1 className="text-lg font-bold text-[var(--text-primary)]">AI Trading</h1>
+                <p className="text-xs text-[var(--text-secondary)]">Hedge Fund Edition</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Collapse Button (desktop) */}
+        {/* Collapse Button */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="hidden lg:flex items-center justify-center p-2 mx-auto text-text-muted hover:text-text hover:bg-bg-tertiary rounded-lg transition-colors"
+          className="hidden lg:flex items-center justify-center p-2 mx-auto my-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] rounded-lg transition-colors"
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          <ChevronRight className={`w-5 h-5 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
+          {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
         </button>
 
         {/* Navigation */}
@@ -74,16 +77,16 @@ export default function Layout() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 ${
                   isActive
-                    ? 'bg-primary/15 text-primary border border-primary/30'
-                    : 'text-text-muted hover:bg-bg-tertiary hover:text-text border border-transparent'
+                    ? 'bg-[var(--accent-blue)]/15 text-[var(--accent-blue)] border border-[var(--accent-blue)]/30'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] border border-transparent'
                 } ${collapsed ? 'justify-center' : ''}`
               }
             >
               <item.icon className="w-5 h-5 flex-shrink-0" />
               {!collapsed && (
-                <div className="overflow-hidden">
-                  <div className="font-medium text-sm truncate">{item.label}</div>
-                  <div className="text-xs text-text-muted truncate">{item.description}</div>
+                <div className="flex flex-col">
+                  <span className="font-medium text-sm">{item.label}</span>
+                  <span className="text-xs text-[var(--text-secondary)]">{item.description}</span>
                 </div>
               )}
             </NavLink>
@@ -91,9 +94,9 @@ export default function Layout() {
         </nav>
 
         {/* Bottom Actions */}
-        <div className="p-3 border-t border-border space-y-1">
+        <div className="p-3 border-t border-[var(--border-color)] space-y-1">
           <button
-            className={`flex items-center gap-3 px-3 py-3 rounded-xl text-text-muted hover:bg-bg-tertiary hover:text-text transition-colors w-full ${
+            className={`flex items-center gap-3 px-3 py-3 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors w-full ${
               collapsed ? 'justify-center' : ''
             }`}
           >
@@ -101,7 +104,7 @@ export default function Layout() {
             {!collapsed && <span className="text-sm font-medium">Settings</span>}
           </button>
           <button
-            className={`flex items-center gap-3 px-3 py-3 rounded-xl text-danger hover:bg-danger/10 transition-colors w-full ${
+            className={`flex items-center gap-3 px-3 py-3 rounded-xl text-[var(--accent-red)] hover:bg-[var(--accent-red)]/10 transition-colors w-full ${
               collapsed ? 'justify-center' : ''
             }`}
           >
@@ -111,11 +114,11 @@ export default function Layout() {
         </div>
 
         {/* Status */}
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-[var(--border-color)]">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-success rounded-full animate-pulse" />
+            <span className="w-2.5 h-2.5 bg-[var(--accent-green)] rounded-full animate-pulse" />
             {!collapsed && (
-              <span className="text-xs text-text-muted">Live Trading Active</span>
+              <span className="text-xs text-[var(--text-secondary)]">Live Trading Active</span>
             )}
           </div>
         </div>
@@ -124,32 +127,32 @@ export default function Layout() {
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-screen lg:ml-64">
         {/* Top Header */}
-        <header className="sticky top-0 z-20 bg-bg-secondary/95 backdrop-blur-sm border-b border-border px-4 py-3">
+        <header className="sticky top-0 z-30 bg-[var(--bg-secondary)]/95 backdrop-blur-sm border-b border-[var(--border-color)] px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden p-2 bg-bg-tertiary rounded-lg text-text hover:bg-border transition-colors"
+                className="lg:hidden p-2 bg-[var(--bg-tertiary)] rounded-lg text-[var(--text-primary)] hover:bg-[var(--border-color)] transition-colors"
               >
                 {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
               
               {/* Page Title */}
               <div>
-                <h1 className="text-lg font-semibold text-text">
+                <h1 className="text-lg font-semibold text-[var(--text-primary)]">
                   {currentPage?.label || 'Dashboard'}
                 </h1>
                 {currentPage && (
-                  <p className="text-xs text-text-muted">{currentPage.description}</p>
+                  <p className="text-xs text-[var(--text-secondary)]">{currentPage.description}</p>
                 )}
               </div>
             </div>
@@ -157,14 +160,14 @@ export default function Layout() {
             {/* Right side - Time & Status */}
             <div className="flex items-center gap-4">
               <div className="text-right hidden sm:block">
-                <div className="text-xs text-text-muted">
+                <div className="text-xs text-[var(--text-secondary)]">
                   {new Date().toLocaleDateString('en-US', { 
                     weekday: 'short', 
                     month: 'short', 
                     day: 'numeric' 
                   })}
                 </div>
-                <div className="text-xs text-text-muted">
+                <div className="text-xs text-[var(--text-secondary)]">
                   {new Date().toLocaleTimeString('en-US', { 
                     hour: '2-digit', 
                     minute: '2-digit',
@@ -172,8 +175,8 @@ export default function Layout() {
                   })}
                 </div>
               </div>
-              <div className="px-3 py-1.5 bg-success/10 border border-success/20 rounded-full">
-                <span className="text-xs font-medium text-success">Paper Trading</span>
+              <div className="px-3 py-1.5 bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/20 rounded-full">
+                <span className="text-xs font-medium text-[var(--accent-green)]">Paper Trading</span>
               </div>
             </div>
           </div>
@@ -190,3 +193,4 @@ export default function Layout() {
     </div>
   );
 }
+
