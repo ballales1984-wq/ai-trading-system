@@ -16,7 +16,7 @@ from app.core.data_adapter import get_data_adapter
 from app.api.mock_data import get_orders as mock_orders
 
 # Import demo mode functions from portfolio (they share the same state)
-from app.api.routes.portfolio import get_demo_mode
+from app.core.demo_mode import get_demo_mode
 
 logger = logging.getLogger(__name__)
 
