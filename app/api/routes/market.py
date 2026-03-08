@@ -21,7 +21,7 @@ from app.api.mock_data import (
 )
 
 # Import demo mode functions from portfolio
-from app.api.routes.portfolio import get_demo_mode
+from app.core.demo_mode import get_demo_mode
 
 # Import Cloudflare Radar client
 try:
