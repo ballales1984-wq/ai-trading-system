@@ -1,20 +1,16 @@
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { portfolioApi, marketApi, ordersApi } from '../services/api';
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
-import { TrendingUp, TrendingDown, DollarSign, Wallet } from 'lucide-react';
-
-type TabType = 'overview' | 'positions' | 'orders' | 'performance';
+import { TrendingUp, TrendingDown, DollarSign, Wallet, Activity, ArrowUp, ArrowDown } from 'lucide-react';
+import { useState } from 'react';
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [activeTab, setActiveTab] = useState('overview');
   
-  const { data: dualSummary, isLoading: summaryLoading } = useQuery({
-    queryKey: ['portfolio-dual-summary'],
-    queryFn: portfolioApi.getDualSummary,
-    refetchInterval: 30000,
-  });
-
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'positions', label: 'Positions' },
+    { id: '
   const { data: history } = useQuery({
     queryKey: ['portfolio-history'],
     queryFn: () => portfolioApi.getHistory(30),
@@ -61,33 +57,38 @@ export default function Dashboard() {
 
   const formatPercent = (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 
-  const tabs = [
-    { id: 'overview' as const, label: 'Overview' },
-    { id: 'positions' as const, label: 'Positions' },
-    { id: 'orders' as const, label: 'Orders' },
-    { id: 'performance' as const, label: 'Performance' },
-  ];
-
   if (summaryLoading && !dualSummary) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary">
-      <div className="border-b border-border bg-bg-secondary px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-text">Trading Dashboard</h1>
-            <p className="text-sm text-text-muted">Paper Trading</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
-            <span className="text-sm text-success font-medium">Live</span>
-          </div>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-100">Trading Dashboard</h1>
+          <p className="text-gray-400">Paper Trading</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+          <span className="text-green-500 font-medium">Live</span>
+        </div>
+
+      {/* Metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <MetricCard title="Total Value" value={formatCurrency(summary?.total_value || 0)} icon={DollarSign} trend={summary?.daily_return_pct} />
+        <MetricCard title="Daily P&L" value={formatCurrency(summary?.daily_pnl || 0)} icon={summary?.daily_pnl >= 0 ? TrendingUp : TrendingDown} color={summary?.daily_pnl >= 0 ? 'green' : 'red'} />
+        <MetricCard title="Unrealized P&L" value={formatCurrency(summary?.unrealized_pnl || 0)} icon={summary?.unrealized_pnl >= 0 ? TrendingUp : TrendingDown} color={summary?.unrealized_pnl >= 0 ? 'green' : 'red'} />
+        <MetricCard title="Open Positions" value={String(summary?.num_positions || 0)} icon={Wallet} />
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-gray-800 rounded-xl p-4" style={{ minHeight: 300 }}>
+          <h3 className="text-lg font-semibold text-gray-100 mb-4">Portfolio Equity</h3>
         </div>
       </div>
 
