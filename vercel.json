@@ -2,25 +2,22 @@
   "version": 2,
   "builds": [
     {
-      "src": "frontend",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build"
     },
     {
       "src": "api/index.py",
       "use": "@vercel/python"
     }
   ],
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "framework": "vite",
+  "installCommand": "pip install -r api/requirements.txt",
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "/api/index.py"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/frontend/index.html"
     }
   ]
 }
