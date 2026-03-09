@@ -165,6 +165,18 @@ export const emergencyApi = {
   },
 };
 
+// Risk API
+export const riskApi = {
+  getMetrics: async () => {
+    const { data } = await api.get('/risk/metrics');
+    return data;
+  },
+  getCorrelationMatrix: async () => {
+    const { data } = await api.get('/risk/correlation');
+    return data;
+  },
+};
+
 // Cache API
 export interface CacheStats {
   in_memory: {
