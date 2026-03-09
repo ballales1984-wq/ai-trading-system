@@ -9,20 +9,9 @@
         "installCommand": "cd frontend && npm ci",
         "buildCommand": "cd frontend && npm run build"
       }
-    },
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python",
-      "config": {
-        "pythonVersion": "3.11"
-      }
     }
   ],
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.py"
-    },
     {
       "src": "/assets/(.*)",
       "headers": {
