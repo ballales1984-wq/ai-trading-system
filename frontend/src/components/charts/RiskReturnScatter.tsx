@@ -12,6 +12,24 @@ interface RiskReturnScatterProps {
 }
 
 export default function RiskReturnScatter({ data, height = 350 }: RiskReturnScatterProps) {
+  // Guard against empty or invalid data
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64 text-text-muted">
+        No risk-return data available
+      </div>
+    );
+  }
+
+  const validData = data.filter(d => d && typeof d.risk === 'number' && typeof d.return === 'number' && d.risk > 0);
+  if (validData.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64 text-text-muted">
+        No valid risk-return data available
+      </div>
+    );
+  }
+
   const option = useMemo(() => ({
     tooltip: {
       trigger: 'item',
@@ -175,6 +193,9 @@ export default function RiskReturnScatter({ data, height = 350 }: RiskReturnScat
   const avgReturn = data.reduce((sum, d) => sum + d.return, 0) / data.length;
   const bestSharpe = Math.max(...data.map(d => d.return / d.risk));
 
+  // Ensure minimum height is valid
+  const chartHeight = Math.max(height || 350, 200);
+
   return (
     <div>
       {/* Stats Summary */}
@@ -193,11 +214,13 @@ export default function RiskReturnScatter({ data, height = 350 }: RiskReturnScat
         </div>
       </div>
       
-      <ReactECharts
-        option={option}
-        style={{ height: `${height}px`, width: '100%' }}
-        opts={{ renderer: 'svg' }}
-      />
+      <div style={{ minHeight: `${chartHeight}px`, minWidth: '100%' }}>
+        <ReactECharts
+          option={option}
+          style={{ height: `${chartHeight}px`, width: '100%' }}
+          opts={{ renderer: 'svg' }}
+        />
+      </div>
     </div>
   );
 }

@@ -54,7 +54,7 @@ Join our growing community of AI trading enthusiasts, developers, and quantitati
 
 ## Discord Invite Link
 
-[Join AI Trading System Discord](https://discord.gg/aitrading)
+[Join AI Trading System Discord](<https://discord.gg/aitrading>)
 
 ## Community Stats
 

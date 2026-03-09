@@ -107,6 +107,9 @@ class Settings(BaseSettings):
     bybit_secret_key: str = Field(default="", env="BYBIT_SECRET_KEY")
     bybit_testnet: bool = True
     
+    # CoinMarketCap API
+    coinmarketcap_api_key: str = Field(default="", env="COINMARKETCAP_API_KEY")
+    
     # Paper Trading
     paper_trading: bool = True
     paper_initial_balance: float = 1000000.0

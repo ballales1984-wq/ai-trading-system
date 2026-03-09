@@ -10,6 +10,18 @@ interface MonteCarloChartProps {
 }
 
 export default function MonteCarloChart({ data, height = 300 }: MonteCarloChartProps) {
+  // Guard against empty or invalid data
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64 text-text-muted">
+        No Monte Carlo data available
+      </div>
+    );
+  }
+
+  // Ensure minimum height is valid
+  const chartHeight = Math.max(height || 300, 200);
+
   const option = useMemo(() => {
     // Extract values for calculating statistics
     const values = data.map(d => d.value);
@@ -189,11 +201,13 @@ export default function MonteCarloChart({ data, height = 300 }: MonteCarloChartP
         </div>
       </div>
       
-      <ReactECharts
-        option={option}
-        style={{ height: `${height}px`, width: '100%' }}
-        opts={{ renderer: 'svg' }}
-      />
+      <div style={{ minHeight: `${chartHeight}px`, minWidth: '100%' }}>
+        <ReactECharts
+          option={option}
+          style={{ height: `${chartHeight}px`, width: '100%' }}
+          opts={{ renderer: 'svg' }}
+        />
+      </div>
     </div>
   );
 }

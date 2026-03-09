@@ -8,7 +8,19 @@ interface CorrelationMatrixProps {
 }
 
 export default function CorrelationMatrix({ data, height = 350 }: CorrelationMatrixProps) {
+  // Guard against empty or invalid data
+  if (!data || !data.assets || !data.matrix || data.assets.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64 text-text-muted">
+        No correlation data available
+      </div>
+    );
+  }
+
   const { assets, matrix } = data;
+
+  // Ensure minimum height is valid
+  const chartHeight = Math.max(height || 350, 250);
 
   // Transform matrix data for ECharts heatmap
   const heatmapData = useMemo(() => {
@@ -135,11 +147,13 @@ export default function CorrelationMatrix({ data, height = 350 }: CorrelationMat
   };
 
   return (
-    <ReactECharts
-      option={option}
-      style={{ height: `${height}px`, width: '100%' }}
-      opts={{ renderer: 'svg' }}
-    />
+    <div style={{ minHeight: `${chartHeight}px`, minWidth: '100%' }}>
+      <ReactECharts
+        option={option}
+        style={{ height: `${chartHeight}px`, width: '100%' }}
+        opts={{ renderer: 'svg' }}
+      />
+    </div>
   );
 }
 

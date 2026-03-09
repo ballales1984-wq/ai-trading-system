@@ -11,6 +11,18 @@ interface DrawdownChartProps {
 }
 
 export default function DrawdownChart({ data, height = 300 }: DrawdownChartProps) {
+  // Guard against empty or invalid data
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64 text-text-muted">
+        No drawdown data available
+      </div>
+    );
+  }
+
+  // Ensure minimum height is valid
+  const chartHeight = Math.max(height || 300, 200);
+
   const option = useMemo(() => ({
     tooltip: {
       trigger: 'axis',
@@ -171,10 +183,12 @@ export default function DrawdownChart({ data, height = 300 }: DrawdownChartProps
   }), [data]);
 
   return (
-    <ReactECharts
-      option={option}
-      style={{ height: `${height}px`, width: '100%' }}
-      opts={{ renderer: 'svg' }}
-    />
+    <div style={{ minHeight: `${chartHeight}px`, minWidth: '100%' }}>
+      <ReactECharts
+        option={option}
+        style={{ height: `${chartHeight}px`, width: '100%' }}
+        opts={{ renderer: 'svg' }}
+      />
+    </div>
   );
 }

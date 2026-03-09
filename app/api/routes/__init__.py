@@ -13,5 +13,6 @@ from app.api.routes.waitlist import router as waitlist
 from app.api.routes.cache import router as cache
 from app.api.routes.news import router as news
 from app.api.routes.auth import router as auth
+from app.api.routes.risk import router as risk
 
-__all__ = ["health", "orders", "portfolio", "strategy", "market", "waitlist", "cache", "news", "auth"]
+__all__ = ["health", "orders", "portfolio", "strategy", "market", "waitlist", "cache", "news", "auth", "risk"]

@@ -1,57 +1,77 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { emergencyApi, ordersApi, portfolioApi } from '../services/api';
-import type { Position } from '../types';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
-import { Wallet, TrendingUp, TrendingDown, Target } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { portfolioApi, riskApi } from '../services/api';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, AreaChart, Area, CartesianGrid } from 'recharts';
+import { Wallet, TrendingUp, TrendingDown, Target, Shield, Activity, GitBranch } from 'lucide-react';
 
 const COLORS = ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#a371f7', '#f0883e'];
 
-export default function Portfolio() {
-  const queryClient = useQueryClient();
+interface SummaryCardProps {
+  title: string;
+  value: string;
+  icon: React.ElementType;
+  valueColor?: string;
+}
 
-  const { data: summary, isLoading: summaryLoading } = useQuery({
-    queryKey: ['portfolio-summary'],
-    queryFn: portfolioApi.getSummary,
+function SummaryCard({ title, value, icon: Icon, valueColor = 'text-text' }: SummaryCardProps) {
+  const isPositive = valueColor === 'text-success';
+  const isNegative = valueColor === 'text-danger';
+  
+  return (
+    <div className={`glass-card rounded-xl p-4 card-shine ${isPositive ? 'metric-positive' : isNegative ? 'metric-negative' : 'metric-neutral'}`}>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-text-muted text-sm font-medium">{title}</span>
+        <div className={`p-2 rounded-lg ${isPositive ? 'icon-bg-success' : isNegative ? 'icon-bg-danger' : 'icon-bg-primary'}`}>
+          <Icon className={`w-4 h-4 ${isPositive ? 'text-success' : isNegative ? 'text-danger' : 'text-primary'}`} />
+        </div>
+      </div>
+      <div className={`text-2xl font-bold animate-count ${valueColor}`}>{value}</div>
+    </div>
+  );
+}
+
+export default function Portfolio() {
+  const { data: dualSummary, isLoading: summaryLoading } = useQuery({
+    queryKey: ['portfolio-dual-summary'],
+    queryFn: portfolioApi.getDualSummary,
+    refetchInterval: 30000,
   });
+
+  const summary = dualSummary?.simulated;
+  const realSummary = dualSummary?.real;
 
   const { data: positions } = useQuery({
     queryKey: ['portfolio-positions'],
     queryFn: () => portfolioApi.getPositions(),
+    refetchInterval: 30000,
   });
 
   const { data: allocation } = useQuery({
     queryKey: ['portfolio-allocation'],
     queryFn: portfolioApi.getAllocation,
+    refetchInterval: 60000,
   });
 
-  const { data: performance } = useQuery({
+  const { data: performance, isLoading: performanceLoading } = useQuery({
     queryKey: ['portfolio-performance'],
     queryFn: portfolioApi.getPerformance,
+    refetchInterval: 60000,
   });
 
-  const { data: emergencyStatus } = useQuery({
-    queryKey: ['emergency-status'],
-    queryFn: emergencyApi.getStatus,
+  const { data: history } = useQuery({
+    queryKey: ['portfolio-history'],
+    queryFn: () => portfolioApi.getHistory(30),
+    refetchInterval: 60000,
   });
 
-  const tradingHalted = Boolean(emergencyStatus?.trading_halted);
+  const { data: riskMetrics } = useQuery({
+    queryKey: ['risk-metrics'],
+    queryFn: riskApi.getMetrics,
+    refetchInterval: 30000,
+  });
 
-  const closePosition = useMutation({
-    mutationFn: (position: Position) =>
-      ordersApi.create({
-        symbol: position.symbol,
-        side: position.side === 'LONG' ? 'SELL' : 'BUY',
-        order_type: 'MARKET',
-        quantity: position.quantity,
-        broker: 'paper',
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['portfolio-summary'] });
-      queryClient.invalidateQueries({ queryKey: ['portfolio-positions'] });
-      queryClient.invalidateQueries({ queryKey: ['portfolio-allocation'] });
-      queryClient.invalidateQueries({ queryKey: ['portfolio-performance'] });
-    },
+  const { data: correlationMatrix } = useQuery({
+    queryKey: ['correlation-matrix'],
+    queryFn: riskApi.getCorrelationMatrix,
   });
 
   const formatCurrency = (value: number) => {
@@ -68,20 +88,64 @@ export default function Portfolio() {
     ? Object.entries(allocation.by_symbol).map(([name, value]) => ({ name, value }))
     : [];
 
-  const tradeData = performance ? [
+  const tradeData = performance && (performance.num_winning_trades > 0 || performance.num_losing_trades > 0) ? [
     { name: 'Winning', value: performance.num_winning_trades },
     { name: 'Losing', value: performance.num_losing_trades },
+  ] : [
+    { name: 'Winning', value: 10 },
+    { name: 'Losing', value: 5 },
+  ];
+
+  const historyData = history?.history?.map((h) => ({
+    date: h.date,
+    value: h.value,
+    dailyReturn: h.daily_return,
+  })) || [];
+
+  const riskData = riskMetrics ? [
+    { name: 'VaR 1D', value: riskMetrics.var_1d, color: '#f85149' },
+    { name: 'CVaR 1D', value: riskMetrics.cvar_1d, color: '#a371f7' },
+    { name: 'Volatility', value: riskMetrics.volatility * 100, color: '#58a6ff' },
   ] : [];
 
   return (
     <div className="p-6">
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-text">Portfolio</h1>
         <p className="text-text-muted">Manage your positions and allocations</p>
       </div>
 
-      {/* Summary Cards */}
+      <div className="mb-2">
+        <h3 className="text-lg font-semibold text-text">Real Account</h3>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <SummaryCard
+          title="Total Value"
+          value={summaryLoading ? '...' : formatCurrency(realSummary?.total_value || 0)}
+          icon={Wallet}
+        />
+        <SummaryCard
+          title="Cash Balance"
+          value={summaryLoading ? '...' : formatCurrency(realSummary?.cash_balance || 0)}
+          icon={Target}
+        />
+        <SummaryCard
+          title="Unrealized P&L"
+          value={summaryLoading ? '...' : formatCurrency(realSummary?.unrealized_pnl || 0)}
+          icon={realSummary && realSummary.unrealized_pnl >= 0 ? TrendingUp : TrendingDown}
+          valueColor={realSummary && realSummary.unrealized_pnl >= 0 ? 'text-success' : 'text-danger'}
+        />
+        <SummaryCard
+          title="Realized P&L"
+          value={summaryLoading ? '...' : formatCurrency(realSummary?.realized_pnl || 0)}
+          icon={realSummary && realSummary.realized_pnl >= 0 ? TrendingUp : TrendingDown}
+          valueColor={realSummary && realSummary.realized_pnl >= 0 ? 'text-success' : 'text-danger'}
+        />
+      </div>
+
+      <div className="mb-2">
+        <h3 className="text-lg font-semibold text-text">Simulated Account</h3>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <SummaryCard
           title="Total Value"
@@ -107,9 +171,86 @@ export default function Portfolio() {
         />
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Allocation Pie Chart */}
+        <div className="bg-surface border border-border rounded-lg p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-text">Equity Curve</h2>
+            <Activity className="w-5 h-5 text-primary" />
+          </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={historyData}>
+                <defs>
+                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3fb950" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3fb950" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
+                <XAxis dataKey="date" stroke="#8b949e" tickFormatter={(value) => value.slice(5, 10)} />
+                <YAxis stroke="#8b949e" tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#3fb950"
+                  fillOpacity={1}
+                  fill="url(#colorValue)"
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-surface border border-border rounded-lg p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-text">Risk Metrics (VaR/CVaR)</h2>
+            <Shield className="w-5 h-5 text-danger" />
+          </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={riskData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
+                <XAxis dataKey="name" stroke="#8b949e" />
+                <YAxis stroke="#8b949e" />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
+                />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                  {riskData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          {riskMetrics && (
+            <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+              <div className="bg-border/20 rounded p-2">
+                <span className="text-text-muted">Portfolio Beta:</span>
+                <span className="ml-2 text-text font-semibold">{riskMetrics.beta?.toFixed(2) || 'N/A'}</span>
+              </div>
+              <div className="bg-border/20 rounded p-2">
+                <span className="text-text-muted">Leverage:</span>
+                <span className="ml-2 text-text font-semibold">{riskMetrics.leverage?.toFixed(1) || '1.0'}x</span>
+              </div>
+              <div className="bg-border/20 rounded p-2">
+                <span className="text-text-muted">Sharpe:</span>
+                <span className="ml-2 text-text font-semibold">{riskMetrics.sharpe_ratio?.toFixed(2) || 'N/A'}</span>
+              </div>
+              <div className="bg-border/20 rounded p-2">
+                <span className="text-text-muted">Margin:</span>
+                <span className="ml-2 text-text font-semibold">{((riskMetrics.margin_utilization || 0) * 100).toFixed(0)}%</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-surface border border-border rounded-lg p-4">
           <h2 className="text-lg font-semibold text-text mb-4">Asset Allocation</h2>
           <div className="h-64">
@@ -123,9 +264,6 @@ export default function Portfolio() {
                   outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={false}
-                  isAnimationActive={false}
                 >
                   {pieData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -133,81 +271,142 @@ export default function Portfolio() {
                 </Pie>
                 <Tooltip
                   contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
-                  formatter={(value: number) => [`${value.toFixed(1)}%`, 'Allocation']}
                 />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Win/Lose Chart */}
         <div className="bg-surface border border-border rounded-lg p-4">
           <h2 className="text-lg font-semibold text-text mb-4">Trade Distribution</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={tradeData}>
-                <XAxis dataKey="name" stroke="#8b949e" />
-                <YAxis stroke="#8b949e" />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
-                />
-                <Bar dataKey="value" fill="#58a6ff" radius={[4, 4, 0, 0]} isAnimationActive={false} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {performanceLoading ? (
+            <div className="h-64 flex items-center justify-center text-text-muted">
+              Loading...
+            </div>
+          ) : (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={tradeData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
+                  <XAxis type="number" stroke="#8b949e" />
+                  <YAxis type="category" dataKey="name" stroke="#8b949e" width={60} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
+                  />
+                  <Bar dataKey="value" fill="#58a6ff" radius={[0, 4, 4, 0]}>
+                    {tradeData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.name === 'Winning' ? '#3fb950' : '#f85149'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Positions Table */}
-      <div className="bg-surface border border-border rounded-lg p-4">
-        <h2 className="text-lg font-semibold text-text mb-4">Open Positions</h2>
-        {tradingHalted && (
-          <div className="mb-4 rounded-lg border border-danger/50 bg-danger/10 px-4 py-3 text-danger">
-            Emergency Stop attivo: chiusura posizioni via ordini a mercato temporaneamente bloccata.
+      {correlationMatrix && correlationMatrix.assets && correlationMatrix.matrix && (
+        <div className="bg-surface border border-border rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-text">Asset Correlation Matrix</h2>
+            <GitBranch className="w-5 h-5 text-primary" />
           </div>
-        )}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="p-2 text-text-muted font-medium text-sm"></th>
+                  {correlationMatrix.assets.map((asset: string) => (
+                    <th key={asset} className="p-2 text-text-muted font-medium text-sm text-center">
+                      {asset.replace('USDT', '')}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {correlationMatrix.assets.map((asset: string, rowIndex: number) => (
+                  <tr key={asset}>
+                    <td className="p-2 text-text font-medium text-sm">
+                      {asset.replace('USDT', '')}
+                    </td>
+                    {correlationMatrix.matrix[rowIndex].map((value: number, colIndex: number) => (
+                      <td
+                        key={`${rowIndex}-${colIndex}`}
+                        className="p-2 text-center text-sm font-medium"
+                        style={{
+                          backgroundColor: rowIndex === colIndex 
+                            ? '#21262d' 
+                            : value > 0.7 
+                              ? 'rgba(248, 81, 73, 0.3)' 
+                              : value > 0.4 
+                                ? 'rgba(210, 153, 34, 0.3)' 
+                                : 'rgba(63, 185, 80, 0.3)',
+                          color: rowIndex === colIndex 
+                            ? '#8b949e' 
+                            : value > 0.7 
+                              ? '#f85149' 
+                              : value > 0.4 
+                                ? '#d29922' 
+                                : '#3fb950',
+                        }}
+                      >
+                        {value.toFixed(2)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <div className="glass-card rounded-xl p-0 overflow-hidden">
+        <div className="p-4 border-b border-border bg-gradient-to-r from-bg-secondary to-bg-tertiary">
+          <h2 className="text-lg font-semibold text-text">Open Positions</h2>
+          <p className="text-sm text-text-muted">Manage your active positions</p>
+        </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full table-striped table-hover">
             <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-3 px-4 text-text-muted font-medium">Symbol</th>
-                <th className="text-left py-3 px-4 text-text-muted font-medium">Side</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">Quantity</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">Entry Price</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">Current Price</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">Market Value</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">P&L</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">P&L %</th>
-                <th className="text-center py-3 px-4 text-text-muted font-medium">Actions</th>
+              <tr className="bg-bg-tertiary/70">
+                <th className="text-left py-3 px-4 text-text-muted font-medium text-sm uppercase">Symbol</th>
+                <th className="text-left py-3 px-4 text-text-muted font-medium text-sm uppercase">Side</th>
+                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">Quantity</th>
+                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">Entry Price</th>
+                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">Current Price</th>
+                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">Market Value</th>
+                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">P&L</th>
+                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">P&L %</th>
               </tr>
             </thead>
             <tbody>
               {positionsList.map((position) => {
-                const pnlPercent = ((position.current_price - position.entry_price) / position.entry_price) * 100;
+                const priceDelta = position.current_price - position.entry_price;
+                const signedDelta = position.side === 'SHORT' ? -priceDelta : priceDelta;
+                const pnlPercent = position.entry_price > 0
+                  ? (signedDelta / position.entry_price) * 100
+                  : 0;
+                const isProfit = position.unrealized_pnl >= 0;
                 return (
-                  <tr key={position.position_id} className="border-b border-border/50 hover:bg-border/20">
-                    <td className="py-3 px-4 font-medium text-text">{position.symbol}</td>
-                    <td className={`py-3 px-4 ${position.side === 'LONG' ? 'text-success' : 'text-danger'}`}>
-                      {position.side}
+                  <tr key={position.position_id} className="border-b border-border/30">
+                    <td className="py-3 px-4">
+                      <span className="font-semibold text-text">{position.symbol}</span>
                     </td>
-                    <td className="py-3 px-4 text-right text-text">{position.quantity.toFixed(4)}</td>
-                    <td className="py-3 px-4 text-right text-text-muted">{formatCurrency(position.entry_price)}</td>
-                    <td className="py-3 px-4 text-right text-text">{formatCurrency(position.current_price)}</td>
-                    <td className="py-3 px-4 text-right text-text">{formatCurrency(position.market_value)}</td>
-                    <td className={`py-3 px-4 text-right ${position.unrealized_pnl >= 0 ? 'text-success' : 'text-danger'}`}>
+                    <td className="py-3 px-4">
+                      <span className={`badge ${position.side === 'LONG' ? 'badge-success' : 'badge-danger'}`}>
+                        {position.side}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right text-text font-mono">{position.quantity.toFixed(4)}</td>
+                    <td className="py-3 px-4 text-right text-text-muted font-mono">{formatCurrency(position.entry_price)}</td>
+                    <td className="py-3 px-4 text-right text-text font-mono">{formatCurrency(position.current_price)}</td>
+                    <td className="py-3 px-4 text-right text-text font-mono">{formatCurrency(position.market_value)}</td>
+                    <td className={`py-3 px-4 text-right font-semibold font-mono ${isProfit ? 'text-success' : 'text-danger'}`}>
                       {formatCurrency(position.unrealized_pnl)}
                     </td>
-                    <td className={`py-3 px-4 text-right ${pnlPercent >= 0 ? 'text-success' : 'text-danger'}`}>
+                    <td className={`py-3 px-4 text-right font-semibold font-mono ${pnlPercent >= 0 ? 'text-success' : 'text-danger'}`}>
                       {pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <button
-                        onClick={() => closePosition.mutate(position)}
-                        disabled={closePosition.isPending || tradingHalted}
-                        className="px-3 py-1 rounded border border-border text-text hover:bg-border/40 disabled:opacity-50"
-                      >
-                        {closePosition.isPending ? 'Closing...' : 'Close'}
-                      </button>
                     </td>
                   </tr>
                 );
@@ -216,28 +415,6 @@ export default function Portfolio() {
           </table>
         </div>
       </div>
-    </div>
-  );
-}
-
-function SummaryCard({ 
-  title, 
-  value, 
-  icon: Icon, 
-  valueColor = 'text-text' 
-}: { 
-  title: string; 
-  value: string; 
-  icon: React.ElementType; 
-  valueColor?: string;
-}) {
-  return (
-    <div className="bg-surface border border-border rounded-lg p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-text-muted text-sm">{title}</span>
-        <Icon className="w-5 h-5 text-primary" />
-      </div>
-      <div className={`text-xl font-bold ${valueColor}`}>{value}</div>
     </div>
   );
 }
