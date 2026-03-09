@@ -1,4 +1,5 @@
 # AI Trading System - Code Review Report
+<!-- markdownlint-disable MD009 MD012 MD022 MD031 MD032 MD036 MD040 MD060 -->
 
 **Date:** 2024
 **Reviewer:** BLACKBOXAI Code Review

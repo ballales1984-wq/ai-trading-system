@@ -1,7 +1,6 @@
- import axios from 'axios';
+import axios from 'axios';
 import type {
   PortfolioSummary,
-  DualPortfolioSummary,
   Position,
   PerformanceMetrics,
   Allocation,
@@ -11,47 +10,23 @@ import type {
   CandleData,
   Order,
   OrderCreate,
-  MarketSentiment,
-  NewsListResponse,
-  NewsBySymbolResponse,
+  EmergencyStatus,
 } from '../types';
 
-
-
 // Use environment variable for API base URL
-// In production (Vercel), set VITE_API_BASE_URL to your backend URL
-// Local: http://localhost:8000 (via vite proxy - /api routes to localhost:8000)
-// Vercel with ngrok: https://your-ngrok-url.ngrok.io (uses proxy)
-const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+// In production (Vercel), this should point to your local backend via ngrok or public IP
+const defaultApiBase =
+  typeof window !== 'undefined' && ['5173', '3000'].includes(window.location.port)
+    ? 'http://localhost:8000/api/v1'
+    : '/api/v1';
 
-// Environment variable takes priority (for Vercel -> ngrok setup)
-const envApiUrl = import.meta.env.VITE_API_BASE_URL;
-
-let API_BASE: string;
-if (envApiUrl) {
-  // Production: use configured URL (ngrok or other backend)
-  API_BASE = envApiUrl;
-} else if (isLocalhost) {
-  // Local development - use proxy (vite.config.ts routes /api to backend)
-  API_BASE = '';
-} else {
-  // Production (Vercel) - use relative path
-  API_BASE = '';
-}
-
-const defaultHeaders: Record<string, string> = {
-  'Content-Type': 'application/json',
-};
-
-// Free ngrok domains can return an interstitial HTML page unless this header is set.
-if (API_BASE.includes('ngrok-free.dev') || API_BASE.includes('ngrok.io')) {
-  defaultHeaders['ngrok-skip-browser-warning'] = 'true';
-}
-
+const API_BASE = import.meta.env.VITE_API_BASE_URL || defaultApiBase;
 
 const api = axios.create({
   baseURL: API_BASE,
-  headers: defaultHeaders,
+  headers: {
+    'Content-Type': 'application/json',
+  },
   // Add timeout and retry logic
   timeout: 10000,
 });
@@ -71,11 +46,6 @@ api.interceptors.response.use(
 export const portfolioApi = {
   getSummary: async (): Promise<PortfolioSummary> => {
     const { data } = await api.get<PortfolioSummary>('/portfolio/summary');
-    return data;
-  },
-
-  getDualSummary: async (): Promise<DualPortfolioSummary> => {
-    const { data } = await api.get<DualPortfolioSummary>('/portfolio/summary/dual');
     return data;
   },
 
@@ -99,17 +69,6 @@ export const portfolioApi = {
     const { data } = await api.get<PortfolioHistory>('/portfolio/history', {
       params: { days },
     });
-    return data;
-  },
-
-  // Demo mode control - toggle between simulation and live trading
-  getDemoMode: async (): Promise<{ demo_mode: boolean; description: string }> => {
-    const { data } = await api.get('/portfolio/mode');
-    return data;
-  },
-
-  setDemoMode: async (enabled: boolean): Promise<{ success: boolean; demo_mode: boolean; message: string }> => {
-    const { data } = await api.post(`/portfolio/mode?enabled=${enabled}`);
     return data;
   },
 };
@@ -141,88 +100,10 @@ export const marketApi = {
     const { data } = await api.get(`/market/orderbook/${symbol}`);
     return data;
   },
-
-  /**
-   * Get market sentiment data (Fear & Greed Index)
-   * Returns fear/greed index, sentiment label with emoji, BTC dominance, and market momentum
-   */
-  getSentiment: async (): Promise<MarketSentiment> => {
-    const { data } = await api.get<MarketSentiment>('/market/sentiment');
-    return data;
-  },
 };
-
-
-// Risk API
-export const riskApi = {
-  getMetrics: async (): Promise<{
-    var_1d: number;
-    var_5d: number;
-    cvar_1d: number;
-    cvar_5d: number;
-    volatility: number;
-    beta: number;
-    correlation_to_btc: number;
-    max_drawdown: number;
-    sharpe_ratio: number;
-    leverage: number;
-    margin_utilization: number;
-  }> => {
-    const { data } = await api.get('/risk/metrics');
-    return data;
-  },
-
-  getCorrelationMatrix: async (): Promise<{
-    assets: string[];
-    matrix: number[][];
-  }> => {
-    const { data } = await api.get('/risk/correlation');
-    return data;
-  },
-
-  // Rolling Sharpe Ratio
-  getRollingSharpe: async (window: number = 30): Promise<{
-    date: string;
-    rolling_sharpe: number;
-  }[]> => {
-    const { data } = await api.get('/risk/rolling-sharpe', { params: { window } });
-    return data;
-  },
-
-  // Drawdown data
-  getDrawdown: async (): Promise<{
-    date: string;
-    drawdown: number;
-    equity: number;
-  }[]> => {
-    const { data } = await api.get('/risk/drawdown');
-    return data;
-  },
-
-  // Monte Carlo simulation
-  getMonteCarlo: async (simulations: number = 1000): Promise<{
-    percentile: string;
-    value: number;
-  }[]> => {
-    const { data } = await api.get('/risk/monte-carlo', { params: { simulations } });
-    return data;
-  },
-
-  // Risk/Return scatter data
-  getRiskReturn: async (): Promise<{
-    name: string;
-    risk: number;
-    return: number;
-  }[]> => {
-    const { data } = await api.get('/risk/risk-return');
-    return data;
-  },
-};
-
 
 // Orders API
 export const ordersApi = {
-
   list: async (symbol?: string, status?: string): Promise<Order[]> => {
     const params: Record<string, string> = {};
     if (symbol) params.symbol = symbol;
@@ -249,119 +130,36 @@ export const ordersApi = {
     const { data } = await api.post<Order>(`/orders/${orderId}/execute`);
     return data;
   },
-
-  /**
-   * Get trade history with P&L data
-   * Supports filtering by symbol, status, and date range
-   */
-  getHistory: async (params?: {
-    symbol?: string;
-    status?: string;
-    dateFrom?: string;
-    dateTo?: string;
-    limit?: number;
-  }): Promise<Order[]> => {
-    const { data } = await api.get<Order[]>('/orders/history', { params });
-    return data;
-  },
 };
 
-
-// Stripe Payment API
-export interface CreateCheckoutRequest {
-  email?: string;
-  price_id?: string;
-  quantity?: number;
-}
-
-export interface CreateCheckoutResponse {
-  checkout_url: string;
-  session_id: string;
-}
-
-export const paymentApi = {
-  /**
-   * Create a Stripe checkout session
-   * Uses backend API to generate Stripe checkout URL
-   */
-  createCheckoutSession: async (payload: CreateCheckoutRequest): Promise<CreateCheckoutResponse> => {
-    const { data } = await api.post<CreateCheckoutResponse>(
-      '/payments/stripe/checkout-session',
-      payload
-    );
+export const emergencyApi = {
+  getStatus: async (): Promise<EmergencyStatus> => {
+    const { data } = await api.get<EmergencyStatus>('/orders/emergency/status');
     return data;
   },
 
-  /**
-   * Redirect to Stripe checkout
-   * Creates a checkout session and redirects the user
-   */
-  redirectToCheckout: async (email?: string, priceId?: string): Promise<void> => {
-    const response = await paymentApi.createCheckoutSession({
-      email,
-      price_id: priceId,
-      quantity: 1,
+  activate: async (reason: string, adminKey: string): Promise<EmergencyStatus> => {
+    const { data } = await api.post<EmergencyStatus>('/orders/emergency/activate', {
+      confirm: true,
+      reason,
+    }, {
+      headers: {
+        'X-Admin-Key': adminKey,
+        'X-Admin-User': 'ui-operator',
+      },
     });
-    
-    // Redirect to Stripe checkout
-    window.location.href = response.checkout_url;
-  },
-
-  /**
-   * Get Stripe payment link from environment
-   * For simple payment link redirect (no backend required)
-   */
-  getPaymentLink: (): string | undefined => {
-    return import.meta.env.VITE_STRIPE_PAYMENT_LINK;
-  },
-
-  /**
-   * Check if Stripe payment is configured
-   */
-  isConfigured: (): boolean => {
-    return !!paymentApi.getPaymentLink();
-  },
-
-  /**
-   * Redirect to Stripe payment link
-   */
-  redirectToPaymentLink: (): void => {
-    const paymentLink = paymentApi.getPaymentLink();
-    if (paymentLink) {
-      window.location.href = paymentLink;
-    } else {
-      console.error('Stripe payment link not configured');
-    }
-  },
-};
-
-// News API
-export const newsApi = {
-  /**
-   * Get latest crypto news feed
-   * Returns news items with sentiment analysis and related symbols
-   */
-  getNews: async (params?: {
-    limit?: number;
-    sentiment?: string;
-    category?: string;
-    refresh?: string;
-  }): Promise<NewsListResponse> => {
-    const { data } = await api.get<NewsListResponse>('/news', { params });
     return data;
   },
 
-  /**
-   * Get news filtered by trading symbol
-   * Returns news items related to a specific cryptocurrency
-   */
-  getNewsBySymbol: async (
-    symbol: string,
-    limit?: number,
-    refresh?: string
-  ): Promise<NewsBySymbolResponse> => {
-    const { data } = await api.get<NewsBySymbolResponse>(`/news/${symbol}`, {
-      params: { limit, refresh },
+  deactivate: async (reason: string, adminKey: string): Promise<EmergencyStatus> => {
+    const { data } = await api.post<EmergencyStatus>('/orders/emergency/deactivate', {
+      confirm: true,
+      reason,
+    }, {
+      headers: {
+        'X-Admin-Key': adminKey,
+        'X-Admin-User': 'ui-operator',
+      },
     });
     return data;
   },

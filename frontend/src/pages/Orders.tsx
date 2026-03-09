@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ordersApi } from '../services/api';
-import { Plus, Play, X, Clock, CheckCircle, XCircle, History, List } from 'lucide-react';
-
+import { emergencyApi, ordersApi } from '../services/api';
+import { Plus, Play, X, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 export default function Orders() {
   const queryClient = useQueryClient();
@@ -14,8 +13,6 @@ export default function Orders() {
     quantity: 0.001,
     broker: 'paper',
   });
-  const [activeTab, setActiveTab] = useState<'orders' | 'history'>('orders');
-
 
   const { data: orders } = useQuery({
     queryKey: ['orders'],
@@ -23,12 +20,12 @@ export default function Orders() {
     refetchInterval: 10000,
   });
 
-  const { data: tradeHistory } = useQuery({
-    queryKey: ['orders', 'history'],
-    queryFn: () => ordersApi.getHistory({ limit: 50 }),
-    refetchInterval: 30000,
+  const { data: emergencyStatus } = useQuery({
+    queryKey: ['emergency-status'],
+    queryFn: emergencyApi.getStatus,
   });
 
+  const tradingHalted = Boolean(emergencyStatus?.trading_halted);
 
   const createOrder = useMutation({
     mutationFn: ordersApi.create,
@@ -61,6 +58,7 @@ export default function Orders() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (tradingHalted) return;
     createOrder.mutate(newOrder);
   };
 
@@ -73,8 +71,6 @@ export default function Orders() {
   };
 
   const ordersList = Array.isArray(orders) ? orders : [];
-  const historyList = Array.isArray(tradeHistory) ? tradeHistory : [];
-
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -108,16 +104,6 @@ export default function Orders() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-
   return (
     <div className="p-6">
       {/* Header */}
@@ -128,6 +114,7 @@ export default function Orders() {
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
+          disabled={tradingHalted}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors"
         >
           <Plus className="w-5 h-5" />
@@ -135,14 +122,22 @@ export default function Orders() {
         </button>
       </div>
 
+      {tradingHalted && (
+        <div className="mb-4 rounded-lg border border-danger/50 bg-danger/10 px-4 py-3 text-danger">
+          Emergency Stop attivo: creazione ed esecuzione ordini BUY/SELL bloccate.
+        </div>
+      )}
+
       {/* New Order Form */}
       {showForm && (
         <div className="bg-surface border border-border rounded-lg p-4 mb-6">
           <h2 className="text-lg font-semibold text-text mb-4">Create New Order</h2>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-text-muted text-sm mb-1">Symbol</label>
+              <label htmlFor="order-symbol" className="block text-text-muted text-sm mb-1">Symbol</label>
               <select
+                id="order-symbol"
+                name="symbol"
                 value={newOrder.symbol}
                 onChange={(e) => setNewOrder({ ...newOrder, symbol: e.target.value })}
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text"
@@ -155,8 +150,10 @@ export default function Orders() {
               </select>
             </div>
             <div>
-              <label className="block text-text-muted text-sm mb-1">Side</label>
+              <label htmlFor="order-side" className="block text-text-muted text-sm mb-1">Side</label>
               <select
+                id="order-side"
+                name="side"
                 value={newOrder.side}
                 onChange={(e) => setNewOrder({ ...newOrder, side: e.target.value })}
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text"
@@ -166,8 +163,10 @@ export default function Orders() {
               </select>
             </div>
             <div>
-              <label className="block text-text-muted text-sm mb-1">Order Type</label>
+              <label htmlFor="order-type" className="block text-text-muted text-sm mb-1">Order Type</label>
               <select
+                id="order-type"
+                name="order_type"
                 value={newOrder.order_type}
                 onChange={(e) => setNewOrder({ ...newOrder, order_type: e.target.value })}
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text"
@@ -178,8 +177,10 @@ export default function Orders() {
               </select>
             </div>
             <div>
-              <label className="block text-text-muted text-sm mb-1">Quantity</label>
+              <label htmlFor="order-quantity" className="block text-text-muted text-sm mb-1">Quantity</label>
               <input
+                id="order-quantity"
+                name="quantity"
                 type="number"
                 step="0.0001"
                 autoComplete="off"
@@ -189,8 +190,10 @@ export default function Orders() {
               />
             </div>
             <div>
-              <label className="block text-text-muted text-sm mb-1">Broker</label>
+              <label htmlFor="order-broker" className="block text-text-muted text-sm mb-1">Broker</label>
               <select
+                id="order-broker"
+                name="broker"
                 value={newOrder.broker}
                 onChange={(e) => setNewOrder({ ...newOrder, broker: e.target.value })}
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text"
@@ -204,7 +207,7 @@ export default function Orders() {
             <div className="flex items-end gap-2">
               <button
                 type="submit"
-                disabled={createOrder.isPending}
+                disabled={createOrder.isPending || tradingHalted}
                 className="flex-1 px-4 py-2 bg-success text-white rounded-lg hover:bg-success/80 transition-colors disabled:opacity-50"
               >
                 {createOrder.isPending ? 'Creating...' : 'Create Order'}
@@ -221,38 +224,10 @@ export default function Orders() {
         </div>
       )}
 
-      {/* Tab Navigation */}
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setActiveTab('orders')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-            activeTab === 'orders'
-              ? 'bg-primary text-white'
-              : 'bg-surface border border-border text-text hover:bg-border/20'
-          }`}
-        >
-          <List className="w-4 h-4" />
-          Active Orders
-        </button>
-        <button
-          onClick={() => setActiveTab('history')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-            activeTab === 'history'
-              ? 'bg-primary text-white'
-              : 'bg-surface border border-border text-text hover:bg-border/20'
-          }`}
-        >
-          <History className="w-4 h-4" />
-          Trade History
-        </button>
-      </div>
-
       {/* Orders Table */}
-      {activeTab === 'orders' && (
       <div className="bg-surface border border-border rounded-lg p-4">
         <h2 className="text-lg font-semibold text-text mb-4">All Orders</h2>
         <div className="overflow-x-auto">
-
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
@@ -295,6 +270,7 @@ export default function Orders() {
                         <>
                           <button
                             onClick={() => executeOrder.mutate(order.order_id)}
+                            disabled={tradingHalted}
                             className="p-1 text-success hover:bg-success/20 rounded"
                             title="Execute"
                           >
@@ -322,72 +298,7 @@ export default function Orders() {
           )}
         </div>
       </div>
-      )}
-
-      {/* Trade History Table */}
-      {activeTab === 'history' && (
-      <div className="bg-surface border border-border rounded-lg p-4">
-        <h2 className="text-lg font-semibold text-text mb-4">Trade History</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-3 px-4 text-text-muted font-medium">Date</th>
-                <th className="text-left py-3 px-4 text-text-muted font-medium">Symbol</th>
-                <th className="text-left py-3 px-4 text-text-muted font-medium">Side</th>
-                <th className="text-left py-3 px-4 text-text-muted font-medium">Type</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">Qty</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">Price</th>
-                <th className="text-center py-3 px-4 text-text-muted font-medium">Status</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">P&L</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">P&L %</th>
-              </tr>
-            </thead>
-            <tbody>
-              {historyList.map((order) => (
-                <tr key={order.order_id} className="border-b border-border/50 hover:bg-border/20">
-                  <td className="py-3 px-4 text-text-muted text-sm">
-                    {formatDate(order.created_at)}
-                  </td>
-                  <td className="py-3 px-4 font-medium text-text">{order.symbol}</td>
-                  <td className={`py-3 px-4 font-medium ${
-                    order.side === 'BUY' ? 'text-success' : 'text-danger'
-                  }`}>
-                    {order.side}
-                  </td>
-                  <td className="py-3 px-4 text-text-muted">{order.order_type}</td>
-                  <td className="py-3 px-4 text-right text-text">{order.quantity.toFixed(4)}</td>
-                  <td className="py-3 px-4 text-right text-text">
-                    {order.average_price ? formatCurrency(order.average_price) : '-'}
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      {getStatusIcon(order.status)}
-                      <span className={getStatusColor(order.status)}>{order.status}</span>
-                    </div>
-                  </td>
-                  <td className={`py-3 px-4 text-right font-medium ${
-                    (order.pnl || 0) >= 0 ? 'text-success' : 'text-danger'
-                  }`}>
-                    {order.pnl !== undefined ? formatCurrency(order.pnl) : '-'}
-                  </td>
-                  <td className={`py-3 px-4 text-right font-medium ${
-                    (order.pnl_pct || 0) >= 0 ? 'text-success' : 'text-danger'
-                  }`}>
-                    {order.pnl_pct !== undefined ? `${order.pnl_pct.toFixed(2)}%` : '-'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {historyList.length === 0 && (
-            <div className="text-center py-8 text-text-muted">
-              No trade history found.
-            </div>
-          )}
-        </div>
-      </div>
-      )}
     </div>
   );
 }
+

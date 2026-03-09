@@ -1,150 +1,234 @@
 """
-Tests for app/api/routes - API Routes
+Tests for API Routes
+====================
+Tests for FastAPI route handlers.
 """
 
 import pytest
+import sys
+import os
+from datetime import datetime
+from unittest.mock import Mock, patch, AsyncMock
+
+# Add project root to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from fastapi.testclient import TestClient
 
 
-class TestAPIRoutesImports:
-    """Test suite for API routes imports."""
-
-    def test_health_router_import(self):
-        """Test health router can be imported."""
-        from app.api.routes.health import router as health
+class TestHealthRoutes:
+    """Test health check routes."""
+    
+    def setup_method(self):
+        """Setup test client."""
+        from app.main import app
+        self.client = TestClient(app)
+    
+    def test_health_check(self):
+        """Test main health check endpoint."""
+        response = self.client.get("/api/v1/health")
         
-        assert health is not None
-
-    def test_orders_router_import(self):
-        """Test orders router can be imported."""
-        from app.api.routes.orders import router as orders
+        assert response.status_code == 200
+        data = response.json()
         
-        assert orders is not None
-
-    def test_portfolio_router_import(self):
-        """Test portfolio router can be imported."""
-        from app.api.routes.portfolio import router as portfolio
+        assert data['status'] == 'healthy'
+        assert 'timestamp' in data
+        assert 'service' in data
+        assert 'version' in data
+    
+    def test_readiness_check(self):
+        """Test readiness check endpoint."""
+        response = self.client.get("/api/v1/ready")
         
-        assert portfolio is not None
-
-    def test_strategy_router_import(self):
-        """Test strategy router can be imported."""
-        from app.api.routes.strategy import router as strategy
+        assert response.status_code == 200
+        data = response.json()
         
-        assert strategy is not None
-
-    def test_market_router_import(self):
-        """Test market router can be imported."""
-        from app.api.routes.market import router as market
+        assert data['status'] == 'ready'
+    
+    def test_liveness_check(self):
+        """Test liveness check endpoint."""
+        response = self.client.get("/api/v1/live")
         
-        assert market is not None
-
-    def test_waitlist_router_import(self):
-        """Test waitlist router can be imported."""
-        from app.api.routes.waitlist import router as waitlist
+        assert response.status_code == 200
+        data = response.json()
         
-        assert waitlist is not None
+        assert data['status'] == 'alive'
 
-    def test_cache_router_import(self):
-        """Test cache router can be imported."""
-        from app.api.routes.cache import router as cache
+
+class TestWaitlistRoutes:
+    """Test waitlist routes."""
+    
+    def setup_method(self):
+        """Setup test client."""
+        from app.main import app
+        self.client = TestClient(app)
+    
+    def test_join_waitlist(self):
+        """Test joining the waitlist."""
+        response = self.client.post(
+            "/api/v1/waitlist",
+            json={
+                "email": "test@example.com",
+                "source": "landing_page"
+            }
+        )
         
-        assert cache is not None
-
-    def test_news_router_import(self):
-        """Test news router can be imported."""
-        from app.api.routes.news import router as news
+        # Should succeed or return validation error
+        assert response.status_code in [200, 201, 422]
+    
+    def test_join_waitlist_invalid_email(self):
+        """Test joining waitlist with invalid email."""
+        response = self.client.post(
+            "/api/v1/waitlist",
+            json={
+                "email": "invalid-email"
+            }
+        )
         
-        assert news is not None
-
-    def test_auth_router_import(self):
-        """Test auth router can be imported."""
-        from app.api.routes.auth import router as auth
+        # Should return validation error
+        assert response.status_code == 422
+    
+    def test_join_waitlist_missing_email(self):
+        """Test joining waitlist without email."""
+        response = self.client.post(
+            "/api/v1/waitlist",
+            json={
+                "source": "landing_page"
+            }
+        )
         
-        assert auth is not None
+        # Should return validation error
+        assert response.status_code == 422
 
 
-class TestAPIRoutesPackage:
-    """Test suite for API routes package."""
-
-    def test_routes_package_import(self):
-        """Test routes package can be imported."""
-        from app.api import routes
+class TestMarketRoutes:
+    """Test market data routes."""
+    
+    def setup_method(self):
+        """Setup test client."""
+        from app.main import app
+        self.client = TestClient(app)
+    
+    def test_get_market_data(self):
+        """Test getting market data."""
+        response = self.client.get("/api/v1/market/data")
         
-        assert routes is not None
-
-    def test_routes_all_export(self):
-        """Test __all__ exports."""
-        from app.api.routes import __all__
+        # Should return data or 404/401
+        assert response.status_code in [200, 401, 404, 422]
+    
+    def test_get_symbols(self):
+        """Test getting available symbols."""
+        response = self.client.get("/api/v1/market/symbols")
         
-        assert "health" in __all__
-        assert "orders" in __all__
-        assert "portfolio" in __all__
-        assert "strategy" in __all__
-        assert "market" in __all__
-        assert "waitlist" in __all__
-        assert "cache" in __all__
-        assert "news" in __all__
-        assert "auth" in __all__
+        # Should return symbols or 404/401
+        assert response.status_code in [200, 401, 404]
 
 
-class TestRouterAttributes:
-    """Test suite for router attributes."""
-
-    def test_health_router_has_routes(self):
-        """Test health router has routes."""
-        from app.api.routes.health import router
+class TestPortfolioRoutes:
+    """Test portfolio routes."""
+    
+    def setup_method(self):
+        """Setup test client."""
+        from app.main import app
+        self.client = TestClient(app)
+    
+    def test_get_portfolio(self):
+        """Test getting portfolio."""
+        response = self.client.get("/api/v1/portfolio")
         
-        # Router should have routes
-        assert hasattr(router, 'routes')
-
-    def test_orders_router_has_routes(self):
-        """Test orders router has routes."""
-        from app.api.routes.orders import router
+        # Should return portfolio or 401/404
+        assert response.status_code in [200, 401, 404]
+    
+    def test_get_portfolio_summary(self):
+        """Test getting portfolio summary."""
+        response = self.client.get("/api/v1/portfolio/summary")
         
-        assert hasattr(router, 'routes')
+        # Should return summary or 401/404
+        assert response.status_code in [200, 401, 404]
 
-    def test_portfolio_router_has_routes(self):
-        """Test portfolio router has routes."""
-        from app.api.routes.portfolio import router
+
+class TestOrderRoutes:
+    """Test order routes."""
+    
+    def setup_method(self):
+        """Setup test client."""
+        from app.main import app
+        self.client = TestClient(app)
+    
+    def test_get_orders(self):
+        """Test getting orders."""
+        response = self.client.get("/api/v1/orders")
         
-        assert hasattr(router, 'routes')
-
-    def test_market_router_has_routes(self):
-        """Test market router has routes."""
-        from app.api.routes.market import router
+        # Should return orders or 401/404
+        assert response.status_code in [200, 401, 404]
+    
+    def test_create_order(self):
+        """Test creating an order."""
+        response = self.client.post(
+            "/api/v1/orders",
+            json={
+                "symbol": "BTCUSDT",
+                "side": "buy",
+                "quantity": 0.1,
+                "price": 50000
+            }
+        )
         
-        assert hasattr(router, 'routes')
+        # Should return 200, 201, 401, or 422 (validation error)
+        assert response.status_code in [200, 201, 401, 422]
+
+    def test_emergency_stop_blocks_order_creation(self):
+        """Emergency stop should block BUY/SELL order creation."""
+        os.environ["ADMIN_SECRET_KEY"] = "test-admin-key"
+        headers = {"X-Admin-Key": "test-admin-key", "X-Admin-User": "tests"}
+
+        activate = self.client.post(
+            "/api/v1/orders/emergency/activate",
+            json={"confirm": True, "reason": "test"},
+            headers=headers,
+        )
+        assert activate.status_code == 200
+        assert activate.json().get("trading_halted") is True
+
+        blocked = self.client.post(
+            "/api/v1/orders",
+            json={
+                "symbol": "BTCUSDT",
+                "side": "BUY",
+                "quantity": 0.1,
+                "order_type": "MARKET",
+                "broker": "paper",
+            },
+        )
+        assert blocked.status_code == 423
+
+        deactivate = self.client.post(
+            "/api/v1/orders/emergency/deactivate",
+            json={"confirm": True, "reason": "test cleanup"},
+            headers=headers,
+        )
+        assert deactivate.status_code == 200
+        assert deactivate.json().get("trading_halted") is False
 
 
-class TestAPIRoutesIntegration:
-    """Test suite for API routes integration."""
-
-    def test_can_import_all_routes(self):
-        """Test all routes can be imported together."""
-        from app.api.routes import health, orders, portfolio, strategy, market, waitlist, cache, news, auth
+class TestRiskRoutes:
+    """Test risk management routes."""
+    
+    def setup_method(self):
+        """Setup test client."""
+        from app.main import app
+        self.client = TestClient(app)
+    
+    def test_get_risk_metrics(self):
+        """Test getting risk metrics."""
+        response = self.client.get("/api/v1/risk/metrics")
         
-        assert health is not None
-        assert orders is not None
-        assert portfolio is not None
-        assert strategy is not None
-        assert market is not None
-        assert waitlist is not None
-        assert cache is not None
-        assert news is not None
-        assert auth is not None
-
-
-class TestAPIPackage:
-    """Test suite for API package."""
-
-    def test_api_package_import(self):
-        """Test API package can be imported."""
-        from app import api
+        # Should return metrics or 401/404
+        assert response.status_code in [200, 401, 404]
+    
+    def test_get_risk_limits(self):
+        """Test getting risk limits."""
+        response = self.client.get("/api/v1/risk/limits")
         
-        assert api is not None
-
-    def test_api_has_routes(self):
-        """Test API package has routes."""
-        from app.api import routes
-        
-        assert routes is not None
+        # Should return limits or 401/404
+        assert response.status_code in [200, 401, 404]

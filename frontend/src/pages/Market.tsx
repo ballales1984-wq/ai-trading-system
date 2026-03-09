@@ -231,6 +231,7 @@ export default function Market() {
                   stroke="#58a6ff"
                   strokeWidth={2}
                   dot={false}
+                  isAnimationActive={false}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -249,7 +250,7 @@ export default function Market() {
                   contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
                   formatter={(value: number) => [value.toFixed(2), 'Volume']}
                 />
-                <Bar dataKey="volume" fill="#3fb950" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="volume" fill="#3fb950" radius={[2, 2, 0, 0]} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>

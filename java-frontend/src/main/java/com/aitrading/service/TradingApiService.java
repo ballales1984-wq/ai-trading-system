@@ -2,10 +2,12 @@ package com.aitrading.service;
 
 import com.aitrading.model.*;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
 import java.util.*;
+import java.util.Objects;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -32,7 +34,12 @@ public class TradingApiService {
     public MarketData getMarketData(String symbol) {
         try {
             String url = pythonApiBaseUrl + "/api/market/" + symbol;
-            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                url,
+                Objects.requireNonNull(HttpMethod.GET),
+                null,
+                new ParameterizedTypeReference<Map<String, Object>>() {}
+            );
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 return objectMapper.convertValue(response.getBody(), MarketData.class);
             }
@@ -48,8 +55,13 @@ public class TradingApiService {
     public List<String> getSymbols() {
         try {
             String url = pythonApiBaseUrl + "/api/symbols";
-            ResponseEntity<List> response = restTemplate.getForEntity(url, List.class);
-            if (response.getStatusCode() == HttpStatus.OK) {
+            ResponseEntity<List<String>> response = restTemplate.exchange(
+                url,
+                Objects.requireNonNull(HttpMethod.GET),
+                null,
+                new ParameterizedTypeReference<List<String>>() {}
+            );
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 return response.getBody();
             }
         } catch (Exception e) {
@@ -64,10 +76,14 @@ public class TradingApiService {
     public List<TradingSignal> getSignals() {
         try {
             String url = pythonApiBaseUrl + "/api/signals";
-            ResponseEntity<List> response = restTemplate.getForEntity(url, List.class);
+            ResponseEntity<List<TradingSignal>> response = restTemplate.exchange(
+                url,
+                Objects.requireNonNull(HttpMethod.GET),
+                null,
+                new ParameterizedTypeReference<List<TradingSignal>>() {}
+            );
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                return objectMapper.convertValue(response.getBody(), 
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, TradingSignal.class));
+                return response.getBody();
             }
         } catch (Exception e) {
             System.err.println("Error fetching signals: " + e.getMessage());
@@ -81,7 +97,12 @@ public class TradingApiService {
     public Portfolio getPortfolio() {
         try {
             String url = pythonApiBaseUrl + "/api/portfolio";
-            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                url,
+                Objects.requireNonNull(HttpMethod.GET),
+                null,
+                new ParameterizedTypeReference<Map<String, Object>>() {}
+            );
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 return objectMapper.convertValue(response.getBody(), Portfolio.class);
             }
@@ -102,7 +123,13 @@ public class TradingApiService {
             request.put("side", side);
             request.put("quantity", quantity);
             
-            ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
+            HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(request);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                url,
+                Objects.requireNonNull(HttpMethod.POST),
+                httpEntity,
+                new ParameterizedTypeReference<Map<String, Object>>() {}
+            );
             return response.getBody();
         } catch (Exception e) {
             System.err.println("Error executing trade: " + e.getMessage());

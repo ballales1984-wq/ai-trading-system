@@ -42,20 +42,25 @@ htmlcov/
 # Logs
 logs/
 *.log
+*.log.*
 
 # Data
 data/*.json
 data/*.db
 data/*.csv
 cache/
+*.tmp
 
-# Images
+# Images (allow screenshots in docs)
 *.png
 *.jpg
 *.jpeg
+!docs/images/*
 
 # Environment
 .env
+.env.local
+.env.*
 *.swo
 *~
 
@@ -63,21 +68,18 @@ cache/
 .DS_Store
 Thumbs.db
 
-# Logs
-logs/*.log
-
-# Data (optional - keep signals)
-# data/*.json
-
-# Environment
-.env
-.env.local
-.env.*
-
 # TypeScript build info
 *.tsbuildinfo
 .vercel
 
 # CLI submodule (not tracked)
 cli/
-node_modules/ 
+node_modules/
+
+# Archive (temporary files)
+archive/
+
+# Coverage
+.coverage.*
+coverage.xml
+*.cover
