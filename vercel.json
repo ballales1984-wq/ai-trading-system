@@ -2,8 +2,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "frontend",
-      "use": "@vercel/static-build"
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
     },
     {
       "src": "api/index.py",
@@ -16,31 +19,16 @@
       "dest": "/api/index.py"
     },
     {
+      "src": "/(.*).js",
+      "dest": "/$1.js"
+    },
+    {
+      "src": "/(.*).css",
+      "dest": "/$1.css"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, must-revalidate"
-        },
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, PUT, DELETE, OPTIONS"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization"
-        }
-      ]
     }
   ]
 }
