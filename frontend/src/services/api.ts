@@ -189,6 +189,23 @@ export const newsApi = {
   },
 };
 
+// Payment API
+export const paymentApi = {
+  isConfigured: () => {
+    return !!import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+  },
+  redirectToPaymentLink: () => {
+    const paymentLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK;
+    if (paymentLink) {
+      window.location.href = paymentLink;
+    }
+  },
+  createCheckoutSession: async (email: string) => {
+    const { data } = await api.post('/payments/stripe/checkout-session', { email });
+    return data;
+  },
+};
+
 // Cache API
 export interface CacheStats {
   in_memory: {
