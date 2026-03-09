@@ -1,12 +1,26 @@
 {
-  "buildCommand": "cd frontend && npm install && npm run build",
-  "installCommand": "cd api && pip install --break-system-packages -r requirements.txt",
-  "outputDirectory": "frontend/dist",
-  "framework": "vite",
+  "version": 2,
+  "builds": [
+    {
+      "src": "frontend",
+      "use": "@vercel/static-build"
+    }
+  ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/index"
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
