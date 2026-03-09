@@ -247,4 +247,5 @@ export const cacheApi = {
   },
 };
 
+export { api };
 export default api;
