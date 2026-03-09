@@ -21,11 +21,15 @@
   ],
   "routes": [
     {
-      "src": "/api/test.py",
+      "src": "/api/test",
       "dest": "/api/test.py"
     },
     {
-      "src": "/api/(.*)",
+      "src": "/api/health",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/api/",
       "dest": "/api/index.py"
     },
     {
