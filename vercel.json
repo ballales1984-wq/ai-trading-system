@@ -11,8 +11,9 @@
       }
     },
     {
-      "src": "api/requirements.txt",
-      "use": "@vercel/python"
+      "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": { "handler": "handler" }
     }
   ],
   "routes": [
