@@ -2,10 +2,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "frontend/package.json",
+      "src": "frontend",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist"
+        "distDir": "dist",
+        "buildCommand": "cd frontend && npm install && npm run build"
       }
     },
     {
@@ -19,16 +20,12 @@
       "dest": "/api/index.py"
     },
     {
-      "src": "/(.*).js",
-      "dest": "/$1.js"
-    },
-    {
-      "src": "/(.*).css",
-      "dest": "/$1.css"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/frontend/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/frontend/index.html"
     }
   ]
 }
