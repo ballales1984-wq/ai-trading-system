@@ -147,3 +147,55 @@ const News = () => {
               className={`p-4 rounded-lg border ${getSentimentBg(item.sentiment)} backdrop-blur-sm`}
             >
               <div className="flex justify-between items-start mb-2">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-white mb-1">
+                    {item.title}
+                  </h3>
+                  <p className="text-gray-400 text-sm">{item.content}</p>
+                </div>
+                <span className={`px-2 py-1 rounded text-xs font-medium ${getSentimentColor(item.sentiment)}`}>
+                  {item.sentiment || 'neutral'}
+                </span>
+              </div>
+              
+              <div className="flex justify-between items-center mt-3 text-sm">
+                <div className="flex gap-4">
+                  <span className="text-gray-500">{item.source}</span>
+                  <span className="text-gray-500">
+                    {new Date(item.published_at).toLocaleDateString()}
+                  </span>
+                </div>
+                
+                {item.symbols && (
+                  <div className="flex gap-1">
+                    {item.symbols.map((symbol) => (
+                      <span
+                        key={symbol}
+                        className="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded text-xs"
+                      >
+                        {symbol}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Refresh Button */}
+      <div className="flex justify-center">
+        <button
+          onClick={fetchNews}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+        >
+          Refresh News
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default News;
+
