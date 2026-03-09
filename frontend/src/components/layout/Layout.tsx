@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Menu, X, Bot } from 'lucide-react';
+import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Menu, X, Bot, FileText } from 'lucide-react';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/portfolio', icon: PieChart, label: 'Portfolio' },
   { to: '/market', icon: TrendingUp, label: 'Market' },
   { to: '/orders', icon: ClipboardList, label: 'Orders' },
+  { to: '/news', icon: FileText, label: 'News' },
 ];
 
 export default function Layout() {
