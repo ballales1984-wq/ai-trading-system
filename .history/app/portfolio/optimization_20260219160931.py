@@ -157,55 +157,6 @@ class PortfolioOptimizer:
         return frontier
 
     # ------------------------------------------------------------------
-    # Public utility methods (for test compatibility)
-    # ------------------------------------------------------------------
-
-    def calculate_weights(self, method: str = "max_sharpe") -> Dict[str, float]:
-        """
-        Calculate portfolio weights using specified method.
-
-        Args:
-            method: Optimization method (max_sharpe, min_variance, risk_parity,
-                   equal_weight, inverse_volatility)
-
-        Returns:
-            Dictionary mapping symbol to weight
-        """
-        result = self.optimize(method=method)
-        return result.weights
-
-    def calculate_sharpe_ratio(
-        self,
-        weights: Optional[np.ndarray] = None,
-        risk_free_rate: Optional[float] = None
-    ) -> float:
-        """
-        Calculate Sharpe ratio for given weights.
-
-        Args:
-            weights: Portfolio weights (if None, uses equal weights)
-            risk_free_rate: Annual risk-free rate (if None, uses instance value)
-
-        Returns:
-            Sharpe ratio
-        """
-        if weights is None:
-            weights = np.ones(self.n_assets) / self.n_assets
-
-        if risk_free_rate is None:
-            risk_free_rate = self.risk_free_rate
-
-        port_return = float(np.dot(weights, self.mean_returns) * 252)
-        port_vol = float(np.sqrt(np.dot(weights, np.dot(self.cov_matrix, weights)) * 252))
-
-        if port_vol > 0:
-            sharpe = (port_return - risk_free_rate) / port_vol
-        else:
-            sharpe = 0.0
-
-        return sharpe
-
-    # ------------------------------------------------------------------
     # Optimization methods
     # ------------------------------------------------------------------
 
