@@ -2,10 +2,9 @@
 Vercel Python entrypoint for API routes.
 
 Important:
-- Use Mangum handler for Vercel Python runtime.
+- Export the ASGI app as `app` for Vercel Python runtime.
 """
 
-from mangum import Mangum
 from datetime import datetime, timedelta
 import json
 import os
@@ -520,6 +519,3 @@ async def health_client_events(event: ClientEvent) -> Dict[str, Any]:
     }
     _client_events.append(row)
     return {"success": True, "event_id": row["id"]}
-
-# Vercel handler - wrap FastAPI with Mangum
-handler = Mangum(app)
