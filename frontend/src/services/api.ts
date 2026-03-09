@@ -177,6 +177,18 @@ export const riskApi = {
   },
 };
 
+// News API
+export const newsApi = {
+  getNews: async (params?: { limit?: number; refresh?: string }) => {
+    const { data } = await api.get('/market/news', { params });
+    return data;
+  },
+  getNewsBySymbol: async (symbol: string, limit?: number, refresh?: string) => {
+    const { data } = await api.get(`/market/news`, { params: { symbol, limit, refresh } });
+    return data;
+  },
+};
+
 // Cache API
 export interface CacheStats {
   in_memory: {
