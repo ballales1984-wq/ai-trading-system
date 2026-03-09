@@ -49,6 +49,11 @@ export const portfolioApi = {
     return data;
   },
 
+  getDualSummary: async () => {
+    const { data } = await api.get('/portfolio/summary/dual');
+    return data;
+  },
+
   getPositions: async (symbol?: string): Promise<Position[]> => {
     const params = symbol ? { symbol } : {};
     const { data } = await api.get<Position[]>('/portfolio/positions', { params });
@@ -180,11 +185,11 @@ export const riskApi = {
 // News API
 export const newsApi = {
   getNews: async (params?: { limit?: number; refresh?: string }) => {
-    const { data } = await api.get('/market/news', { params });
+    const { data } = await api.get('/news', { params });
     return data;
   },
   getNewsBySymbol: async (symbol: string, limit?: number, refresh?: string) => {
-    const { data } = await api.get(`/market/news`, { params: { symbol, limit, refresh } });
+    const { data } = await api.get(`/news/${symbol}`, { params: { limit, refresh } });
     return data;
   },
 };
