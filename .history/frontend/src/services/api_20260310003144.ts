@@ -14,8 +14,7 @@ import type {
 } from '../types';
 
 // Use environment variable for API base URL
-// In production (Vercel), requests to /api/v1/* are proxied to Render backend
-// In local development, use localhost:8000
+// In production (Vercel), this should point to your local backend via ngrok or public IP
 const defaultApiBase =
   typeof window !== 'undefined' && ['5173', '3000'].includes(window.location.port)
     ? 'http://localhost:8000/api/v1'
@@ -186,11 +185,11 @@ export const riskApi = {
 // News API
 export const newsApi = {
   getNews: async (params?: { limit?: number; refresh?: string }) => {
-    const { data } = await api.get('/news', { params });
+    const { data } = await api.get('/market/news', { params });
     return data;
   },
   getNewsBySymbol: async (symbol: string, limit?: number, refresh?: string) => {
-    const { data } = await api.get(`/news/${symbol}`, { params: { limit, refresh } });
+    const { data } = await api.get(`/market/news`, { params: { symbol, limit, refresh } });
     return data;
   },
 };
