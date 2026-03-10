@@ -85,6 +85,9 @@ npm run dev
 
 ### Option 3: Cloud Deployment
 Deploy to Render or Vercel with one click:
+
+**Live Demo:** https://ai-trading-system-1reg.onrender.com
+
 - [Deploy to Render](https://render.com/deploy?repo=ballales1984-wq/ai-trading-system)
 - [Deploy to Vercel](https://vercel.com/new/git/external?repository-url=https://github.com/ballales1984-wq/ai-trading-system)
 
