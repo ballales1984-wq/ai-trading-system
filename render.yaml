@@ -4,7 +4,7 @@ services:
     env: docker
     plan: free
     branch: main
-    dockerfilePath: ./Dockerfile.render.optimized
+    dockerfilePath: Dockerfile.render.optimized
     dockerContext: .
     healthCheckPath: /api/v1/health
     healthCheckTimeout: 1000
@@ -12,8 +12,12 @@ services:
     healthCheckRetries: 3
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11
-      - key: NODE_VERSION
-        value: 18
+        value: "3.11"
       - key: WEB_CONCURRENCY
-        value: 1
+        value: "1"
+      - key: DATABASE_URL
+        value: ""
+      - key: REDIS_URL
+        value: ""
+      - key: SECRET_KEY
+        value: "change-me-in-production"

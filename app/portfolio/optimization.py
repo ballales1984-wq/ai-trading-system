@@ -13,7 +13,7 @@ Provides:
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -119,7 +119,6 @@ class PortfolioOptimizer:
         # Compute portfolio stats
         port_return = float(np.dot(weights, self.mean_returns) * 252)
         port_vol = float(np.sqrt(np.dot(weights, np.dot(self.cov_matrix, weights)) * 252))
-        daily_rf = self.risk_free_rate / 252
         sharpe = (port_return - self.risk_free_rate) / port_vol if port_vol > 0 else 0
 
         return OptimizationResult(
@@ -151,7 +150,7 @@ class PortfolioOptimizer:
                 ret = float(np.dot(weights, self.mean_returns) * 252)
                 w_dict = {s: float(w) for s, w in zip(self.symbols, weights)}
                 frontier.append((vol, ret, w_dict))
-            except Exception:
+            except (np.linalg.LinAlgError, ValueError):
                 continue
 
         return frontier
@@ -250,16 +249,16 @@ class PortfolioOptimizer:
         ones = np.ones(self.n_assets)
         mu = self.mean_returns * 252  # annualized
 
-        A = ones @ inv_cov @ ones
-        B = ones @ inv_cov @ mu
-        C = mu @ inv_cov @ mu
-        D = A * C - B * B
+        param_a = ones @ inv_cov @ ones
+        param_b = ones @ inv_cov @ mu
+        param_c = mu @ inv_cov @ mu
+        param_d = param_a * param_c - param_b * param_b
 
-        if abs(D) < 1e-12:
+        if abs(param_d) < 1e-12:
             return np.ones(self.n_assets) / self.n_assets
 
-        lam1 = (C - target_return * B) / D
-        lam2 = (target_return * A - B) / D
+        lam1 = (param_c - target_return * param_b) / param_d
+        lam2 = (target_return * param_a - param_b) / param_d
 
         weights = inv_cov @ (lam1 * ones + lam2 * mu)
         return weights
