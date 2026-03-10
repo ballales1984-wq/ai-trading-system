@@ -119,14 +119,12 @@ export default function Login() {
 
         <div className="mt-6 pt-6 border-t border-slate-700/50">
           <p className="text-center text-sm text-slate-400 mb-4">
-            Non hai un account?
+            Per il demo usa qualsiasi email e password
           </p>
-          <button
-            onClick={() => navigate('/payment')}
-            className="w-full py-3 px-4 bg-slate-700/50 hover:bg-slate-700 text-white font-semibold rounded-lg transition-all border border-slate-600 hover:border-blue-500"
-          >
-            Registrati Ora
-          </button>
+          <div className="text-center text-xs text-slate-500">
+            <p>Email: test@test.com</p>
+            <p>Password: qualsiasi</p>
+          </div>
         </div>
 
         <div className="mt-6 text-center">
