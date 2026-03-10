@@ -15,11 +15,8 @@
       "dest": "https://ai-trading-system-1reg.onrender.com/api/v1/$1"
     },
     {
-      "handle": "filesystem"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/dist/index.html"
+      "dest": "frontend/dist/index.html"
     }
   ]
 }
