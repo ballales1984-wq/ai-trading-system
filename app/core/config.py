@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     cors_origins: List[str] = [
         "https://*.vercel.app",  # Vercel deployments
         "https://*.ngrok-free.app",  # Ngrok tunnels
+        "https://*.onrender.com",  # Render deployments
         "http://localhost:3000",  # Local React dev server
         "http://localhost:5173",  # Local Vite dev server
     ]

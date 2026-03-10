@@ -6,6 +6,7 @@ Hedge Fund Trading System API.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
 from app.api.routes import news, market, portfolio, orders, health, strategy, waitlist, cache, auth, risk
@@ -114,6 +115,13 @@ async def health_check():
         "version": settings.app_version,
         "environment": settings.environment
     }
+
+# Serve frontend static files (for Render deployment)
+try:
+    app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="frontend")
+    logger.info("Frontend static files mounted at /")
+except Exception as e:
+    logger.warning(f"Could not mount frontend static files: {e}")
 
 if __name__ == "__main__":
     import uvicorn
