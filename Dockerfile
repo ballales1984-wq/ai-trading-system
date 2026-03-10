@@ -55,8 +55,8 @@ RUN pip install --no-cache-dir -r requirements-vercel.txt
 COPY app/ ./app/
 COPY api/ ./api/
 
-# Copia frontend build dal frontend-builder
-COPY --from=frontend-builder /app/dist ./frontend/
+# Copia frontend build dal frontend-builder - usa percorso assoluto
+COPY --from=frontend-builder /app/dist /app/frontend/dist
 
 # Crea environment file minimo inline
 RUN echo "FASTAPI_ENV=production" > .env
