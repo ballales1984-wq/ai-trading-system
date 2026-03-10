@@ -1,10 +1,9 @@
 """
-
-
 Portfolio Routes
 ================
 REST API for portfolio management and positions.
 """
+from __future__ import annotations
 
 import os
 import random
