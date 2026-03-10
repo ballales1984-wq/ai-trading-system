@@ -75,9 +75,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mt-2 md:mt-0">
         <div>
           <h1 className="text-2xl font-bold text-gray-100">Trading Dashboard</h1>
           <p className="text-gray-400">Paper Trading</p>

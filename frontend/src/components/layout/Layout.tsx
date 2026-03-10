@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Menu, X, Bot, FileText } from 'lucide-react';
 
@@ -12,6 +12,24 @@ const navItems = [
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [isMobile]);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#0d1117' }}>
@@ -23,12 +41,18 @@ export default function Layout() {
           top: 16,
           left: 16,
           zIndex: 50,
-          padding: 8,
+          padding: 10,
           backgroundColor: '#161b22',
           border: '1px solid #30363d',
           borderRadius: 8,
-          display: 'none',
+          display: isMobile ? 'flex' : 'none',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          minWidth: 44,
+          minHeight: 44,
         }}
+        aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
       >
         {sidebarOpen ? <X size={24} color="#c9d1d9" /> : <Menu size={24} color="#c9d1d9" />}
       </button>
@@ -40,14 +64,15 @@ export default function Layout() {
           left: 0,
           top: 0,
           bottom: 0,
-          width: 260,
-          backgroundColor: 'rgba(22, 27, 34, 0.95)',
+          width: isMobile ? 260 : 260,
+          backgroundColor: 'rgba(22, 27, 34, 0.98)',
           backdropFilter: 'blur(20px)',
           borderRight: '1px solid #30363d',
           display: 'flex',
           flexDirection: 'column',
           zIndex: 40,
           transition: 'transform 0.3s ease',
+          transform: isMobile ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : 'translateX(0)',
         }}
       >
         {/* Logo */}
@@ -134,7 +159,13 @@ export default function Layout() {
       )}
 
       {/* Main Content */}
-      <main style={{ flex: 1, marginLeft: 260, overflow: 'auto' }}>
+      <main style={{ 
+        flex: 1, 
+        marginLeft: isMobile ? 0 : 260, 
+        marginTop: isMobile ? 60 : 0,
+        overflow: 'auto',
+        minHeight: '100vh'
+      }}>
         <Outlet />
       </main>
 
