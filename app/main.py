@@ -118,8 +118,8 @@ async def health_check():
 
 # Serve frontend static files (for Render deployment)
 try:
-    app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="frontend")
-    logger.info("Frontend static files mounted at /")
+    app.mount("/", StaticFiles(directory="dist", html=True), name="frontend")
+    logger.info("Frontend static files mounted at / from dist/")
 except Exception as e:
     logger.warning(f"Could not mount frontend static files: {e}")
 
