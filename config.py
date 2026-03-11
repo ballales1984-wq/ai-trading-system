@@ -234,6 +234,178 @@ TRACKED_COMMODITIES: Dict[str, Dict[str, Any]] = {
     },
 }
 
+# ==================== FOREX CONFIGURATION ====================
+FOREX_SYMBOLS: Dict[str, Dict[str, str]] = {
+    # Major Currency Pairs
+    'EURUSD': {
+        'symbol': 'EUR/USD',
+        'name': 'Euro / US Dollar',
+        'pip_value': 0.0001,
+        'category': 'major'
+    },
+    'GBPUSD': {
+        'symbol': 'GBP/USD',
+        'name': 'British Pound / US Dollar',
+        'pip_value': 0.0001,
+        'category': 'major'
+    },
+    'USDJPY': {
+        'symbol': 'USD/JPY',
+        'name': 'US Dollar / Japanese Yen',
+        'pip_value': 0.01,
+        'category': 'major'
+    },
+    'USDCHF': {
+        'symbol': 'USD/CHF',
+        'name': 'US Dollar / Swiss Franc',
+        'pip_value': 0.0001,
+        'category': 'major'
+    },
+    'AUDUSD': {
+        'symbol': 'AUD/USD',
+        'name': 'Australian Dollar / US Dollar',
+        'pip_value': 0.0001,
+        'category': 'major'
+    },
+    'USDCAD': {
+        'symbol': 'USD/CAD',
+        'name': 'US Dollar / Canadian Dollar',
+        'pip_value': 0.0001,
+        'category': 'major'
+    },
+    'NZDUSD': {
+        'symbol': 'NZD/USD',
+        'name': 'New Zealand Dollar / US Dollar',
+        'pip_value': 0.0001,
+        'category': 'major'
+    },
+    # Minor Pairs
+    'EURGBP': {
+        'symbol': 'EUR/GBP',
+        'name': 'Euro / British Pound',
+        'pip_value': 0.0001,
+        'category': 'minor'
+    },
+    'EURJPY': {
+        'symbol': 'EUR/JPY',
+        'name': 'Euro / Japanese Yen',
+        'pip_value': 0.01,
+        'category': 'minor'
+    },
+    'GBPJPY': {
+        'symbol': 'GBP/JPY',
+        'name': 'British Pound / Japanese Yen',
+        'pip_value': 0.01,
+        'category': 'minor'
+    },
+}
+
+# ==================== STOCKS CONFIGURATION ====================
+STOCK_SYMBOLS: Dict[str, Dict[str, str]] = {
+    # Tech Stocks
+    'AAPL': {
+        'symbol': 'AAPL',
+        'name': 'Apple Inc.',
+        'exchange': 'NASDAQ',
+        'sector': 'Technology',
+        'currency': 'USD'
+    },
+    'MSFT': {
+        'symbol': 'MSFT',
+        'name': 'Microsoft Corporation',
+        'exchange': 'NASDAQ',
+        'sector': 'Technology',
+        'currency': 'USD'
+    },
+    'GOOGL': {
+        'symbol': 'GOOGL',
+        'name': 'Alphabet Inc.',
+        'exchange': 'NASDAQ',
+        'sector': 'Technology',
+        'currency': 'USD'
+    },
+    'AMZN': {
+        'symbol': 'AMZN',
+        'name': 'Amazon.com Inc.',
+        'exchange': 'NASDAQ',
+        'sector': 'Consumer Cyclical',
+        'currency': 'USD'
+    },
+    'NVDA': {
+        'symbol': 'NVDA',
+        'name': 'NVIDIA Corporation',
+        'exchange': 'NASDAQ',
+        'sector': 'Technology',
+        'currency': 'USD'
+    },
+    'META': {
+        'symbol': 'META',
+        'name': 'Meta Platforms Inc.',
+        'exchange': 'NASDAQ',
+        'sector': 'Technology',
+        'currency': 'USD'
+    },
+    'TSLA': {
+        'symbol': 'TSLA',
+        'name': 'Tesla Inc.',
+        'exchange': 'NASDAQ',
+        'sector': 'Automotive',
+        'currency': 'USD'
+    },
+    # Financial
+    'JPM': {
+        'symbol': 'JPM',
+        'name': 'JPMorgan Chase & Co.',
+        'exchange': 'NYSE',
+        'sector': 'Financial',
+        'currency': 'USD'
+    },
+    'BAC': {
+        'symbol': 'BAC',
+        'name': 'Bank of America Corp.',
+        'exchange': 'NYSE',
+        'sector': 'Financial',
+        'currency': 'USD'
+    },
+    'GS': {
+        'symbol': 'GS',
+        'name': 'Goldman Sachs Group Inc.',
+        'exchange': 'NYSE',
+        'sector': 'Financial',
+        'currency': 'USD'
+    },
+    # Healthcare
+    'JNJ': {
+        'symbol': 'JNJ',
+        'name': 'Johnson & Johnson',
+        'exchange': 'NYSE',
+        'sector': 'Healthcare',
+        'currency': 'USD'
+    },
+    'UNH': {
+        'symbol': 'UNH',
+        'name': 'UnitedHealth Group Inc.',
+        'exchange': 'NYSE',
+        'sector': 'Healthcare',
+        'currency': 'USD'
+    },
+    # Energy
+    'XOM': {
+        'symbol': 'XOM',
+        'name': 'Exxon Mobil Corporation',
+        'exchange': 'NYSE',
+        'sector': 'Energy',
+        'currency': 'USD'
+    },
+    'CVX': {
+        'symbol': 'CVX',
+        'name': 'Chevron Corporation',
+        'exchange': 'NYSE',
+        'sector': 'Energy',
+        'currency': 'USD'
+    },
+}
+
 # ==================== EXCHANGE API CONFIGURATION ====================
 # Primary exchange for crypto data
 DEFAULT_EXCHANGE: str = 'binance'

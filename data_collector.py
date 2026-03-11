@@ -513,8 +513,10 @@ class DataCollector:
     
     def get_supported_symbols(self) -> List[str]:
         """Get list of supported trading symbols"""
-        return list(config.CRYPTO_SYMBOLS.values()) + \
-               [v['api_symbol'] for v in config.COMMODITY_TOKENS.values()]
+        return (list(config.CRYPTO_SYMBOLS.values()) + 
+                [v['api_symbol'] for v in config.COMMODITY_TOKENS.values()] +
+                [v['symbol'] for v in config.FOREX_SYMBOLS.values()] +
+                list(config.STOCK_SYMBOLS.keys()))
     
     def get_commodity_symbols(self) -> List[str]:
         """Get list of commodity-backed token symbols"""
