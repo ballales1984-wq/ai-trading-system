@@ -352,11 +352,11 @@ Feedback Loop
 - ✅ ML models base
 
 ### **Fase 2: Ottimizzazione** 🔄
-- [ ] Backtesting avanzato
-- [ ] Walk-forward optimization
-- [ ] Multi-timeframe analysis
-- [ ] Advanced ML models
-- [ ] Performance attribution
+- [x] Backtesting avanzato
+- [x] Walk-forward optimization
+- [x] Multi-timeframe analysis
+- [x] Advanced ML models
+- [x] Performance attribution
 
 ### **Fase 3: Espansione** 📅
 - [ ] Più broker (IB, Bybit)

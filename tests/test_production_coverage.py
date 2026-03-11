@@ -92,7 +92,10 @@ class TestProductionIntegration:
         try:
             from src.production.order_manager import OrderManager
             
-            manager = OrderManager()
+            # OrderManager requires broker and risk_manager
+            mock_broker = Mock()
+            mock_risk_manager = Mock()
+            manager = OrderManager(broker=mock_broker, risk_manager=mock_risk_manager)
             assert manager is not None
         except ImportError:
             pass
