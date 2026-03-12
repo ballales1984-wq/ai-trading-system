@@ -219,7 +219,7 @@ class MultiAssetCVaR:
         self, 
         alpha: float = 0.01,
         n_simulations: int = 50000,
-        bounds: Optional list = None,
+        bounds: Optional[list] = None,
         constraints: Optional[Dict] = None
     ) -> Dict:
         """
