@@ -135,16 +135,16 @@ class TestAsyncRepository:
     def test_database_config_creation(self):
         """Test DatabaseConfig creation."""
         from app.database.async_repository import DatabaseConfig
-        # DatabaseConfig requires url parameter, not host
+        # DatabaseConfig requires database_url parameter
         config = DatabaseConfig(
-            url="postgresql://localhost:5432/trading"
+            database_url="postgresql://localhost:5432/trading"
         )
         assert config is not None
     
     def test_async_repository_creation(self):
         """Test AsyncRepository creation."""
         from app.database.async_repository import AsyncRepository, DatabaseConfig
-        config = DatabaseConfig(url="postgresql://localhost:5432/trading")
+        config = DatabaseConfig(database_url="postgresql://localhost:5432/trading")
         repo = AsyncRepository(config)
         assert repo is not None
 
@@ -179,7 +179,7 @@ class TestRepository:
         """Test async repository basic operations."""
         from app.database.async_repository import AsyncRepository, DatabaseConfig
         
-        config = DatabaseConfig(url="postgresql://localhost:5432/trading")
+        config = DatabaseConfig(database_url="postgresql://localhost:5432/trading")
         repo = AsyncRepository(config)
         
         # Test basic methods exist
