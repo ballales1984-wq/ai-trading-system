@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
   import { Outlet, NavLink } from 'react-router-dom';
   import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Menu, X, Bot, FileText } from 'lucide-react';
 
@@ -26,11 +26,11 @@ export default function Layout() {
     
     // Add touch event listeners for swipe gestures on mobile
     if (isMobile) {
-      const handleTouchStart = (e) => {
+      const handleTouchStart = (e: TouchEvent) => {
         setTouchStartX(e.touches[0].clientX);
       };
       
-      const handleTouchEnd = (e) => {
+      const handleTouchEnd = (e: TouchEvent) => {
         setTouchEndX(e.changedTouches[0].clientX);
         handleSwipeGesture();
       };
@@ -71,7 +71,7 @@ export default function Layout() {
 
   // Handle escape key to close sidebar on mobile
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isMobile && sidebarOpen) {
         setSidebarOpen(false);
       }
