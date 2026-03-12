@@ -1,4 +1,4 @@
-fai import { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
@@ -82,11 +82,11 @@ export default function Login() {
   };
 
   // Handle Enter key press in form fields
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement | HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       // Trigger form submission
-      const form = e.currentTarget.form as HTMLFormElement;
+      const form = e.currentTarget.form || (e.currentTarget as HTMLFormElement);
       if (form) {
         form.requestSubmit();
       }
