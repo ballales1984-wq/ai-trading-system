@@ -163,10 +163,18 @@ def get_balance() -> float:
         Current balance in account currency
     """
     saldo_path = _get_saldo_path()
+    if not os.path.exists(saldo_path):
+        os.makedirs(os.path.dirname(saldo_path), exist_ok=True)
+        with open(saldo_path, "w") as f:
+            f.write("0.0")
+        return 0.0
     try:
         with open(saldo_path, "r") as f:
             return float(f.read().strip())
-    except (FileNotFoundError, ValueError):
+    except ValueError:
+        # If corrupt, reset to 0.0
+        with open(saldo_path, "w") as f:
+            f.write("0.0")
         return 0.0
 
 
