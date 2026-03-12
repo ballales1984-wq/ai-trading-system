@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Menu, X, Bot, FileText } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+  import { Outlet, NavLink } from 'react-router-dom';
+  import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Menu, X, Bot, FileText } from 'lucide-react';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
