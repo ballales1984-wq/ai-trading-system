@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { portfolioApi, marketApi, ordersApi } from '../services/api';
-import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
-import { TrendingUp, TrendingDown, DollarSign, Wallet } from 'lucide-react';
-import { useState } from 'react';
-import { StatusBadge } from '@/components/ui/StatusBadge';
+  import { portfolioApi, marketApi, ordersApi } from '../services/api';
+  import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Dot } from 'recharts';
+  import { TrendingUp, TrendingDown, DollarSign, Wallet } from 'lucide-react';
+  import { useState } from 'react';
+  import { StatusBadge } from '@/components/ui/StatusBadge';
+  import { DashboardSkeleton } from '@/components/ui/Skeleton';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -16,45 +17,45 @@ export default function Dashboard() {
   ];
 
   const { data: dualSummary, isLoading: summaryLoading } = useQuery({
-    queryKey: ['portfolio-dual-summary'],
-    queryFn: portfolioApi.getDualSummary,
-    refetchInterval: 30000,
+  queryKey: ['portfolio-dual-summary'],
+  queryFn: portfolioApi.getDualSummary,
+  refetchInterval: 30000,
   });
 
   const { data: history } = useQuery({
-    queryKey: ['portfolio-history'],
-    queryFn: () => portfolioApi.getHistory(30),
-    refetchInterval: 60000,
+  queryKey: ['portfolio-history'],
+  queryFn: () => portfolioApi.getHistory(30),
+  refetchInterval: 60000,
   });
 
   const { data: markets } = useQuery({
-    queryKey: ['market-prices'],
-    queryFn: marketApi.getAllPrices,
-    refetchInterval: 15000,
+  queryKey: ['market-prices'],
+  queryFn: marketApi.getAllPrices,
+  refetchInterval: 15000,
   });
 
   const { data: performance } = useQuery({
-    queryKey: ['portfolio-performance'],
-    queryFn: portfolioApi.getPerformance,
-    refetchInterval: 60000,
+  queryKey: ['portfolio-performance'],
+  queryFn: portfolioApi.getPerformance,
+  refetchInterval: 60000,
   });
 
   const { data: orders } = useQuery({
-    queryKey: ['orders'],
-    queryFn: () => ordersApi.list(),
-    refetchInterval: 10000,
+  queryKey: ['orders'],
+  queryFn: () => ordersApi.list(),
+  refetchInterval: 10000,
   });
 
   const { data: positions } = useQuery({
-    queryKey: ['portfolio-positions'],
-    queryFn: () => portfolioApi.getPositions(),
-    refetchInterval: 30000,
+  queryKey: ['portfolio-positions'],
+  queryFn: () => portfolioApi.getPositions(),
+  refetchInterval: 30000,
   });
 
   const summary = dualSummary?.simulated || { total_value: 0, daily_pnl: 0, unrealized_pnl: 0, num_positions: 0, daily_return_pct: 0 };
   const historyData = history?.history?.map((h: any) => ({
-    date: new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    value: h.value,
+  date: new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+  value: h.value,
   })) || [];
 
   const marketData = markets?.markets?.slice(0, 6) || [];
@@ -62,17 +63,14 @@ export default function Dashboard() {
   const positionsList = Array.isArray(positions) ? positions : [];
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(value);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(value);
   };
 
   const formatPercent = (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 
-  if (summaryLoading && !dualSummary) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
+  // Show skeleton loader while data is loading
+  if (summaryLoading || !history || !markets || !performance || !orders || !positions) {
+  return <DashboardSkeleton />;
   }
 
   return (
@@ -97,32 +95,110 @@ export default function Dashboard() {
         <MetricCard title="Open Positions" value={String(summary?.num_positions || 0)} icon={Wallet} />
       </div>
 
-       {/* Charts Row */}
-       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-         <div className="lg:col-span-2 bg-gray-800 rounded-xl p-4" style={{ minHeight: 300 }}>
-           <h3 className="text-lg font-semibold text-gray-100 mb-4">Portfolio Equity</h3>
-           <div className="h-72 w-full min-h-[280px]">
-             {!summaryLoading && historyData.length > 0 ? (
-               <ResponsiveContainer width="100%" height="100%">
-                 <AreaChart data={historyData}>
-                   <defs>
-                     <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
-                       <stop offset="5%" stopColor="#3fb950" stopOpacity={0.3} />
-                       <stop offset="95%" stopColor="#3fb950" stopOpacity={0} />
-                     </linearGradient>
-                   </defs>
-                   <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
-                   <XAxis dataKey="date" stroke="#8b949e" fontSize={11} />
-                   <YAxis stroke="#8b949e" fontSize={11} tickFormatter={(v: number) => `$${(v/1000).toFixed(0)}k`} />
-                   <Tooltip contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }} />
-                   <Area type="monotone" dataKey="value" stroke="#3fb950" strokeWidth={2} fillOpacity={1} fill="url(#equityGradient)" />
-                 </AreaChart>
-               </ResponsiveContainer>
-             ) : (
-               <div className="h-full flex items-center justify-center text-text-muted">No data</div>
-             )}
-           </div>
-         </div>
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-gray-800 rounded-xl p-4" style={{ minHeight: 300 }}>
+            <h3 className="text-lg font-semibold text-gray-100 mb-4">Portfolio Equity</h3>
+            <div className="h-72 w-full min-h-[280px]">
+              {!summaryLoading && historyData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart 
+                    data={historyData}
+                    margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                  >
+                    <defs>
+                      <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3fb950" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#3fb950" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    {/* Cartesian grid with dashed lines */}
+                    <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
+                    {/* X-axis with date formatting */}
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="#8b949e" 
+                      fontSize={11}
+                      tickFormatter={(date) => {
+                        // Format date for better readability
+                        const d = new Date(date);
+                        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      }}
+                    />
+                    {/* Y-axis with currency formatting */}
+                    <YAxis 
+                      stroke="#8b949e" 
+                      fontSize={11} 
+                      tickFormatter={(v: number) => `$${(v/1000).toFixed(0)}k`}
+                    />
+                    {/* Enhanced tooltip with cursor and label */}
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#161b22', 
+                        border: '1px solid #30363d', 
+                        borderRadius: '8px',
+                        padding: '8px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                      }}
+                      labelStyle={{ 
+                        fontSize: 12,
+                        fontWeight: 600,
+                        fill: '#c9d1d9'
+                      }}
+                      separator={':'}
+                      cursor={{ strokeDasharray: '3 3' }}
+                    />
+                    {/* Legend for better interactivity */}
+                    <Legend 
+                      verticalAlign="top" 
+                      height={36} 
+                      formatter={(value) => `Portfolio Value ($)`}
+                      wrapperStyle={{ 
+                        cursor: 'pointer' 
+                      }}
+                      itemStyle={{ 
+                        cursor: 'pointer',
+                        opacity: 0.8
+                      }}
+                      itemHoverStyle={{ 
+                        opacity: 1 
+                      }}
+                    />
+                    {/* Area chart with smooth gradient */}
+                    <Area 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="#3fb950" 
+                      strokeWidth={2} 
+                      fillOpacity={1} 
+                      fill="url(#equityGradient)"
+                      isAnimationActive={true}
+                      animationBegin={400}
+                      animationDuration={800}
+                      easing='ease-out-quad'
+                    />
+                    {/* Optional: Add dot points for better interaction */}
+                    {/* 
+                    <Dot 
+                      type="monotone" 
+                      dataKey="value" 
+                      strokeWidth={2} 
+                      stroke="#3fb950" 
+                      dot={{ 
+                        strokeWidth: 5, 
+                        stroke: '#fff', 
+                        fill: '#3fb950', 
+                        radius: 4 
+                      }} 
+                    /> 
+                    */}
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-text-muted">No data</div>
+              )}
+            </div>
+          </div>
          <div className="glass rounded-xl p-6">
            <h3 className="text-lg font-semibold text-text mb-4">Performance</h3>
            <div className="space-y-3">

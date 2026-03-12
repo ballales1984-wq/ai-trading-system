@@ -5,6 +5,7 @@ export default function PaymentTest() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [priceId, setPriceId] = useState<string>('');
 
   const handlePaymentLinkTest = () => {
     if (paymentApi.isConfigured()) {
@@ -15,13 +16,19 @@ export default function PaymentTest() {
   };
 
   const handleCheckoutTest = async () => {
+    // Basic validation
+    if (!priceId) {
+      setError('Please enter a Price ID');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
       const response = await paymentApi.createCheckoutSession({
-        price_id: undefined, // Use default from env
+        price_id: priceId || undefined, // Use provided or default from env
         quantity: 1,
       });
       
@@ -59,13 +66,28 @@ export default function PaymentTest() {
           <p className="text-sm text-gray-400 mb-4">
             Crea una sessione di pagamento tramite backend API
           </p>
-          <button
-            onClick={handleCheckoutTest}
-            disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium"
-          >
-            {loading ? 'Creazione sessione...' : 'Test Checkout Session'}
-          </button>
+          <div className="space-y-3">
+            <div>
+              <label htmlFor="price-id" className="block text-sm font-medium text-slate-300 mb-2">
+                Price ID (optional - uses default from env if empty)
+              </label>
+              <input
+                id="price-id"
+                type="text"
+                value={priceId}
+                onChange={(e) => setPriceId(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="price_123abc..."
+              />
+            </div>
+            <button
+              onClick={handleCheckoutTest}
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium"
+            >
+              {loading ? 'Creazione sessione...' : 'Test Checkout Session'}
+            </button>
+          </div>
         </div>
 
         {/* Method 2: Payment Link */}
@@ -77,7 +99,7 @@ export default function PaymentTest() {
           <button
             onClick={handlePaymentLinkTest}
             disabled={!isPaymentLinkConfigured}
-            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium"
+            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium"
           >
             Test Payment Link
           </button>
