@@ -296,18 +296,26 @@ class TestCoreIntegration:
     def test_event_bus_pubsub(self):
         """Test event bus publish/subscribe."""
         try:
-            from src.core.event_bus import EventBus
+            from src.core.event_bus import EventBus, EventType, Event, CallbackEventHandler
+            import asyncio
             
-            bus = EventBus()
+            async def inner():
+                bus = EventBus()
+                
+                # Test basic operations
+                if hasattr(bus, 'publish') and hasattr(bus, 'subscribe'):
+                    messages = []
+                    # Use CallbackEventHandler to wrap the lambda
+                    handler = CallbackEventHandler(lambda event: messages.append(event))
+                    bus.subscribe(EventType.MARKET_DATA, handler)
+                    # Create and publish an Event object
+                    event = Event(event_type=EventType.MARKET_DATA, data={"data": "test"})
+                    await bus.publish(event)
+                    assert len(messages) > 0
+                else:
+                    assert bus is not None
             
-            # Test basic operations
-            if hasattr(bus, 'publish') and hasattr(bus, 'subscribe'):
-                messages = []
-                bus.subscribe("test", lambda m: messages.append(m))
-                bus.publish("test", {"data": "test"})
-                assert len(messages) > 0
-            else:
-                assert bus is not None
+            asyncio.run(inner())
         except ImportError:
             pass
     

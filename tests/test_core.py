@@ -6,20 +6,18 @@ Test script for the core trading system components.
 import asyncio
 import sys
 
-# Test imports
-print("=" * 50)
-print("Testing Core Module Imports...")
-print("=" * 50)
-
-try:
+def test_core_imports():
+    """Test core module imports."""
     from src.core import (
         TradingEngine, PaperBroker, OrderManager, 
         RiskEngine, PortfolioManager, create_broker
     )
-    print("[OK] All core imports successful")
-except Exception as e:
-    print(f"[ERROR] Import error: {e}")
-    sys.exit(1)
+    assert TradingEngine is not None
+    assert PaperBroker is not None
+    assert OrderManager is not None
+    assert RiskEngine is not None
+    assert PortfolioManager is not None
+    assert create_broker is not None
 
 
 async def test_paper_broker():
