@@ -41,15 +41,27 @@ function Toast({ toast, onClose }: { toast: ToastMessage; onClose: () => void })
     warning: '⚠',
   }[toast.type];
 
+  // Map toast type to accessible role and label
+  const roleMap: Record<string, string> = {
+    success: 'status',
+    error: 'alert',
+    info: 'status',
+    warning: 'status',
+  };
+
   return (
     <div
       className={`${bgColor} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in min-w-[300px]`}
+      role={roleMap[toast.type] || 'status'}
+      aria-live="polite"
+      aria-atomic="true"
     >
       <span className="text-lg">{icon}</span>
       <span className="flex-1">{toast.message}</span>
       <button
         onClick={onClose}
         className="text-white/80 hover:text-white transition-colors"
+        aria-label="Close toast"
       >
         ✕
       </button>

@@ -13,6 +13,8 @@ const navItems = [
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [touchEndX, setTouchEndX] = useState(0);
 
   // Detect mobile device
   useEffect(() => {
@@ -21,8 +23,44 @@ export default function Layout() {
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
+    
+    // Add touch event listeners for swipe gestures on mobile
+    if (isMobile) {
+      const handleTouchStart = (e) => {
+        setTouchStartX(e.touches[0].clientX);
+      };
+      
+      const handleTouchEnd = (e) => {
+        setTouchEndX(e.changedTouches[0].clientX);
+        handleSwipeGesture();
+      };
+      
+      const handleSwipeGesture = () => {
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+        
+        // Swipe right to open sidebar
+        if (diff < -swipeThreshold) {
+          setSidebarOpen(true);
+        }
+        // Swipe left to close sidebar
+        if (diff > swipeThreshold) {
+          setSidebarOpen(false);
+        }
+      };
+      
+      window.addEventListener('touchstart', handleTouchStart);
+      window.addEventListener('touchend', handleTouchEnd);
+      
+      return () => {
+        window.removeEventListener('resize', checkMobile);
+        window.removeEventListener('touchstart', handleTouchStart);
+        window.removeEventListener('touchend', handleTouchEnd);
+      };
+    }
+    
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [isMobile, touchStartX, touchEndX]);
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -30,6 +68,18 @@ export default function Layout() {
       setSidebarOpen(false);
     }
   }, [isMobile]);
+
+  // Handle escape key to close sidebar on mobile
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isMobile && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobile, sidebarOpen]);
 
   return (
     <div className="flex min-h-screen bg-background">
