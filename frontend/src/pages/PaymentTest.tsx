@@ -5,7 +5,7 @@ export default function PaymentTest() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [priceId, setPriceId] = useState<string>('');
+  const [email, setEmail] = useState<string>('test@example.com');
 
   const handlePaymentLinkTest = () => {
     if (paymentApi.isConfigured()) {
@@ -17,8 +17,15 @@ export default function PaymentTest() {
 
   const handleCheckoutTest = async () => {
     // Basic validation
-    if (!priceId) {
-      setError('Please enter a Price ID');
+    if (!email) {
+      setError('Please enter an email address');
+      return;
+    }
+
+    // Simple email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address');
       return;
     }
 
@@ -27,10 +34,7 @@ export default function PaymentTest() {
     setSuccess(null);
 
     try {
-      const response = await paymentApi.createCheckoutSession({
-        price_id: priceId, // Use provided price ID
-        quantity: 1,
-      });
+      const response = await paymentApi.createCheckoutSession(email);
       
       setSuccess(`Session created! Redirecting to: ${response.checkout_url}`);
       
@@ -82,31 +86,29 @@ export default function PaymentTest() {
           </p>
           <div className="space-y-3">
             <div>
-              <label htmlFor="price-id" className="block text-sm font-medium text-slate-300 mb-2">
-                Price ID (optional - uses default from env if empty)
+              <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+                Email for checkout session
               </label>
               <input
-                id="price-id"
-                type="text"
-                value={priceId}
-                onChange={(e) => setPriceId(e.target.value)}
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={handleKeyDown}
                 className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="price_123abc..."
-                aria-required="false"
-                aria-describedby={priceId ? 'price-id-help' : undefined}
+                placeholder="test@example.com"
+                aria-required="true"
+                aria-describedby="email-help"
               />
-              {!priceId && (
-                <p id="price-id-help" className="text-xs text-text-muted mt-1">
-                  Leave empty to use default from environment variables
-                </p>
-              )}
+              <p id="email-help" className="text-xs text-text-muted mt-1">
+                Used to create a Stripe checkout session
+              </p>
             </div>
             <button
               onClick={handleCheckoutTest}
               disabled={loading}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium"
-              aria-disabled={loading.toString()}
+              aria-disabled={String(loading)}
             >
               {loading ? (
                 <span className="flex items-center justify-center">
@@ -133,7 +135,7 @@ export default function PaymentTest() {
             onClick={handlePaymentLinkTest}
             disabled={!isPaymentLinkConfigured}
             className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium"
-            aria-disabled={(!isPaymentLinkConfigured).toString()}
+            aria-disabled={String(!isPaymentLinkConfigured)}
             aria-label={isPaymentLinkConfigured ? 'Test Payment Link' : 'Payment Link not configured'}
           >
             Test Payment Link
