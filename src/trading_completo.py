@@ -115,7 +115,7 @@ class Position:
 # =============================================================================
 
 # In-memory storage
-_premi: Dict[str, float = {}]
+_premi: Dict[str, float] = {}
 _posizioni: Dict[str, Position] = {}
 _data_dir = DEFAULT_DATA_DIR
 
