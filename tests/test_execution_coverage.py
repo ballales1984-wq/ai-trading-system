@@ -11,6 +11,29 @@ from typing import List, Dict, Any, Optional
 from enum import Enum
 import sys
 import os
+import asyncio
+
+# Mock ib_insync to avoid import errors and event loop issues
+mock_ib_insync = MagicMock()
+mock_ib_insync.IB = MagicMock
+mock_ib_insync.Contract = MagicMock
+mock_ib_insync.Forex = MagicMock
+mock_ib_insync.Future = MagicMock
+mock_ib_insync.LimitOrder = MagicMock
+mock_ib_insync.MarketOrder = MagicMock
+mock_ib_insync.Stock = MagicMock
+mock_ib_insync.StopOrder = MagicMock
+mock_ib_insync.Trade = MagicMock
+mock_ib_insync.util = MagicMock
+
+sys.modules['ib_insync'] = mock_ib_insync
+
+# Set up event loop for MainThread to avoid ib_insync import errors
+try:
+    asyncio.get_running_loop()
+except RuntimeError:
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
