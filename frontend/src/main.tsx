@@ -16,7 +16,7 @@ import { createRoot } from 'react-dom/client'
  
   const root = createRoot(document.getElementById('root')!);
   root.render(
-    <ErrorBoundary fallbackRender={(error, resetError) => (
+    <ErrorBoundary fallbackRender={(_error, resetError) => (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="bg-surface border border-border rounded-lg p-6 max-w-md w-full">
           <div className="text-center">
