@@ -1,4 +1,4 @@
-import { useState } from 'react';
+fai import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
@@ -81,6 +81,18 @@ export default function Login() {
     }
   };
 
+  // Handle Enter key press in form fields
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // Trigger form submission
+      const form = e.currentTarget.form as HTMLFormElement;
+      if (form) {
+        form.requestSubmit();
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAzMmMtNy43MzIgMC0xNC02LjI2OC0xNC0xNHM2LjI2OC0xNCAxNCAxNCAxNCA2LjI2OCAxNCAxNC02LjI2OCAxNC0xNHoiIGZpbGw9IiM0ZmY0ZmYiIGZpbGwtb3BhY2l0eT0iLjAyIi8+PC9nPjwvc3ZnPg==')] opacity-30"></div>
@@ -92,13 +104,22 @@ export default function Login() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">AI Trading System</h1>
+          <h1 className="text-3xl font-bold text-white mb-2" id="login-heading">
+            AI Trading System
+          </h1>
           <p className="text-slate-400">Accedi al tuo account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form 
+          onSubmit={handleSubmit} 
+          className="space-y-6"
+          onKeyDown={handleKeyDown}
+        >
           {error && (
-            <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm text-center">
+            <div 
+              role="alert"
+              className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm text-center"
+            >
               {error}
             </div>
           )}
@@ -119,11 +140,20 @@ export default function Login() {
                 }
               }}
               required
+              aria-required="true"
+              aria-invalid={!!emailError}
+              aria-describedby={emailError ? 'email-error' : undefined}
               className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder="tua@email.com"
             />
             {emailError && (
-              <p className="text-red-400 text-sm mt-1">{emailError}</p>
+              <p 
+                id="email-error"
+                className="text-red-400 text-sm mt-1"
+                role="alert"
+              >
+                {emailError}
+              </p>
             )}
           </div>
 
@@ -143,11 +173,20 @@ export default function Login() {
                 }
               }}
               required
+              aria-required="true"
+              aria-invalid={!!passwordError}
+              aria-describedby={passwordError ? 'password-error' : undefined}
               className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder="••••••••"
             />
             {passwordError && (
-              <p className="text-red-400 text-sm mt-1">{passwordError}</p>
+              <p 
+                id="password-error"
+                className="text-red-400 text-sm mt-1"
+                role="alert"
+              >
+                {passwordError}
+              </p>
             )}
           </div>
 
