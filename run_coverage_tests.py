@@ -26,6 +26,7 @@ COVERAGE_TESTS = [
     "tests/test_app_coverage_extended.py",
     "tests/test_core_coverage.py",
     "tests/test_uncovered_modules.py",
+    "tests/test_trading_completo_coverage.py",
 ]
 
 def run_tests():
