@@ -3,6 +3,7 @@ import { portfolioApi, marketApi, ordersApi } from '../services/api';
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, Wallet } from 'lucide-react';
 import { useState } from 'react';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -96,44 +97,43 @@ export default function Dashboard() {
         <MetricCard title="Open Positions" value={String(summary?.num_positions || 0)} icon={Wallet} />
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-gray-800 rounded-xl p-4" style={{ minHeight: 300 }}>
-          <h3 className="text-lg font-semibold text-gray-100 mb-4">Portfolio Equity</h3>
-          <div className="h-72 w-full min-h-[280px]">
-            {!summaryLoading && historyData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={historyData}>
-                  <defs>
-                    <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3fb950" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#3fb950" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
-                  <XAxis dataKey="date" stroke="#8b949e" fontSize={11} />
-                  <YAxis stroke="#8b949e" fontSize={11} tickFormatter={(v: number) => `$${(v/1000).toFixed(0)}k`} />
-                  <Tooltip contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }} />
-                  <Area type="monotone" dataKey="value" stroke="#3fb950" strokeWidth={2} fillOpacity={1} fill="url(#equityGradient)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-text-muted">No data</div>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-bg-secondary border border-border rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-text mb-4">Performance</h3>
-          <div className="space-y-3">
-            <PerfRow label="Total Return" value={formatPercent(performance?.total_return_pct || 0)} positive={(performance?.total_return_pct || 0) >= 0} />
-            <PerfRow label="Sharpe Ratio" value={String(performance?.sharpe_ratio?.toFixed(2) || '0.00')} />
-            <PerfRow label="Win Rate" value={`${((performance?.win_rate || 0) * 100).toFixed(1)}%`} positive={(performance?.win_rate || 0) > 0.5} />
-            <PerfRow label="Max Drawdown" value={formatPercent(performance?.max_drawdown_pct || 0)} inverted />
-            <PerfRow label="Profit Factor" value={String(performance?.profit_factor?.toFixed(2) || '0.00')} />
-          </div>
-        </div>
-      </div>
+       {/* Charts Row */}
+       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+         <div className="lg:col-span-2 bg-gray-800 rounded-xl p-4" style={{ minHeight: 300 }}>
+           <h3 className="text-lg font-semibold text-gray-100 mb-4">Portfolio Equity</h3>
+           <div className="h-72 w-full min-h-[280px]">
+             {!summaryLoading && historyData.length > 0 ? (
+               <ResponsiveContainer width="100%" height="100%">
+                 <AreaChart data={historyData}>
+                   <defs>
+                     <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
+                       <stop offset="5%" stopColor="#3fb950" stopOpacity={0.3} />
+                       <stop offset="95%" stopColor="#3fb950" stopOpacity={0} />
+                     </linearGradient>
+                   </defs>
+                   <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
+                   <XAxis dataKey="date" stroke="#8b949e" fontSize={11} />
+                   <YAxis stroke="#8b949e" fontSize={11} tickFormatter={(v: number) => `$${(v/1000).toFixed(0)}k`} />
+                   <Tooltip contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }} />
+                   <Area type="monotone" dataKey="value" stroke="#3fb950" strokeWidth={2} fillOpacity={1} fill="url(#equityGradient)" />
+                 </AreaChart>
+               </ResponsiveContainer>
+             ) : (
+               <div className="h-full flex items-center justify-center text-text-muted">No data</div>
+             )}
+           </div>
+         </div>
+         <div className="glass rounded-xl p-6">
+           <h3 className="text-lg font-semibold text-text mb-4">Performance</h3>
+           <div className="space-y-3">
+             <PerfRow label="Total Return" value={formatPercent(performance?.total_return_pct || 0)} positive={(performance?.total_return_pct || 0) >= 0} />
+             <PerfRow label="Sharpe Ratio" value={String(performance?.sharpe_ratio?.toFixed(2) || '0.00')} />
+             <PerfRow label="Win Rate" value={`${((performance?.win_rate || 0) * 100).toFixed(1)}%`} positive={(performance?.win_rate || 0) > 0.5} />
+             <PerfRow label="Max Drawdown" value={formatPercent(performance?.max_drawdown_pct || 0)} inverted />
+             <PerfRow label="Profit Factor" value={String(performance?.profit_factor?.toFixed(2) || '0.00')} />
+           </div>
+         </div>
+       </div>
 
       <div className="border-b border-border bg-bg-secondary px-6">
         <div className="flex gap-1">
@@ -161,43 +161,42 @@ export default function Dashboard() {
               <MetricCard title="Open Positions" value={String(summary?.num_positions || 0)} icon={Wallet} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 bg-bg-secondary border border-border rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-text mb-4">Portfolio Equity</h3>
-                <div className="h-72 w-full min-h-[280px]">
-                  {!summaryLoading && historyData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={historyData}>
-                        <defs>
-                          <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3fb950" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#3fb950" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
-                        <XAxis dataKey="date" stroke="#8b949e" fontSize={11} />
-                        <YAxis stroke="#8b949e" fontSize={11} tickFormatter={(v: number) => `$${(v/1000).toFixed(0)}k`} />
-                        <Tooltip contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }} />
-                        <Area type="monotone" dataKey="value" stroke="#3fb950" strokeWidth={2} fillOpacity={1} fill="url(#equityGradient)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-full flex items-center justify-center text-text-muted">No data</div>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-bg-secondary border border-border rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-text mb-4">Performance</h3>
-                <div className="space-y-3">
-                  <PerfRow label="Total Return" value={formatPercent(performance?.total_return_pct || 0)} positive={(performance?.total_return_pct || 0) >= 0} />
-                  <PerfRow label="Sharpe Ratio" value={String(performance?.sharpe_ratio?.toFixed(2) || '0.00')} />
-                  <PerfRow label="Win Rate" value={`${((performance?.win_rate || 0) * 100).toFixed(1)}%`} positive={(performance?.win_rate || 0) > 0.5} />
-                  <PerfRow label="Max Drawdown" value={formatPercent(performance?.max_drawdown_pct || 0)} inverted />
-                  <PerfRow label="Profit Factor" value={String(performance?.profit_factor?.toFixed(2) || '0.00')} />
-                </div>
-              </div>
-            </div>
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+               <div className="lg:col-span-2 bg-bg-secondary border border-border rounded-xl p-6">
+                 <h3 className="text-lg font-semibold text-text mb-4">Portfolio Equity</h3>
+                 <div className="h-72 w-full min-h-[280px]">
+                   {!summaryLoading && historyData.length > 0 ? (
+                     <ResponsiveContainer width="100%" height="100%">
+                       <AreaChart data={historyData}>
+                         <defs>
+                           <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
+                             <stop offset="5%" stopColor="#3fb950" stopOpacity={0.3} />
+                             <stop offset="95%" stopColor="#3fb950" stopOpacity={0} />
+                           </linearGradient>
+                         </defs>
+                         <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
+                         <XAxis dataKey="date" stroke="#8b949e" fontSize={11} />
+                         <YAxis stroke="#8b949e" fontSize={11} tickFormatter={(v: number) => `$${(v/1000).toFixed(0)}k`} />
+                         <Tooltip contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }} />
+                         <Area type="monotone" dataKey="value" stroke="#3fb950" strokeWidth={2} fillOpacity={1} fill="url(#equityGradient)" />
+                       </AreaChart>
+                     </ResponsiveContainer>
+                   ) : (
+                     <div className="h-full flex items-center justify-center text-text-muted">No data</div>
+                   )}
+                 </div>
+               </div>
+               <div className="glass rounded-xl p-6">
+                 <h3 className="text-lg font-semibold text-text mb-4">Performance</h3>
+                 <div className="space-y-3">
+                   <PerfRow label="Total Return" value={formatPercent(performance?.total_return_pct || 0)} positive={(performance?.total_return_pct || 0) >= 0} />
+                   <PerfRow label="Sharpe Ratio" value={String(performance?.sharpe_ratio?.toFixed(2) || '0.00')} />
+                   <PerfRow label="Win Rate" value={`${((performance?.win_rate || 0) * 100).toFixed(1)}%`} positive={(performance?.win_rate || 0) > 0.5} />
+                   <PerfRow label="Max Drawdown" value={formatPercent(performance?.max_drawdown_pct || 0)} inverted />
+                   <PerfRow label="Profit Factor" value={String(performance?.profit_factor?.toFixed(2) || '0.00')} />
+                 </div>
+               </div>
+             </div>
 
             <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
               <div className="px-6 py-4 border-b border-border">
@@ -338,7 +337,7 @@ function MetricCard({ title, value, icon: Icon, trend, color }: { title: string;
   const isNegative = color === 'danger' || (trend !== undefined && trend < 0);
   
   return (
-    <div className="bg-bg-secondary border border-border rounded-xl p-4">
+    <div className="glass rounded-xl p-4">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm text-text-muted">{title}</span>
         <Icon className={`w-4 h-4 ${isPositive ? 'text-success' : isNegative ? 'text-danger' : 'text-text'}`} />
@@ -359,9 +358,11 @@ function PerfRow({ label, value, positive, inverted }: { label: string; value: s
   if (inverted) valueColor = value.startsWith('+') ? 'text-danger' : 'text-success';
   
   return (
-    <div className="flex justify-between items-center py-2 border-b border-border/50">
-      <span className="text-sm text-text-muted">{label}</span>
-      <span className={`font-semibold ${valueColor}`}>{value}</span>
+    <div className="glass py-2 border-b border-border/50">
+      <div className="flex justify-between items-center">
+        <span className="text-sm text-text-muted">{label}</span>
+        <span className={`font-semibold ${valueColor}`}>{value}</span>
+      </div>
     </div>
   );
 }
@@ -372,28 +373,10 @@ function PerfCard({ label, value, positive, inverted }: { label: string; value: 
   if (inverted) valueColor = value.startsWith('+') ? 'text-danger' : 'text-success';
   
   return (
-    <div className="bg-bg-secondary border border-border rounded-xl p-4">
+    <div className="glass rounded-xl p-4">
       <div className="text-sm text-text-muted mb-1">{label}</div>
       <div className={`text-2xl font-bold ${valueColor}`}>{value}</div>
     </div>
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    FILLED: 'bg-success/20 text-success',
-    COMPLETED: 'bg-success/20 text-success',
-    PENDING: 'bg-warning/20 text-warning',
-    PARTIALLY_FILLED: 'bg-warning/20 text-warning',
-    CANCELLED: 'bg-danger/20 text-danger',
-    REJECTED: 'bg-danger/20 text-danger',
-  };
-  
-  const style = styles[status] || 'bg-text-muted/20 text-text-muted';
-  
-  return (
-    <span className={`px-2 py-1 rounded text-xs font-medium ${style}`}>
-      {status}
-    </span>
-  );
-}
