@@ -18,8 +18,8 @@ export class ErrorBoundary extends Component<Props, State> {
    }
  
   static getDerivedStateFromError(error: Error): Partial<State> {
-     return { hasError: true, error };
-   }
+      return { hasError: true, error, resetError: () => {} };
+    }
  
    componentDidCatch(error: Error, errorInfo: ErrorInfo) {
      console.error('Error caught by boundary:', error, errorInfo);

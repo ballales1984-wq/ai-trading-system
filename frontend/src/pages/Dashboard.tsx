@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
   import { portfolioApi, marketApi, ordersApi } from '../services/api';
-  import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Dot } from 'recharts';
+  import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
   import { TrendingUp, TrendingDown, DollarSign, Wallet } from 'lucide-react';
   import { useState } from 'react';
   import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -148,22 +148,12 @@ export default function Dashboard() {
                       separator={':'}
                       cursor={{ strokeDasharray: '3 3' }}
                     />
-                    {/* Legend for better interactivity */}
-                    <Legend 
-                      verticalAlign="top" 
-                      height={36} 
-                      formatter={(value) => `Portfolio Value ($)`}
-                      wrapperStyle={{ 
-                        cursor: 'pointer' 
-                      }}
-                      itemStyle={{ 
-                        cursor: 'pointer',
-                        opacity: 0.8
-                      }}
-                      itemHoverStyle={{ 
-                        opacity: 1 
-                      }}
-                    />
+                     {/* Legend for better interactivity */}
+                     <Legend 
+                       verticalAlign="top" 
+                       height={36} 
+                       formatter={(value) => `Portfolio Value ($)`}
+                     />
                     {/* Area chart with smooth gradient */}
                     <Area 
                       type="monotone" 
@@ -175,7 +165,6 @@ export default function Dashboard() {
                       isAnimationActive={true}
                       animationBegin={400}
                       animationDuration={800}
-                      easing='ease-out-quad'
                     />
                     {/* Optional: Add dot points for better interaction */}
                     {/* 
