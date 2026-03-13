@@ -17,7 +17,8 @@ From evaluation report (7.2/10 → target 9+/10). Tracking progress on security,
 **Progress: 3/25 items complete**
 
 ## 2. Code Documentation (Priority 2)
-- [ ] Comprehensive docstrings for core modules (`src/`, `app/strategies/`, `app/risk/`)
+- [x] Comprehensive docstrings for core modules (`app/backtest.py`, `app/strategies/*`, `app/risk/*`) [DONE]
+
 - [ ] Update `docs/API_DOCS.md` with endpoint details/examples
 - [ ] Inline docs for complex algorithms (risk calcs, backtesting)
 - [ ] Generate/update OpenAPI schema with examples
