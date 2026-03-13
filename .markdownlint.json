@@ -1,12 +1,8 @@
 {
-  "MD013": false,
-  "MD022": false,
-  "MD026": false,
-  "MD031": false,
-  "MD032": false,
-  "MD040": false,
-  "MD060": false,
-  "MD012": false
+  "MD034/no-bare-urls": false,
+  "MD041/first-line-h1": false,
+  "MD009/no-trailing-spaces": false,
+  "MD029/ol-prefix": false,
+  "MD024/no-duplicate-heading": false,
+  "MD047/single-trailing-newline": false
 }
-
-

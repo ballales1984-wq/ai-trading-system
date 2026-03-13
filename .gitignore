@@ -83,3 +83,12 @@ archive/
 .coverage.*
 coverage.xml
 *.cover
+
+# Project specific junk (from CLEANUP_PLAN)
+data/ledger/
+.history/
+.zencoder/
+coverage_error.txt
+health_tmp.pyc.*
+fix_remaining
+%(upstream
