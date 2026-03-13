@@ -157,13 +157,25 @@ class MultiStrategyManager:
         signals: List[StrategySignal]
     ) -> Optional[TradingSignal]:
         """
-        Aggregate signals from multiple strategies.
+        Weighted ensemble signal aggregation algorithm.
+        
+        1. Filter actionable (non-FLAT) signals
+        2. Compute weighted average confidence: Σ(weight * conf) / Σ(weight)
+        3. Direction vote: LONG if Σ_LONG > Σ_SHORT else SHORT/FLAT
+        4. Average levels: entry/stop/target from contributing signals
+        5. Metadata tracks contributing strategies & vote scores
+        
+        Handles edge cases: all FLAT → first FLAT; no signals → None
         
         Args:
-            signals: List of strategy signals
+            signals: List[StrategySignal] from generate_signals()
             
         Returns:
-            Aggregated signal or None
+            Consensus TradingSignal or None
+            
+        Example:
+            momentum(LONG,0.8,w=1.0) + mean_rev(SHORT,0.6,w=0.5) 
+            → LONG conf=0.75 (1.0*0.8 > 0.5*0.6)
         """
         if not signals:
             return None
