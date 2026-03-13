@@ -2,14 +2,33 @@
 Main FastAPI Application
 =======================
 Hedge Fund Trading System API.
+
+Security Features:
+- JWT Authentication
+- Rate Limiting (60 req/min, 1000/hr, 10000/day)
+- Security Headers (HSTS, CSP, X-Frame-Options, etc.)
+- Audit Logging
+- Request Monitoring & Metrics
 """
 
+from datetime import datetime
 from fastapi import FastAPI
+from fastapi import Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
+from app.core.rate_limiter import default_rate_limiter, RateLimitExceeded
+from app.core.security_middleware import (
+    setup_security_middleware,
+    create_monitoring_routes,
+    SecurityHeadersConfig,
+    get_monitoring_middleware,
+)
+from app.compliance.audit import AuditLogger, AuditEvent, AuditEventType
 from app.api.routes import news, market, portfolio, orders, health, strategy, waitlist, cache, auth, risk
+from app.metrics import get_metrics_app, instrument_requests
 
 # Setup logging
 setup_logging()
@@ -44,6 +63,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 logger.info(f"CORS enabled for origins: {cors_origins}")
+
+# Security Response class for headers
+class SecurityResponse(Response):
+    def __init__(self, content: Any, status_code: int = 200, headers: dict | None = None, **kwargs):
+        super().__init__(content, status_code, headers or {}, **kwargs)
+        security_headers = {
+            "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+            "X-Frame-Options": "DENY",
+            "X-Content-Type-Options": "nosniff",
+            "X-XSS-Protection": "1; mode=block",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+            "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+            "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none';",
+            "Cross-Origin-Embedder-Policy": "require-corp",
+            "Cross-Origin-Opener-Policy": "same-origin",
+            "Cross-Origin-Resource-Policy": "same-origin"
+        }
+        self.headers.update(security_headers)
+
+# Rate limiting middleware
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    client_id = request.client.host
+    try:
+        default_rate_limiter.check_rate_limit(client_id)
+    except RateLimitExceeded as e:
+        return SecurityResponse(
+            content={"error": "Rate limit exceeded", "retry_after": e.retry_after},
+            status_code=429,
+            headers={"Retry-After": str(e.retry_after)}
+        )
+    response = await call_next(request)
+    return SecurityResponse(content=response.body, status_code=response.status_code, headers=dict(response.headers))
+
+# Global audit logger
+audit_logger = AuditLogger()
 
 # Include routers
 app.include_router(
@@ -106,15 +161,179 @@ app.include_router(
     tags=["Risk"]
 )
 
-# Health check
+# Health check with audit
 @app.get("/health")
-async def health_check():
+async def health_check(request: Request):
     """Health check endpoint."""
-    return {
+    audit_logger.log_event(
+        AuditEvent(
+            event_type=AuditEventType.LOGIN,  # Reuse for health
+            ip_address=request.client.host,
+            action="Health check",
+            details={"status": "healthy"}
+        )
+    )
+    return SecurityResponse({
         "status": "healthy",
         "version": settings.app_version,
         "environment": settings.environment
+    })
+
+# Rate limit stats endpoint
+@app.get("/api/v1/rate-limit/stats")
+async def rate_limit_stats(request: Request):
+    """Get rate limit statistics for current client."""
+    client_id = request.client.host
+    try:
+        stats = default_rate_limiter.get_stats(client_id)
+        audit_logger.log_event(
+            AuditEvent(
+                ip_address=client_id,
+                action="Rate limit stats query",
+                details={"stats": stats}
+            )
+        )
+        return SecurityResponse(stats)
+    except Exception as e:
+        return SecurityResponse({"error": str(e)}, status_code=500)
+
+# Comprehensive Monitoring Endpoints
+@app.get("/api/monitoring/metrics")
+async def get_metrics():
+    """
+    Get application monitoring metrics.
+    
+    Returns:
+        - requests: Request counts by endpoint, status, user
+        - performance: Response time percentiles (p50, p95, p99)
+        - errors: Error count and rate
+        - uptime: Application uptime
+    """
+    monitoring = get_monitoring_middleware()
+    if monitoring is None:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Monitoring not enabled"}
+        )
+    return monitoring.get_metrics()
+
+@app.get("/api/monitoring/health")
+async def detailed_health():
+    """
+    Get detailed health status with metrics.
+    
+    Returns:
+        - status: healthy | degraded | unhealthy
+        - monitoring: enabled status
+        - metrics: current performance metrics
+    """
+    monitoring = get_monitoring_middleware()
+    
+    if monitoring is None:
+        return {
+            "status": "healthy",
+            "monitoring": "disabled",
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    metrics = monitoring.get_metrics()
+    
+    # Determine health status
+    error_rate = metrics.get("errors", {}).get("rate", 0)
+    avg_response = metrics.get("performance", {}).get("avg_response_time_ms", 0)
+    
+    if error_rate > 10 or avg_response > 1000:
+        status = "unhealthy"
+    elif error_rate > 5 or avg_response > 500:
+        status = "degraded"
+    else:
+        status = "healthy"
+    
+    return {
+        "status": status,
+        "monitoring": "enabled",
+        "metrics": metrics,
+        "timestamp": datetime.now().isoformat()
     }
+
+@app.post("/api/monitoring/reset")
+async def reset_metrics():
+    """Reset monitoring metrics."""
+    monitoring = get_monitoring_middleware()
+    if monitoring is None:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Monitoring not enabled"}
+        )
+    monitoring.reset_metrics()
+    return {"message": "Metrics reset successfully"}
+
+@app.get("/api/security/headers")
+async def security_headers_info():
+    """
+    Get security headers configuration.
+    
+    Returns current security headers and rate limiting settings.
+    """
+    return {
+        "security_level": "standard",
+        "headers": {
+            "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+            "X-Frame-Options": "DENY",
+            "X-Content-Type-Options": "nosniff",
+            "X-XSS-Protection": "1; mode=block",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+            "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+            "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval';",
+            "Cross-Origin-Embedder-Policy": "require-corp",
+            "Cross-Origin-Opener-Policy": "same-origin",
+            "Cross-Origin-Resource-Policy": "same-origin"
+        },
+        "rate_limiting": {
+            "enabled": True,
+            "requests_per_minute": 60,
+            "requests_per_hour": 1000,
+            "requests_per_day": 10000,
+            "burst_size": 10
+        }
+    }
+
+# Audit log query endpoint
+@app.get("/api/audit/events")
+async def get_audit_events(
+    request: Request,
+    event_type: str = None,
+    user_id: str = None,
+    limit: int = 100
+):
+    """
+    Query audit events.
+    
+    Args:
+        event_type: Filter by event type
+        user_id: Filter by user ID
+        limit: Maximum number of events to return
+    """
+    # In production, this would require admin authentication
+    events = audit_logger.events[-limit:]
+    
+    if event_type:
+        events = [e for e in events if e.event_type.value == event_type]
+    if user_id:
+        events = [e for e in events if e.user_id == user_id]
+    
+    return {
+        "events": [e.to_dict() for e in events],
+        "total": len(events)
+    }
+
+@app.get("/api/audit/stats")
+async def get_audit_stats():
+    """Get audit statistics."""
+    return audit_logger.get_stats()
+
+# Prometheus metrics
+app.mount("/metrics", get_metrics_app())
 
 # Serve frontend static files (for Render deployment)
 try:
@@ -122,6 +341,8 @@ try:
     logger.info("Frontend static files mounted at / from frontend/dist/")
 except Exception as e:
     logger.warning(f"Could not mount frontend static files: {e}")
+    
+logger.info("Prometheus metrics available at /metrics")
 
 if __name__ == "__main__":
     import uvicorn
