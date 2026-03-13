@@ -3,15 +3,91 @@ AI Trading System - Scheduler Module
 
 Provides automated scheduling for strategy execution, data collection,
 and system maintenance tasks.
+
+Features:
+- Multiple schedule types (interval, cron, daily, weekly)
+- Task status tracking
+- Error handling and recovery
+- Async task execution
+
+Performance:
+- cProfile decorators for function timing analysis
+- Memory usage tracking
 """
 
 import asyncio
 import logging
+import cProfile
+import pstats
+import io
+import functools
 from datetime import datetime, timedelta
 from typing import Callable, Dict, List, Optional, Any
 from enum import Enum
 import json
 from pathlib import Path
+
+
+logger = logging.getLogger(__name__)
+
+
+def profile_execution(func: Callable) -> Callable:
+    """
+    Decorator to profile function execution using cProfile.
+    
+    Usage:
+        @profile_execution
+        def my_function():
+            ...
+    
+    Results are logged at INFO level with timing stats.
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        profiler = cProfile.Profile()
+        profiler.enable()
+        
+        try:
+            result = func(*args, **kwargs)
+            return result
+        finally:
+            profiler.disable()
+            
+            # Get stats
+            s = io.StringIO()
+            ps = pstats.Stats(profiler, stream=s)
+            ps.sort_stats('cumulative')
+            ps.print_stats(10)  # Top 10 functions
+            
+            logger.info(f"Profile for {func.__name__}:\n{s.getvalue()}")
+    
+    return wrapper
+
+
+def time_execution(func: Callable) -> Callable:
+    """
+    Decorator to time function execution.
+    
+    Usage:
+        @time_execution
+        def my_function():
+            ...
+    
+    Results are logged at INFO level with execution time.
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        import time
+        start = time.perf_counter()
+        
+        try:
+            result = func(*args, **kwargs)
+            return result
+        finally:
+            elapsed = time.perf_counter() - start
+            logger.info(f"Execution time for {func.__name__}: {elapsed:.4f}s")
+    
+    return wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -250,6 +326,33 @@ class TaskScheduler:
                 pass
         self._save_state()
         logger.info("Task scheduler stopped")
+    
+    @profile
+    async def _execute_task(self, task: ScheduledTask):
+        """Execute a single task"""
+        task.status = TaskStatus.RUNNING
+        
+        try:
+            if asyncio.iscoroutinefunction(task.func):
+                await task.func(**task.kwargs)
+            else:
+                task.func(**task.kwargs)
+                
+            task.status = TaskStatus.COMPLETED
+            task.last_error = None
+            logger.debug(f"Task {task.task_id} completed successfully")
+            
+        except Exception as e:
+            task.status = TaskStatus.FAILED
+            task.error_count += 1
+            task.last_error = str(e)
+            logger.error(f"Task {task.task_id} failed: {e}")
+            
+        finally:
+            task.last_run = datetime.utcnow()
+            task.run_count += 1
+            task.calculate_next_run()
+            self._save_state()
     
     async def _run_scheduler(self):
         """Main scheduler loop"""

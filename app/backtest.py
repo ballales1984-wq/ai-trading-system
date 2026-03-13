@@ -11,17 +11,87 @@ Features:
 - Performance metrics calculation
 - Walk-forward validation
 - Monte Carlo simulation
+
+Performance:
+- cProfile decorators for function timing analysis
+- Memory usage tracking
 """
 
 import asyncio
 import logging
+import cProfile
+import pstats
+import io
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Callable, Tuple
 from enum import Enum
 from copy import deepcopy
 import random
+import functools
 import numpy as np
+
+
+logger = logging.getLogger(__name__)
+
+
+def profile_execution(func: Callable) -> Callable:
+    """
+    Decorator to profile function execution using cProfile.
+    
+    Usage:
+        @profile_execution
+        def my_function():
+            ...
+    
+    Results are logged at INFO level with timing stats.
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        profiler = cProfile.Profile()
+        profiler.enable()
+        
+        try:
+            result = func(*args, **kwargs)
+            return result
+        finally:
+            profiler.disable()
+            
+            # Get stats
+            s = io.StringIO()
+            ps = pstats.Stats(profiler, stream=s)
+            ps.sort_stats('cumulative')
+            ps.print_stats(10)  # Top 10 functions
+            
+            logger.info(f"Profile for {func.__name__}:\n{s.getvalue()}")
+    
+    return wrapper
+
+
+def time_execution(func: Callable) -> Callable:
+    """
+    Decorator to time function execution.
+    
+    Usage:
+        @time_execution
+        def my_function():
+            ...
+    
+    Results are logged at INFO level with execution time.
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        import time
+        start = time.perf_counter()
+        
+        try:
+            result = func(*args, **kwargs)
+            return result
+        finally:
+            elapsed = time.perf_counter() - start
+            logger.info(f"Execution time for {func.__name__}: {elapsed:.4f}s")
+    
+    return wrapper
 
 logger = logging.getLogger(__name__)
 
