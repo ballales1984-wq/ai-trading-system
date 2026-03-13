@@ -957,3 +957,99 @@ class MonteCarloBacktest:
             "success_rate": len([r for r in results if r.total_return > 0]) / n_simulations * 100,
             "results": results
         }
+
+
+# =============================================================================
+# Example Usage
+# =============================================================================
+
+if __name__ == "__main__":
+    """
+    Example: Running a backtest with the BacktestEngine
+    
+    This demonstrates how to use the backtest engine with a simple
+    moving average crossover strategy.
+    """
+    import asyncio
+    from dataclasses import dataclass
+    
+    @dataclass
+    class Signal:
+        """Simple trading signal"""
+        action: str  # 'buy', 'sell', 'hold'
+        confidence: float = 1.0
+    
+    class SimpleMAStrategy:
+        """
+        Simple Moving Average Crossover Strategy
+        
+        Buy when fast MA crosses above slow MA
+        Sell when fast MA crosses below slow MA
+        """
+        
+        def __init__(self, fast_period: int = 10, slow_period: int = 30):
+            self.fast_period = fast_period
+            self.slow_period = slow_period
+            
+        def generate_signal(self, symbol: str, context: dict) -> Optional[Signal]:
+            """Generate trading signal based on MA crossover"""
+            prices = context.get("prices", [])
+            
+            if len(prices) < self.slow_period + 1:
+                return None
+            
+            # Calculate moving averages
+            fast_ma = np.mean(prices[-self.fast_period:])
+            slow_ma = np.mean(prices[-self.slow_period:])
+            
+            # Previous bar values
+            prev_fast_ma = np.mean(prices[-self.fast_period-1:-1])
+            prev_slow_ma = np.mean(prices[-self.slow_period-1:-1])
+            
+            # Crossover detection
+            if prev_fast_ma <= prev_slow_ma and fast_ma > slow_ma:
+                return Signal(action="buy", confidence=0.8)
+            elif prev_fast_ma >= prev_slow_ma and fast_ma < slow_ma:
+                return Signal(action="sell", confidence=0.8)
+            
+            return Signal(action="hold", confidence=0.0)
+    
+    async def run_example_backtest():
+        """Run an example backtest"""
+        print("=" * 60)
+        print("AI Trading System - Backtest Engine Example")
+        print("=" * 60)
+        
+        # Configure backtest
+        config = BacktestConfig(
+            initial_capital=100000,
+            commission_rate=0.001,
+            slippage_model="fixed",
+            slippage_pct=0.0005,
+            latency_ms=100
+        )
+        
+        # Create engine
+        engine = BacktestEngine(config=config)
+        
+        # Create strategy
+        strategy = SimpleMAStrategy(fast_period=10, slow_period=30)
+        
+        # Run backtest
+        print("\nRunning backtest on BTC-USD...")
+        result = await engine.run(
+            strategy=strategy,
+            symbols=["BTC-USD"],
+            start_date="2024-01-01",
+            end_date="2024-12-31",
+            interval="1h"
+        )
+        
+        # Print results
+        print(f"\nReturn: {result.total_return_pct:.2f}%")
+        print(f"Sharpe: {result.sharpe_ratio:.2f}")
+        print(f"Max DD: {result.max_drawdown_pct:.2f}%")
+        print(f"Win Rate: {result.win_rate:.1f}%")
+        
+    if __name__ == "__main__":
+        asyncio.run(run_example_backtest())
