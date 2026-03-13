@@ -19,19 +19,20 @@ This project is different. It's designed from scratch as modular quantitative in
 
 ## 🧠 System Philosophy
 
-| Principle | Implementation |
-|-----------|----------------|
-| Event-Driven Architecture | Async data pipelines, non-blocking execution, reactive decision engine |
-| Probabilistic Forecasting | 5-level Monte Carlo simulation, uncertainty quantification, ensemble design |
-| Risk-First Design | VaR/CVaR limits, GARCH volatility modeling, dynamic position sizing, drawdown protection |
-| Adaptive Regime Modeling | HMM market regime detection, strategy rotation based on market conditions |
-| Multi-Source Intelligence | 18+ API integrations, sentiment analysis, on-chain metrics, macro indicators |
+| Principle          | Implementation                                                                 |
+|--------------------|--------------------------------------------------------------------------------|
+| Event-Driven       | Async data pipelines, non-blocking execution, reactive decision engine        |
+| Probabilistic      | 5-level Monte Carlo simulation, uncertainty quantification, ensemble design   |
+| Risk-First         | VaR/CVaR limits, GARCH volatility modeling, dynamic position sizing,          |
+|                    | drawdown protection                                                           |
+| Adaptive Regime    | HMM market regime detection, strategy rotation based on market conditions     |
+| Multi-Source       | 18+ API integrations, sentiment analysis, on-chain metrics, macro indicators  |
 
 ## 🏗️ Architecture Overview
 
 ![Architecture Diagram](https://raw.githubusercontent.com/ballales1984-wq/ai-trading-system/main/docs/architecture_diagram.png)
 
-```
+```text
 ai-trading-system/
 ├── app/                    # FastAPI application
 │   ├── api/routes/        # REST endpoints
@@ -200,7 +201,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📧 Contact
 
-For questions or support, please use GitHub Issues or join our Discord community.## 📚 Documentation
+For questions or support, please use GitHub Issues or join our Discord community.
+
+## 📚 Documentation
 
 - [API Reference](app/docs)
 - [Architecture Guide](docs/ARCHITECTURE.md)
