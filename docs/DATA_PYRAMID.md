@@ -3,6 +3,7 @@
 ## Livello 1 — Dati Grezzi & Open (Base)
 
 ### Fonti
+
 - API open (Open-Meteo, CoinGecko, etc.)
 - Dati storici CSV
 - Webcam pubbliche
@@ -11,6 +12,7 @@
 - Eventi locali
 
 ### Tipologia Dati
+
 - Temperatura
 - Precipitazioni
 - Traffico veicolare
@@ -18,9 +20,11 @@
 - Indicatori economici generali
 
 ### Funzione
+
 Raccolta grezza dei dati senza elaborazioni
 
 ### Output
+
 Dati pronti per aggregazione
 
 ---
@@ -28,20 +32,24 @@ Dati pronti per aggregazione
 ## Livello 2 — Moduli Macro Aggregati
 
 ### Tipologia
+
 - Dati aggregati giornalieri
 - Dati aggregati settimanali
 - Dati aggregati mensili
 
 ### Parametri
+
 - Stagioni (inverno, primavera, estate, autunno)
 - Giorno/Notte
 - Festività
 - Weekend
 
 ### Funzione
+
 Trasformazione dei dati grezzi in segnali compositi e pattern
 
 ### Output
+
 - Segnali mediati
 - Indicatori macro
 
@@ -50,20 +58,24 @@ Trasformazione dei dati grezzi in segnali compositi e pattern
 ## Livello 3 — Dati Professionali / API Premium
 
 ### Fonti
+
 - API a pagamento
 - Dati finanziari ad alta frequenza
 - Indicatori macroeconomici dettagliati
 
 ### Tipologia
+
 - Prezzi materie prime
 - Consumo energetico
 - Flussi di capitale
 - Criptovalute
 
 ### Funzione
+
 Integrazione dati precisi e aggiornati per raffinare previsioni
 
 ### Output
+
 Segnali ad alta accuratezza e frequenza
 
 ---
@@ -71,9 +83,11 @@ Segnali ad alta accuratezza e frequenza
 ## Livello 4 — Singolarità / Previsioni / Guadagno (Apex)
 
 ### Funzione
+
 Combinazione dei segnali mediati e dei dati professionali
 
 ### Algoritmi
+
 - Monte Carlo (5 livelli)
 - Machine Learning (XGBoost, LightGBM)
 - Hidden Markov Models (HMM)
@@ -81,12 +95,14 @@ Combinazione dei segnali mediati e dei dati professionali
 - Pattern Recognition
 
 ### Output
+
 - Decisioni strategiche BUY/SELL/HOLD
 - Previsione consumi
 - Movimenti di mercato
 - Piani di guadagno
 
 ### Feedback
+
 Aggiornamento pesi dei segnali e parametri dei moduli inferiori
 
 ---
@@ -204,4 +220,3 @@ segnale_finale = (
 
 *Questo documento definisce l'architettura completa del sistema di dati e previsioni.*
 *Ultimo aggiornamento: Febbraio 2026*
-

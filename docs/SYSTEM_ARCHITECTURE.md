@@ -1,6 +1,7 @@
 # AI Trading System - Technical Architecture Overview
 
 ## Document Information
+
 - **Version**: 1.0
 - **Last Updated**: February 2026
 - **Author**: System Architecture Team
@@ -30,6 +31,7 @@
 The AI Trading System is a professional-grade, multi-asset trading platform designed for algorithmic trading across cryptocurrency, commodity, and traditional financial markets. The system implements an event-driven architecture with institutional-grade risk management, real-time market data processing, and multi-broker execution capabilities.
 
 ### Key Features
+
 - **Multi-Asset Support**: Crypto, forex, stocks, futures, commodities
 - **Multi-Strategy Execution**: Momentum, mean-reversion, custom strategies
 - **Institutional Risk Management**: VaR, CVaR, Monte Carlo simulations
@@ -147,6 +149,7 @@ class TradingEngine:
 ```
 
 **Engine States:**
+
 - `STOPPED` - Engine not running
 - `INITIALIZING` - Starting up, connecting to brokers
 - `RUNNING` - Active trading mode
@@ -155,6 +158,7 @@ class TradingEngine:
 - `ERROR` - Error state requiring intervention
 
 **Trading Modes:**
+
 - `BACKTEST` - Historical data simulation
 - `PAPER` - Simulated trading with real data
 - `LIVE` - Real money trading
@@ -188,6 +192,7 @@ class EventBus:
 The [`DecisionEngine`](decision_engine.py:146) generates probabilistic trading signals by combining multiple analysis types.
 
 **Signal Components:**
+
 - Technical Analysis Score (RSI, MACD, Bollinger Bands)
 - Momentum Score (Price momentum, volume)
 - Sentiment Score (News, social media analysis)
@@ -197,6 +202,7 @@ The [`DecisionEngine`](decision_engine.py:146) generates probabilistic trading s
 - Regime Score (HMM market regime detection)
 
 **5-Question Framework:**
+
 1. **What** - Asset selection based on opportunity scoring
 2. **Why** - Macro + sentiment reasoning
 3. **How Much** - Position sizing based on risk
@@ -272,6 +278,7 @@ The FastAPI application in [`app/main.py`](app/main.py) exposes the following en
 ### 6.2 API Request/Response Models
 
 **Order Creation:**
+
 ```python
 class OrderCreate(BaseModel):
     symbol: str
@@ -286,6 +293,7 @@ class OrderCreate(BaseModel):
 ```
 
 **Portfolio Summary:**
+
 ```python
 class PortfolioSummary(BaseModel):
     total_value: float
@@ -479,6 +487,7 @@ class ExecutionEngine:
 ```
 
 **Retry Configuration:**
+
 - Max retries: 3
 - Base delay: 1.0s
 - Max delay: 30.0s

@@ -132,6 +132,7 @@ await agent.start()
 ```
 
 **Features:**
+
 - Multi-symbol support
 - Multiple data sources
 - Price caching and history
@@ -163,6 +164,7 @@ agent = MonteCarloAgent(
 ```
 
 **Simulation Levels:**
+
 1. **Level 1 - Base**: Geometric Brownian Motion
 2. **Level 2 - Conditional**: Event-conditioned paths
 3. **Level 3 - Adaptive**: RL from past accuracy
@@ -192,6 +194,7 @@ agent = RiskAgent(
 ```
 
 **Risk Metrics:**
+
 - Value at Risk (VaR) - Historical, Parametric, Monte Carlo
 - Conditional VaR (CVaR / Expected Shortfall)
 - Maximum Drawdown

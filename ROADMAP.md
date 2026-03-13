@@ -46,6 +46,7 @@
 Released: January 2025
 
 **Core Features:**
+
 - FastAPI REST API with full CRUD operations
 - React dashboard with real-time updates
 - Multi-agent architecture (MarketData, MonteCarlo, Risk, Execution)
@@ -55,6 +56,7 @@ Released: January 2025
 - CI/CD with GitHub Actions
 
 **Technical Highlights:**
+
 - 927+ unit tests with 80%+ coverage
 - JWT authentication with role-based access control
 - Rate limiting and API security
@@ -67,6 +69,7 @@ Released: January 2025
 Released: June 2025
 
 **New Features:**
+
 - Cross-asset portfolio optimization
 - Multi-symbol trading strategies
 - Enhanced risk management (VaR/CVaR, GARCH volatility)
@@ -75,6 +78,7 @@ Released: June 2025
 - On-chain metrics integration
 
 **Broker Integrations:**
+
 - Binance (Spot & Futures)
 - Bybit (Spot & Derivatives)
 - Interactive Brokers
@@ -87,6 +91,7 @@ Released: June 2025
 ### v1.2.0 "Enterprise" - Q1 2026
 
 **Goals:**
+
 - Production-ready backtesting engine
 - Strategy parameter optimization
 - Enhanced performance analytics

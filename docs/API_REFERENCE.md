@@ -9,6 +9,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ## 📊 Market Data APIs
 
 ### 1. Binance Market Client
+
 **File**: [`src/external/market_data_apis.py`](src/external/market_data_apis.py)
 **Classe**: `BinanceMarketClient`
 
@@ -20,6 +21,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | Recent trades | Storico trade recenti |
 
 **Environment Variables**:
+
 - `BINANCE_API_KEY` - API key
 - `BINANCE_SECRET_KEY` - Secret key
 - `BINANCE_TESTNET` - Usa testnet (true/false)
@@ -29,6 +31,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ---
 
 ### 2. CoinGecko Client
+
 **File**: [`src/external/market_data_apis.py`](src/external/market_data_apis.py)
 **Classe**: `CoinGeckoClient`
 
@@ -40,6 +43,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | Trending | Crypto più popolari |
 
 **Environment Variables**:
+
 - `COINGECKO_API_KEY` - API key (opzionale per plan free)
 
 **Rate Limits**: 10-50 richieste/minuto (free), 500+ (paid)
@@ -47,6 +51,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ---
 
 ### 3. CoinMarketCap Client
+
 **File**: [`src/external/market_data_apis.py`](src/external/market_data_apis.py), [`src/external/coinmarketcap_client.py`](src/external/coinmarketcap_client.py)
 **Classe**: `CoinMarketCapClient`
 
@@ -58,6 +63,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | Global metrics | Statistiche globali mercato |
 
 **Environment Variables**:
+
 - `COINMARKETCAP_API_KEY` - API key richiesta
 
 **Rate Limits**: 333 richieste/giorno (basic), 10000 (professional)
@@ -65,6 +71,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ---
 
 ### 4. Alpha Vantage Client
+
 **File**: [`src/external/market_data_apis.py`](src/external/market_data_apis.py)
 **Classe**: `AlphaVantageClient`
 
@@ -76,6 +83,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | Crypto | Dati cryptocurrency |
 
 **Environment Variables**:
+
 - `ALPHA_VANTAGE_API_KEY` - API key richiesta
 
 **Rate Limits**: 5 richieste/minuto (free), 600/minuto (premium)
@@ -83,6 +91,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ---
 
 ### 5. Quandl Client
+
 **File**: [`src/external/market_data_apis.py`](src/external/market_data_apis.py)
 **Classe**: `QuandlClient`
 
@@ -94,6 +103,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | Alternative data | Dati alternativi |
 
 **Environment Variables**:
+
 - `QUANDL_API_KEY` - API key
 
 **Rate Limits**: Varia per dataset
@@ -103,6 +113,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ## 📰 Sentiment & News APIs
 
 ### 6. NewsAPI Client
+
 **File**: [`src/external/sentiment_apis.py`](src/external/sentiment_apis.py)
 **Classe**: `NewsAPIClient`
 
@@ -114,6 +125,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | Sentiment analysis | Analisi sentiment |
 
 **Environment Variables**:
+
 - `NEWSAPI_KEY` - API key richiesta
 
 **Rate Limits**: 100 richieste/giorno (free), 10000 (developer)
@@ -121,6 +133,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ---
 
 ### 7. Benzinga Client
+
 **File**: [`src/external/sentiment_apis.py`](src/external/sentiment_apis.py)
 **Classe**: `BenzingaClient`
 
@@ -132,6 +145,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | IPOs | Calendario IPO |
 
 **Environment Variables**:
+
 - `BENZINGA_API_KEY` - API key
 
 **Rate Limits**: Varia per piano
@@ -139,6 +153,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ---
 
 ### 8. Twitter/X Sentiment Client
+
 **File**: [`src/external/sentiment_apis.py`](src/external/sentiment_apis.py)
 **Classe**: `TwitterSentimentClient`
 
@@ -150,21 +165,24 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | Sentiment scoring | Score sentiment tweet |
 
 **Environment Variables**:
+
 - `TWITTER_BEARER_TOKEN` - Bearer token OAuth 2.0
 
 **Rate Limits**: 15 richieste/15min (search), 900/15min (user lookup)
 
 **Endpoint API v2**:
+
 - User lookup: `GET /users/by/username/{username}`
 - Post lookup: `GET /tweets/{id}`
 - Recent search: `GET /tweets/search/recent`
 - User's posts: `GET /users/{id}/tweets`
 
-**Docs**: https://docs.x.com/x-api/getting-started/introduction
+**Docs**: <https://docs.x.com/x-api/getting-started/introduction>
 
 ---
 
 ### 9. GDELT Client
+
 **File**: [`src/external/sentiment_apis.py`](src/external/sentiment_apis.py)
 **Classe**: `GDELTClient`
 
@@ -184,6 +202,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ## 📈 Macro Event APIs
 
 ### 10. Trading Economics Client
+
 **File**: [`src/external/macro_event_apis.py`](src/external/macro_event_apis.py)
 **Classe**: `TradingEconomicsClient`
 
@@ -195,6 +214,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | Historical data | Dati storici |
 
 **Environment Variables**:
+
 - `TRADING_ECONOMICS_API_KEY` - API key
 
 **Rate Limits**: Varia per piano
@@ -202,6 +222,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ---
 
 ### 11. EconPulse Client
+
 **File**: [`src/external/macro_event_apis.py`](src/external/macro_event_apis.py)
 **Classe**: `EconPulseClient`
 
@@ -212,11 +233,13 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | Country data | Dati per paese |
 
 **Environment Variables**:
+
 - `ECONPULSE_API_KEY` - API key
 
 ---
 
 ### 12. Investing.com Client
+
 **File**: [`src/external/macro_event_apis.py`](src/external/macro_event_apis.py)
 **Classe**: `InvestingComClient`
 
@@ -227,6 +250,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | Analysis | Analisi di mercato |
 
 **Environment Variables**:
+
 - `INVESTING_COM_API_KEY` - API key
 
 ---
@@ -234,6 +258,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ## 🔬 Innovation & Alternative Data APIs
 
 ### 13. EIA (Energy Information Administration) Client
+
 **File**: [`src/external/innovation_apis.py`](src/external/innovation_apis.py)
 **Classe**: `EIAClient`
 
@@ -245,6 +270,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | Electricity | Elettricità |
 
 **Environment Variables**:
+
 - `EIA_API_KEY` - API key (gratuita)
 
 **Rate Limits**: Varia
@@ -252,6 +278,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ---
 
 ### 14. Google Patents Client
+
 **File**: [`src/external/innovation_apis.py`](src/external/innovation_apis.py)
 **Classe**: `GooglePatentsClient`
 
@@ -262,11 +289,13 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | Innovation trends | Trend innovazione |
 
 **Environment Variables**:
+
 - `SERPAPI_KEY` - SerpAPI key
 
 ---
 
 ### 15. Lens.org Client
+
 **File**: [`src/external/innovation_apis.py`](src/external/innovation_apis.py)
 **Classe**: `LensOrgClient`
 
@@ -277,6 +306,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | Citation analysis | Analisi citazioni |
 
 **Environment Variables**:
+
 - `LENS_ORG_API_KEY` - API key
 
 ---
@@ -284,6 +314,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ## 🌍 Natural Event APIs
 
 ### 16. Open-Meteo Client
+
 **File**: [`src/external/natural_event_apis.py`](src/external/natural_event_apis.py)
 **Classe**: `OpenMeteoClient`
 
@@ -300,6 +331,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ---
 
 ### 17. Climate TRACE Client
+
 **File**: [`src/external/natural_event_apis.py`](src/external/natural_event_apis.py)
 **Classe**: `ClimateTRACEClient`
 
@@ -314,6 +346,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ---
 
 ### 18. USGS Water Client
+
 **File**: [`src/external/natural_event_apis.py`](src/external/natural_event_apis.py)
 **Classe**: `USGSWaterClient`
 
@@ -330,6 +363,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ## 💱 Exchange APIs
 
 ### 19. Bybit Client
+
 **File**: [`src/external/bybit_client.py`](src/external/bybit_client.py)
 **Classe**: `BybitClient`
 
@@ -341,6 +375,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | Order management | Gestione ordini |
 
 **Environment Variables**:
+
 - `BYBIT_API_KEY` - API key
 - `BYBIT_SECRET_KEY` - Secret key
 
@@ -349,6 +384,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ---
 
 ### 20. OKX Client
+
 **File**: [`src/external/okx_client.py`](src/external/okx_client.py)
 **Classe**: `OKXClient`
 
@@ -360,6 +396,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | Market data | Dati mercato |
 
 **Environment Variables**:
+
 - `OKX_API_KEY` - API key
 - `OKX_SECRET_KEY` - Secret key
 - `OKX_PASSPHRASE` - Passphrase
@@ -369,6 +406,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ## 🤖 Telegram Bot API
 
 ### 21. Telegram Notifier
+
 **File**: [`src/live/telegram_notifier.py`](src/live/telegram_notifier.py)
 **Classe**: `TelegramNotifier`
 
@@ -380,6 +418,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | Inline keyboards | Pulsanti interattivi |
 
 **Environment Variables**:
+
 - `TELEGRAM_BOT_TOKEN` - Bot token
 - `TELEGRAM_CHAT_ID` - Chat ID
 
@@ -390,6 +429,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 ## 🔐 Security APIs
 
 ### 22. JWT Authentication
+
 **File**: [`app/core/security.py`](app/core/security.py)
 **Classe**: `User`, `TokenData`
 
@@ -401,6 +441,7 @@ Questo documento descrive tutte le API esterne integrate nel sistema di trading.
 | User authentication | Autenticazione utenti |
 
 **Environment Variables**:
+
 - `SECRET_KEY` - Chiave segreta JWT
 
 ---

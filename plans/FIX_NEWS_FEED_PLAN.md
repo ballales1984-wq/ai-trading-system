@@ -88,6 +88,7 @@ class NewsService:
 Replace static sample news with time-based rotation that changes every refresh.
 
 **Key Features**:
+
 - Multiple headline templates
 - Time-based variation
 - Asset rotation
@@ -98,6 +99,7 @@ Replace static sample news with time-based rotation that changes every refresh.
 Modify [`dashboard.py`](dashboard.py:1274) to use the new news service.
 
 **Changes**:
+
 1. Import the news service
 2. Replace inline news fetching with service call
 3. Add proper error handling and logging
@@ -121,6 +123,7 @@ NEWS_SETTINGS = {
 ### File 1: `src/services/news_service.py` (NEW)
 
 Create a unified news service with:
+
 - Multiple source fallback chain
 - Proper caching
 - Dynamic news generation

@@ -3,6 +3,7 @@
 ## Overview
 
 News is used throughout the system in multiple ways:
+
 1. **Dashboard Display** - Shows news to users
 2. **Sentiment Analysis** - Extracts sentiment scores from news
 3. **Decision Engine** - Uses news sentiment for trading signals
@@ -96,6 +97,7 @@ flowchart TB
 ## News Data Structures
 
 ### NewsItem (sentiment_news.py)
+
 ```python
 @dataclass
 class NewsItem:
@@ -110,6 +112,7 @@ class NewsItem:
 ```
 
 ### NewsItem (logical_portfolio_module.py)
+
 ```python
 @dataclass
 class NewsItem:
@@ -120,6 +123,7 @@ class NewsItem:
 ```
 
 ### SentimentData (sentiment_news.py)
+
 ```python
 @dataclass
 class SentimentData:
@@ -140,7 +144,9 @@ class SentimentData:
 ## How News Affects Trading Decisions
 
 ### Decision Engine Weights
+
 From [`decision_engine.py`](decision_engine.py):
+
 - **Technical Analysis**: 30%
 - **Momentum**: 25%
 - **Correlation**: 20%
@@ -149,7 +155,9 @@ From [`decision_engine.py`](decision_engine.py):
 - **Monte Carlo**: 10%
 
 ### Semantic Analysis Weights
+
 From [`src/decision/filtro_opportunita.py`](src/decision/filtro_opportunita.py):
+
 ```python
 semantic_score = (
     0.20 * trend_signal +
@@ -163,33 +171,41 @@ semantic_score = (
 ## News Integration Points
 
 ### 1. Dashboard News Feed
+
 ```
 CoinGecko API → dashboard.py → UI Display
 ```
+
 - Shows latest crypto news
 - Updates on refresh interval
 - **Fixed**: Now uses correct `?page=1` parameter
 
 ### 2. Sentiment Analysis Pipeline
+
 ```
 NewsAPI/CryptoPanic → SentimentAnalyzer → SentimentData → DecisionEngine
 ```
+
 - Fetches news for each asset
 - Calculates sentiment score (-1 to +1)
 - Weighs by source reliability
 
 ### 3. Logical Analysis Pipeline
+
 ```
 News Feed → LogicalPortfolioEngine → Trading Signals
 ```
+
 - Extracts asset mentions from news
 - Calculates buy/sell signals
 - Assigns confidence scores
 
 ### 4. Monte Carlo Level 2 (Conditional)
+
 ```
 News Events → Conditional Paths → Price Projections
 ```
+
 - Uses news events to condition simulations
 - Adjusts probability distributions
 
@@ -198,6 +214,7 @@ News Events → Conditional Paths → Price Projections
 ## Configuration
 
 ### Environment Variables
+
 ```env
 NEWS_API_KEY=your_newsapi_key
 TWITTER_BEARER_TOKEN=your_twitter_token
@@ -205,6 +222,7 @@ BENZINGA_API_KEY=your_benzinga_key
 ```
 
 ### Config Settings (config.py)
+
 ```python
 NEWS_SETTINGS = {
     'news_api_key': os.getenv('NEWS_API_KEY', ''),

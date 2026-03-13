@@ -74,6 +74,7 @@ Questo progetto è un **ecosistema integrato** che replica le capacità di un he
 ## 🔄 **FLUSSO DATI COMPLETO**
 
 ### **1. Raccolta Dati (Livello 2)**
+
 ```
 Market Data Collector
     ↓
@@ -97,6 +98,7 @@ On-Chain Data
 ```
 
 ### **2. Analisi Multi-Fattore (Livello 3)**
+
 ```
 Technical Analysis
     ↓
@@ -128,6 +130,7 @@ Event Detection
 ```
 
 ### **3. Decision Engine (Livello 4)**
+
 ```
 Decision Engine
     ↓
@@ -152,6 +155,7 @@ Decision Engine
 ```
 
 ### **4. Risk Management (Livello 4)**
+
 ```
 Risk Engine
     ↓
@@ -179,6 +183,7 @@ Risk Engine
 ```
 
 ### **5. Execution (Livello 4)**
+
 ```
 Execution Engine
     ↓
@@ -202,6 +207,7 @@ Execution Engine
 ```
 
 ### **6. Portfolio Management (Livello 4)**
+
 ```
 Portfolio Manager
     ↓
@@ -258,6 +264,7 @@ Feedback Loop
 ## 🔌 **INTEGRAZIONI ESTERNE**
 
 ### **Data Sources**
+
 - **Binance API**: Prezzi, ordini, portfolio
 - **NewsAPI**: Notizie finanziarie
 - **CoinMarketCap**: Market cap, rankings
@@ -265,11 +272,13 @@ Feedback Loop
 - **Economic Calendar**: Eventi macroeconomici
 
 ### **Brokers**
+
 - **Binance Testnet**: Trading simulato
 - **Binance Live**: Trading reale (quando configurato)
 - **Paper Trading**: Simulazione completa
 
 ### **Notifiche**
+
 - **Telegram Bot**: Alert e notifiche
 - **Email**: Report giornalieri (planned)
 - **Dashboard**: Monitoraggio real-time
@@ -279,6 +288,7 @@ Feedback Loop
 ## 📈 **SCALABILITÀ E ESPANSIONE**
 
 ### **Aggiungere Nuovi Asset**
+
 ```
 1. Aggiungi simbolo a config.py
 2. Sistema automaticamente:
@@ -289,6 +299,7 @@ Feedback Loop
 ```
 
 ### **Aggiungere Nuove Strategie**
+
 ```
 1. Crea nuova classe Strategy
 2. Implementa metodi:
@@ -302,6 +313,7 @@ Feedback Loop
 ```
 
 ### **Aggiungere Nuove Fonti Dati**
+
 ```
 1. Crea nuovo Collector
 2. Integra nel DataCollector
@@ -316,26 +328,31 @@ Feedback Loop
 ## 🎯 **VANTAGGI COMPETITIVI**
 
 ### **1. Integrazione Totale**
+
 - **Un solo motore** per tutto invece di strumenti separati
 - **Dati coerenti** tra tutte le componenti
 - **Decisioni coordinate** invece di analisi frammentate
 
 ### **2. Apprendimento Automatico**
+
 - **Migliora nel tempo** invece di rimanere statico
 - **Si adatta** a condizioni di mercato diverse
 - **Ottimizza** parametri e pesi automaticamente
 
 ### **3. Risk Management Istituzionale**
+
 - **VaR/CVaR** come i grandi hedge fund
 - **Stress Testing** per scenari estremi
 - **Portfolio Optimization** avanzata
 
 ### **4. Multi-Fattore Analysis**
+
 - **Non solo numeri**: combina tecnico, sentiment, eventi
 - **Contesto completo**: capisce il "perché" non solo il "cosa"
 - **Decisioni informate**: più fonti = migliore qualità
 
 ### **5. Scalabilità**
+
 - **Aggiungi asset** senza rifare tutto
 - **Aggiungi strategie** senza modificare il core
 - **Aggiungi fonti** senza cambiare logica
@@ -345,6 +362,7 @@ Feedback Loop
 ## 🚀 **ROADMAP EVOLUTIVA**
 
 ### **Fase Attuale: MVP Completo** ✅
+
 - ✅ Sistema base funzionante
 - ✅ API REST completa
 - ✅ Dashboard integrata
@@ -352,6 +370,7 @@ Feedback Loop
 - ✅ ML models base
 
 ### **Fase 2: Ottimizzazione** 🔄
+
 - [x] Backtesting avanzato
 - [x] Walk-forward optimization
 - [x] Multi-timeframe analysis
@@ -359,6 +378,7 @@ Feedback Loop
 - [x] Performance attribution
 
 ### **Fase 3: Espansione** 📅
+
 - [ ] Più broker (IB, Bybit)
 - [ ] Più asset class (forex, stocks, futures)
 - [ ] Options trading
@@ -366,6 +386,7 @@ Feedback Loop
 - [ ] Market making strategies
 
 ### **Fase 4: Istituzionale** 🎯
+
 - [ ] Multi-account management
 - [ ] Compliance & reporting
 - [ ] Advanced risk limits

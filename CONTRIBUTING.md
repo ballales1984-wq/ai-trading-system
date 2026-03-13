@@ -5,29 +5,35 @@ We welcome contributions from the community! Whether you're a developer, trader,
 ## Getting Started
 
 ### Prerequisites
+
 - Python 3.11+
 - Node.js 18+
 - Docker (optional, for development)
 
 ### Development Setup
+
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/ballales1984-wq/ai-trading-system.git
    cd ai-trading-system
    ```
 
 2. Install Python dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 3. Install Node.js dependencies:
+
    ```bash
    cd frontend
    npm install
    ```
 
 4. Start the development servers:
+
    ```bash
    # Backend
    uvicorn app.main:app --reload
@@ -40,34 +46,42 @@ We welcome contributions from the community! Whether you're a developer, trader,
 ## How to Contribute
 
 ### 1. Report Issues
+
 If you encounter bugs or have feature requests, please create an issue using our issue templates.
 
 ### 2. Fix Bugs
+
 Look for issues with the "bug" label and submit a pull request with your fix.
 
 ### 3. Add Features
+
 We welcome new features! Please discuss your idea in an issue before implementing it.
 
 ### 4. Improve Documentation
+
 Documentation improvements are always appreciated. This includes README updates, code comments, and tutorials.
 
 ### 5. Test Coverage
+
 Help us improve our test coverage by writing new tests for uncovered modules.
 
 ## Development Guidelines
 
 ### Code Style
+
 - Follow PEP 8 for Python code
 - Use TypeScript for frontend development
 - Include type hints in Python code
 - Write clear, descriptive commit messages
 
 ### Testing
+
 - All new code should include tests
 - Run `pytest` before submitting changes
 - Aim for high test coverage
 
 ### Documentation
+
 - Update relevant documentation for your changes
 - Include examples where appropriate
 - Use clear, concise language

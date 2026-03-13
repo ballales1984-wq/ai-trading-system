@@ -1,11 +1,13 @@
 # Trade History Implementation
 
 ## Overview
+
 Implementation of Trade History feature for the AI Trading System dashboard. This feature displays historical trades with P&L (Profit/Loss) data in a dedicated tab on the Orders page.
 
 ## Changes Made
 
 ### 1. Backend API (`app/api/mock_data.py`)
+
 - **Added P&L fields to mock orders**: `pnl` and `pnl_pct`
 - **Calculated values** based on current prices vs entry prices:
   - BTC: $2,750 (8.87%)
@@ -15,6 +17,7 @@ Implementation of Trade History feature for the AI Trading System dashboard. Thi
   - AVAX: $350 (10.94%)
 
 ### 2. Backend API (`app/api/routes/orders.py`)
+
 - **New endpoint**: `GET /api/v1/orders/history`
 - **Parameters**:
   - `symbol` (optional): Filter by trading symbol
@@ -29,15 +32,19 @@ Implementation of Trade History feature for the AI Trading System dashboard. Thi
   - Filters for symbol, status, and date range
 
 ### 3. Frontend Types (`frontend/src/types/index.ts`)
+
 - **Extended `Order` interface** with optional fields:
+
   ```typescript
   pnl?: number;      // Profit/Loss in base currency
   pnl_pct?: number;  // Profit/Loss percentage
   ```
 
 ### 4. Frontend API Service (`frontend/src/services/api.ts`)
+
 - **New method**: `ordersApi.getHistory(params)`
 - **Parameters**:
+
   ```typescript
   {
     symbol?: string;
@@ -47,9 +54,11 @@ Implementation of Trade History feature for the AI Trading System dashboard. Thi
     limit?: number;
   }
   ```
+
 - **Returns**: `Promise<Order[]>`
 
 ### 5. Frontend Component (`frontend/src/pages/Orders.tsx`)
+
 - **Tab navigation**: Added "Active Orders" and "Trade History" tabs
 - **Trade History table** with columns:
   - Date (formatted: "Feb 25, 02:30 PM")
@@ -71,6 +80,7 @@ Implementation of Trade History feature for the AI Trading System dashboard. Thi
 ## API Testing
 
 ### Test Endpoint
+
 ```bash
 # Get all trade history
 curl http://localhost:8000/api/v1/orders/history
@@ -86,6 +96,7 @@ curl "http://localhost:8000/api/v1/orders/history?limit=10"
 ```
 
 ### Expected Response
+
 ```json
 [
   {
@@ -108,6 +119,7 @@ curl "http://localhost:8000/api/v1/orders/history?limit=10"
 ## Frontend Testing
 
 ### Visual Tests
+
 - [x] Tab navigation switches between Active Orders and Trade History
 - [x] Trade History table displays all columns correctly
 - [x] BUY orders shown in green
@@ -121,12 +133,14 @@ curl "http://localhost:8000/api/v1/orders/history?limit=10"
 - [x] Responsive design on mobile
 
 ### Functional Tests
+
 - [x] API call returns 200 status
 - [x] Data refreshes every 30 seconds
 - [x] Sorting by date (newest first)
 - [x] All 6 demo orders display correctly
 
 ## Files Modified
+
 1. `app/api/mock_data.py` - Added P&L to mock orders
 2. `app/api/routes/orders.py` - Added `/history` endpoint
 3. `frontend/src/types/index.ts` - Extended Order interface
@@ -134,6 +148,7 @@ curl "http://localhost:8000/api/v1/orders/history?limit=10"
 5. `frontend/src/pages/Orders.tsx` - Added Trade History tab and table
 
 ## Deployment Checklist
+
 - [x] Backend API tested locally
 - [x] Frontend build successful
 - [x] No TypeScript errors
@@ -143,6 +158,7 @@ curl "http://localhost:8000/api/v1/orders/history?limit=10"
 - [ ] Vercel deployment verified
 
 ## Next Steps
+
 1. Monitor Vercel deployment status
 2. Test on production URL
 3. Gather user feedback

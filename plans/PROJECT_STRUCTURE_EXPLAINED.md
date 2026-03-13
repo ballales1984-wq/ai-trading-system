@@ -85,6 +85,7 @@ flowchart TB
 ### `/src` - Core Source Code
 
 #### `/src/core/` - Core Engine Components
+
 | Module | Description |
 |--------|-------------|
 | [`engine.py`](src/core/engine.py) | Core trading engine orchestrator |
@@ -92,6 +93,7 @@ flowchart TB
 | [`state_manager.py`](src/core/state_manager.py) | State persistence using SQLite |
 
 #### `/src/core/execution/` - Order Execution
+
 | Module | Description |
 |--------|-------------|
 | [`best_execution.py`](src/core/execution/best_execution.py) | Best execution routing with slippage control |
@@ -101,6 +103,7 @@ flowchart TB
 | [`broker_interface.py`](src/core/execution/broker_interface.py) | Abstract broker interface |
 
 #### `/src/core/risk/` - Risk Management
+
 | Module | Description |
 |--------|-------------|
 | [`risk_engine.py`](src/core/risk/risk_engine.py) | Core risk calculations |
@@ -110,11 +113,13 @@ flowchart TB
 | [`volatility_models.py`](src/core/risk/volatility_models.py) | GARCH/EGARCH volatility models |
 
 #### `/src/core/portfolio/` - Portfolio Management
+
 | Module | Description |
 |--------|-------------|
 | [`portfolio_manager.py`](src/core/portfolio/portfolio_manager.py) | Multi-asset portfolio management |
 
 #### `/src/external/` - External API Clients
+
 | Module | Description |
 |--------|-------------|
 | [`api_registry.py`](src/external/api_registry.py) | Central API factory and dispatcher |
@@ -127,6 +132,7 @@ flowchart TB
 | [`okx_client.py`](src/external/okx_client.py) | OKX exchange connector |
 
 #### `/src/automl/` - AutoML Engine
+
 | Module | Description |
 |--------|-------------|
 | [`automl_engine.py`](src/automl/automl_engine.py) | AutoML orchestration |
@@ -134,6 +140,7 @@ flowchart TB
 | [`strategy_evolution_manager.py`](src/automl/strategy_evolution_manager.py) | Strategy evolution management |
 
 #### `/src/strategy/` - Trading Strategies
+
 | Module | Description |
 |--------|-------------|
 | [`base_strategy.py`](src/strategy/base_strategy.py) | Abstract base strategy class |
@@ -141,6 +148,7 @@ flowchart TB
 | [`momentum.py`](src/strategy/momentum.py) | Momentum trading strategy |
 
 #### `/src/agents/` - Multi-Agent System
+
 | Module | Description |
 |--------|-------------|
 | [`base_agent.py`](src/agents/base_agent.py) | Base agent class |
@@ -150,6 +158,7 @@ flowchart TB
 | [`agent_supervisor.py`](src/agents/agent_supervisor.py) | Supervisor agent for coordination |
 
 #### `/src/live/` - Live Trading
+
 | Module | Description |
 |--------|-------------|
 | [`binance_multi_ws.py`](src/live/binance_multi_ws.py) | Binance multi-stream WebSocket |
@@ -159,6 +168,7 @@ flowchart TB
 | [`telegram_notifier.py`](src/live/telegram_notifier.py) | Telegram notifications |
 
 #### `/src/hft/` - High-Frequency Trading
+
 | Module | Description |
 |--------|-------------|
 | [`hft_env.py`](src/hft/hft_env.py) | HFT environment |
@@ -170,6 +180,7 @@ flowchart TB
 ### `/app` - FastAPI REST API
 
 #### `/app/api/routes/` - API Endpoints
+
 | Module | Endpoints |
 |--------|-----------|
 | [`health.py`](app/api/routes/health.py) | Health check endpoints |
@@ -180,6 +191,7 @@ flowchart TB
 | [`strategy.py`](app/api/routes/strategy.py) | Strategy management endpoints |
 
 #### `/app/execution/` - Execution Layer
+
 | Module | Description |
 |--------|-------------|
 | [`broker_connector.py`](app/execution/broker_connector.py) | Broker connection management |
@@ -187,6 +199,7 @@ flowchart TB
 | [`order_manager.py`](app/execution/order_manager.py) | Order management |
 
 #### `/app/execution/connectors/` - Broker Connectors
+
 | Module | Description |
 |--------|-------------|
 | [`binance_connector.py`](app/execution/connectors/binance_connector.py) | Binance connector |
@@ -194,6 +207,7 @@ flowchart TB
 | [`paper_connector.py`](app/execution/connectors/paper_connector.py) | Paper trading connector |
 
 #### `/app/database/` - Database Layer
+
 | Module | Description |
 |--------|-------------|
 | [`models.py`](app/database/models.py) | SQLAlchemy models |
@@ -206,6 +220,7 @@ flowchart TB
 ## Key Features
 
 ### 1. Multi-Source Data Ingestion (18 APIs)
+
 - **Market Data**: Binance, CoinGecko, Alpha Vantage, Quandl, CoinMarketCap
 - **Sentiment**: NewsAPI, Benzinga, Twitter/X, GDELT
 - **Macro Events**: Trading Economics, EconPulse, Investing.com
@@ -213,6 +228,7 @@ flowchart TB
 - **Innovation**: EIA, Google Patents, Lens.org
 
 ### 2. Monte Carlo Simulation (5 Levels)
+
 1. **Base**: Geometric Brownian Motion random walks
 2. **Conditional**: Event-conditioned paths (macro + sentiment)
 3. **Adaptive**: Reinforcement learning from past accuracy
@@ -220,11 +236,13 @@ flowchart TB
 5. **Semantic History**: Pattern matching, black swan detection, fat tails
 
 ### 3. Decision Engine
+
 - Weighted ensemble: Technical (30%) + Momentum (25%) + Correlation (20%) + Sentiment (15%) + ML (10%) + Monte Carlo (10%)
 - ML Predictor (XGBoost/LightGBM/Random Forest)
 - Confidence scoring with strength labels (STRONG/MODERATE/WEAK)
 
 ### 4. Institutional Risk Management
+
 - Value at Risk (VaR): Historical, Parametric, Monte Carlo
 - Conditional VaR (CVaR / Expected Shortfall)
 - GARCH/EGARCH/GJR-GARCH volatility models
@@ -232,6 +250,7 @@ flowchart TB
 - Position limits, drawdown controls
 
 ### 5. Execution Engine
+
 - Best execution routing with slippage control
 - Order book simulation
 - Transaction Cost Analysis (TCA)
@@ -242,22 +261,26 @@ flowchart TB
 ## Running the Application
 
 ### Start Dashboard
+
 ```bash
 python dashboard.py
 # Open http://127.0.0.1:8050
 ```
 
 ### Start Trading Engine
+
 ```bash
 python main.py
 ```
 
 ### Start FastAPI Server
+
 ```bash
 uvicorn app.main:app --reload
 ```
 
 ### Run Tests
+
 ```bash
 # Run all tests
 pytest
@@ -272,6 +295,7 @@ python test_binance_testnet.py
 ```
 
 ### Docker Deployment
+
 ```bash
 docker-compose up -d
 ```
@@ -318,6 +342,7 @@ TWITTER_BEARER_TOKEN=your_twitter_token
 ## Current Status
 
 The repository is on the `main` branch and up to date with `origin/main`. There are some uncommitted local changes:
+
 - New file: `app/database/async_repository.py`
 - Modified: `src/automl/evolution.py`
 - Modified: `src/core/state_manager.py`

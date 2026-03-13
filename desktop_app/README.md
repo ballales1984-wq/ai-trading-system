@@ -22,6 +22,7 @@ pip install pyinstaller
 ## Come usare
 
 ### 1. Avvio in modalita sviluppo
+
 ```
 bash
 cd desktop_app
@@ -29,6 +30,7 @@ python main_tkinter.py
 ```
 
 ### 2. Creare l'EXE (per distribuzione)
+
 ```
 bash
 cd desktop_app

@@ -13,7 +13,7 @@ If Render is still using the old Dockerfile:
 
 If Render continues to have issues, Railway is simpler:
 
-1. Go to https://railway.app/new
+1. Go to <https://railway.app/new>
 2. Connect GitHub
 3. Select `ballales1984-wq/ai-trading-system`
 4. Use branch `blackboxai/fix-frontend-build`

@@ -3,6 +3,7 @@
 This guide covers how to deploy the AI Trading System to various platforms including Docker, Render, and Vercel.
 
 ## Table of Contents
+
 1. [Prerequisites](#prerequisites)
 2. [Docker Deployment](#docker-deployment)
 3. [Render Deployment](#render-deployment)
@@ -13,12 +14,14 @@ This guide covers how to deploy the AI Trading System to various platforms inclu
 ## Prerequisites
 
 ### System Requirements
+
 - **CPU**: 2+ cores (4+ recommended for production)
 - **RAM**: 4GB+ (8GB+ recommended for production)
 - **Storage**: 10GB+ free space
 - **Network**: Stable internet connection
 
 ### Software Requirements
+
 - **Python**: 3.11+
 - **Node.js**: 18+
 - **Docker**: 24+ (for Docker deployment)
@@ -27,6 +30,7 @@ This guide covers how to deploy the AI Trading System to various platforms inclu
 ## Docker Deployment
 
 ### Quick Start
+
 ```bash
 # Clone the repository
 git clone https://github.com/ballales1984-wq/ai-trading-system.git
@@ -40,6 +44,7 @@ docker-compose up -d
 ```
 
 ### Services Included
+
 - **API Server**: FastAPI on port 8000
 - **Frontend**: React on port 5173
 - **Database**: PostgreSQL on port 5432
@@ -47,7 +52,9 @@ docker-compose up -d
 - **Dashboard**: Dash on port 8050
 
 ### Configuration
+
 Create a `.env` file in the root directory:
+
 ```bash
 # Exchange API Keys
 BINANCE_API_KEY=your_binance_key
@@ -63,12 +70,14 @@ ALPHA_VANTAGE_API_KEY=your_av_key
 ## Render Deployment
 
 ### One-Click Deployment
+
 1. Click the "Deploy to Render" button in the README
 2. Connect your GitHub repository
 3. Configure environment variables
 4. Deploy!
 
 ### Manual Deployment
+
 ```bash
 # Install Render CLI
 npm install -g @renderhq/cli
@@ -79,6 +88,7 @@ render create web --name ai-trading-system --dockerfile ./Dockerfile.render.opti
 ```
 
 ### Environment Variables
+
 - `PYTHON_VERSION`: 3.11
 - `NODE_VERSION`: 18
 - `WEB_CONCURRENCY`: 1
@@ -86,12 +96,14 @@ render create web --name ai-trading-system --dockerfile ./Dockerfile.render.opti
 ## Vercel Deployment
 
 ### One-Click Deployment
+
 1. Click the "Deploy to Vercel" button in the README
 2. Connect your GitHub repository
 3. Configure build settings
 4. Deploy!
 
 ### Manual Deployment
+
 ```bash
 # Install Vercel CLI
 npm install -g vercel
@@ -101,7 +113,9 @@ vercel --prod
 ```
 
 ### Configuration
+
 Create `vercel.json`:
+
 ```json
 {
   "buildCommand": "cd frontend && npm install && npm run build",
@@ -120,7 +134,9 @@ Create `vercel.json`:
 ## Configuration
 
 ### API Keys
+
 Create a `.env` file with your API keys:
+
 ```bash
 # Exchange Keys
 BINANCE_API_KEY=your_binance_key
@@ -135,6 +151,7 @@ NEWS_API_KEY=your_news_key
 ```
 
 ### Database Configuration
+
 ```bash
 # PostgreSQL
 DATABASE_URL=postgresql://user:password@localhost:5432/ai_trading
@@ -148,6 +165,7 @@ REDIS_URL=redis://localhost:6379
 ### Common Issues
 
 #### Port Conflicts
+
 ```bash
 # Check running processes
 netstat -tulpn | grep :8000
@@ -158,6 +176,7 @@ kill -9 <PID>
 ```
 
 #### Docker Issues
+
 ```bash
 # Check Docker status
 docker ps
@@ -168,6 +187,7 @@ docker-compose up -d
 ```
 
 #### Build Failures
+
 ```bash
 # Clear cache
 docker system prune -a
@@ -179,6 +199,7 @@ docker-compose build --no-cache
 ### Performance Issues
 
 #### Memory Usage
+
 ```bash
 # Check memory usage
 free -h
@@ -186,6 +207,7 @@ docker stats
 ```
 
 #### CPU Usage
+
 ```bash
 # Check CPU usage
 top
@@ -195,18 +217,21 @@ htop
 ## Production Considerations
 
 ### Security
+
 - Use HTTPS in production
 - Set up proper firewall rules
 - Use environment variables for secrets
 - Regular security updates
 
 ### Monitoring
+
 - Set up health checks
 - Monitor resource usage
 - Set up logging
 - Create backup strategies
 
 ### Scaling
+
 - Use load balancers
 - Set up auto-scaling
 - Monitor performance metrics
@@ -215,6 +240,7 @@ htop
 ## Support
 
 For deployment issues, please:
+
 1. Check the troubleshooting section
 2. Search existing issues
 3. Create a new issue with detailed information

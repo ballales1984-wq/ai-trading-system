@@ -1,54 +1,62 @@
-# AI Trading System - 100 Days Piano + Master TODO
-## 🎯 APPROVED PLAN EXECUTION - Following 100 Giorni Piano
+# AI Trading System Improvements - Critical Recommendations
+From evaluation report (7.2/10 → target 9+/10). Tracking progress on security, docs, perf, testing, monitoring.
 
-**Status**: [PLAN APPROVED ✅ | EDITS PENDING] Lint cleanup plan confirmed. Next: execute file fixes.
+## Status Legend
+- [ ] **TODO**: Not started
+- [x] **DONE**: Completed & tested
+- [!] **IN PROGRESS**: Working on it
+- [?] **BLOCKED**: Waiting on dependency/approval
 
-### 📅 100 Days Piano Mapping
-- **Days 1-25**: Study codebase + local run → Complete.
-- **Days 26-50**: Indicators + paper trading → Pending.
-- **Days 51-75**: Flows + tests → Pending.
-- **Days 76-100**: Polish + demo → Pending.
+## 1. Security Hardening (Priority 1)
+- [x] Add security middleware to `app/main.py` (HSTS, CSP, X-Frame-Options, Referrer-Policy) **DONE**
+- [x] Integrate rate limit middleware globally **DONE**
+- [ ] Add audit logging to key API routes (orders, portfolio, risk)
+- [ ] Add rate limiting stats endpoint `/api/v1/rate-limit/stats`
+- [ ] Security headers testing & validation
 
-### 📋 Granular Steps from Approved Plan
+**Progress: 3/25 items complete**
 
-#### Phase 1: Cleanup (Days 1-10) [5/5 → 6/6]
-- [x] Update .gitignore (node_modules, .history, pycs, temps).
-- [x] git rm --cached junk + commit \"Cleanup repo\".
-- [x] Rebase dates (git rebase --root --exec date fix) or new commits.
-- [x] PyInstaller slim exe (<100MB): desktop_app/ --exclude torch/matplotlib.
-- [x] pytest tests/ --cov (126+ tests collecting, test_backtest.py: 6 solid tests - RUNNING ✅).
-- [ ] **Lint cleanup: Fix MD013/MD012/MD022 etc. in 100_GIORNI_PIANO.md/README.md/TODO.md** [IN PROGRESS]
+## 2. Code Documentation (Priority 2)
+- [ ] Comprehensive docstrings for core modules (`src/`, `app/strategies/`, `app/risk/`)
+- [ ] Update `docs/API_DOCS.md` with endpoint details/examples
+- [ ] Inline docs for complex algorithms (risk calcs, backtesting)
+- [ ] Generate/update OpenAPI schema with examples
+- [ ] Update README.md with security/performance sections
 
-#### Phase 2: Core Polish (Days 11-30) [0/4]
-- [ ] Backtest real data: Hook Binance/Bybit loader (fix CMC 401).
-- [ ] Integrate scheduler.py + risk_engine.py tests.
-- [ ] HMM full impl (remove try/except stub).
-- [ ] Validate metrics not hardcoded (Sharpe/DD realistic).
+## 3. Performance Optimization (Priority 3)
+- [ ] Add cProfile decorators to critical paths (`backtest.py`, risk calcs)
+- [ ] Database query optimization (indexing, async improvements)
+- [ ] Add performance monitoring middleware
+- [ ] Benchmark critical functions (pytest-benchmark)
+- [ ] Memory profiling for large datasets
 
-#### Phase 3: Tests/Validate (Days 31-50) [0/3]
-- [ ] pytest full coverage >80%.
-- [ ] docker-compose up → localhost:8000 paper trading.
-- [ ] Frontend dev: npm run dev → TS clean.
+## 4. Testing Enhancement (Priority 3)
+- [ ] Add performance tests (`pytest-benchmark`)
+- [ ] Integration tests for API flows (order→execution→risk check)
+- [ ] Security tests (rate limiting, audit logging)
+- [ ] Load testing with Locust
+- [ ] Update test coverage to 90%+
 
-#### Phase 4: Demo/SaaS (Days 51-75) [0/4]
-- [ ] Render/Vercel deploy.
-- [ ] README badges/GIF demo.
-- [ ] v2.1.1 release exe attach.
-- [ ] Discord/GA4 waitlist.
+## 5. Monitoring (Priority 4)
+- [ ] Prometheus metrics endpoint `/metrics`
+- [ ] Integrate with existing structured logging
+- [ ] Health checks expansion (DB, Redis, external APIs)
+- [ ] Grafana dashboard templates
+- [ ] Alerting rules (Prometheus Alertmanager)
 
-#### Phase 5: Final (Days 76-100) [0/2]
-- [ ] Video demo.
-- [ ] Star hunt + production tests.
+## Dependencies/Setup
+- [x] `pip install prometheus-client slowapi pytest-benchmark locust` **RUNNING**
+- [x] Update `requirements.txt` & `pyproject.toml` **DONE**
+- [ ] Docker rebuild & test
 
-### 🔧 Commands to Run
-```
-# Lint verify after fixes
-npx markdownlint-cli2 "**/*.md"
-# Phase 1 complete → Phase 2
-pytest tests/ -v
-docker-compose up -d
-```
+## Validation Steps
+- [ ] Run full test suite: `pytest --cov`
+- [ ] Security scan: `bandit -r app/ src/`
+- [ ] Performance benchmarks before/after
+- [ ] Docker/K8s deployment test
 
-**Next**: Execute lint fixes on 3 MD files. Update status post-edits.
-**Progress**: 25% (Cleanup near-complete). Edit after Phase 1 ✅.
+**Progress: 0/25 items complete**
+**Last Updated: $(date)**
+
+**Next Step**: Security middleware in `app/main.py`
 

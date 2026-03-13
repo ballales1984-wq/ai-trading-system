@@ -56,6 +56,7 @@ ai-trading-system/
 ## ⚡ Quick Start (5 Minutes)
 
 ### Option 1: Docker (Recommended)
+
 ```bash
 # Clone and run with Docker
 git clone https://github.com/ballales1984-wq/ai-trading-system.git
@@ -67,6 +68,7 @@ docker-compose up -d
 ```
 
 ### Option 2: Local Development
+
 ```bash
 # Install dependencies
 pip install -r requirements.txt
@@ -85,9 +87,10 @@ npm run dev
 ```
 
 ### Option 3: Cloud Deployment
+
 Deploy to Render or Vercel with one click:
 
-**Live Demo:** https://ai-trading-system-1reg.onrender.com
+**Live Demo:** <https://ai-trading-system-1reg.onrender.com>
 
 - [Deploy to Render](https://render.com/deploy?repo=ballales1984-wq/ai-trading-system)
 - [Deploy to Vercel](https://vercel.com/new/git/external?repository-url=https://github.com/ballales1984-wq/ai-trading-system)
@@ -100,18 +103,21 @@ Watch our 5-minute setup guide:
 ## 📊 Key Features
 
 ### Trading Infrastructure
+
 - **Multi-broker support**: Binance, Bybit, Paper Trading
 - **Smart order routing**: TWAP, VWAP, POV, Iceberg orders
 - **Risk management**: VaR/CVaR limits, GARCH volatility, dynamic position sizing
 - **Execution algorithms**: Best execution with latency optimization
 
 ### AI & Analytics
+
 - **Monte Carlo simulation**: 5-level probabilistic forecasting
 - **HMM regime detection**: Market condition identification
 - **Sentiment analysis**: News and social media integration
 - **Cross-asset correlation**: Portfolio optimization
 
 ### Frontend Dashboard
+
 - **Real-time monitoring**: Live P&L, positions, risk metrics
 - **Interactive charts**: Price action, equity curves, correlation matrices
 - **Mobile responsive**: Works on all devices
@@ -130,12 +136,14 @@ Watch our 5-minute setup guide:
 ## 🛡️ Risk Management
 
 ### Capital Protection
+
 - **Max position size**: 10% per asset
 - **Daily drawdown limit**: 5% circuit breaker
 - **VaR confidence**: 95% (industry standard)
 - **CVaR limit**: 8% tail risk protection
 
 ### Failure Modes & Mitigations
+
 | Failure Mode | Probability | Mitigation |
 |--------------|-------------|------------|
 | API Failure | Medium | Multi-exchange fallback |
@@ -154,12 +162,15 @@ Watch our 5-minute setup guide:
 ## 🚀 Getting Started Guide
 
 ### Step 1: Choose Your Deployment Method
+
 - **Docker**: Easiest for beginners
 - **Local**: Best for development
 - **Cloud**: For production use
 
 ### Step 2: Configure API Keys
+
 Create `.env` file with your exchange API keys:
+
 ```bash
 # Binance
 BINANCE_API_KEY=your_key
@@ -173,10 +184,10 @@ BYBIT_TESTNET=true
 ```
 
 ### Step 3: Start Trading
+
 1. Paper trading (recommended first)
 2. Live trading with small capital
 3. Scale up gradually
-
 
 - [API Reference](app/docs)
 - [Architecture Guide](docs/ARCHITECTURE.md)
@@ -227,22 +238,3 @@ We welcome contributions! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) gui
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 📧 Contact
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

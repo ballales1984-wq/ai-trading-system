@@ -9,22 +9,26 @@ Questa cartella contiene la documentazione completa del sistema di trading.
 ## 📚 Documenti Disponibili
 
 ### API Reference
+
 - **[API_REFERENCE.md](API_REFERENCE.md)** - Guida completa alle API esterne integrate
   - 22 API documentate
   - Configurazione environment
   - Rate limits e usage
 
 ### Architettura
+
 - **[../ARCHITECTURE.md](../ARCHITECTURE.md)** - Architettura generale del sistema
 - **[../ARCHITECTURE_INTEGRATION.md](../ARCHITECTURE_INTEGRATION.md)** - Integrazione componenti
 - **[../API_INTEGRATION_ARCHITECTURE.md](../API_INTEGRATION_ARCHITECTURE.md)** - Architettura integrazione API
 
 ### Diagrammi
+
 - **[../COMPONENT_DIAGRAM.md](../COMPONENT_DIAGRAM.md)** - Diagramma componenti
 - **[../ECOSYSTEM_MAP.md](../ECOSYSTEM_MAP.md)** - Mappa ecosistema
 - **[../API_FLOW_DIAGRAM.md](../API_FLOW_DIAGRAM.md)** - Diagramma flusso API
 
 ### Roadmap
+
 - **[../ROADMAP.md](../ROADMAP.md)** - Roadmap progetto 100%
 
 ---
@@ -32,17 +36,20 @@ Questa cartella contiene la documentazione completa del sistema di trading.
 ## 🚀 Quick Start
 
 1. **Configura le API Key**
+
    ```bash
    cp .env.example .env
    # Modifica .env con le tue chiavi
    ```
 
 2. **Avvia il Dashboard**
+
    ```bash
    python main.py --mode dashboard
    ```
 
 3. **Esegui i Test**
+
    ```bash
    pytest tests/ -v
    ```

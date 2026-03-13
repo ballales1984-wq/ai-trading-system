@@ -28,6 +28,7 @@
 ### FASE 1: Core Modules (Priorità Alta)
 
 #### 1.1 Decision Engine
+
 **File:** [`decision_engine.py`](decision_engine.py) (75,643 chars)
 
 | Azione | Stato | Note |
@@ -44,6 +45,7 @@
 **Completamento: 10%**
 
 #### 1.2 Risk Engine
+
 **File:** [`app/risk/hardened_risk_engine.py`](app/risk/hardened_risk_engine.py) (38,930 chars)
 
 | Azione | Stato | Note |
@@ -57,6 +59,7 @@
 **Completamento: 50%**
 
 #### 1.3 Event Bus
+
 **File:** [`src/core/event_bus.py`](src/core/event_bus.py)
 
 | Azione | Stato | Note |
@@ -73,6 +76,7 @@
 ### FASE 2: Database Layer (Priorità Alta)
 
 #### 2.1 SQLAlchemy Models
+
 **File:** [`app/database/models.py`](app/database/models.py) (11,259 chars)
 
 | Azione | Stato | Note |
@@ -87,6 +91,7 @@
 **Completamento: 60%**
 
 #### 2.2 TimescaleDB Integration
+
 **File:** [`app/database/timescale_models.py`](app/database/timescale_models.py) (23,010 chars)
 
 | Azione | Stato | Note |
@@ -105,6 +110,7 @@
 ### FASE 3: API Layer (Priorità Media)
 
 #### 3.1 REST Endpoints
+
 **Directory:** [`app/api/routes/`](app/api/routes/)
 
 | Azione | Stato | Note |
@@ -115,6 +121,7 @@
 | Request/response logging | ⚠️ Parziale | Logging presente ma non strutturato |
 
 **Endpoint presenti:**
+
 - ✅ [`cache.py`](app/api/routes/cache.py) (11,288 chars)
 - ✅ [`health.py`](app/api/routes/health.py) (1,224 chars)
 - ✅ [`market.py`](app/api/routes/market.py) (11,540 chars)
@@ -127,6 +134,7 @@
 **Completamento: 50%**
 
 #### 3.2 Broker Connectors
+
 **Directory:** [`app/execution/`](app/execution/)
 
 | Azione | Stato | Note |
@@ -137,6 +145,7 @@
 | Error categorization | ⚠️ Parziale | Base error handling |
 
 **File presenti:**
+
 - ✅ [`broker_connector.py`](app/execution/broker_connector.py) (28,613 chars)
 - ✅ [`execution_engine.py`](app/execution/execution_engine.py) (12,106 chars)
 - ✅ [`order_manager.py`](app/execution/order_manager.py) (11,753 chars)
@@ -149,6 +158,7 @@
 ### FASE 4: Dashboard (Priorità Media)
 
 #### 4.1 Main Dashboard
+
 **File:** [`dashboard.py`](dashboard.py) (79,824 chars) - ORIGINALE NON RIFATTORIZZATO
 
 | Azione | Stato | Note |
@@ -163,6 +173,7 @@
 | Ridurre memory footprint | ❌ NON FATTO | File originale ancora 79KB |
 
 **Nuova struttura dashboard:**
+
 - ✅ [`dashboard/app.py`](dashboard/app.py) (57,026 chars) - versione rifattorizzata
 - ✅ [`dashboard/strategy_comparison_tab.py`](dashboard/strategy_comparison_tab.py) (16,789 chars)
 - ✅ [`dashboard/styles.css`](dashboard/styles.css) (16,439 chars)
@@ -170,6 +181,7 @@
 **Completamento: 30%**
 
 #### 4.2 Real-time Updates
+
 **File:** [`dashboard_realtime.py`](dashboard_realtime.py) (40,234 chars)
 
 | Azione | Stato | Note |
@@ -186,6 +198,7 @@
 ### FASE 5: External APIs (Priorità Media)
 
 #### 5.1 API Registry
+
 **File:** [`src/external/api_registry.py`](src/external/api_registry.py) (12,490 chars)
 
 | Azione | Stato | Note |
@@ -198,6 +211,7 @@
 **Completamento: 40%**
 
 #### 5.2 Data Normalization
+
 **Directory:** [`src/external/`](src/external/)
 
 | Azione | Stato | Note |
@@ -208,6 +222,7 @@
 | Standardizzare error handling | ⚠️ Parziale | Inconsistente |
 
 **API Clients presenti:**
+
 - ✅ [`api_registry.py`](src/external/api_registry.py) (12,490 chars)
 - ✅ [`bybit_client.py`](src/external/bybit_client.py) (22,157 chars)
 - ✅ [`coinmarketcap_client.py`](src/external/coinmarketcap_client.py) (14,444 chars)
@@ -235,6 +250,7 @@
 | Performance tests | ❌ NON FATTO | Non presenti |
 
 **Test presenti nella directory `tests/`:**
+
 - ✅ [`test_agents.py`](tests/test_agents.py) (15,433 chars)
 - ✅ [`test_all_modules.py`](tests/test_all_modules.py) (17,815 chars)
 - ✅ [`test_app.py`](tests/test_app.py) (17,064 chars)
@@ -251,6 +267,7 @@
 - ✅ [`test_technical_analysis.py`](tests/test_technical_analysis.py) (6,051 chars)
 
 **Test aggiuntivi in root:**
+
 - 30+ file `test_*.py` nella root del progetto
 
 **Completamento: 40%**
@@ -260,6 +277,7 @@
 ### FASE 7: Security (Priorità Alta)
 
 #### 7.1 Authentication & Authorization
+
 **Files:** [`app/core/security.py`](app/core/security.py), [`app/core/rbac.py`](app/core/rbac.py)
 
 | Azione | Stato | Note |
@@ -288,6 +306,7 @@
 ### FASE 8: DevOps (Priorità Media)
 
 #### 8.1 Docker
+
 **Directory:** [`docker/`](docker/)
 
 | Azione | Stato | Note |
@@ -298,6 +317,7 @@
 | Logging | ✅ FATTO | Configurato |
 
 **File presenti:**
+
 - ✅ [`Dockerfile`](Dockerfile) (2,236 chars)
 - ✅ [`Dockerfile.render`](Dockerfile.render) (1,519 chars)
 - ✅ [`Dockerfile.render.optimized`](Dockerfile.render.optimized) (2,163 chars)
@@ -311,6 +331,7 @@
 **Completamento: 70%**
 
 #### 8.2 CI/CD
+
 **Directory:** [`.github/workflows/`](.github/workflows/)
 
 | Azione | Stato | Note |
@@ -321,6 +342,7 @@
 | Rollback mechanism | ❌ NON FATTO | Non implementato |
 
 **Workflows presenti:**
+
 - ✅ [`ci-cd-production.yml`](.github/workflows/ci-cd-production.yml) (5,347 chars)
 - ✅ [`python-app.yml`](.github/workflows/python-app.yml) (4,912 chars)
 
@@ -331,6 +353,7 @@
 ## 📈 Metriche Attuali
 
 ### Performance
+
 | Metrica | Attuale | Target | Gap |
 |---------|---------|--------|-----|
 | API Latency | ~200ms | <100ms | -100ms |
@@ -339,6 +362,7 @@
 | Memory Usage | ~2GB | <1GB | -1GB |
 
 ### Qualità
+
 | Metrica | Attuale | Target | Gap |
 |---------|---------|--------|-----|
 | Test Coverage | ~60% | >80% | -20% |
@@ -347,6 +371,7 @@
 | Type Hints | ~50% | >90% | -40% |
 
 ### Affidabilità
+
 | Metrica | Attuale | Target | Gap |
 |---------|---------|--------|-----|
 | Uptime | ~95% | >99% | -4% |
@@ -358,18 +383,21 @@
 ## 🚀 Azioni Prioritarie Rimanenti
 
 ### Alta Priorità (Immediata)
+
 1. ❌ **Decision Engine refactoring** - Suddividere in moduli
 2. ❌ **Event Bus cleanup** - Implementare cleanup subscribers
 3. ❌ **Continuous aggregates** - TimescaleDB
 4. ❌ **Error response standardization** - API Layer
 
 ### Media Priorità (Prossime 2 Settimane)
+
 1. ⚠️ **Dashboard modularization** - Completare refactoring
 2. ⚠️ **Schema validation** - External APIs
 3. ⚠️ **Test coverage** - Aumentare a >80%
 4. ⚠️ **Data protection** - Encryption at rest
 
 ### Bassa Priorità (Prossimo Mese)
+
 1. ⚠️ **Performance optimization** - Latency, memory
 2. ❌ **Rollback mechanism** - CI/CD
 3. ❌ **GDPR compliance** - Data protection
@@ -379,9 +407,10 @@
 
 ## 📝 Conclusioni
 
-Il piano di consolidamento è stato **parzialmente eseguito** con un completamento complessivo del **~48%**. 
+Il piano di consolidamento è stato **parzialmente eseguito** con un completamento complessivo del **~48%**.
 
 ### Punti di Forza
+
 - ✅ CI/CD pipeline configurata con security scanning
 - ✅ Docker multi-stage builds
 - ✅ Alembic migrations configurate
@@ -390,6 +419,7 @@ Il piano di consolidamento è stato **parzialmente eseguito** con un completamen
 - ✅ Nuova struttura dashboard iniziata
 
 ### Aree Critiche
+
 - ❌ Decision Engine non rifattorizzato (file 75KB ancora singolo)
 - ❌ Continuous aggregates non implementati
 - ❌ Test coverage sotto target
@@ -397,6 +427,7 @@ Il piano di consolidamento è stato **parzialmente eseguito** con un completamen
 - ❌ Data protection incompleta
 
 ### Raccomandazioni
+
 1. **Priorità 1:** Completare refactoring Decision Engine
 2. **Priorità 2:** Implementare continuous aggregates TimescaleDB
 3. **Priorità 3:** Standardizzare error responses API

@@ -1,14 +1,18 @@
 # Agent Coordination Protocol
 
 ## Overview
+
 This document defines the coordination protocol between two Kilo Code agents working on the same repository.
 
 ## Agent Identity
+
 - **Agent1**: Main branch agent (this instance)
 - **Agent2**: Branch `copilot/vscode-mlsfbh4p-tvi2` agent
 
 ## Communication</label><div class="btn-group w-100"><input type="radio" class="btn-check" name="side" id="buy" value="BUY" checked><label class=" Method
+
 Agents communicate via shared JSON files in the `agent_coordination/` directory:
+
 - `tasks/` - Pending tasks queuebtn btn-outline-success" for="buy">BUY</label><input type="radio" class="btn-check" name="side" id="sell" value="SELL"><label class="btn btn-outline-danger" for="sell">SELL</label></div></div>
                                 <div class="mb-3"><label>Quantity</label><input type="number" class="
 - `in_progress/` - Tasks being worked on
@@ -24,11 +28,13 @@ Agents communicate via shared JSON files in the `agent_coordination/` directory:
             </main>
         </div>
     </div>
+
  Inter-agent messages
 
 ## Task Workflow
 
 ### Adding Tasks
+
 ```python
 c = Coordinator("Agent1", "Agent2")
 task    
@@ -62,7 +68,9 @@ task
 ```
 
 ### Claiming Tasks
+
 Before starting work on a task, an agent must claim it:
+
 ```python
 if c.claim(task000).toLocaleString();
                     document.getElementById('unrealizedPnL').textContent = '$' + (data.unrealizedPnL || 3500).toLocaleString();
@@ -72,16 +80,18 @@ if c.claim(task000).toLocaleString();
 ```
 
 ### Checking File Conflicts
+
 Before editing files, check if the('sharpeRatio').textContent = (data.sharpeRatio || 1.45).toFixed(2);
                 }
             } catch(e) { console.log('Using mock data'); }
             updateLastUpdate();
         }
-        
+
         async function loadSignals() {
             try {
                 const resp = await fetch(API_BASE + '/api/signals');
                 if other agent is working on them:
+
 ```python
 conflicts = c.check_file_conflicts(["decision_engine.py"])
 if conflicts:
@@ -93,10 +103,12 @@ if conflicts:
 ```
 
 ### Completing Tasks
+
 ```python
 c.complete(task_id)
 ```
 
 ### Sending Messages
+
 ```python
 c.send_message(

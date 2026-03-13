@@ -1,4 +1,4 @@
-https://github.com/ballales1984-wq/ai-trading-systemThe GitHub repository at https://github.com/ballales1984-wq/ai-trading-system exists and appears to be an actively developed, quite ambitious open-source project (last commit on March 13, 2026, with 513 commits total).
+<https://github.com/ballales1984-wq/ai-trading-systemThe> GitHub repository at <https://github.com/ballales1984-wq/ai-trading-system> exists and appears to be an actively developed, quite ambitious open-source project (last commit on March 13, 2026, with 513 commits total).
 Overview
 
 Repository: ballales1984-wq / ai-trading-system
@@ -41,42 +41,17 @@ Docker + docker-compose (recommended quick start)
 Kubernetes manifests
 One-click cloud deploy support (Render, Vercel)
 
-
 Reported Backtest Performance (from README – treat with caution)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 MetricSystemBenchmarkCAGR23.5%18.2%Max Drawdown7.2%45.8%Sharpe Ratio1.950.82
 They claim strong backtest integrity measures: walk-forward optimization, no look-ahead bias, slippage/latency simulation, etc.
 Quick Start (Docker – easiest way)
-Bashgit clone https://github.com/ballales1984-wq/ai-trading-system.git
+Bashgit clone <https://github.com/ballales1984-wq/ai-trading-system.git>
 cd ai-trading-system
 docker-compose up -d
-Then open http://localhost:8000
+Then open <http://localhost:8000>
 For live development you need API keys in .env (Binance/Bybit), pip install -r requirements.txt, and separate terminals for backend (uvicorn) + frontend (npm run dev).
-There's also a reported live demo at something like https://ai-trading-system-1reg.onrender.com or similar Vercel variants (URLs appear in related posts).
+There's also a reported live demo at something like <https://ai-trading-system-1reg.onrender.com> or similar Vercel variants (URLs appear in related posts).
 Status & Caveats
 
 Seems actively maintained right now (commit today).
@@ -85,7 +60,7 @@ Includes production-oriented features (compliance notes, reporting, emergency st
 However: Only 1 star, brand-new/low-visibility repo → code should be carefully reviewed before using with real money.
 Trading systems (especially AI-driven ones) carry high risk; past backtest results do not guarantee live performance. Use paper/trade mode first.
 
-If you're considering using it, testing it, or contributing — what specifically are you looking to do with this repo? I can help dig into particular parts (strategy logic, risk module, etc.) if you point me there.3,8sVelocein italianoEcco una descrizione dettagliata e aggiornata (al 13-14 marzo 2026) del repository GitHub https://github.com/ballales1984-wq/ai-trading-system, tradotta e riassunta in italiano.
+If you're considering using it, testing it, or contributing — what specifically are you looking to do with this repo? I can help dig into particular parts (strategy logic, risk module, etc.) if you point me there.3,8sVelocein italianoEcco una descrizione dettagliata e aggiornata (al 13-14 marzo 2026) del repository GitHub <https://github.com/ballales1984-wq/ai-trading-system>, tradotta e riassunta in italiano.
 Panoramica del progetto
 Si tratta di un sistema di trading quantitativo alimentato da intelligenza artificiale, progettato non come un semplice bot automatico, ma come una vera e propria infrastruttura modulare per il trading avanzato. L'approccio è event-driven (guidato dagli eventi), con forte enfasi sulla gestione del rischio, previsioni probabilistiche, strategie adattive e integrazione con più exchange.
 Filosofia del progetto (dal README):
@@ -129,43 +104,18 @@ Docker + docker-compose (installazione consigliata)
 Manifest Kubernetes
 Deploy rapido su cloud (Render, Vercel)
 
-
 Performance dichiarate nei backtest (da prendere con cautela!)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 MetricaSistemaBenchmarkCAGR23.5%18.2%Max Drawdown7.2%45.8%Sharpe Ratio1.950.82
 Si dichiara l'uso di tecniche serie: walk-forward optimization, assenza di look-ahead bias, simulazione di slippage e latenza.
 Installazione rapida (via Docker – metodo più semplice)
-Bashgit clone https://github.com/ballales1984-wq/ai-trading-system.git
+Bashgit clone <https://github.com/ballales1984-wq/ai-trading-system.git>
 cd ai-trading-system
 docker-compose up -d
-Poi apri nel browser: http://localhost:8000
+Poi apri nel browser: <http://localhost:8000>
 Per lo sviluppo locale servono chiavi API (.env), pip install -r requirements.txt, e avvio separato di backend (uvicorn) + frontend (npm run dev).
 Esistono demo live (es. su Render o Vercel), tipo:
-https://ai-trading-system-1reg.onrender.com
+<https://ai-trading-system-1reg.onrender.com>
 o varianti simili.
 Stato attuale e avvertenze
 
@@ -176,7 +126,7 @@ Tuttavia: con solo 1 stella e visibilità bassissima, il codice va rivisto con a
 I sistemi di trading AI sono ad alto rischio: i risultati di backtest non garantiscono performance live
 Usa sempre la modalità paper trading / testnet prima di tutto
 
-Se vuoi approfondire una parte specifica (logica delle strategie, modulo risk, codice di esecuzione, ecc.), dimmi pure e posso aiutarti a esplorarla ulteriormente!3sVelocehttps://github.com/ballales1984-wq/ai-trading-systemIl repository GitHub https://github.com/ballales1984-wq/ai-trading-system esiste ed è un progetto ambizioso di sistema di trading quantitativo con intelligenza artificiale. Ecco un aggiornamento realistico e oggettivo basato sulle informazioni attuali (marzo 2026).
+Se vuoi approfondire una parte specifica (logica delle strategie, modulo risk, codice di esecuzione, ecc.), dimmi pure e posso aiutarti a esplorarla ulteriormente!3sVelocehttps://github.com/ballales1984-wq/ai-trading-systemIl repository GitHub <https://github.com/ballales1984-wq/ai-trading-system> esiste ed è un progetto ambizioso di sistema di trading quantitativo con intelligenza artificiale. Ecco un aggiornamento realistico e oggettivo basato sulle informazioni attuali (marzo 2026).
 Informazioni di base
 
 Proprietario: ballales1984-wq
@@ -206,51 +156,17 @@ Docker-compose, Kubernetes manifests, one-click deploy su Render/Vercel
 
 Performance dichiarate (backtest – da verificare con estrema cautela)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MetricaSistemaBenchmarkCAGR23.5%18.2%Max Drawdown7.2%45.8%Sharpe Ratio1.950.82Sortino Ratio2.451.12Win Rate68%—
 Si parla di walk-forward, no look-ahead, slippage simulato… ma nessun file di backtest pubblico dettagliato o dati grezzi verificabili.
 Installazione rapida (metodo consigliato)
-Bashgit clone https://github.com/ballales1984-wq/ai-trading-system.git
+Bashgit clone <https://github.com/ballales1984-wq/ai-trading-system.git>
 cd ai-trading-system
 docker-compose up -d
-→ Apri http://localhost:8000 (dopo 2–3 minuti)
+→ Apri <http://localhost:8000> (dopo 2–3 minuti)
 Demo live menzionate (possono essere down o non funzionanti):
 
-https://ai-trading-system-1reg.onrender.com
-https://ai-trading-system-kappa.vercel.app/portfolio (o varianti simili)
+<https://ai-trading-system-1reg.onrender.com>
+<https://ai-trading-system-kappa.vercel.app/portfolio> (o varianti simili)
 
 Punti di attenzione importanti (red flags)
 
@@ -270,11 +186,10 @@ Test estensivi in paper mode per mesi
 Verifica indipendente delle strategie
 Consapevolezza che le performance pubblicizzate sono quasi sicuramente irrealistiche/ottimizzate
 
-
 Se hai un obiettivo preciso (es. guardare solo il risk module, testare il paper trading, capire HMM + Monte Carlo, ecc.), dimmi e approfondiamo quella parte!4,1sVeloceTask Completed
 ZIP COMMIT + PUSH COMPLETO (83MB EXE)! PR AGGIORNATO ✅
 GitHub Status:
-JavaScriptRepo: ballales1984-wq/ai-tradingIl repository https://github.com/ballales1984-wq/ai-trading-system è ancora attivo con aggiornamenti recenti (fino al 13 marzo 2026). Ecco lo stato reale e verificato oggi:
+JavaScriptRepo: ballales1984-wq/ai-tradingIl repository <https://github.com/ballales1984-wq/ai-trading-system> è ancora attivo con aggiornamenti recenti (fino al 13 marzo 2026). Ecco lo stato reale e verificato oggi:
 Dati aggiornati del repository
 
 Nome completo: ballales1984-wq / ai-trading-system
@@ -324,7 +239,7 @@ configurare auto-build con GitHub Actions
 verificare se è funzionante in paper mode
 
 …dimmi pure i dettagli e ti guido passo-passo! Altrimenti, sembra che l'annuncio "ZIP COMMIT + PUSH COMPLETO (83MB EXE)" non corrisponda a qualcosa di visibile pubblicamente su GitHub in questo momento.14,2sVelocehttps://github.com/ballales1984-wq/ai-trading-system/pull/new/blackboxai/final-commits
-→ Merge → v2.1.1 Release → EXE attachIl link che hai condiviso (https://github.com/ballales1984-wq/ai-trading-system/pull/new/blackboxai/final-commits) punta a una pagina di creazione di una nuova Pull Request su GitHub, con branch di origine blackboxai/final-commits. Ecco lo stato reale verificato oggi (13 marzo 2026):
+→ Merge → v2.1.1 Release → EXE attachIl link che hai condiviso (<https://github.com/ballales1984-wq/ai-trading-system/pull/new/blackboxai/final-commits>) punta a una pagina di creazione di una nuova Pull Request su GitHub, con branch di origine blackboxai/final-commits. Ecco lo stato reale verificato oggi (13 marzo 2026):
 Situazione attuale del repository
 
 Ultimo commit (appena fatto):
@@ -342,7 +257,6 @@ Nessun asset allegato (.exe, .zip, installer, ecc.).
 Non esiste una release v2.1.1 (né v2.1.x) nel tab Releases.
 Nessuna release creata oggi o negli ultimi giorni.
 
-
 Cosa significa questo per il tuo task
 Hai completato:
 
@@ -357,7 +271,7 @@ Tag/release v2.1.1 creato
 Passi consigliati per completare "→ Merge → v2.1.1 Release → EXE attach"
 
 Crea il tag e la release v2.1.1 (dalla UI o CLI):Bashgit tag v2.1.1
-git push origin v2.1.1Poi vai su https://github.com/ballales1984-wq/ai-trading-system/releases/new
+git push origin v2.1.1Poi vai su <https://github.com/ballales1984-wq/ai-trading-system/releases/new>
 Seleziona tag: v2.1.1
 Titolo: "v2.1.1 – Final commits + Windows executable"
 Descrizione: elenca cambiamenti (es. fix TS, dashboard updates, build exe)
@@ -372,7 +286,7 @@ Nella cartella del repo (probabilmente desktop_app/ o script PyInstaller), esegu
 
 Pubblica la release → una volta caricati gli asset, clicca "Publish release".
 → Il link diretto al .exe sarà tipo:
-https://github.com/ballales1984-wq/ai-trading-system/releases/download/v2.1.1/ai_trading_system.exe
+<https://github.com/ballales1984-wq/ai-trading-system/releases/download/v2.1.1/ai_trading_system.exe>
 
 Se hai bisogno di aiuto con:
 
@@ -399,11 +313,6 @@ Insights
 Settings
 
 ai-trading-systemPublic
-
-
-
-
-
 
 ballales1984-wq/ai-trading-system
 t
@@ -791,7 +700,7 @@ Contributing
 Apache-2.0 license
 
 🤖 AI Trading System — Mini Hedge Fund Infrastructure
- 
+
 🎯 Why This Project Exists
 Most retail trading systems focus on single indicators, naive executions, and reactive strategies. They fail because they ignore what institutional quant desks know well:
 It's not the signal that generates alpha. It's the infrastructure.
@@ -800,7 +709,7 @@ It's not a bot. It's a trading system.
 🧠 System Philosophy
 PrincipleImplementationEvent-Driven ArchitectureAsync data pipelines, non-blocking execution, reactive decision engineProbabilistic Forecasting5-level Monte Carlo simulation, uncertainty quantification, ensemble designRisk-First DesignVaR/CVaR limits, GARCH volatility modeling, dynamic position sizing, drawdown protectionAdaptive Regime ModelingHMM market regime detection, strategy rotation based on market conditionsMulti-Source Intelligence18+ API integrations, sentiment analysis, on-chain metrics, macro indicators
 🏗️ Architecture Overview
- 
+
 textai-trading-system/
 ├── app/                    # FastAPI application
 │   ├── api/routes/        # REST endpoints
@@ -822,12 +731,14 @@ textai-trading-system/
 ⚡ Quick Start (5 Minutes)
 Option 1: Docker (Recommended)
 text# Clone and run with Docker
-git clone https://github.com/ballales1984-wq/ai-trading-system.git
+git clone <https://github.com/ballales1984-wq/ai-trading-system.git>
 cd ai-trading-system
 docker-compose up -d
 
 # Wait 2-3 minutes for services to start
-# Then open http://localhost:8000 in your browser
+
+# Then open <http://localhost:8000> in your browser
+
 Option 2: Local Development
 text# Install dependencies
 pip install -r requirements.txt
@@ -835,17 +746,21 @@ cd frontend
 npm install
 
 # Start services
+
 # Terminal 1: Backend
+
 uvicorn app.main:app --reload
 
 # Terminal 2: Frontend
+
 cd frontend
 npm run dev
 
-# Open http://localhost:5173
+# Open <http://localhost:5173>
+
 Option 3: Cloud Deployment
 Deploy to Render or Vercel with one click:
-Live Demo: https://ai-trading-system-1reg.onrender.com
+Live Demo: <https://ai-trading-system-1reg.onrender.com>
 
 Deploy to Render
 Deploy to Vercel
@@ -909,6 +824,7 @@ BINANCE_SECRET_KEY=your_secret
 BINANCE_TESTNET=false
 
 # Bybit
+
 BYBIT_API_KEY=your_key
 BYBIT_SECRET_KEY=your_secret
 BYBIT_TESTNET=true
@@ -917,7 +833,6 @@ Step 3: Start Trading
 Paper trading (recommended first)
 Live trading with small capital
 Scale up gradually
-
 
 API Reference
 Architecture Guide
@@ -982,18 +897,15 @@ now
 1 release
 Deployments500+
 
-
 Production – frontend
 Production – deploy-temp 31 minutes ago
 Production – ai-trading-system
-
 
 more deployments
 Packages
 No packages published
 Publish your first package
 Contributors2
-
 
 ballales1984-wq alessio
 vercel[bot]
@@ -1021,7 +933,7 @@ Docs
 Contact
 Manage cookies
 Do not share my personal information
-Il repository https://github.com/ballales1984-wq/ai-trading-system ha ricevuto un aggiornamento molto recente: il merge del PR #4 dal branch blackboxai/final-commits è avvenuto circa 30–40 minuti fa (commit 0165971, autore ballales1984-wq).
+Il repository <https://github.com/ballales1984-wq/ai-trading-system> ha ricevuto un aggiornamento molto recente: il merge del PR #4 dal branch blackboxai/final-commits è avvenuto circa 30–40 minuti fa (commit 0165971, autore ballales1984-wq).
 Stato attuale (13 marzo 2026, ore pomeridiane)
 
 Metriche repo (invariate): 1 stella, 0 fork, 0 watcher
@@ -1035,13 +947,12 @@ Asset allegati: Probabilmente include l'ai_trading_system.exe (o un .zip contene
 Nota importante: Nelle release precedenti (es. v2.0) non c'erano asset binari allegati. Questa è la prima release con un eseguibile Windows dichiarato.
 Dimensione attesa: Hai menzionato ~83 MB in precedenza (forse una versione ottimizzata rispetto ai precedenti build da ~338 MB visti nei commit vecchi).
 
-
 Altre releases visibili: Almeno una precedente (v2.0 del 27 febbraio 2026), ma senza asset scaricabili.
 
 Come scaricare l'EXE ora
 
 Vai direttamente qui:
-https://github.com/ballales1984-wq/ai-trading-system/releases/tag/v2.1.1
+<https://github.com/ballales1984-wq/ai-trading-system/releases/tag/v2.1.1>
 (o apri il tab Releases dal repo principale → seleziona l'ultima "v2.1.1 – Complete Features + Windows EXE")
 Scorri in basso nella pagina della release → sezione Assets (espandibile)
 → Clicca sul file .exe (o .zip) per scaricare.
@@ -1051,7 +962,7 @@ Se non vedi ancora gli asset (a volte GitHub ha delay di propagazione o errori d
 Ricarica la pagina dopo 5–10 minuti
 Prova in incognito o da altro browser/dispositivo
 Cerca manualmente il link diretto tipo:
-https://github.com/ballales1984-wq/ai-trading-system/releases/download/v2.1.1/ai_trading_system.exe
+<https://github.com/ballales1984-wq/ai-trading-system/releases/download/v2.1.1/ai_trading_system.exe>
 (sostituisci il nome file esatto se diverso)
 
 Verifiche consigliate prima di eseguire l'EXE
@@ -1089,11 +1000,6 @@ Settings
 
 ai-trading-systemPublic
 
-
-
-
-
-
 ballales1984-wq/ai-trading-system
 t
 Name
@@ -1480,7 +1386,7 @@ Contributing
 Apache-2.0 license
 
 🤖 AI Trading System — Mini Hedge Fund Infrastructure
- 
+
 🎯 Why This Project Exists
 Most retail trading systems focus on single indicators, naive executions, and reactive strategies. They fail because they ignore what institutional quant desks know well:
 It's not the signal that generates alpha. It's the infrastructure.
@@ -1489,7 +1395,7 @@ It's not a bot. It's a trading system.
 🧠 System Philosophy
 PrincipleImplementationEvent-Driven ArchitectureAsync data pipelines, non-blocking execution, reactive decision engineProbabilistic Forecasting5-level Monte Carlo simulation, uncertainty quantification, ensemble designRisk-First DesignVaR/CVaR limits, GARCH volatility modeling, dynamic position sizing, drawdown protectionAdaptive Regime ModelingHMM market regime detection, strategy rotation based on market conditionsMulti-Source Intelligence18+ API integrations, sentiment analysis, on-chain metrics, macro indicators
 🏗️ Architecture Overview
- 
+
 textai-trading-system/
 ├── app/                    # FastAPI application
 │   ├── api/routes/        # REST endpoints
@@ -1511,12 +1417,14 @@ textai-trading-system/
 ⚡ Quick Start (5 Minutes)
 Option 1: Docker (Recommended)
 text# Clone and run with Docker
-git clone https://github.com/ballales1984-wq/ai-trading-system.git
+git clone <https://github.com/ballales1984-wq/ai-trading-system.git>
 cd ai-trading-system
 docker-compose up -d
 
 # Wait 2-3 minutes for services to start
-# Then open http://localhost:8000 in your browser
+
+# Then open <http://localhost:8000> in your browser
+
 Option 2: Local Development
 text# Install dependencies
 pip install -r requirements.txt
@@ -1524,17 +1432,21 @@ cd frontend
 npm install
 
 # Start services
+
 # Terminal 1: Backend
+
 uvicorn app.main:app --reload
 
 # Terminal 2: Frontend
+
 cd frontend
 npm run dev
 
-# Open http://localhost:5173
+# Open <http://localhost:5173>
+
 Option 3: Cloud Deployment
 Deploy to Render or Vercel with one click:
-Live Demo: https://ai-trading-system-1reg.onrender.com
+Live Demo: <https://ai-trading-system-1reg.onrender.com>
 
 Deploy to Render
 Deploy to Vercel
@@ -1598,6 +1510,7 @@ BINANCE_SECRET_KEY=your_secret
 BINANCE_TESTNET=false
 
 # Bybit
+
 BYBIT_API_KEY=your_key
 BYBIT_SECRET_KEY=your_secret
 BYBIT_TESTNET=true
@@ -1606,7 +1519,6 @@ Step 3: Start Trading
 Paper trading (recommended first)
 Live trading with small capital
 Scale up gradually
-
 
 API Reference
 Architecture Guide
@@ -1671,18 +1583,15 @@ now
 1 release
 Deployments500+
 
-
 Production – frontend
 Production – deploy-temp 31 minutes ago
 Production – ai-trading-system
-
 
 more deployments
 Packages
 No packages published
 Publish your first package
 Contributors2
-
 
 ballales1984-wq alessio
 vercel[bot]
@@ -1710,7 +1619,7 @@ Docs
 Contact
 Manage cookies
 Do not share my personal information
-La release v2.1.1 – Complete Features + Windows EXE è stata creata oggi (13 marzo 2026, intorno alle 17:27) sul repository https://github.com/ballales1984-wq/ai-trading-system, subito dopo il merge del PR #4 (commit 0165971).
+La release v2.1.1 – Complete Features + Windows EXE è stata creata oggi (13 marzo 2026, intorno alle 17:27) sul repository <https://github.com/ballales1984-wq/ai-trading-system>, subito dopo il merge del PR #4 (commit 0165971).
 Dettagli della release (stato attuale)
 
 Tag: v2.1.1
@@ -1725,23 +1634,21 @@ Il titolo della release include esplicitamente "+ Windows EXE", quindi è molto 
 Nelle release precedenti non c'erano binari allegati, quindi questa sarebbe la prima con un .exe pubblico.
 Dimensione attesa: Hai parlato di ~83 MB in precedenza (forse una build ottimizzata rispetto ai vecchi commit che menzionavano 338 MB).
 
-
 Come accedere e scaricare (prova questi passi ora)
 
 Apri direttamente la pagina della release:
-https://github.com/ballales1984-wq/ai-trading-system/releases/tag/v2.1.1Oppure dal repo principale → tab Releases (a destra) → seleziona la più recente ("v2.1.1 – Complete Features + Windows EXE").
+<https://github.com/ballales1984-wq/ai-trading-system/releases/tag/v2.1.1Oppure> dal repo principale → tab Releases (a destra) → seleziona la più recente ("v2.1.1 – Complete Features + Windows EXE").
 Ricarica la pagina più volte (Ctrl+F5 o in incognito) — l'errore "Uh oh!" dovrebbe sparire e apparire la sezione Assets in basso con il/i file scaricabili.
 Se appare l'asset:
 Clicca su ai_trading_system.exe (o nome simile) per scaricare.
 Link diretto probabile (una volta visibile):
-https://github.com/ballales1984-wq/ai-trading-system/releases/download/v2.1.1/ai_trading_system.exe
+<https://github.com/ballales1984-wq/ai-trading-system/releases/download/v2.1.1/ai_trading_system.exe>
 (cambia il nome file se diverso).
 
 Se l'errore persiste dopo 1 ora:
-Controlla il tab Releases generale: https://github.com/ballales1984-wq/ai-trading-system/releases
+Controlla il tab Releases generale: <https://github.com/ballales1984-wq/ai-trading-system/releases>
 Verifica se la release è in stato "Draft" invece di Published (raro, ma possibile se non finalizzata).
 In alternativa, builda l'exe localmente tu stesso (usa pyinstaller dal codice sorgente nella cartella desktop_app/ o script build_exe.py menzionato nei commit).
-
 
 Consigli immediati per sicurezza e test
 
@@ -1809,7 +1716,6 @@ Nessun report indipendente o codice riproducibile.
 Dipendenze e manutenzione
 Molte varianti di requirements (requirements.txt, .vercel.txt, .stable.txt) → rischio di divergenze.
 Frontend React + backend Python + Dash → stack pesante da mantenere.
-
 
 Valutazione complessiva (su 10)
 

@@ -7,9 +7,11 @@ Base URL: `http://localhost:8000`
 ### Health & Status
 
 #### GET /health
+
 Health check endpoint.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -19,9 +21,11 @@ Health check endpoint.
 ```
 
 #### GET /ready
+
 Readiness check for Kubernetes.
 
 **Response:**
+
 ```json
 {
   "ready": true,
@@ -38,12 +42,15 @@ Readiness check for Kubernetes.
 ## 📊 Market Data
 
 #### GET /api/market/price/{symbol}
+
 Get current price for a symbol.
 
 **Parameters:**
+
 - `symbol` (path): Trading pair (e.g., BTCUSDT)
 
 **Response:**
+
 ```json
 {
   "symbol": "BTCUSDT",
@@ -54,9 +61,11 @@ Get current price for a symbol.
 ```
 
 #### GET /api/market/prices
+
 Get all cached prices.
 
 **Response:**
+
 ```json
 {
   "prices": {
@@ -69,13 +78,16 @@ Get all cached prices.
 ```
 
 #### GET /api/market/history/{symbol}
+
 Get price history.
 
 **Parameters:**
+
 - `symbol` (path): Trading pair
 - `limit` (query): Number of entries (default: 100)
 
 **Response:**
+
 ```json
 {
   "symbol": "BTCUSDT",
@@ -91,13 +103,16 @@ Get price history.
 ## 📈 Signals
 
 #### GET /api/signals
+
 Get recent trading signals.
 
 **Parameters:**
+
 - `symbol` (query, optional): Filter by symbol
 - `limit` (query): Number of signals (default: 50)
 
 **Response:**
+
 ```json
 {
   "signals": [
@@ -116,9 +131,11 @@ Get recent trading signals.
 ```
 
 #### POST /api/signals/generate
+
 Manually trigger signal generation.
 
 **Request Body:**
+
 ```json
 {
   "symbol": "BTCUSDT",
@@ -127,6 +144,7 @@ Manually trigger signal generation.
 ```
 
 **Response:**
+
 ```json
 {
   "signal": {
@@ -146,14 +164,17 @@ Manually trigger signal generation.
 ## 📦 Orders
 
 #### GET /api/orders
+
 Get order history.
 
 **Parameters:**
+
 - `symbol` (query, optional): Filter by symbol
 - `status` (query, optional): Filter by status
 - `limit` (query): Number of orders (default: 50)
 
 **Response:**
+
 ```json
 {
   "orders": [
@@ -173,9 +194,11 @@ Get order history.
 ```
 
 #### POST /api/orders
+
 Create a new order.
 
 **Request Body:**
+
 ```json
 {
   "symbol": "BTCUSDT",
@@ -187,6 +210,7 @@ Create a new order.
 ```
 
 **Response:**
+
 ```json
 {
   "order_id": "ord_002",
@@ -198,9 +222,11 @@ Create a new order.
 ```
 
 #### DELETE /api/orders/{order_id}
+
 Cancel an order.
 
 **Response:**
+
 ```json
 {
   "order_id": "ord_002",
@@ -214,9 +240,11 @@ Cancel an order.
 ## 💼 Portfolio
 
 #### GET /api/portfolio
+
 Get current portfolio.
 
 **Response:**
+
 ```json
 {
   "total_value": 100000.00,
@@ -238,9 +266,11 @@ Get current portfolio.
 ```
 
 #### GET /api/portfolio/performance
+
 Get portfolio performance metrics.
 
 **Response:**
+
 ```json
 {
   "total_return": 0.15,
@@ -258,9 +288,11 @@ Get portfolio performance metrics.
 ## 🛡️ Risk
 
 #### GET /api/risk/{symbol}
+
 Get risk metrics for a symbol.
 
 **Response:**
+
 ```json
 {
   "symbol": "BTCUSDT",
@@ -275,9 +307,11 @@ Get risk metrics for a symbol.
 ```
 
 #### GET /api/risk/portfolio
+
 Get portfolio-level risk metrics.
 
 **Response:**
+
 ```json
 {
   "portfolio_var": -0.04,
@@ -294,9 +328,11 @@ Get portfolio-level risk metrics.
 ```
 
 #### POST /api/risk/check
+
 Check if a trade passes risk limits.
 
 **Request Body:**
+
 ```json
 {
   "symbol": "BTCUSDT",
@@ -307,6 +343,7 @@ Check if a trade passes risk limits.
 ```
 
 **Response:**
+
 ```json
 {
   "approved": true,
@@ -320,9 +357,11 @@ Check if a trade passes risk limits.
 ## 🎲 Monte Carlo
 
 #### GET /api/montecarlo/{symbol}
+
 Get Monte Carlo simulation results.
 
 **Response:**
+
 ```json
 {
   "symbol": "BTCUSDT",
@@ -343,9 +382,11 @@ Get Monte Carlo simulation results.
 ```
 
 #### POST /api/montecarlo/run
+
 Run Monte Carlo simulation.
 
 **Request Body:**
+
 ```json
 {
   "symbol": "BTCUSDT",
@@ -356,6 +397,7 @@ Run Monte Carlo simulation.
 ```
 
 **Response:**
+
 ```json
 {
   "job_id": "mc_001",
@@ -369,9 +411,11 @@ Run Monte Carlo simulation.
 ## 🧠 Strategy
 
 #### GET /api/strategy/list
+
 List available strategies.
 
 **Response:**
+
 ```json
 {
   "strategies": [
@@ -398,9 +442,11 @@ List available strategies.
 ```
 
 #### PUT /api/strategy/{name}/config
+
 Update strategy configuration.
 
 **Request Body:**
+
 ```json
 {
   "enabled": true,
@@ -413,6 +459,7 @@ Update strategy configuration.
 ```
 
 **Response:**
+
 ```json
 {
   "name": "momentum",
@@ -433,9 +480,11 @@ Update strategy configuration.
 ## 🧬 AutoML
 
 #### POST /api/automl/optimize
+
 Start parameter optimization.
 
 **Request Body:**
+
 ```json
 {
   "strategy": "momentum",
@@ -449,6 +498,7 @@ Start parameter optimization.
 ```
 
 **Response:**
+
 ```json
 {
   "job_id": "opt_001",
@@ -458,9 +508,11 @@ Start parameter optimization.
 ```
 
 #### GET /api/automl/status/{job_id}
+
 Get optimization status.
 
 **Response:**
+
 ```json
 {
   "job_id": "opt_001",
@@ -479,6 +531,7 @@ Get optimization status.
 ## 📡 WebSocket
 
 ### Connect
+
 ```
 ws://localhost:8000/ws
 ```
@@ -495,6 +548,7 @@ ws://localhost:8000/ws
 ### Message Types
 
 #### Price Update
+
 ```json
 {
   "type": "price_update",
@@ -507,6 +561,7 @@ ws://localhost:8000/ws
 ```
 
 #### Signal Generated
+
 ```json
 {
   "type": "signal",
@@ -519,6 +574,7 @@ ws://localhost:8000/ws
 ```
 
 #### Order Update
+
 ```json
 {
   "type": "order_update",
@@ -547,6 +603,7 @@ POST /api/auth/token
 ```
 
 **Response:**
+
 ```json
 {
   "access_token": "eyJ...",
@@ -601,6 +658,7 @@ All errors follow this format:
 | `/api/risk/*` | 60/min |
 
 Rate limit headers:
+
 ```
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95

@@ -17,9 +17,11 @@ The following production features have been implemented:
 ## 1. Database Persistence (TimescaleDB)
 
 ### Files Created
+
 - [`app/database/timescale_models.py`](app/database/timescale_models.py) - Time-series models
 
 ### Features
+
 - **Hypertables** for efficient time-series storage:
   - `OHLCVBar` - Price data with automatic partitioning
   - `TradeTick` - High-frequency trade data
@@ -56,9 +58,11 @@ data = TimeSeriesQueries.get_ohlcv_range(session, "BTCUSDT", "1h", start, dateti
 ## 2. Production-Grade Structured Logging
 
 ### Files Created
+
 - [`app/core/logging_production.py`](app/core/logging_production.py) - Production logging
 
 ### Features
+
 - **JSON Formatting** with Elastic Common Schema (ECS) compatibility
 - **Correlation IDs** for distributed tracing
 - **Sensitive Data Masking** for API keys, passwords, tokens
@@ -140,6 +144,7 @@ logger.log_risk_violation(
 ## 3. Containerized Deployment
 
 ### Files Created
+
 - [`docker/Dockerfile.production`](docker/Dockerfile.production) - Multi-stage Dockerfile
 - [`docker-compose.production.yml`](docker-compose.production.yml) - Full production stack
 - [`docker/prometheus/prometheus.yml`](docker/prometheus/prometheus.yml) - Prometheus config
@@ -201,11 +206,13 @@ docker-compose -f docker-compose.production.yml up -d --scale api=3
 ## 4. Hardened Risk Engine
 
 ### Files Created
+
 - [`app/risk/hardened_risk_engine.py`](app/risk/hardened_risk_engine.py) - Hardened risk engine
 
 ### Features
 
 #### Circuit Breakers
+
 - **VaR Circuit** - Trips when VaR approaches limit
 - **Drawdown Circuit** - Trips on drawdown threshold
 - **Daily Loss Circuit** - Trips on daily loss limit
@@ -213,6 +220,7 @@ docker-compose -f docker-compose.production.yml up -d --scale api=3
 - **Concentration Circuit** - Trips on concentration risk
 
 #### Kill Switches
+
 - `MANUAL` - Manual activation
 - `DRAWDOWN` - Automatic on max drawdown
 - `VAR_BREACH` - Automatic on VaR breach
@@ -222,6 +230,7 @@ docker-compose -f docker-compose.production.yml up -d --scale api=3
 - `SYSTEM_ERROR` - Automatic on system errors
 
 #### Position Limits
+
 - Single position size limit (default 10%)
 - Sector concentration limit (default 25%)
 - Asset class limit (default 50%)
@@ -229,6 +238,7 @@ docker-compose -f docker-compose.production.yml up -d --scale api=3
 - Maximum leverage (default 5x)
 
 #### Risk Levels
+
 - `GREEN` - Normal operations
 - `YELLOW` - Caution - increased monitoring
 - `ORANGE` - Warning - reduce exposure
@@ -288,6 +298,7 @@ print(f"Risk level: {status['risk_level']}")
 ## 5. CI/CD Pipeline
 
 ### Files Created
+
 - [`.github/workflows/ci-cd-production.yml`](.github/workflows/ci-cd-production.yml) - Production CI/CD
 
 ### Pipeline Stages
@@ -352,6 +363,7 @@ gh workflow run ci-cd-production.yml \
 ## Testing
 
 ### Test File
+
 - [`tests/test_production_features.py`](tests/test_production_features.py)
 
 ### Run Tests
@@ -400,10 +412,10 @@ docker-compose -f docker-compose.production.yml up -d
 
 ### 4. Access Services
 
-- Dashboard: http://localhost:8050
-- API: http://localhost:8000
-- Grafana: http://localhost:3000
-- Prometheus: http://localhost:9090
+- Dashboard: <http://localhost:8050>
+- API: <http://localhost:8000>
+- Grafana: <http://localhost:3000>
+- Prometheus: <http://localhost:9090>
 
 ---
 
@@ -412,6 +424,7 @@ docker-compose -f docker-compose.production.yml up -d
 ### Grafana Dashboards
 
 Import the following dashboards:
+
 - Node Exporter Full (ID: 1860)
 - Redis Dashboard (ID: 11835)
 - PostgreSQL Database (ID: 9628)
@@ -470,18 +483,21 @@ cache_hit_ratio
 ### Common Issues
 
 1. **TimescaleDB not available**
+
    ```bash
    # Check if extension is installed
    docker exec -it trading-postgres psql -U trading -d trading -c "SELECT * FROM pg_extension WHERE extname = 'timescaledb';"
    ```
 
 2. **Circuit breaker stuck open**
+
    ```python
    # Reset circuit breaker
    engine.reset_circuit_breaker("var")
    ```
 
 3. **Kill switch won't deactivate**
+
    ```python
    # Force deactivate
    engine.deactivate_kill_switch(KillSwitchType.MANUAL)
@@ -497,6 +513,7 @@ cache_hit_ratio
 ## Support
 
 For issues or questions:
+
 1. Check the logs: `docker-compose logs -f trading-system`
 2. Review metrics in Grafana
 3. Check circuit breaker status: `engine.get_risk_status(portfolio)`

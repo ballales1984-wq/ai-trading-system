@@ -33,6 +33,7 @@ Result: Robust parameters that work forward
 ## Alpha Sources (18+ Data Sources)
 
 ### Price Data
+
 | Source | Type | Purpose |
 |--------|------|---------|
 | Binance | WebSocket | Real-time OHLCV, Order Book |
@@ -40,6 +41,7 @@ Result: Robust parameters that work forward
 | Alpha Vantage | REST API | Technical indicators |
 
 ### Sentiment
+
 | Source | Type | Purpose |
 |--------|------|---------|
 | NewsAPI | REST API | Financial news headlines |
@@ -47,18 +49,21 @@ Result: Robust parameters that work forward
 | Reddit | REST API | Market sentiment |
 
 ### Macro
+
 | Source | Type | Purpose |
 |--------|------|---------|
 | Trading Economics | REST API | GDP, inflation, rates |
 | FRED | REST API | US economic data |
 
 ### On-Chain
+
 | Source | Type | Purpose |
 |--------|------|---------|
 | Glassnode | REST API | Blockchain metrics |
 | CoinGlass | REST API | Liquidations, funding |
 
 ### Alternative
+
 | Source | Type | Purpose |
 |--------|------|---------|
 | GDELT | Periodic | Global events |
@@ -77,8 +82,9 @@ Risk of Ruin Formula:
 P_ruin = ((1 - W) / (1 + W)) ^ N
 
 Where:
+
 - W = Win rate (e.g., 0.60)
-- W = (avg_win * win_rate - avg_loss * (1 - win_rate)) / avg_loss
+- W = (avg_win *win_rate - avg_loss* (1 - win_rate)) / avg_loss
 - N = Number of consecutive losses to ruin (capital / position_size)
 
 ### Risk of Ruin Matrix
@@ -122,18 +128,22 @@ Where:
 ### Overall Interpretation
 
 The system **significantly outperforms Buy & Hold on a risk-adjusted basis**:
+
 - **Similar/higher returns** (+5.3% annual CAGR)
 - **Dramatically lower risk** (6× lower drawdown)
 - **Exceptional capital efficiency** (Sharpe ×2.4, Sortino ×2.2, Calmar ×8)
 
-### Key Strengths:
+### Key Strengths
+
 - Extreme downside protection → survives 2022 crypto winter with minimal drawdown
 - Probabilistic edge (Monte Carlo 5-levels + HMM + dynamic sizing)
 - Infrastructure focus → not just signals, but real uncertainty management
 
 ### Realistic 2026 Assessment
+
 Values are ambitious but plausible for 2020-2024 backtest (bull extremes + bear avoided thanks to regime detection).
 Benchmark metrics in line with independent reports (Glassnode, Fidelity Digital Assets):
+
 - Buy & Hold Sharpe crypto ~0.7–1.0
 - Calmar passive ~0.4–0.9
 
@@ -144,6 +154,7 @@ Benchmark metrics in line with independent reports (Glassnode, Fidelity Digital 
 ## System Data Flow
 
 External Data Layer:
+
 - Binance (WebSocket)
 - CoinGecko (REST)
 - NewsAPI (REST)
@@ -152,22 +163,25 @@ External Data Layer:
 - GDELT (Periodic)
 
 Event Bus (Async Pub/Sub):
+
 - MARKET_DATA -> SIGNALS -> DECISION -> EXECUTION -> ORDERS
 
 Core Engines:
+
 - Alpha Lab (Research)
 - Decision Engine (5-Question)
 - Risk Engine (VaR/CVaR/GARCH)
 
 Execution Layer:
+
 - TWAP Algorithm
 - VWAP Algorithm
 - POV Algorithm
 - Adaptive Algorithm
 
 Broker Connectors:
+
 - Binance (Live)
 - Bybit (Live)
 - Interactive Brokers
 - Paper Trading
-

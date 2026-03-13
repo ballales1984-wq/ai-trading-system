@@ -7,9 +7,11 @@ Base URL: `http://localhost:8000`
 ### Health & Status
 
 #### GET /health
+
 Health check endpoint.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -19,9 +21,11 @@ Health check endpoint.
 ```
 
 #### GET /ready
+
 Readiness check for Kubernetes.
 
 **Response:**
+
 ```json
 {
   "ready": true,
@@ -34,9 +38,11 @@ Readiness check for Kubernetes.
 ```
 
 #### GET /status
+
 Get full system status.
 
 **Response:**
+
 ```json
 {
   "mode": "paper_trading",
@@ -53,12 +59,15 @@ Get full system status.
 ### Market Data
 
 #### GET /market/price/{symbol}
+
 Get current price for a symbol.
 
 **Parameters:**
+
 - `symbol` (path): Trading pair (e.g., BTCUSDT)
 
 **Response:**
+
 ```json
 {
   "symbol": "BTCUSDT",
@@ -70,9 +79,11 @@ Get current price for a symbol.
 ```
 
 #### GET /market/prices
+
 Get all tracked prices.
 
 **Response:**
+
 ```json
 {
   "prices": {
@@ -85,14 +96,17 @@ Get all tracked prices.
 ```
 
 #### GET /market/history/{symbol}
+
 Get price history.
 
 **Parameters:**
+
 - `symbol` (path): Trading pair
 - `interval` (query): Time interval (1m, 5m, 1h, 1d)
 - `limit` (query): Number of candles (default: 100)
 
 **Response:**
+
 ```json
 {
   "symbol": "BTCUSDT",
@@ -115,9 +129,11 @@ Get price history.
 ### Orders
 
 #### POST /orders
+
 Place a new order.
 
 **Request Body:**
+
 ```json
 {
   "symbol": "BTCUSDT",
@@ -131,6 +147,7 @@ Place a new order.
 ```
 
 **Response:**
+
 ```json
 {
   "order_id": "12345",
@@ -145,14 +162,17 @@ Place a new order.
 ```
 
 #### GET /orders
+
 Get all orders.
 
 **Parameters:**
+
 - `symbol` (query): Filter by symbol
 - `status` (query): Filter by status (PENDING, FILLED, CANCELLED)
 - `limit` (query): Number of orders (default: 50)
 
 **Response:**
+
 ```json
 {
   "orders": [
@@ -170,9 +190,11 @@ Get all orders.
 ```
 
 #### DELETE /orders/{order_id}
+
 Cancel an order.
 
 **Response:**
+
 ```json
 {
   "order_id": "12345",
@@ -186,9 +208,11 @@ Cancel an order.
 ### Portfolio
 
 #### GET /portfolio
+
 Get portfolio summary.
 
 **Response:**
+
 ```json
 {
   "total_value": 105000.00,
@@ -210,9 +234,11 @@ Get portfolio summary.
 ```
 
 #### GET /portfolio/positions
+
 Get all positions.
 
 **Response:**
+
 ```json
 {
   "positions": [
@@ -231,9 +257,11 @@ Get all positions.
 ```
 
 #### GET /portfolio/performance
+
 Get performance metrics.
 
 **Response:**
+
 ```json
 {
   "total_return": 5.0,
@@ -254,9 +282,11 @@ Get performance metrics.
 ### Risk
 
 #### GET /risk/metrics
+
 Get risk metrics.
 
 **Response:**
+
 ```json
 {
   "portfolio_var_95": -0.03,
@@ -269,9 +299,11 @@ Get risk metrics.
 ```
 
 #### GET /risk/metrics/{symbol}
+
 Get risk metrics for a specific symbol.
 
 **Response:**
+
 ```json
 {
   "symbol": "BTCUSDT",
@@ -289,9 +321,11 @@ Get risk metrics for a specific symbol.
 ```
 
 #### GET /risk/alerts
+
 Get recent risk alerts.
 
 **Response:**
+
 ```json
 {
   "alerts": [
@@ -308,9 +342,11 @@ Get recent risk alerts.
 ```
 
 #### POST /risk/position-size
+
 Get recommended position size.
 
 **Request Body:**
+
 ```json
 {
   "symbol": "BTCUSDT",
@@ -320,6 +356,7 @@ Get recommended position size.
 ```
 
 **Response:**
+
 ```json
 {
   "symbol": "BTCUSDT",
@@ -335,9 +372,11 @@ Get recommended position size.
 ### Strategy
 
 #### GET /strategy/signals
+
 Get recent trading signals.
 
 **Response:**
+
 ```json
 {
   "signals": [
@@ -355,9 +394,11 @@ Get recent trading signals.
 ```
 
 #### GET /strategy/performance
+
 Get strategy performance.
 
 **Response:**
+
 ```json
 {
   "strategies": {
@@ -374,9 +415,11 @@ Get strategy performance.
 ```
 
 #### POST /strategy/optimize
+
 Run strategy optimization.
 
 **Request Body:**
+
 ```json
 {
   "strategy": "momentum",
@@ -386,6 +429,7 @@ Run strategy optimization.
 ```
 
 **Response:**
+
 ```json
 {
   "optimization_id": "opt_123",
@@ -399,9 +443,11 @@ Run strategy optimization.
 ### Monte Carlo
 
 #### GET /montecarlo/simulation/{symbol}
+
 Get latest simulation results.
 
 **Response:**
+
 ```json
 {
   "symbol": "BTCUSDT",
@@ -429,11 +475,13 @@ Get latest simulation results.
 ## WebSocket API
 
 ### Connection
+
 ```
 ws://localhost:8000/ws
 ```
 
 ### Subscribe to Market Data
+
 ```json
 {
   "action": "subscribe",
@@ -443,6 +491,7 @@ ws://localhost:8000/ws
 ```
 
 ### Subscribe to Signals
+
 ```json
 {
   "action": "subscribe",
@@ -451,6 +500,7 @@ ws://localhost:8000/ws
 ```
 
 ### Subscribe to Risk Alerts
+
 ```json
 {
   "action": "subscribe",
@@ -459,6 +509,7 @@ ws://localhost:8000/ws
 ```
 
 ### Message Format
+
 ```json
 {
   "channel": "market_data",

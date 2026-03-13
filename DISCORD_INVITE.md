@@ -5,16 +5,19 @@ Join our growing community of AI trading enthusiasts, developers, and quantitati
 ## Why Join?
 
 ### 🚀 Get Help & Support
+
 - Ask questions about setup and configuration
 - Get help troubleshooting issues
 - Share your trading strategies and results
 
 ### 💡 Share Knowledge
+
 - Discuss AI trading algorithms
 - Share market insights and analysis
 - Collaborate on new features
 
 ### 📈 Learn & Grow
+
 - Access exclusive tutorials and guides
 - Participate in trading competitions
 - Get early access to new features
@@ -22,18 +25,21 @@ Join our growing community of AI trading enthusiasts, developers, and quantitati
 ## Community Channels
 
 ### 📊 Trading Discussion
+
 - #general: General chat and announcements
 - #trading-strategies: Share and discuss trading strategies
 - #market-analysis: Technical and fundamental analysis
 - #performance: Share your trading results
 
 ### 🛠️ Development
+
 - #development: Development discussions and help
 - #bugs: Report and track bugs
 - #features: Suggest new features
 - #code-review: Code review and feedback
 
 ### 📚 Learning
+
 - #tutorials: Share and request tutorials
 - #resources: Share useful resources and tools
 - #q-a: Ask and answer questions
@@ -66,6 +72,7 @@ Join our growing community of AI trading enthusiasts, developers, and quantitati
 ## Moderators
 
 Our team of experienced traders and developers are here to help:
+
 - @Moderator1 (Trading Strategy Expert)
 - @Moderator2 (Frontend Developer)
 - @Moderator3 (Backend Developer)
@@ -80,4 +87,4 @@ Our team of experienced traders and developers are here to help:
 
 ## Contact
 
-For any issues with the Discord server, please contact the moderators or email support@aitrading-system.com
+For any issues with the Discord server, please contact the moderators or email <support@aitrading-system.com>

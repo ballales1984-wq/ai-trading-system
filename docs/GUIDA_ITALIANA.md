@@ -13,6 +13,7 @@ Questo è un sistema di trading algoritmico avanzato che utilizza l'intelligenza
 Il paper trading permette di simulare operazioni di trading senza usare soldi reali. È il modo più sicuro per testare il sistema.
 
 **Come avviarlo:**
+
 ```bash
 # Windows
 start_paper_trading.bat
@@ -22,6 +23,7 @@ python start_paper_trading.py
 ```
 
 **A cosa serve:**
+
 - Testare le strategie di trading senza rischiare denaro reale
 - Vedere come il sistema performa in condizioni di mercato reali
 - Imparare come funziona il sistema
@@ -34,6 +36,7 @@ python start_paper_trading.py
 Il live trading esegue operazioni reali sui mercati. **Usare con estrema cautela!**
 
 **Come avviarlo:**
+
 ```bash
 # Windows
 start_ai_trading.bat
@@ -43,10 +46,12 @@ python run_live.py
 ```
 
 **A cosa serve:**
+
 - Trading automatico con denaro reale
 - Richiede API keys degli exchange (Binance, Bybit, ecc.)
 
 **⚠️ AVVERTENZE IMPORTANTI:**
+
 - Solo per utenti esperti
 - Iniziare sempre con il paper trading
 - Configurare correttamente le API keys
@@ -59,11 +64,13 @@ python run_live.py
 Il backend fornisce tutte le API per il trading system.
 
 **Come avviarlo:**
+
 ```bash
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 **Endpoint disponibili:**
+
 - `http://localhost:8000` - Documentazione API
 - `http://localhost:8000/docs` - Swagger UI
 - `http://localhost:8000/api/v1/market/prices` - Prezzi mercato
@@ -76,14 +83,16 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 L'interfaccia web per visualizzare e controllare il sistema.
 
 **Come avviarlo:**
+
 ```bash
 cd frontend
 npm run dev
 ```
 
-**Poi aprire:** http://localhost:5173
+**Poi aprire:** <http://localhost:5173>
 
 **Pagine disponibili:**
+
 - **Dashboard**: Panoramica del sistema e statistiche
 - **Portfolio**: Le tue posizioni e performance
 - **Market**: Dati di mercato in tempo reale
@@ -102,6 +111,7 @@ Per fare trading reale, devi configurare le API keys:
 3. **Altre exchange**: Configurare nel file `.env`
 
 Le variabili di ambiente da impostare:
+
 ```
 BINANCE_API_KEY=your_api_key
 BINANCE_SECRET_KEY=your_secret
@@ -112,6 +122,7 @@ BYBIT_SECRET_KEY=your_bybit_secret
 ### Database
 
 Il sistema usa PostgreSQL. Assicurati che il database sia avviato:
+
 ```bash
 # Con Docker
 docker-compose up -d postgres
@@ -124,15 +135,19 @@ docker-compose up -d postgres
 Il sistema include diverse strategie:
 
 ### Mean Reversion
+
 Cerca situazioni dove il prezzo si allontana troppo dalla media e torna indietro.
 
 ### Monte Carlo
+
 Utilizza simulazioni probabilistiche per decidere le operazioni.
 
 ### Montblanck
+
 Strategia proprietaria basata su analisi multi-timeframe.
 
 ### ML Enhanced
+
 Utilizza machine learning (XGBoost) per predire i movimenti di prezzo.
 
 ---
@@ -152,22 +167,26 @@ Il sistema include protezioni importanti:
 ## Comandi Utili
 
 ### Avvio rapido (tutto insieme)
+
 ```bash
 # Windows - avvia tutto
 start_stable.bat
 ```
 
 ### Test delle API
+
 ```bash
 python test_api.py
 ```
 
 ### Test del trading
+
 ```bash
 python test_paper_trading.py
 ```
 
 ### Monitoraggio
+
 ```bash
 python dashboard_realtime.py
 ```
@@ -177,14 +196,17 @@ python dashboard_realtime.py
 ## Risoluzione Problemi
 
 ### Il frontend non si connette all'API
+
 1. Verifica che il backend sia avviato sulla porta 8000
 2. Controlla che non ci siano errori nel terminale del backend
 
 ### Errori di connessione al database
+
 1. Verifica che PostgreSQL sia avviato
 2. Controlla le credenziali nel file `.env`
 
 ### Operazioni non eseguite
+
 1. Controlla di avere soldi nel portafoglio (paper o reale)
 2. Verifica che le API keys siano configurate
 3. Controlla i log nella cartella `logs/`
@@ -215,6 +237,7 @@ ai-trading-system/
 ## Supporto
 
 Per problemi o domande:
+
 1. Controllare i file di log nella cartella `logs/`
 2. Consultare la documentazione in `docs/`
 3. Testare con `python test_api.py`
@@ -229,4 +252,3 @@ Per problemi o domande:
 - **Fai backup regolari del database**
 
 Buon trading! 🚀
-

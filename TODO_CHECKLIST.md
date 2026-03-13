@@ -15,6 +15,7 @@ REMAINING:    ░░░░░░░░░░░░░░░░░░░░░░
 ## Daily Checklist - ALL COMPLETED ✅
 
 ### Day 1: Live Multi-Asset Streaming ✅
+
 | Task | Status | Notes |
 |------|--------|-------|
 | Agganciare WebSocket Binance per tutti gli asset supportati | ✅ | `app/market_data/websocket_stream.py` |
@@ -24,6 +25,7 @@ REMAINING:    ░░░░░░░░░░░░░░░░░░░░░░
 | Verificare gestione ordini + stop-loss in tempo reale | ✅ | `src/core/execution/order_manager.py` |
 
 ### Day 2: HFT & Multi-Agent Market ✅
+
 | Task | Status | Notes |
 |------|--------|-------|
 | Controllare loop tick-by-tick in `hft_simulator.py` | ✅ | `src/hft/` |
@@ -32,6 +34,7 @@ REMAINING:    ░░░░░░░░░░░░░░░░░░░░░░
 | Integrare output HFT nel `TradingEngine` | ✅ | `src/core/engine.py` |
 
 ### Day 3: AutoML / Strategy Evolution / RL ✅
+
 | Task | Status | Notes |
 |------|--------|-------|
 | Configurare workflow evolutivo per segnali ML | ✅ | `src/automl/` |
@@ -40,6 +43,7 @@ REMAINING:    ░░░░░░░░░░░░░░░░░░░░░░
 | Test preliminare con PaperBroker | ✅ | `tests/test_evolution.py` |
 
 ### Day 4: Dashboard & Telegram Alerts ✅
+
 | Task | Status | Notes |
 |------|--------|-------|
 | Verificare candlestick + indicatori su dashboard | ✅ | `dashboard/app.py` |
@@ -48,6 +52,7 @@ REMAINING:    ░░░░░░░░░░░░░░░░░░░░░░
 | Ottimizzare grafici e refresh live | ✅ | `dashboard_realtime_graphs.py` |
 
 ### Day 5: Testing Finale & Rifiniture ✅
+
 | Task | Status | Notes |
 |------|--------|-------|
 | Eseguire `python test_core.py` | ✅ | 5 passed |
@@ -58,6 +63,7 @@ REMAINING:    ░░░░░░░░░░░░░░░░░░░░░░
 | Fare commit finale + tag versione 2.0 | ✅ | v2.0.0 |
 
 ### Day 6: Production Features ✅
+
 | Task | Status | Notes |
 |------|--------|-------|
 | TimescaleDB time-series models | ✅ | `app/database/timescale_models.py` |

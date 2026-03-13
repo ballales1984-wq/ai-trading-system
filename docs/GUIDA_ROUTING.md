@@ -100,6 +100,7 @@ export default defineConfig({
 ```
 
 **Come funziona il proxy**:
+
 - Quando il frontend chiama `/api/v1/...`, Vite intercetta la richiesta
 - La inoltra al backend su `http://localhost:8000`
 - Risponde al frontend come se fosse la stessa origine
@@ -334,12 +335,13 @@ app.include_router(
 ### 3. Testare l'endpoint
 
 Avviare il server:
+
 ```
 bash
 python -m uvicorn app.main:app --reload
 ```
 
-Visitare: http://localhost:8000/docs
+Visitare: <http://localhost:8000/docs>
 
 ---
 
@@ -386,10 +388,10 @@ class Settings(BaseSettings):
 
 ## Link Utili
 
-- Documentazione React Router: https://reactrouter.com/
-- Documentazione FastAPI: https://fastapi.tiangolo.com/
-- Swagger UI (API docs): http://localhost:8000/docs
-- ReDoc (API docs alternative): http://localhost:8000/redoc
+- Documentazione React Router: <https://reactrouter.com/>
+- Documentazione FastAPI: <https://fastapi.tiangolo.com/>
+- Swagger UI (API docs): <http://localhost:8000/docs>
+- ReDoc (API docs alternative): <http://localhost:8000/redoc>
 
 ---
 

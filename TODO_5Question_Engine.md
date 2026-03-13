@@ -6,6 +6,7 @@
 ---
 
 ## Phase 1: 5-Question Methods ✅
+
 - [x] 1. `answer_what()` - What to buy/sell (ML + technical) → Line 1133
 - [x] 2. `answer_why()` - Reason Score (0.6*Macro + 0.4*Sentiment) → Line 1200
 - [x] 3. `answer_how_much()` - Position sizing (max_pos * reason_score) → Line 1254
@@ -13,15 +14,18 @@
 - [x] 5. `answer_risk()` - Risk checks (VaR/CVaR, limits) → Line 1330
 
 ## Phase 2: Integration ✅
+
 - [x] 6. `unified_decision()` method combining all 5 questions → Line 1418
 - [x] 7. Macro Score fetching from external APIs → Integrated in `answer_why()`
 - [x] 8. VaR/CVaR integration with risk engine → Integrated in `answer_risk()`
 
 ## Phase 3: Feedback Loop ✅
+
 - [x] 9. Decision logging for feedback loop → Implemented via logger
 - [x] 10. Config weights (0.6*Macro + 0.4*Sentiment) → Line 1238
 
 ## Phase 4: Testing ✅
+
 - [x] 11. Test the new decision flow → `test_hedge_fund_features.py`
 - [x] 12. Verify all components work together → `TestFiveQuestionDecisionEngine` class
 
@@ -53,4 +57,3 @@ Each method returns a dictionary with specific keys:
 | `answer_when()` | when_score, probability_up, confidence, var_95 |
 | `answer_risk()` | risk_score, passed, reason, var_95, cvar_95 |
 | `unified_decision()` | Complete decision with all 5 answers |
-
