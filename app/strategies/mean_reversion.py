@@ -60,13 +60,29 @@ class MeanReversionStrategy(BaseStrategy):
     
     def generate_signal(self, data: pd.DataFrame) -> Optional[TradingSignal]:
         """
-        Generate mean reversion trading signal.
+        Generate mean reversion signal using Bollinger Bands (2σ) + Z-score confluence.
+        
+        LONG entry: price <= BB_lower OR zscore < -threshold (oversold)
+        SHORT entry: price >= BB_upper OR zscore > threshold (overbought)  
+        FLAT exit: price crosses BB_middle (mean reversion complete)
+        
+        Z-score threshold tuning:
+        * Conservative: 2.0 (standard normal extremes)
+        * Aggressive: 1.5 (more frequent signals)
+        * Extreme: 2.5 (high-confidence only)
+        
+        Confidence scaling: base 0.65 + normalized z-score contribution
         
         Args:
-            data: DataFrame with OHLCV data
+            data: pd.DataFrame OHLCV (open,high,low,close,volume indexed by time)
             
         Returns:
-            TradingSignal or None
+            TradingSignal with direction, confidence [0.3-0.95], stop/target levels
+            Metadata includes 'zscore', 'bb_position', 'distance_from_mean'
+            
+        Example:
+            zscore=-2.3 → LONG confidence=0.81 (extreme oversold)
+            close=48500, bb_lower=48700 → LONG (band touch)
         """
         if len(data) < self.lookback_period + 1:
             return None
