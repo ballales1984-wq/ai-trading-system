@@ -408,9 +408,27 @@ class RiskEngine:
         portfolio: Portfolio,
     ) -> RiskCheckResult:
         """
-        Check if an order passes risk limits.
+        Pre-execution order risk gatekeeper.
         
-        This is the core of the risk engine - every order must be validated.
+        Sequential checks (hard stops first):
+        1. Position limits (symbol/sector max)
+        2. VaR impact (historical/parametric sim)
+        3. Leverage (gross exposure)
+        4. Concentration (largest post-trade)
+        
+        Example rejection flow:
+            Order BTC 5x @65k → Position limit breach (25%→35%)
+            risk_score=75 → REJECT + audit log
+            
+        Returns RiskCheckResult (approved, score 0-100, reasons)
+        Threshold: score > 50 = REJECT
+        
+        Args:
+            symbol/side/quantity/price: Order details
+            portfolio: Current Portfolio snapshot
+            
+        Returns:
+            RiskCheckResult (approved=True if passes all gates)
         """
         reasons = []
         warnings = []
