@@ -137,7 +137,19 @@ class AuditLogger:
     Sistema avanzato di audit trail
     """
     
+    _instance = None
+    
+    def __new__(cls, storage_path: Optional[str] = None):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.__initialized = False
+        return cls._instance
+    
     def __init__(self, storage_path: Optional[str] = None):
+        if self.__initialized:
+            return
+        self.__initialized = True
+        
         self.events: List[AuditEvent] = []
         self.storage_path = storage_path
         self.user_sessions: Dict[str, Dict] = {}
