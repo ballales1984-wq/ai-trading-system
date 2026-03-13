@@ -581,8 +581,22 @@ class HardenedRiskEngine:
         order_pct: float,
         portfolio: Portfolio
     ) -> Dict[str, Any]:
-        """Check position size limit."""
-        # Find existing position
+        """
+        Symbol-level position sizing gate.
+        
+        Calculates post-trade exposure: existing + new order
+        Hard reject > max_position_pct (10%)
+        Warn at 80% threshold
+        
+        Args:
+            symbol: Trade symbol (e.g. 'BTCUSDT')
+            order_pct: order_value / portfolio.total_value
+            portfolio: Current positions/cash
+            
+        Returns:
+            {'passed': bool, 'reason'/'warning': str}
+        """
+        # Sum existing exposure for symbol (net or gross based on config)
         existing_value = sum(
             pos.market_value for pos in portfolio.positions
             if pos.symbol == symbol
@@ -643,7 +657,22 @@ class HardenedRiskEngine:
         order_value: float,
         portfolio: Portfolio
     ) -> Dict[str, Any]:
-        """Check leverage impact."""
+        """
+        Gross exposure leverage check.
+        
+        leverage = gross_exposure / equity
+        Hard stop > max_leverage (5x)
+        Warn > 80% limit
+        
+        Gross exposure sums abs(long + short) positions
+        
+        Args:
+            order_value: USD size of proposed order
+            portfolio: Current equity/positions
+            
+        Returns:
+            {'passed': bool, reason/warning}
+        """
         current_exposure = sum(abs(pos.market_value) for pos in portfolio.positions)
         new_exposure = current_exposure + order_value
         new_leverage = new_exposure / portfolio.total_value if portfolio.total_value > 0 else 1.0
