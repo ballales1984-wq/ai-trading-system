@@ -455,14 +455,41 @@ class BacktestEngine:
             
         return candles
     
-    async def _run_simulation(
+async def _run_simulation(
         self,
         strategy,
         historical_data: Dict[str, List[OHLCV]],
         symbols: List[str]
-    ):
-        """Run the backtest simulation"""
-        # Find the maximum length
+    ) -> None:
+        """
+        Run the core backtest simulation loop.
+        
+        Iterates through historical data time steps:
+        1. Update price context for each symbol (OHLCV arrays)
+        2. Update open positions with current prices (unrealized P&L)
+        3. Generate trading signals from strategy.generate_signal()
+        4. Execute signals as market orders via _execute_signal()
+        5. Process pending orders (_process_orders)
+        6. Record equity curve point (capital + positions value)
+        
+        Handles realistic market effects:
+        - Slippage (configurable models)
+        - Commissions (maker/taker)
+        - Latency simulation
+        - Partial fills / position sizing
+        
+        Args:
+            strategy: Instance implementing generate_signal(symbol, context) -> Signal
+            historical_data: Dict[str symbol, List[OHLCV candles]]
+            symbols: List[str] of all tradeable symbols
+            
+        Returns:
+            None (mutates engine state: capital, positions, trades, equity_curve)
+            
+        Raises:
+            ValueError: Invalid data lengths or missing symbols
+        """
+        # Find the maximum length across all symbols
         max_length = max(len(data) for data in historical_data.values())
         
         # Create context data for strategy
@@ -585,9 +612,37 @@ class BacktestEngine:
         price: float,
         confidence: float = 1.0
     ) -> float:
-        """Calculate position size based on risk management"""
-        # Use fixed position sizing (2% of capital)
+        """
+        Risk-based position sizing (Kelly-inspired fixed fractional).
+        
+        Uses 2% capital risk per trade, scaled by signal confidence.
+        Applies min_order_size and max_position_size limits.
+        
+        Formula: position_value = capital * 0.02 * confidence
+                 quantity = position_value / price
+        
+        Args:
+            action: 'buy' or 'sell' (unused, symmetric sizing)
+            price: Current market price
+            confidence: Signal strength [0.0, 1.0]
+            
+        Returns:
+            Quantity to trade (floored to min_order_size)
+        """
+        # Fixed fractional risk (2% capital per trade) * confidence scaling
         position_value = self.capital * 0.02 * confidence
+        
+        # Respect max position size config
+        max_position_value = self.capital * self.config.max_position_size
+        position_value = min(position_value, max_position_value)
+        
+        # Convert USD value to quantity
+        quantity = position_value / price
+        
+        # Enforce exchange minimums
+        quantity = max(quantity, self.config.min_order_size)
+        
+        return quantity
         
         # Apply max position limit
         max_position_value = self.capital * self.config.max_position_size
@@ -754,9 +809,25 @@ class BacktestEngine:
         return self.capital + positions_value
     
     def _calculate_results(self) -> BacktestResult:
-        """Calculate comprehensive backtest results"""
+        """
+        Calculate 15+ comprehensive performance metrics post-simulation.
+        
+        Metrics computed:
+        * Returns: total_return, total_return_pct
+        * Trade stats: total_trades, win_rate, avg_win/loss, profit_factor, expectancy
+        * Risk: max_drawdown/pct, Sharpe/Sortino/Calmar ratios, recovery_factor
+        * Equity: full curve with timestamps/capital/positions_value
+        
+        Annualization assumes 252 trading days, hourly data.
+        
+        Returns:
+            BacktestResult dataclass with all metrics populated
+            
+        Note:
+            Handles edge cases: zero trades, empty equity curve.
+        """
         end_time = datetime.utcnow()
-        execution_time = (end_time - self.start_time).total_seconds()
+        execution_time = (end_time - self.start_time).total_seconds() if self.start_time else 0
         
         # Calculate final equity
         if self.positions:
