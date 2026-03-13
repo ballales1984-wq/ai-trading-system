@@ -54,13 +54,28 @@ class MomentumStrategy(BaseStrategy):
     
     def generate_signal(self, data: pd.DataFrame) -> Optional[TradingSignal]:
         """
-        Generate momentum-based trading signal.
+        Momentum signal with RSI + MACD histogram divergence confluence.
+        
+        LONG confluence: RSI < oversold (30) AND MACD hist crossover +ve (momentum shift)
+        SHORT confluence: RSI > overbought (70) AND MACD hist crossover -ve
+        
+        Exit: RSI neutral (50) or stop/target hit
+        
+        RSI levels tuning:
+        * Conservative: oversold=25, overbought=75 (fewer signals)
+        * Standard: 30/70 (balanced)
+        * Aggressive: 35/65 (more frequent)
+        
+        Trend filter: SMA20 vs SMA50 (bullish if SMA20>SMA50)
         
         Args:
-            data: DataFrame with OHLCV data
+            data: OHLCV DataFrame (requires indicators: rsi, macd_hist, sma_20/50)
             
         Returns:
-            TradingSignal or None
+            TradingSignal with metadata {'rsi', 'macd', 'trend'}
+            
+        Example:
+            rsi=28, MACD hist -0.001→+0.002, SMA20>SMA50 → LONG (0.85 conf)
         """
         if len(data) < self.lookback_period + 1:
             return None
