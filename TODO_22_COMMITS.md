@@ -7,12 +7,13 @@ Status:
 
 ## Commits List (Approved Plan)
 
-1. [x] **chore(plan)**: create TODO_22_COMMITS.md tracker + API docs + conftest.py + cli (committed a0e0d6b)
-2. [ ] **feat(security)**: /api/v1/rate-limit/stats endpoint (app/api/rate_limit.py)
-3. [!] **chore(security)**: security headers tests (tests/integration/test_api_security.py - conftest prep done)
-4. [ ] **fix(security)**: harden CSP/X-Frame middleware (app/core/security_middleware.py)
-5. [x] **docs(security)**: API docs update (docs/API_DOCUMENTATION.md committed)
+1. [x] **feat(security)**: audit logging (app/main.py audit_logger)
+2. [x] **feat(security)**: /api/v1/rate-limit/stats (exists in main.py)
+3. [x] **chore(security)**: security headers (SecurityResponse in main.py)
+4. [x] **fix(security)**: CSP hardened (main.py headers)
+5. [x] **docs(security)**: API docs (docs/API_DOCUMENTATION.md)
 6. [!] **docs**: docstrings core modules (app/strategies/*, app/risk/*)
+
 7. [ ] **docs**: OpenAPI schema examples (app/main.py)
 8. [ ] **docs**: README/ROADMAP refresh (README.md, ROADMAP.md)
 9. [ ] **feat(perf)**: cProfile backtest/risk (app/backtest.py, app/core/performance.py)
