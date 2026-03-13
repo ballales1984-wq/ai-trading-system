@@ -1,48 +1,54 @@
-# AI Trading System - Master TODO for Mid-Level Promotion & SaaS Polish
+# AI Trading System - 100 Days Piano + Master TODO
+## 🎯 APPROVED PLAN EXECUTION - Following 100 Giorni Piano
 
-## 🎯 Objective
-Implement 3 strategic moves from evaluation:
-1. **Structure**: Max tests, logging, clean arch.
-2. **Complete Project**: Finish backtest/risk engine.
-3. **Production Polish**: SaaS-ready demo, GitHub credibility.
+**Status**: [PLAN APPROVED ✅ | EDITS PENDING] Lint cleanup plan confirmed. Next: execute file fixes.
 
-Progress tracked here. Updates after each step.
+### 📅 100 Days Piano Mapping
+- **Days 1-25**: Study codebase + local run → Complete.
+- **Days 26-50**: Indicators + paper trading → Pending.
+- **Days 51-75**: Flows + tests → Pending.
+- **Days 76-100**: Polish + demo → Pending.
 
-## 📋 Step-by-Step Plan (Approved)
+### 📋 Granular Steps from Approved Plan
 
-### Phase 1: Setup & Tracking ✅
-- [x] Analyzed codebase (FastAPI, agents, tests, docs via tools)
-- [x] Created this TODO.md ✅
-- [x] pytest running (background); dev server up
+#### Phase 1: Cleanup (Days 1-10) [5/5 → 6/6]
+- [x] Update .gitignore (node_modules, .history, pycs, temps).
+- [x] git rm --cached junk + commit \"Cleanup repo\".
+- [x] Rebase dates (git rebase --root --exec date fix) or new commits.
+- [x] PyInstaller slim exe (<100MB): desktop_app/ --exclude torch/matplotlib.
+- [x] pytest tests/ --cov (126+ tests collecting, test_backtest.py: 6 solid tests - RUNNING ✅).
+- [ ] **Lint cleanup: Fix MD013/MD012/MD022 etc. in 100_GIORNI_PIANO.md/README.md/TODO.md** [IN PROGRESS]
 
-### Phase 2: Frontend Polish ✅ (100% TS clean)
-- [x] Fixed ErrorBoundary.tsx resetError
-- [x] Dev server running (localhost:5177, no errors)
-- [x] frontend/TODO.md was already COMPLETE
+#### Phase 2: Core Polish (Days 11-30) [0/4]
+- [ ] Backtest real data: Hook Binance/Bybit loader (fix CMC 401).
+- [ ] Integrate scheduler.py + risk_engine.py tests.
+- [ ] HMM full impl (remove try/except stub).
+- [ ] Validate metrics not hardcoded (Sharpe/DD realistic).
 
-### Phase 3: Core Enhancements
-- [ ] Enhance app/backtest.py: Real data loader, walk-forward, metrics (Sharpe, MDD)
-- [ ] Add tests/test_backtest.py (unit + integration)
-- [ ] Integrate logging in strategies/ (momentum.py, mean_reversion.py)
+#### Phase 3: Tests/Validate (Days 31-50) [0/3]
+- [ ] pytest full coverage >80%.
+- [ ] docker-compose up → localhost:8000 paper trading.
+- [ ] Frontend dev: npm run dev → TS clean.
 
-### Phase 4: API & SaaS Polish
-- [ ] app/main.py: Add rate limiting, Stripe waitlist
-- [ ] docs/DEPLOYMENT_GUIDE.md (new): Render/Vercel + env setup
+#### Phase 4: Demo/SaaS (Days 51-75) [0/4]
+- [ ] Render/Vercel deploy.
+- [ ] README badges/GIF demo.
+- [ ] v2.1.1 release exe attach.
+- [ ] Discord/GA4 waitlist.
 
-### Phase 5: Docs & Demo
-- [ ] Update README.md: Badges, GIF demo, SaaS pitch
-- [ ] Update ROADMAP.md: v1.2 ✅, SaaS milestones
-- [ ] Run full tests: `pytest tests/ -v`
-- [ ] Demo command: `start_frontend_and_backend.bat`
+#### Phase 5: Final (Days 76-100) [0/2]
+- [ ] Video demo.
+- [ ] Star hunt + production tests.
 
-## 🚀 100-Day Alignment (User Phases Integrated)
-- **Days 1-25**: Study + local run → Phase 1-2 here.
-- **Days 26-50**: Indicators + paper trading → Backtest enhancements.
-- **Days 51-75**: Flows + tests → Phase 3-4.
-- **Days 76-100**: Polish + demo → Phase 5.
+### 🔧 Commands to Run
+```
+# Lint verify after fixes
+npx markdownlint-cli2 "**/*.md"
+# Phase 1 complete → Phase 2
+pytest tests/ -v
+docker-compose up -d
+```
 
-## Next Step
-Run `pytest --cov` and reply with output for Step 1 complete.
-
-**Status: Ready for implementation. Edit this file after each step.**
+**Next**: Execute lint fixes on 3 MD files. Update status post-edits.
+**Progress**: 25% (Cleanup near-complete). Edit after Phase 1 ✅.
 
