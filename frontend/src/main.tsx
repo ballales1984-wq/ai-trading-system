@@ -16,7 +16,7 @@ import { createRoot } from 'react-dom/client'
  
   const root = createRoot(document.getElementById('root')!);
   root.render(
-    <ErrorBoundary fallbackRender={(_error, resetError) => (
+    <ErrorBoundary fallbackRender={(_, resetError) => (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="bg-surface border border-border rounded-lg p-6 max-w-md w-full">
           <div className="text-center">
@@ -45,10 +45,10 @@ import { createRoot } from 'react-dom/client'
         </div>
       </div>
     )}>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  </ErrorBoundary>
   );
 
 

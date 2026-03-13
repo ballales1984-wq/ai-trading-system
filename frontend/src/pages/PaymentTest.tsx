@@ -105,11 +105,11 @@ export default function PaymentTest() {
               </p>
             </div>
             <button
-              onClick={handleCheckoutTest}
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium"
-              aria-disabled={String(loading)}
-            >
+  onClick={handleCheckoutTest}
+  disabled={loading}
+  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium"
+  aria-disabled={loading}
+>
               {loading ? (
                 <span className="flex items-center justify-center">
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -132,12 +132,12 @@ export default function PaymentTest() {
             Redirect diretto a Stripe Payment Link (più semplice)
           </p>
           <button
-            onClick={handlePaymentLinkTest}
-            disabled={!isPaymentLinkConfigured}
-            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium"
-            aria-disabled={String(!isPaymentLinkConfigured)}
-            aria-label={isPaymentLinkConfigured ? 'Test Payment Link' : 'Payment Link not configured'}
-          >
+  onClick={handlePaymentLinkTest}
+  disabled={!isPaymentLinkConfigured}
+  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium"
+  aria-disabled={!isPaymentLinkConfigured}
+  aria-label={isPaymentLinkConfigured ? 'Test Payment Link' : 'Payment Link not configured'}
+>
             Test Payment Link
           </button>
         </div>

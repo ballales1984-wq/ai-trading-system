@@ -152,7 +152,7 @@ export default function Dashboard() {
                      <Legend 
                        verticalAlign="top" 
                        height={36} 
-                       formatter={(value) => `Portfolio Value ($)`}
+                       formatter={(_) => `Portfolio Value ($)`}
                      />
                     {/* Area chart with smooth gradient */}
                     <Area 
