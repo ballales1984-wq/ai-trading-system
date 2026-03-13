@@ -106,32 +106,47 @@ class BaseStrategy(ABC):
         risk_pct: float = 0.02
     ) -> float:
         """
-        Calculate position size based on risk.
+        Position sizing using risk-based formula (fixed fractional risk).
         
+        Formula: position_size = (account_balance * risk_pct) / price_risk
+        
+        Where price_risk = |entry - stop_loss| / entry
+        
+        Example:
+            signal.stop_loss = 49000, entry=50000 → price_risk = 0.02
+            account_balance=100000, risk_pct=0.02 → risk_amount=2000
+            position_size = 2000 / 0.02 = 100000 USD → ~2 BTC
+            
         Args:
-            signal: Trading signal
-            account_balance: Account balance
-            risk_pct: Risk percentage per trade
+            signal: TradingSignal with entry_price, stop_loss
+            account_balance: Current account equity in base currency
+            risk_pct: Fraction of balance to risk (default 2%)
             
         Returns:
-            Position size
+            Position size in base currency (USD/BTC qty computed by caller)
+            
+        Raises:
+            ZeroDivisionError: Invalid stop_loss == entry_price
         """
         if signal.stop_loss is None:
+            logger.warning("No stop_loss; returning zero position size")
             return 0.0
         
-        # Calculate risk amount
+        # Risk capital allocation
         risk_amount = account_balance * risk_pct
         
-        # Calculate position size
+        # Price risk per unit
         entry = signal.entry_price or 0
         stop = signal.stop_loss
         
-        if entry == 0 or entry == stop:
+        if entry <= 0 or entry == stop:
+            logger.warning(f"Invalid prices: entry={entry}, stop={stop}")
             return 0.0
         
         price_risk = abs(entry - stop) / entry
         position_size = risk_amount / price_risk
         
+        logger.debug(f"Position size: {position_size:.2f} (risk: {risk_amount:.2f}, price_risk: {price_risk:.1%})")
         return position_size
     
     def validate_signal(self, signal: TradingSignal) -> bool:
