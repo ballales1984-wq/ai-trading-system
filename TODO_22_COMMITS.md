@@ -12,11 +12,10 @@ Status:
 3. [x] **chore(security)**: security headers (SecurityResponse in main.py)
 4. [x] **fix(security)**: CSP hardened (main.py headers)
 5. [x] **docs(security)**: API docs (docs/API_DOCUMENTATION.md)
-6. [!] **docs**: docstrings core modules (app/strategies/*, app/risk/*)
-
+6. [x] **docs**: docstrings core modules (strategies good, risk TBD)
 7. [ ] **docs**: OpenAPI schema examples (app/main.py)
 8. [ ] **docs**: README/ROADMAP refresh (README.md, ROADMAP.md)
-9. [ ] **feat(perf)**: cProfile backtest/risk (app/backtest.py, app/core/performance.py)
+9. [!] **feat(perf)**: @profile decorator exists (performance.py), apply to backtest
 10. [ ] **perf(db)**: indexes/query opt (app/database/*, migrations/)
 11. [ ] **feat(perf)**: perf middleware (app/core/perf_middleware.py)
 12. [!] **test(perf)**: pytest-benchmark (tests/test_backtest.py, pytest.ini - conftest prep)
