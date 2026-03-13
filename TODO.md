@@ -10,11 +10,11 @@ From evaluation report (7.2/10 → target 9+/10). Tracking progress on security,
 ## 1. Security Hardening (Priority 1)
 - [x] Add security middleware to `app/main.py` (HSTS, CSP, X-Frame-Options, Referrer-Policy) **DONE**
 - [x] Integrate rate limit middleware globally **DONE**
-- [ ] Add audit logging to key API routes (orders, portfolio, risk)
+- [x] Add audit logging to key API routes (orders, portfolio, risk)
 - [ ] Add rate limiting stats endpoint `/api/v1/rate-limit/stats`
 - [ ] Security headers testing & validation
 
-**Progress: 3/25 items complete**
+**Progress: 4/25 items complete**
 
 ## 2. Code Documentation (Priority 2)
 - [x] Comprehensive docstrings for core modules (`app/backtest.py`, `app/strategies/*`, `app/risk/*`) [DONE]
@@ -25,7 +25,7 @@ From evaluation report (7.2/10 → target 9+/10). Tracking progress on security,
 - [ ] Update README.md with security/performance sections
 
 ## 3. Performance Optimization (Priority 3)
-- [ ] Add cProfile decorators to critical paths (`backtest.py`, risk calcs)
+- [x] Add cProfile decorators to critical paths (`backtest.py`, risk calcs)
 - [ ] Database query optimization (indexing, async improvements)
 - [ ] Add performance monitoring middleware
 - [ ] Benchmark critical functions (pytest-benchmark)

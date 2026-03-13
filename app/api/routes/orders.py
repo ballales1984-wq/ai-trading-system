@@ -109,23 +109,28 @@ async def create_order(order: OrderCreate, request: Request) -> OrderResponse:
     Create a new order.
     
     The order goes through the risk engine before execution.
+    
+    Audit logged via compliance.audit.AuditLogger.
     """
     user_id = request.headers.get("Authorization", "anonymous").replace("Bearer ", "") if request.headers.get("Authorization") else "anonymous"
     
-    # Log audit event
+    # Log audit event - AUDIT INTEGRATION
     audit_logger.log_event(
         AuditEvent(
             event_type=AuditEventType.ORDER_CREATED,
             user_id=user_id,
             ip_address=request.client.host,
             resource_type="order",
-            action=f"Create order {order.symbol} {order.side}",
+            resource_id="pending",  # Will be updated after ID generation
+            action=f"Create order {order.symbol} {order.side} QTY:{order.quantity}",
             details={
                 "symbol": order.symbol,
                 "side": order.side,
                 "quantity": order.quantity,
                 "price": order.price,
-                "strategy_id": order.strategy_id
+                "stop_price": order.stop_price,
+                "strategy_id": order.strategy_id,
+                "broker": order.broker
             }
         )
     )
