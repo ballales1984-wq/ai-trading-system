@@ -20,6 +20,8 @@ from app.core.demo_mode import get_demo_mode
 
 logger = logging.getLogger(__name__)
 
+from app.compliance.audit import audit_logger, AuditEvent, AuditEventType
+
 
 router = APIRouter()
 
@@ -102,12 +104,32 @@ emergency_stop_active: bool = False
 # ============================================================================
 
 @router.post("", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
-async def create_order(order: OrderCreate) -> OrderResponse:
+async def create_order(order: OrderCreate, request: Request) -> OrderResponse:
     """
     Create a new order.
     
     The order goes through the risk engine before execution.
     """
+    user_id = request.headers.get("Authorization", "anonymous").replace("Bearer ", "") if request.headers.get("Authorization") else "anonymous"
+    
+    # Log audit event
+    audit_logger.log_event(
+        AuditEvent(
+            event_type=AuditEventType.ORDER_CREATED,
+            user_id=user_id,
+            ip_address=request.client.host,
+            resource_type="order",
+            action=f"Create order {order.symbol} {order.side}",
+            details={
+                "symbol": order.symbol,
+                "side": order.side,
+                "quantity": order.quantity,
+                "price": order.price,
+                "strategy_id": order.strategy_id
+            }
+        )
+    )
+    
     # Check if emergency stop is active
     if emergency_stop_active:
         raise HTTPException(
@@ -593,10 +615,25 @@ async def update_order(order_id: str, update: OrderUpdate) -> OrderResponse:
 
 
 @router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def cancel_order(order_id: str) -> None:
+async def cancel_order(order_id: str, request: Request) -> None:
     """
     Cancel a pending order.
     """
+    user_id = request.headers.get("Authorization", "anonymous").replace("Bearer ", "") if request.headers.get("Authorization") else "anonymous"
+    
+    # Log audit event before cancellation
+    audit_logger.log_event(
+        AuditEvent(
+            event_type=AuditEventType.ORDER_CANCELLED,
+            user_id=user_id,
+            ip_address=request.client.host,
+            resource_type="order",
+            resource_id=order_id,
+            action="Cancel order",
+            details={"order_id": order_id}
+        )
+    )
+    
     # Demo mode
     if get_demo_mode():
         if order_id not in demo_orders_db:
@@ -712,7 +749,7 @@ async def execute_order(order_id: str) -> OrderResponse:
 
 
 @router.post("/emergency-stop", response_model=EmergencyStopResponse)
-async def emergency_stop(request: EmergencyStopRequest) -> EmergencyStopResponse:
+async def emergency_stop(request: EmergencyStopRequest, request_obj: Request) -> EmergencyStopResponse:
     """
     Emergency stop - immediately halt all trading activity.
     
@@ -721,6 +758,24 @@ async def emergency_stop(request: EmergencyStopRequest) -> EmergencyStopResponse
     2. Cancels all pending orders
     3. Optionally closes all open positions
     """
+    user_id = request_obj.headers.get("Authorization", "admin").replace("Bearer ", "") if request_obj.headers.get("Authorization") else "admin"
+    
+    # Log emergency stop audit event (CRITICAL)
+    audit_logger.log_event(
+        AuditEvent(
+            event_type=AuditEventType.EMERGENCY_STOP,
+            user_id=user_id,
+            ip_address=request_obj.client.host,
+            action="Emergency stop activated",
+            risk_level="CRITICAL",
+            details={
+                "reason": request.reason,
+                "cancel_all_orders": request.cancel_all_orders,
+                "close_all_positions": request.close_all_positions
+            }
+        )
+    )
+    
     global emergency_stop_active
     
     cancelled_count = 0

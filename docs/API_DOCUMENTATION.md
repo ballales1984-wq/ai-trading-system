@@ -233,15 +233,90 @@ Get cache statistics.
 
 Clear cache.
 
-### Audit
+## Audit & Security
+
+### Audit Trail
 
 #### GET /api/audit/events
 
-Query audit events.
+Query audit events with filters.
+
+**Query:**
+- `event_type`: LOGIN|ORDER_CREATED|EMERGENCY_STOP
+- `user_id`: Filter user
+- `limit`: Max results (default 100)
+
+**Example:**
+```
+GET /api/audit/events?event_type=ORDER_CREATED&limit=10
+```
+
+**Response:**
+```json
+{
+  "events": [
+    {
+      "id": "uuid-123",
+      "timestamp": "2026-03-13T14:30:00Z",
+      "event_type": "ORDER_CREATED",
+      "user_id": "user456",
+      "ip_address": "192.168.1.100",
+      "resource_type": "order",
+      "resource_id": "order-789",
+      "action": "Create order BTCUSDT BUY",
+      "details": {
+        "symbol": "BTCUSDT",
+        "side": "buy",
+        "quantity": 0.01,
+        "strategy_id": "strat_001"
+      },
+      "risk_level": "low"
+    }
+  ],
+  "total": 50
+}
+```
 
 #### GET /api/audit/stats
 
-Get audit statistics.
+Audit statistics.
+
+**Response:**
+```json
+{
+  "total_events": 1250,
+  "by_type": {"ORDER_CREATED": 500, "LOGIN": 300, "EMERGENCY_STOP": 1},
+  "by_user": {"user456": 800},
+  "violations": 5,
+  "by_risk_level": {"low": 1100, "medium": 120, "high": 25, "critical": 5}
+}
+```
+
+### Rate Limiting Stats
+
+#### GET /api/v1/rate-limit/stats
+
+Current rate limit status.
+
+**Response:**
+```json
+{
+  "client_id": "192.168.1.100",
+  "minute_limit": 60,
+  "minute_remaining": 45,
+  "hour_remaining": 950,
+  "day_remaining": 9800,
+  "reset_minute": 1741975200
+}
+```
+
+### OpenAPI/Swagger
+
+Access interactive docs:
+- **Swagger UI:** `/docs`
+- **ReDoc:** `/redoc`
+- **OpenAPI JSON:** `/openapi.json`
+
 
 ### Performance
 

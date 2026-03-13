@@ -363,6 +363,8 @@ class AuditLogger:
         return True
 
 
+audit_logger_instance = AuditLogger()
+
 class ComplianceChecker:
     """
     Verifica compliance in tempo reale
