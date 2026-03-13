@@ -377,6 +377,9 @@ class AuditLogger:
 
 audit_logger_instance = AuditLogger()
 
+# Default export for easy import
+audit_logger = audit_logger_instance
+
 class ComplianceChecker:
     """
     Verifica compliance in tempo reale

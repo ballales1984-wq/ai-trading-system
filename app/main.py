@@ -65,7 +65,7 @@ app.add_middleware(
 logger.info(f"CORS enabled for origins: {cors_origins}")
 
 # Security Response class for headers
-class SecurityResponse(Response):
+class SecurityResponse(JSONResponse):
     def __init__(self, content: Any, status_code: int = 200, headers: dict | None = None, **kwargs):
         super().__init__(content, status_code, headers or {}, **kwargs)
         security_headers = {
@@ -95,7 +95,22 @@ async def rate_limit_middleware(request: Request, call_next):
             headers={"Retry-After": str(e.retry_after)}
         )
     response = await call_next(request)
-    return SecurityResponse(content=response.body, status_code=response.status_code, headers=dict(response.headers))
+    # Add security headers to response
+    security_headers = {
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "X-Frame-Options": "DENY",
+        "X-Content-Type-Options": "nosniff",
+        "X-XSS-Protection": "1; mode=block",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none';",
+        "Cross-Origin-Embedder-Policy": "require-corp",
+        "Cross-Origin-Opener-Policy": "same-origin",
+        "Cross-Origin-Resource-Policy": "same-origin"
+    }
+    for key, value in security_headers.items():
+        response.headers[key] = value
+    return response
 
 # Global audit logger
 audit_logger = AuditLogger()

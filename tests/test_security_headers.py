@@ -36,5 +36,5 @@ def test_rate_limit_stats():
     assert "count" in data
 
 if __name__ == "__main__":
-    pytest.main(["-v", __file__"])
+    pytest.main(["-v", __file__])
 
