@@ -15,7 +15,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-"baseUrl": ".",  // Deprecated in TS 7.0, ignoreDeprecations: "6.0" suppresses
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     },
@@ -25,3 +26,4 @@
   "references": [{ "path": "./tsconfig.node.json" }],
   "exclude": ["node_modules", "dist"]
 }
+
