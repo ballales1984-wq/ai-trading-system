@@ -14,7 +14,6 @@ interface NewsItem {
 const News = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'positive' | 'negative'>('all');
 
   useEffect(() => {

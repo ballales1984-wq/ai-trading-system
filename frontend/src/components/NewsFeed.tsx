@@ -96,27 +96,27 @@ export default function NewsFeed({ symbol, limit = 10, showFilters = true }: New
 }
 
 function NewsCard({ item }: { item: NewsItem }) {
-  const getSentimentIcon = (sentiment: string) => {
-    switch (sentiment) {
-      case 'positive':
-        return <TrendingUp className="w-4 h-4 text-success" />;
-      case 'negative':
-        return <TrendingDown className="w-4 h-4 text-danger" />;
-      default:
-        return <Minus className="w-4 h-4 text-text-muted" />;
-    }
-  };
+   const getSentimentIcon = (sentiment: string | undefined) => {
+     switch (sentiment) {
+       case 'positive':
+         return <TrendingUp className="w-4 h-4 text-success" />;
+       case 'negative':
+         return <TrendingDown className="w-4 h-4 text-danger" />;
+       default:
+         return <Minus className="w-4 h-4 text-text-muted" />;
+     }
+   };
 
-  const getSentimentColor = (sentiment: string) => {
-    switch (sentiment) {
-      case 'positive':
-        return 'bg-success/20 text-success border-success/30';
-      case 'negative':
-        return 'bg-danger/20 text-danger border-danger/30';
-      default:
-        return 'bg-text-muted/20 text-text-muted border-text-muted/30';
-    }
-  };
+   const getSentimentColor = (sentiment: string | undefined) => {
+     switch (sentiment) {
+       case 'positive':
+         return 'bg-success/20 text-success border-success/30';
+       case 'negative':
+         return 'bg-danger/20 text-danger border-danger/30';
+       default:
+         return 'bg-text-muted/20 text-text-muted border-text-muted/30';
+     }
+   };
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -138,9 +138,9 @@ function NewsCard({ item }: { item: NewsItem }) {
           <h3 className="text-sm font-medium text-text line-clamp-2 mb-1">
             {item.title}
           </h3>
-          <p className="text-xs text-text-muted line-clamp-2 mb-2">
-            {item.summary}
-          </p>
+           <p className="text-xs text-text-muted line-clamp-2 mb-2">
+             {item.summary ?? ''}
+           </p>
           
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-primary font-medium">
@@ -152,10 +152,10 @@ function NewsCard({ item }: { item: NewsItem }) {
               {formatTimeAgo(item.published_at)}
             </span>
             
-            <span className={`text-xs px-2 py-0.5 rounded border ${getSentimentColor(item.sentiment)} flex items-center gap-1`}>
-              {getSentimentIcon(item.sentiment)}
-              {item.sentiment.charAt(0).toUpperCase() + item.sentiment.slice(1)}
-            </span>
+             <span className={`text-xs px-2 py-0.5 rounded border ${getSentimentColor(item.sentiment)} flex items-center gap-1`}>
+               {getSentimentIcon(item.sentiment)}
+               {item.sentiment ? item.sentiment.charAt(0).toUpperCase() + item.sentiment.slice(1) : 'Neutral'}
+             </span>
             
             <span className="text-xs text-text-muted bg-surface px-2 py-0.5 rounded">
               {item.category}

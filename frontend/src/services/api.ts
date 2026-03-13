@@ -11,6 +11,7 @@ import type {
   Order,
   OrderCreate,
   EmergencyStatus,
+  MarketSentiment,
 } from '../types';
 
 // Use environment variable for API base URL
@@ -104,6 +105,11 @@ export const marketApi = {
 
   getOrderBook: async (symbol: string) => {
     const { data } = await api.get(`/market/orderbook/${symbol}`);
+    return data;
+  },
+
+  getSentiment: async (): Promise<MarketSentiment> => {
+    const { data } = await api.get<MarketSentiment>('/market/sentiment');
     return data;
   },
 };

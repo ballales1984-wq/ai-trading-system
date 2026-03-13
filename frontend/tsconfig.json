@@ -12,11 +12,10 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
-    "ignoreDeprecations": "6.0",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
+"baseUrl": ".",  // Deprecated in TS 7.0, ignoreDeprecations: "6.0" suppresses
     "paths": {
       "@/*": ["src/*"]
     },

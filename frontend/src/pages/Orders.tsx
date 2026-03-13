@@ -6,10 +6,16 @@ import { Plus, Play, X, Clock, CheckCircle, XCircle } from 'lucide-react';
 export default function Orders() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
-  const [newOrder, setNewOrder] = useState({
+  const [newOrder, setNewOrder] = useState<{
+    symbol: string;
+    side: 'BUY' | 'SELL';
+    order_type: 'market' | 'limit' | 'stop';
+    quantity: number;
+    broker: string;
+  }>({
     symbol: 'BTCUSDT',
     side: 'BUY',
-    order_type: 'MARKET',
+    order_type: 'market',
     quantity: 0.001,
     broker: 'paper',
   });
@@ -32,13 +38,13 @@ export default function Orders() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       setShowForm(false);
-      setNewOrder({
-        symbol: 'BTCUSDT',
-        side: 'BUY',
-        order_type: 'MARKET',
-        quantity: 0.001,
-        broker: 'paper',
-      });
+       setNewOrder({
+         symbol: 'BTCUSDT',
+         side: 'BUY' as const,
+         order_type: 'market' as const,
+         quantity: 0.001,
+         broker: 'paper',
+       });
     },
   });
 
@@ -155,7 +161,7 @@ export default function Orders() {
                 id="order-side"
                 name="side"
                 value={newOrder.side}
-                onChange={(e) => setNewOrder({ ...newOrder, side: e.target.value })}
+                 onChange={(e) => setNewOrder({ ...newOrder, side: e.target.value as 'BUY' | 'SELL' })}
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-text"
               >
                 <option value="BUY">BUY</option>

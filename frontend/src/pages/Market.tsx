@@ -219,11 +219,14 @@ export default function Market() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <XAxis dataKey="timestamp" stroke="#8b949e" fontSize={10} interval="preserveStartEnd" />
-                <YAxis stroke="#8b949e" fontSize={10} domain={['auto', 'auto']} tickFormatter={(v) => formatPrice(v)} />
+                <YAxis stroke="#8b949e" fontSize={10} domain={['auto', 'auto']} tickFormatter={(v) => v !== null && v !== undefined ? formatPrice(v) : ''} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
                   labelStyle={{ color: '#c9d1d9' }}
-                  formatter={(value: number) => [formatCurrency(value), 'Price']}
+                  formatter={(value: any) => {
+                    const numValue = typeof value === 'number' ? value : 0;
+                    return [formatCurrency(numValue), 'Price'];
+                  }}
                 />
                 <Line
                   type="monotone"
@@ -248,7 +251,10 @@ export default function Market() {
                 <YAxis stroke="#8b949e" fontSize={10} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
-                  formatter={(value: number) => [value.toFixed(2), 'Volume']}
+                  formatter={(value: any) => {
+                    const numValue = typeof value === 'number' ? value : 0;
+                    return [numValue.toFixed(2), 'Volume'];
+                  }}
                 />
                 <Bar dataKey="volume" fill="#3fb950" radius={[2, 2, 0, 0]} isAnimationActive={false} />
               </BarChart>
