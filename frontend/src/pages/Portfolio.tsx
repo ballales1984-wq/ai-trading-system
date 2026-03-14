@@ -15,16 +15,19 @@ interface SummaryCardProps {
 function SummaryCard({ title, value, icon: Icon, valueColor = 'text-text' }: SummaryCardProps) {
   const isPositive = valueColor === 'text-success';
   const isNegative = valueColor === 'text-danger';
-  
+
   return (
-    <div className={`glass-card rounded-xl p-4 card-shine ${isPositive ? 'metric-positive' : isNegative ? 'metric-negative' : 'metric-neutral'}`}>
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-text-muted text-sm font-medium">{title}</span>
-        <div className={`p-2 rounded-lg ${isPositive ? 'icon-bg-success' : isNegative ? 'icon-bg-danger' : 'icon-bg-primary'}`}>
-          <Icon className={`w-4 h-4 ${isPositive ? 'text-success' : isNegative ? 'text-danger' : 'text-primary'}`} />
+    <div className={`premium-glass-panel p-5 premium-glass-hover relative overflow-hidden group ${isPositive ? 'metric-positive' : isNegative ? 'metric-negative' : 'metric-neutral'}`}>
+      <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full blur-2xl opacity-10 transition-opacity group-hover:opacity-30 
+        ${isPositive ? 'bg-success' : isNegative ? 'bg-danger' : 'bg-primary'}`}></div>
+
+      <div className="flex items-center justify-between mb-3 relative z-10">
+        <span className="text-sm font-medium text-text-muted uppercase tracking-wider">{title}</span>
+        <div className={`p-2 rounded-lg bg-black/30 border ${isPositive ? 'border-success/30 text-success glow-success' : isNegative ? 'border-danger/30 text-danger glow-danger' : 'border-primary/30 text-primary glow-primary'}`}>
+          <Icon className="w-4 h-4" />
         </div>
       </div>
-      <div className={`text-2xl font-bold animate-count ${valueColor}`}>{value}</div>
+      <div className={`text-2xl lg:text-3xl font-bold font-mono-num relative z-10 ${valueColor}`}>{value}</div>
     </div>
   );
 }
@@ -84,7 +87,7 @@ export default function Portfolio() {
 
   const positionsList = Array.isArray(positions) ? positions : [];
 
-  const pieData = allocation?.by_symbol 
+  const pieData = allocation?.by_symbol
     ? Object.entries(allocation.by_symbol).map(([name, value]) => ({ name, value }))
     : [];
 
@@ -143,8 +146,11 @@ export default function Portfolio() {
         />
       </div>
 
-      <div className="mb-2">
-        <h3 className="text-lg font-semibold text-text">Simulated Account</h3>
+      <div className="mb-2 mt-8">
+        <h3 className="text-lg font-semibold text-text tracking-wide flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-yellow-500 glow-warning"></span>
+          Simulated Account
+        </h3>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <SummaryCard
@@ -172,12 +178,12 @@ export default function Portfolio() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-surface border border-border rounded-lg p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-text">Equity Curve</h2>
-            <Activity className="w-5 h-5 text-primary" />
+        <div className="premium-glass-panel overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.05] bg-white/[0.02]">
+            <h2 className="text-lg font-semibold text-text tracking-wide">Equity Curve</h2>
+            <Activity className="w-5 h-5 text-primary drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
           </div>
-          <div className="h-64">
+          <div className="h-64 p-4">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={historyData}>
                 <defs>
@@ -205,12 +211,12 @@ export default function Portfolio() {
           </div>
         </div>
 
-        <div className="bg-surface border border-border rounded-lg p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-text">Risk Metrics (VaR/CVaR)</h2>
-            <Shield className="w-5 h-5 text-danger" />
+        <div className="premium-glass-panel overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.05] bg-white/[0.02]">
+            <h2 className="text-lg font-semibold text-text tracking-wide">Risk Metrics (VaR/CVaR)</h2>
+            <Shield className="w-5 h-5 text-danger drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
           </div>
-          <div className="h-64">
+          <div className="h-64 p-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={riskData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
@@ -251,9 +257,11 @@ export default function Portfolio() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-surface border border-border rounded-lg p-4">
-          <h2 className="text-lg font-semibold text-text mb-4">Asset Allocation</h2>
-          <div className="h-64">
+        <div className="premium-glass-panel overflow-hidden">
+          <div className="px-6 py-4 border-b border-white/[0.05] bg-white/[0.02]">
+            <h2 className="text-lg font-semibold text-text tracking-wide">Asset Allocation</h2>
+          </div>
+          <div className="h-64 p-4">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -277,14 +285,16 @@ export default function Portfolio() {
           </div>
         </div>
 
-        <div className="bg-surface border border-border rounded-lg p-4">
-          <h2 className="text-lg font-semibold text-text mb-4">Trade Distribution</h2>
+        <div className="premium-glass-panel overflow-hidden">
+          <div className="px-6 py-4 border-b border-white/[0.05] bg-white/[0.02]">
+            <h2 className="text-lg font-semibold text-text tracking-wide">Trade Distribution</h2>
+          </div>
           {performanceLoading ? (
-            <div className="h-64 flex items-center justify-center text-text-muted">
+            <div className="h-64 flex items-center justify-center text-text-muted animate-pulse">
               Loading...
             </div>
           ) : (
-            <div className="h-64">
+            <div className="h-64 p-4">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={tradeData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
@@ -306,18 +316,18 @@ export default function Portfolio() {
       </div>
 
       {correlationMatrix && correlationMatrix.assets && correlationMatrix.matrix && (
-        <div className="bg-surface border border-border rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-text">Asset Correlation Matrix</h2>
+        <div className="premium-glass-panel mb-6 overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.05] bg-white/[0.02]">
+            <h2 className="text-lg font-semibold text-text tracking-wide">Asset Correlation Matrix</h2>
             <GitBranch className="w-5 h-5 text-primary" />
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto p-4">
             <table className="w-full">
               <thead>
                 <tr>
-                  <th className="p-2 text-text-muted font-medium text-sm"></th>
+                  <th className="p-2 text-left text-text-muted font-semibold text-xs uppercase tracking-wider">Asset</th>
                   {correlationMatrix.assets.map((asset: string) => (
-                    <th key={asset} className="p-2 text-text-muted font-medium text-sm text-center">
+                    <th key={asset} className="p-2 text-text-muted font-semibold text-xs uppercase tracking-wider text-center">
                       {asset.replace('USDT', '')}
                     </th>
                   ))}
@@ -334,19 +344,19 @@ export default function Portfolio() {
                         key={`${rowIndex}-${colIndex}`}
                         className="p-2 text-center text-sm font-medium"
                         style={{
-                          backgroundColor: rowIndex === colIndex 
-                            ? '#21262d' 
-                            : value > 0.7 
-                              ? 'rgba(248, 81, 73, 0.3)' 
-                              : value > 0.4 
-                                ? 'rgba(210, 153, 34, 0.3)' 
+                          backgroundColor: rowIndex === colIndex
+                            ? '#21262d'
+                            : value > 0.7
+                              ? 'rgba(248, 81, 73, 0.3)'
+                              : value > 0.4
+                                ? 'rgba(210, 153, 34, 0.3)'
                                 : 'rgba(63, 185, 80, 0.3)',
-                          color: rowIndex === colIndex 
-                            ? '#8b949e' 
-                            : value > 0.7 
-                              ? '#f85149' 
-                              : value > 0.4 
-                                ? '#d29922' 
+                          color: rowIndex === colIndex
+                            ? '#8b949e'
+                            : value > 0.7
+                              ? '#f85149'
+                              : value > 0.4
+                                ? '#d29922'
                                 : '#3fb950',
                         }}
                       >
@@ -361,23 +371,25 @@ export default function Portfolio() {
         </div>
       )}
 
-      <div className="glass-card rounded-xl p-0 overflow-hidden">
-        <div className="p-4 border-b border-border bg-gradient-to-r from-bg-secondary to-bg-tertiary">
-          <h2 className="text-lg font-semibold text-text">Open Positions</h2>
-          <p className="text-sm text-text-muted">Manage your active positions</p>
+      <div className="premium-glass-panel overflow-hidden">
+        <div className="px-6 py-5 border-b border-white/[0.05] bg-white/[0.02]">
+          <h2 className="text-lg font-semibold text-text tracking-wide flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-success glow-success animate-pulse"></span>
+            Open Positions
+          </h2>
+          <p className="text-sm text-text-muted mt-1">Manage your active market exposure</p>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full table-striped table-hover">
-            <thead>
-              <tr className="bg-bg-tertiary/70">
-                <th className="text-left py-3 px-4 text-text-muted font-medium text-sm uppercase">Symbol</th>
-                <th className="text-left py-3 px-4 text-text-muted font-medium text-sm uppercase">Side</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">Quantity</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">Entry Price</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">Current Price</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">Market Value</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">P&L</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium text-sm uppercase">P&L %</th>
+          <table className="w-full">
+            <thead className="bg-black/20">
+              <tr>
+                <th className="text-left py-4 px-6 text-text-muted font-semibold text-xs uppercase tracking-wider">Symbol</th>
+                <th className="text-left py-4 px-6 text-text-muted font-semibold text-xs uppercase tracking-wider">Side</th>
+                <th className="text-right py-4 px-6 text-text-muted font-semibold text-xs uppercase tracking-wider">Qty</th>
+                <th className="text-right py-4 px-6 text-text-muted font-semibold text-xs uppercase tracking-wider">Entry</th>
+                <th className="text-right py-4 px-6 text-text-muted font-semibold text-xs uppercase tracking-wider">Current</th>
+                <th className="text-right py-4 px-6 text-text-muted font-semibold text-xs uppercase tracking-wider">Value</th>
+                <th className="text-right py-4 px-6 text-text-muted font-semibold text-xs uppercase tracking-wider">P&L</th>
               </tr>
             </thead>
             <tbody>
@@ -389,24 +401,27 @@ export default function Portfolio() {
                   : 0;
                 const isProfit = position.unrealized_pnl >= 0;
                 return (
-                  <tr key={position.position_id} className="border-b border-border/30">
-                    <td className="py-3 px-4">
-                      <span className="font-semibold text-text">{position.symbol}</span>
+                  <tr key={position.position_id} className="border-b border-white/[0.05] hover:bg-white/[0.04] transition-colors">
+                    <td className="py-4 px-6">
+                      <span className="font-semibold text-text flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs">
+                          {position.symbol.charAt(0)}
+                        </div>
+                        {position.symbol.replace('USDT', '')}
+                      </span>
                     </td>
-                    <td className="py-3 px-4">
-                      <span className={`badge ${position.side === 'LONG' ? 'badge-success' : 'badge-danger'}`}>
+                    <td className="py-4 px-6">
+                      <span className={`px-2 py-1 rounded text-xs font-bold tracking-wider ${position.side === 'LONG' ? 'bg-success/10 text-success border border-success/30' : 'bg-danger/10 text-danger border border-danger/30'}`}>
                         {position.side}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right text-text font-mono">{position.quantity.toFixed(4)}</td>
-                    <td className="py-3 px-4 text-right text-text-muted font-mono">{formatCurrency(position.entry_price)}</td>
-                    <td className="py-3 px-4 text-right text-text font-mono">{formatCurrency(position.current_price)}</td>
-                    <td className="py-3 px-4 text-right text-text font-mono">{formatCurrency(position.market_value)}</td>
-                    <td className={`py-3 px-4 text-right font-semibold font-mono ${isProfit ? 'text-success' : 'text-danger'}`}>
-                      {formatCurrency(position.unrealized_pnl)}
-                    </td>
-                    <td className={`py-3 px-4 text-right font-semibold font-mono ${pnlPercent >= 0 ? 'text-success' : 'text-danger'}`}>
-                      {pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%
+                    <td className="py-4 px-6 text-right text-text font-mono-num">{position.quantity.toFixed(4)}</td>
+                    <td className="py-4 px-6 text-right text-text-muted font-mono-num">{formatCurrency(position.entry_price)}</td>
+                    <td className="py-4 px-6 text-right text-text font-mono-num">{formatCurrency(position.current_price)}</td>
+                    <td className="py-4 px-6 text-right text-text font-mono-num">{formatCurrency(position.market_value)}</td>
+                    <td className={`py-4 px-6 text-right font-medium font-mono-num ${isProfit ? 'text-success drop-shadow-[0_0_5px_rgba(34,197,94,0.3)]' : 'text-danger drop-shadow-[0_0_5px_rgba(239,68,68,0.3)]'}`}>
+                      <div className="text-lg">{formatCurrency(position.unrealized_pnl)}</div>
+                      <div className="text-xs opacity-80">{pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%</div>
                     </td>
                   </tr>
                 );
