@@ -8,8 +8,8 @@ Usa _safe_index() per essere resiliente a schemi parziali
 (es: SQLite locale, tabelle non ancora create, colonne mancanti).
 """
 
-from alembic import op
-import sqlalchemy as sa
+from alembic import op  # type: ignore[attr-defined]
+import sqlalchemy as sa  # type: ignore[attr-defined]
 
 # revision identifiers
 revision = 'add_performance_indexes'
