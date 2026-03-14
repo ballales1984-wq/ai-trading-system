@@ -1,90 +1,42 @@
-import { useState, useEffect } from 'react';
-import { api } from '../services/api';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { newsApi } from '../services/api';
+import { RefreshCw, Newspaper, TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react';
 
-interface NewsItem {
-  id: number;
-  title: string;
-  content: string;
-  source: string;
-  sentiment?: 'positive' | 'negative' | 'neutral';
-  published_at: string;
-  symbols?: string[];
-}
-
-const News = () => {
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function News() {
   const [filter, setFilter] = useState<'all' | 'positive' | 'negative'>('all');
+  
+  const { data, isLoading, isFetching, refetch } = useQuery({
+    queryKey: ['news'],
+    queryFn: () => newsApi.getNews({ limit: 50 }),
+  });
 
-  useEffect(() => {
-    fetchNews();
-  }, []);
-
-  const fetchNews = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/news');
-      setNews(response.data.news || []);
-    } catch (err) {
-      // Demo data fallback
-      setNews([
-        {
-          id: 1,
-          title: 'Market Update: BTC Reaches New Highs',
-          content: 'Bitcoin has surged past previous resistance levels...',
-          source: 'CryptoNews',
-          sentiment: 'positive',
-          published_at: new Date().toISOString(),
-          symbols: ['BTC', 'ETH']
-        },
-        {
-          id: 2,
-          title: 'Fed Announces Interest Rate Decision',
-          content: 'Federal Reserve maintains current interest rates...',
-          source: 'Financial Times',
-          sentiment: 'neutral',
-          published_at: new Date().toISOString(),
-          symbols: ['SPY', 'QQQ']
-        },
-        {
-          id: 3,
-          title: 'Tech Stocks Face Pressure',
-          content: 'Major tech companies report earnings below expectations...',
-          source: 'Bloomberg',
-          sentiment: 'negative',
-          published_at: new Date().toISOString(),
-          symbols: ['AAPL', 'MSFT', 'GOOGL']
-        }
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  const newsItems = data?.news || [];
+  
   const filteredNews = filter === 'all' 
-    ? news 
-    : news.filter(item => item.sentiment === filter);
+    ? newsItems 
+    : newsItems.filter((item: any) => item.sentiment === filter);
 
-  const getSentimentColor = (sentiment?: string) => {
+  const getSentimentIcon = (sentiment?: string) => {
     switch (sentiment) {
-      case 'positive': return 'text-green-500';
-      case 'negative': return 'text-red-500';
-      default: return 'text-gray-500';
+      case 'positive': return <TrendingUp size={14} className="text-success" />;
+      case 'negative': return <TrendingDown size={14} className="text-danger" />;
+      default: return <Minus size={14} className="text-text-muted" />;
     }
   };
 
   const getSentimentBg = (sentiment?: string) => {
     switch (sentiment) {
-      case 'positive': return 'bg-green-500/10 border-green-500/20';
-      case 'negative': return 'bg-red-500/10 border-red-500/20';
-      default: return 'bg-gray-500/10 border-gray-500/20';
+      case 'positive': return 'bg-success/10 border-success/30';
+      case 'negative': return 'bg-danger/10 border-danger/30';
+      default: return 'bg-white/5 border-white/10';
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -92,109 +44,92 @@ const News = () => {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Market News</h1>
-          <p className="text-gray-400">Latest financial news and sentiment analysis</p>
+          <h1 className="text-2xl font-bold text-text">Market Intelligence</h1>
+          <p className="text-text-muted">Real-time financial news and sentiment analysis</p>
         </div>
         
-        {/* Filter Buttons */}
-        <div className="flex gap-2">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
+            <FilterButton active={filter === 'all'} label="All" onClick={() => setFilter('all')} />
+            <FilterButton active={filter === 'positive'} label="Bullish" onClick={() => setFilter('positive')} />
+            <FilterButton active={filter === 'negative'} label="Bearish" onClick={() => setFilter('negative')} />
+          </div>
+          
           <button
-            onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'all'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="flex items-center justify-center p-2.5 bg-primary/10 text-primary border border-primary/30 rounded-xl hover:bg-primary/20 transition-all font-semibold"
+            title="Refresh News Feed"
           >
-            All
-          </button>
-          <button
-            onClick={() => setFilter('positive')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'positive'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
-          >
-            Positive
-          </button>
-          <button
-            onClick={() => setFilter('negative')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'negative'
-                ? 'bg-red-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
-          >
-            Negative
+            <RefreshCw size={18} className={isFetching ? 'animate-spin' : ''} />
           </button>
         </div>
       </div>
 
       {/* News Feed */}
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4">
         {filteredNews.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            No news available
+          <div className="premium-glass-panel py-20 text-center text-text-muted">
+            <Newspaper className="mx-auto mb-4 opacity-20" size={48} />
+            <p>No intelligence reports found for the selected filter.</p>
           </div>
         ) : (
-          filteredNews.map((item) => (
+          filteredNews.map((item: any) => (
             <div
               key={item.id}
-              className={`p-4 rounded-lg border ${getSentimentBg(item.sentiment)} backdrop-blur-sm`}
+              className="premium-glass-panel p-5 premium-glass-hover border-white/[0.05] flex flex-col md:flex-row gap-4"
             >
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-white mb-1">
-                    {item.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm">{item.content}</p>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1.5 ${getSentimentBg(item.sentiment)}`}>
+                    {getSentimentIcon(item.sentiment)}
+                    {item.sentiment || 'neutral'}
+                  </span>
+                  <span className="text-xs text-text-muted font-mono">{new Date(item.published_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
-                <span className={`px-2 py-1 rounded text-xs font-medium ${getSentimentColor(item.sentiment)}`}>
-                  {item.sentiment || 'neutral'}
-                </span>
+                <h3 className="text-lg font-bold text-text mb-2 leading-tight">
+                  {item.title}
+                </h3>
+                <p className="text-sm text-text-muted leading-relaxed line-clamp-3 md:line-clamp-2">
+                  {item.content}
+                </p>
               </div>
               
-              <div className="flex justify-between items-center mt-3 text-sm">
-                <div className="flex gap-4">
-                  <span className="text-gray-500">{item.source}</span>
-                  <span className="text-gray-500">
-                    {new Date(item.published_at).toLocaleDateString()}
-                  </span>
+              <div className="flex flex-col justify-between items-end shrink-0 pt-2 md:pt-0">
+                <div className="flex gap-1.5 flex-wrap justify-end">
+                  {item.symbols?.map((symbol: string) => (
+                    <span
+                      key={symbol}
+                      className="px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded text-[10px] font-bold"
+                    >
+                      {symbol}
+                    </span>
+                  ))}
                 </div>
-                
-                {item.symbols && (
-                  <div className="flex gap-1">
-                    {item.symbols.map((symbol) => (
-                      <span
-                        key={symbol}
-                        className="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded text-xs"
-                      >
-                        {symbol}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                <span className="text-xs text-text-muted font-semibold mt-4">Source: {item.source}</span>
               </div>
             </div>
           ))
         )}
       </div>
-
-      {/* Refresh Button */}
-      <div className="flex justify-center">
-        <button
-          onClick={fetchNews}
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-        >
-          Refresh News
-        </button>
-      </div>
     </div>
   );
-};
+}
 
-export default News;
+function FilterButton({ active, label, onClick }: any) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+        active 
+          ? 'bg-primary text-white shadow-lg glow-primary' 
+          : 'text-text-muted hover:text-text hover:bg-white/5'
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
 

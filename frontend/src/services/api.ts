@@ -178,15 +178,102 @@ export const emergencyApi = {
 };
 
 // Risk API
+export interface RiskMetrics {
+  var_1d: number;
+  var_5d: number;
+  cvar_1d: number;
+  cvar_5d: number;
+  volatility: number;
+  beta: number;
+  correlation_to_btc: number;
+  max_drawdown: number;
+  sharpe_ratio: number;
+  leverage: number;
+  margin_utilization: number;
+}
+
+export interface RiskLimit {
+  limit_id: string;
+  limit_type: string;
+  limit_value: number;
+  current_value: number;
+  limit_percentage: number;
+  is_breached: boolean;
+  severity: string;
+}
+
+export interface PositionRisk {
+  symbol: string;
+  position_size: number;
+  market_value: number;
+  var_contribution: number;
+  beta_weighted_exposure: number;
+  correlation_to_portfolio: number;
+  concentration_risk: number;
+}
+
 export const riskApi = {
-  getMetrics: async () => {
-    const { data } = await api.get('/risk/metrics');
+  getMetrics: async (): Promise<RiskMetrics> => {
+    const { data } = await api.get<RiskMetrics>('/risk/metrics');
+    return data;
+  },
+  getLimits: async (): Promise<RiskLimit[]> => {
+    const { data } = await api.get<RiskLimit[]>('/risk/limits');
+    return data;
+  },
+  getPositionRisks: async (): Promise<PositionRisk[]> => {
+    const { data } = await api.get<PositionRisk[]>('/risk/positions');
     return data;
   },
   getCorrelationMatrix: async () => {
     const { data } = await api.get('/risk/correlation');
     return data;
   },
+};
+
+// Strategy API
+export interface Strategy {
+  strategy_id: string;
+  name: string;
+  description: string;
+  strategy_type: string;
+  asset_classes: string[];
+  parameters: Record<string, any>;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StrategyPerformance {
+  strategy_id: string;
+  strategy_name: string;
+  total_return: number;
+  total_return_pct: number;
+  sharpe_ratio: number;
+  max_drawdown: number;
+  win_rate: number;
+  num_signals: number;
+  num_trades: number;
+  avg_trade_pnl: number;
+}
+
+export const strategyApi = {
+  list: async (params?: { strategy_type?: string; enabled_only?: boolean }): Promise<Strategy[]> => {
+    const { data } = await api.get<Strategy[]>('/strategy/', { params });
+    return data;
+  },
+  get: async (id: string): Promise<Strategy> => {
+    const { data } = await api.get<Strategy>(`/strategy/${id}`);
+    return data;
+  },
+  getPerformance: async (id: string): Promise<StrategyPerformance> => {
+    const { data } = await api.get<StrategyPerformance>(`/strategy/${id}/performance`);
+    return data;
+  },
+  run: async (id: string) => {
+    const { data } = await api.post(`/strategy/${id}/run`);
+    return data;
+  }
 };
 
 // News API
@@ -272,6 +359,22 @@ export const cacheApi = {
     const { data } = await api.delete<CacheClearResponse>('/cache/redis', {
       params: { pattern },
     });
+    return data;
+  },
+};
+
+// Health API
+export interface HealthStatus {
+  status: string;
+  timestamp: string;
+  service: string;
+  version: string;
+  environment: string;
+}
+
+export const healthApi = {
+  getStatus: async (): Promise<HealthStatus> => {
+    const { data } = await api.get<HealthStatus>('/health');
     return data;
   },
 };

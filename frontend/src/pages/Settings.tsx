@@ -1,7 +1,29 @@
-import React from 'react';
-import { Settings as SettingsIcon, User, Key, Bell, Globe } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { healthApi, cacheApi } from '../services/api';
+import { User, Key, Bell, Globe, Activity, Database, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
 
 export default function Settings() {
+  const queryClient = useQueryClient();
+
+  const { data: health, isLoading: healthLoading } = useQuery({
+    queryKey: ['health'],
+    queryFn: healthApi.getStatus,
+    refetchInterval: 30000,
+  });
+
+  const { data: cacheStats } = useQuery({
+    queryKey: ['cache-stats'],
+    queryFn: cacheApi.getStats,
+    refetchInterval: 30000,
+  });
+
+  const clearCacheMutation = useMutation({
+    mutationFn: cacheApi.clearAll,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cache-stats'] });
+    }
+  });
+
   return (
     <div className="p-6">
       <div className="mb-8">
@@ -15,9 +37,70 @@ export default function Settings() {
           <SettingsNav icon={Key} label="API Keys" />
           <SettingsNav icon={Bell} label="Notifications" />
           <SettingsNav icon={Globe} label="Regional" />
+          <SettingsNav icon={Activity} label="System Status" />
         </div>
 
         <div className="lg:col-span-2 space-y-6">
+          {/* System Health */}
+          <div className="premium-glass-panel p-6 border-white/[0.05]">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-text">System Health</h2>
+              {healthLoading ? <Loader2 size={18} className="animate-spin text-primary" /> : (
+                <div className="flex items-center gap-2">
+                  <span className={`w-2.5 h-2.5 rounded-full ${health?.status === 'healthy' ? 'bg-success animate-pulse' : 'bg-danger'}`} />
+                  <span className="text-xs font-bold uppercase tracking-wider">{health?.status || 'Unknown'}</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <HealthItem label="Environment" value={health?.environment || '...'} />
+              <HealthItem label="App Version" value={health?.version || '...'} />
+              <HealthItem label="Server Time" value={health ? new Date(health.timestamp).toLocaleTimeString() : '...'} />
+            </div>
+          </div>
+
+          {/* Cache Management */}
+          <div className="premium-glass-panel p-6 border-white/[0.05]">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Database className="text-primary" size={20} />
+                <h2 className="text-lg font-bold text-text">Cache Infrastructure</h2>
+              </div>
+              <button 
+                onClick={() => clearCacheMutation.mutate()}
+                disabled={clearCacheMutation.isPending}
+                className="flex items-center gap-2 px-3 py-1.5 bg-danger/10 text-danger border border-danger/30 rounded-lg hover:bg-danger/20 transition-all text-xs font-bold"
+              >
+                {clearCacheMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                Clear All
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/[0.05] rounded-xl">
+                <div>
+                  <div className="text-sm font-bold text-text">In-Memory Cache</div>
+                  <div className="text-xs text-text-muted mt-1">
+                    {cacheStats?.in_memory.size} entries | {((cacheStats?.in_memory.hit_rate || 0) * 100).toFixed(1)}% hit rate
+                  </div>
+                </div>
+                {cacheStats?.in_memory.available ? <CheckCircle2 size={20} className="text-success" /> : <Activity size={20} className="text-text-muted opacity-20" />}
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/[0.05] rounded-xl">
+                <div>
+                  <div className="text-sm font-bold text-text">Redis Distribution</div>
+                  <div className="text-xs text-text-muted mt-1">
+                    {cacheStats?.redis.keys} keys | {cacheStats?.redis.memory} used
+                  </div>
+                </div>
+                {cacheStats?.redis.connected ? <CheckCircle2 size={20} className="text-success" /> : <Activity size={20} className="text-danger" />}
+              </div>
+            </div>
+          </div>
+
+          {/* Original Settings Content */}
           <div className="premium-glass-panel p-6 border-white/[0.05]">
             <h2 className="text-lg font-bold text-text mb-6">Broker Connectivity</h2>
             <div className="space-y-6">
@@ -36,26 +119,17 @@ export default function Settings() {
               </button>
             </div>
           </div>
-
-          <div className="premium-glass-panel p-6 border-white/[0.05]">
-            <h2 className="text-lg font-bold text-text mb-6">User Preferences</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between text-sm py-2">
-                <span className="text-text">Compact UI Mode</span>
-                <span className="text-text-muted">Enabled</span>
-              </div>
-              <div className="flex items-center justify-between text-sm py-2 border-t border-white/[0.05]">
-                <span className="text-text">Sound Notifications</span>
-                <span className="text-text-muted">Disabled</span>
-              </div>
-              <div className="flex items-center justify-between text-sm py-2 border-t border-white/[0.05]">
-                <span className="text-text">Default Currency</span>
-                <span className="text-text-muted">USD</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function HealthItem({ label, value }: { label: string, value: string }) {
+  return (
+    <div className="p-3 bg-white/[0.02] border border-white/[0.05] rounded-xl">
+      <div className="text-[10px] text-text-muted uppercase font-bold mb-1 tracking-wider">{label}</div>
+      <div className="text-sm font-bold text-text">{value}</div>
     </div>
   );
 }
