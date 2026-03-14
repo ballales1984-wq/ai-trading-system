@@ -12,6 +12,7 @@ Security Features:
 """
 
 from datetime import datetime
+from typing import Any
 from fastapi import FastAPI
 from fastapi import Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,7 +28,7 @@ from app.core.security_middleware import (
     get_monitoring_middleware,
 )
 from app.compliance.audit import AuditLogger, AuditEvent, AuditEventType
-from app.api.routes import news, market, portfolio, orders, health, strategy, waitlist, cache, auth, risk
+from app.api.routes import news, market, portfolio, orders, health, strategy, waitlist, cache, auth, risk, ws
 from app.metrics import get_metrics_app, instrument_requests
 
 # Setup logging
@@ -174,6 +175,12 @@ app.include_router(
     risk,
     prefix=f"{settings.api_prefix}/risk",
     tags=["Risk"]
+)
+
+app.include_router(
+    ws,
+    prefix="/ws",
+    tags=["WebSocket"]
 )
 
 # Health check with audit

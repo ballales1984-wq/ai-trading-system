@@ -16,17 +16,22 @@ interface CandlestickChartProps {
     height?: number;
 }
 
-// Custom SVG path per disegnare la candela (body + wick)
 const CandlestickShape = (props: any) => {
-    const { x, width, open, close, high, low, yAxis } = props;
-    const isBull = close > open;
-    const fill = isBull ? 'hsl(var(--success))' : 'hsl(var(--danger))';
+    const { x, width, yAxis, payload } = props;
+    if (!payload || !yAxis?.scale) return null;
 
-    // Calcolo delle coordinate in pixel basate sulla YAxis scale fornita da Recharts
-    // Questo e' un hack visuale per Recharts che nativamente supporta solo Bar
-    // Utilizziamo un Bar chart "finto" passandogli [low, high] come range, ma customizziamo il path.
+    const open = Number(payload.open);
+    const close = Number(payload.close);
+    const high = Number(payload.high);
+    const low = Number(payload.low);
+
+    if (isNaN(open) || isNaN(close) || isNaN(high) || isNaN(low)) return null;
+
+    const isBull = close > open;
+    const fill = isBull ? '#22c55e' : '#ef4444'; // Use direct colors for reliability
 
     const scaleY = yAxis.scale;
+
     const highY = scaleY(high);
     const lowY = scaleY(low);
     const openY = scaleY(open);
@@ -34,15 +39,31 @@ const CandlestickShape = (props: any) => {
 
     const topBodyY = Math.min(openY, closeY);
     const bottomBodyY = Math.max(openY, closeY);
-    const bodyHeight = Math.max(1, bottomBodyY - topBodyY);
+    const bodyHeight = Math.max(2, bottomBodyY - topBodyY);
     const centerX = x + width / 2;
 
     return (
         <g>
-            {/* Wick (Hair) */}
-            <line x1={centerX} y1={highY} x2={centerX} y2={lowY} stroke={fill} strokeWidth={1.5} />
+            {/* Wick */}
+            <line 
+                x1={centerX} 
+                y1={highY} 
+                x2={centerX} 
+                y2={lowY} 
+                stroke={fill} 
+                strokeWidth={1.5} 
+            />
             {/* Body */}
-            <rect x={x} y={topBodyY} width={width} height={bodyHeight} fill={fill} stroke={fill} strokeWidth={1} rx={1} />
+            <rect 
+                x={x} 
+                y={topBodyY} 
+                width={Math.max(1, width)} 
+                height={bodyHeight} 
+                fill={fill} 
+                stroke={fill} 
+                strokeWidth={1} 
+                rx={1} 
+            />
         </g>
     );
 };
@@ -125,7 +146,7 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, symbol
             </div>
 
             <div style={{ width: '100%', height: height - 80 }}>
-                <ResponsiveContainer>
+                <ResponsiveContainer width="100%" height={height - 80}>
                     <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                         <XAxis

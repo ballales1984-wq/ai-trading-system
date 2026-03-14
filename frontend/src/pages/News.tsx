@@ -24,7 +24,7 @@ const News = () => {
     try {
       setLoading(true);
       const response = await api.get('/news');
-      setNews(response.data);
+      setNews(response.data.news || []);
     } catch (err) {
       // Demo data fallback
       setNews([

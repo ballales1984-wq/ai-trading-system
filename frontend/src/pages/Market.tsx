@@ -48,7 +48,7 @@ const fallbackPrices: PricesResponse = {
 // Generate deterministic fallback candles to prevent inconsistent renders
 const generateFallbackCandles = (): CandleData[] =>
   Array.from({ length: 50 }, (_, i) => ({
-    timestamp: new Date(Date.now() - (50 - i) * 3600000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+    timestamp: new Date(Date.now() - (50 - i) * 3600000).toISOString(),
     open: 43000 + i * 15,
     high: 44000 + i * 15,
     low: 42000 + i * 15,
@@ -128,8 +128,10 @@ export default function Market() {
     volume: candle.volume,
   })) || [];
 
-  // Get selected market data
-  const selectedMarket = pricesData?.markets?.find((m: MarketData) => m.symbol === selectedSymbol);
+  // Get selected market data with normalized symbol comparison
+  const selectedMarket = pricesData?.markets?.find((m: MarketData) =>
+    m.symbol.replace('/', '') === selectedSymbol.replace('/', '')
+  );
 
   return (
     <div className="p-6">
