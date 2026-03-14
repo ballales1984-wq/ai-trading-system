@@ -93,23 +93,23 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-2">
           {wsStatus === 'open' && (
-            <>
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <Wifi className="w-4 h-4 text-green-500" />
-              <span className="text-green-500 font-medium text-sm">WS Live</span>
-            </>
+            <div className="flex items-center gap-2 premium-glass px-3 py-1.5 rounded-full border-green-500/30">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse glow-success"></span>
+              <Wifi className="w-4 h-4 text-green-500 drop-shadow-[0_0_5px_rgba(34,197,94,0.5)]" />
+              <span className="text-green-500 font-medium text-sm tracking-wide">WS LIVE</span>
+            </div>
           )}
           {wsStatus === 'connecting' && (
-            <>
+            <div className="flex items-center gap-2 premium-glass px-3 py-1.5 rounded-full border-yellow-500/30">
               <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
-              <span className="text-yellow-500 font-medium text-sm">Connecting…</span>
-            </>
+              <span className="text-yellow-500 font-medium text-sm tracking-wide">CONNECTING</span>
+            </div>
           )}
           {(wsStatus === 'closed' || wsStatus === 'error') && (
-            <>
-              <WifiOff className="w-4 h-4 text-gray-500" />
-              <span className="text-gray-500 font-medium text-sm">Polling</span>
-            </>
+            <div className="flex items-center gap-2 premium-glass px-3 py-1.5 rounded-full border-gray-500/30">
+              <WifiOff className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-400 font-medium text-sm tracking-wide">POLLING</span>
+            </div>
           )}
         </div>
       </div>
@@ -124,9 +124,11 @@ export default function Dashboard() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-gray-800 rounded-xl p-4" style={{ minHeight: 300 }}>
-          <h3 className="text-lg font-semibold text-gray-100 mb-4">Portfolio Equity</h3>
-          <div className="h-72 w-full min-h-[280px]">
+        <div className="lg:col-span-2 premium-glass-panel overflow-hidden" style={{ minHeight: 300 }}>
+          <div className="p-6 border-b border-white/[0.05]">
+            <h3 className="text-lg font-semibold text-text tracking-wide">Portfolio Equity</h3>
+          </div>
+          <div className="h-72 w-full min-h-[280px] p-4">
             {!summaryLoading && historyData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
@@ -253,9 +255,11 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 bg-bg-secondary border border-border rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-text mb-4">Portfolio Equity</h3>
-                <div className="h-72 w-full min-h-[280px]">
+              <div className="lg:col-span-2 premium-glass-panel">
+                <div className="p-6 border-b border-white/[0.05]">
+                  <h3 className="text-lg font-semibold text-text tracking-wide">Portfolio Equity</h3>
+                </div>
+                <div className="h-72 w-full min-h-[280px] p-4">
                   {!summaryLoading && historyData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={historyData}>
@@ -289,28 +293,44 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
-              <div className="px-6 py-4 border-b border-border">
-                <h3 className="text-lg font-semibold text-text">Live Market Prices</h3>
+            <div className="premium-glass-panel overflow-hidden">
+              <div className="px-6 py-5 border-b border-white/[0.05] bg-white/[0.02]">
+                <h3 className="text-lg font-semibold text-text tracking-wide flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-primary glow-primary"></span>
+                  Live Market Prices
+                </h3>
               </div>
               <table className="w-full">
-                <thead className="bg-bg-tertiary">
+                <thead className="bg-black/20">
                   <tr>
-                    <th className="text-left px-6 py-3 text-sm font-medium text-text-muted">Symbol</th>
-                    <th className="text-right px-6 py-3 text-sm font-medium text-text-muted">Price</th>
-                    <th className="text-right px-6 py-3 text-sm font-medium text-text-muted">24h Change</th>
-                    <th className="text-right px-6 py-3 text-sm font-medium text-text-muted">Volume</th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Symbol</th>
+                    <th className="text-right px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Price</th>
+                    <th className="text-right px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">24h Change</th>
+                    <th className="text-right px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Volume</th>
                   </tr>
                 </thead>
                 <tbody>
                   {marketData.map((m: any) => (
-                    <tr key={m.symbol} className="border-t border-border hover:bg-bg-tertiary/50">
-                      <td className="px-6 py-3 font-medium text-text">{m.symbol.replace('USDT', '')}</td>
-                      <td className="px-6 py-3 text-right font-mono text-text">${m.price.toFixed(2)}</td>
-                      <td className={`px-6 py-3 text-right font-mono ${m.change_pct_24h >= 0 ? 'text-success' : 'text-danger'}`}>
-                        {formatPercent(m.change_pct_24h)}
+                    <tr key={m.symbol} className="border-t border-white/[0.05] hover:bg-white/[0.04] transition-colors">
+                      <td className="px-6 py-4 font-semibold text-text flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs">
+                          {m.symbol.charAt(0)}
+                        </div>
+                        {m.symbol.replace('USDT', '')}
                       </td>
-                      <td className="px-6 py-3 text-right text-text-muted">${(m.volume_24h / 1000000).toFixed(2)}M</td>
+                      <td className="px-6 py-4 text-right font-mono-num text-text text-lg">
+                        <span className={livePrices[m.symbol] ? (livePrices[m.symbol].change_pct_24h > 0 ? 'flash-green' : 'flash-red') : ''}>
+                          ${m.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                        </span>
+                      </td>
+                      <td className={`px-6 py-4 text-right font-mono-num ${m.change_pct_24h >= 0 ? 'text-success drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'text-danger drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]'}`}>
+                        <div className="bg-black/20 inline-block px-2 py-1 rounded-md">
+                          {formatPercent(m.change_pct_24h)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right font-mono-num text-text-muted">
+                        ${(m.volume_24h / 1000000).toFixed(2)}M
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -320,20 +340,20 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'positions' && (
-          <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-border">
-              <h3 className="text-lg font-semibold text-text">Open Positions ({positionsList.length})</h3>
+          <div className="premium-glass-panel overflow-hidden">
+            <div className="px-6 py-5 border-b border-white/[0.05] bg-white/[0.02]">
+              <h3 className="text-lg font-semibold text-text tracking-wide">Open Positions ({positionsList.length})</h3>
             </div>
             {positionsList.length > 0 ? (
               <table className="w-full">
-                <thead className="bg-bg-tertiary">
+                <thead className="bg-black/20">
                   <tr>
-                    <th className="text-left px-6 py-3 text-sm font-medium text-text-muted">Symbol</th>
-                    <th className="text-left px-6 py-3 text-sm font-medium text-text-muted">Side</th>
-                    <th className="text-right px-6 py-3 text-sm font-medium text-text-muted">Qty</th>
-                    <th className="text-right px-6 py-3 text-sm font-medium text-text-muted">Entry</th>
-                    <th className="text-right px-6 py-3 text-sm font-medium text-text-muted">Current</th>
-                    <th className="text-right px-6 py-3 text-sm font-medium text-text-muted">P&L</th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Symbol</th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Side</th>
+                    <th className="text-right px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Qty</th>
+                    <th className="text-right px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Entry</th>
+                    <th className="text-right px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Current</th>
+                    <th className="text-right px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider">P&L</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -341,19 +361,19 @@ export default function Dashboard() {
                     const pnl = p.unrealized_pnl || 0;
                     const pnlPercent = p.entry_price > 0 ? ((p.current_price - p.entry_price) / p.entry_price) * 100 : 0;
                     return (
-                      <tr key={p.position_id} className="border-t border-border">
-                        <td className="px-6 py-4 font-medium text-text">{p.symbol}</td>
+                      <tr key={p.position_id} className="border-t border-white/[0.05] hover:bg-white/[0.04]">
+                        <td className="px-6 py-4 font-semibold text-text">{p.symbol}</td>
                         <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${p.side === 'LONG' ? 'bg-success/20 text-success' : 'bg-danger/20 text-danger'}`}>
+                          <span className={`px-2 py-1 rounded text-xs font-bold tracking-wider ${p.side === 'LONG' ? 'bg-success/10 text-success border border-success/30' : 'bg-danger/10 text-danger border border-danger/30'}`}>
                             {p.side}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right text-text font-mono">{p.quantity.toFixed(4)}</td>
-                        <td className="px-6 py-4 text-right text-text-muted font-mono">{formatCurrency(p.entry_price)}</td>
-                        <td className="px-6 py-4 text-right text-text font-mono">{formatCurrency(p.current_price)}</td>
-                        <td className={`px-6 py-4 text-right font-medium font-mono ${pnl >= 0 ? 'text-success' : 'text-danger'}`}>
-                          <div>{formatCurrency(pnl)}</div>
-                          <div className="text-xs">{pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%</div>
+                        <td className="px-6 py-4 text-right text-text font-mono-num">{p.quantity.toFixed(4)}</td>
+                        <td className="px-6 py-4 text-right text-text-muted font-mono-num">{formatCurrency(p.entry_price)}</td>
+                        <td className="px-6 py-4 text-right text-text font-mono-num">{formatCurrency(p.current_price)}</td>
+                        <td className={`px-6 py-4 text-right font-medium font-mono-num ${pnl >= 0 ? 'text-success drop-shadow-[0_0_5px_rgba(34,197,94,0.3)]' : 'text-danger drop-shadow-[0_0_5px_rgba(239,68,68,0.3)]'}`}>
+                          <div className="text-lg">{formatCurrency(pnl)}</div>
+                          <div className="text-xs opacity-80">{pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%</div>
                         </td>
                       </tr>
                     );
@@ -428,15 +448,23 @@ function MetricCard({ title, value, icon: Icon, trend, color }: { title: string;
   const isNegative = color === 'danger' || (trend !== undefined && trend < 0);
 
   return (
-    <div className="glass rounded-xl p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm text-text-muted">{title}</span>
-        <Icon className={`w-4 h-4 ${isPositive ? 'text-success' : isNegative ? 'text-danger' : 'text-text'}`} />
+    <div className="premium-glass-panel p-5 premium-glass-hover relative overflow-hidden group">
+      {/* Decorative gradient blob */}
+      <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full blur-2xl opacity-20 transition-opacity group-hover:opacity-40 
+        ${isPositive ? 'bg-success' : isNegative ? 'bg-danger' : 'bg-primary'}`}></div>
+
+      <div className="flex items-center justify-between mb-3 relative z-10">
+        <span className="text-sm font-medium text-text-muted uppercase tracking-wider">{title}</span>
+        <div className={`p-2 rounded-lg bg-black/30 border ${isPositive ? 'border-success/30 text-success glow-success' : isNegative ? 'border-danger/30 text-danger glow-danger' : 'border-primary/30 text-primary glow-primary'}`}>
+          <Icon className="w-4 h-4" />
+        </div>
       </div>
-      <div className={`text-xl font-bold ${isPositive ? 'text-success' : isNegative ? 'text-danger' : 'text-text'}`}>{value}</div>
+      <div className={`text-2xl lg:text-3xl font-bold font-mono-num relative z-10 ${isPositive ? 'text-success' : isNegative ? 'text-danger' : 'text-text'}`}>
+        {value}
+      </div>
       {trend !== undefined && (
-        <div className={`text-xs mt-1 ${trend >= 0 ? 'text-success' : 'text-danger'}`}>
-          {trend >= 0 ? '↑' : '↓'} {Math.abs(trend).toFixed(2)}%
+        <div className={`text-sm mt-2 font-medium flex items-center gap-1 relative z-10 ${trend >= 0 ? 'text-success' : 'text-danger'}`}>
+          {trend >= 0 ? '▲' : '▼'} {Math.abs(trend).toFixed(2)}% <span className="text-text-muted ml-1 font-normal text-xs uppercase">vs ieri</span>
         </div>
       )}
     </div>
