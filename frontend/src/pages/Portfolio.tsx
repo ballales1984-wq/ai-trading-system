@@ -102,7 +102,6 @@ export default function Portfolio() {
   const historyData = history?.history?.map((h) => ({
     date: h.date,
     value: h.value,
-    dailyReturn: h.daily_return,
   })) || [];
 
   const riskData = riskMetrics ? [
@@ -395,7 +394,7 @@ export default function Portfolio() {
             <tbody>
               {positionsList.map((position) => {
                 const priceDelta = position.current_price - position.entry_price;
-                const signedDelta = position.side === 'SHORT' ? -priceDelta : priceDelta;
+                const signedDelta = position.side === 'SELL' ? -priceDelta : priceDelta;
                 const pnlPercent = position.entry_price > 0
                   ? (signedDelta / position.entry_price) * 100
                   : 0;
@@ -411,8 +410,8 @@ export default function Portfolio() {
                       </span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className={`px-2 py-1 rounded text-xs font-bold tracking-wider ${position.side === 'LONG' ? 'bg-success/10 text-success border border-success/30' : 'bg-danger/10 text-danger border border-danger/30'}`}>
-                        {position.side}
+                      <span className={`px-2 py-1 rounded text-xs font-bold tracking-wider ${position.side === 'BUY' ? 'bg-success/10 text-success border border-success/30' : 'bg-danger/10 text-danger border border-danger/30'}`}>
+                        {position.side === 'BUY' ? 'LONG' : 'SHORT'}
                       </span>
                     </td>
                     <td className="py-4 px-6 text-right text-text font-mono-num">{position.quantity.toFixed(4)}</td>

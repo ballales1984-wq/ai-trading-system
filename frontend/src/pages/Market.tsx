@@ -2,11 +2,10 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { marketApi } from '../services/api';
 import type { MarketSentiment } from '../types';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { TrendingUp, TrendingDown, AlertTriangle, Brain } from 'lucide-react';
 import NewsFeed from '../components/NewsFeed';
 import { CandlestickChart } from '../components/trading/CandlestickChart';
-import { OrderBook, OrderBookLevel } from '../components/trading/OrderBook';
+import { OrderBook } from '../components/trading/OrderBook';
 
 
 
@@ -120,14 +119,8 @@ export default function Market() {
     }).format(value);
   };
 
-  const formatPrice = (value: number) => {
-    if (value >= 1000) return value.toFixed(2);
-    if (value >= 1) return value.toFixed(4);
-    return value.toFixed(6);
-  };
-
   const chartData = candlesData?.map((candle: CandleData) => ({
-    timestamp: typeof candle.timestamp === 'string' ? candle.timestamp : new Date(candle.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+    time: typeof candle.timestamp === 'string' ? candle.timestamp : new Date(candle.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
     open: candle.open,
     high: candle.high,
     low: candle.low,
@@ -179,8 +172,8 @@ export default function Market() {
               key={symbol}
               onClick={() => setSelectedSymbol(symbol)}
               className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${selectedSymbol === symbol
-                  ? 'bg-primary text-white glow-primary border-primary shadow-lg shadow-primary/20'
-                  : 'bg-white/[0.03] border border-white/[0.08] text-text-muted hover:text-text hover:bg-white/[0.08]'
+                ? 'bg-primary text-white glow-primary border-primary shadow-lg shadow-primary/20'
+                : 'bg-white/[0.03] border border-white/[0.08] text-text-muted hover:text-text hover:bg-white/[0.08]'
                 }`}
             >
               {symbol}
@@ -193,8 +186,8 @@ export default function Market() {
               key={tf}
               onClick={() => setTimeframe(tf)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${timeframe === tf
-                  ? 'bg-primary/20 text-primary border-primary/50'
-                  : 'bg-white/[0.02] border border-transparent text-text-muted hover:text-text hover:bg-white/[0.05]'
+                ? 'bg-primary/20 text-primary border-primary/50'
+                : 'bg-white/[0.02] border border-transparent text-text-muted hover:text-text hover:bg-white/[0.05]'
                 }`}
             >
               {tf}

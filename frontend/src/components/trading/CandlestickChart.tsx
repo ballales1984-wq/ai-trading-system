@@ -18,7 +18,7 @@ interface CandlestickChartProps {
 
 // Custom SVG path per disegnare la candela (body + wick)
 const CandlestickShape = (props: any) => {
-    const { x, y, width, height, open, close, high, low, yAxis } = props;
+    const { x, width, open, close, high, low, yAxis } = props;
     const isBull = close > open;
     const fill = isBull ? 'hsl(var(--success))' : 'hsl(var(--danger))';
 
@@ -47,7 +47,7 @@ const CandlestickShape = (props: any) => {
     );
 };
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
         const data = payload[0].payload as OHLCVData;
         const isBull = data.close > data.open;
