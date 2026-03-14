@@ -18,7 +18,8 @@ Scenari:
   - AdminUser:       Simula un amministratore (health check, stats)
 """
 
-from locust import HttpUser, task, between, events
+# pyre-ignore-all-errors[missing-import]
+from locust import HttpUser, task, between, events  # type: ignore[attr-defined]
 import random
 import json
 import logging
