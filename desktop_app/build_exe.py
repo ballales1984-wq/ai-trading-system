@@ -6,6 +6,7 @@ Usa PyInstaller + Tkinter (incluso in Python, nessuna dipendenza esterna!)
 import os
 import sys
 import subprocess
+import importlib.util
 from pathlib import Path
 
 def build_exe():
@@ -15,10 +16,9 @@ def build_exe():
     print()
     
     # Verifica PyInstaller
-    try:
-        import PyInstaller
+    if importlib.util.find_spec("PyInstaller") is not None:
         print("[OK] PyInstaller")
-    except ImportError:
+    else:
         print("[..] Installazione PyInstaller...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
         print("[OK] PyInstaller installato")
