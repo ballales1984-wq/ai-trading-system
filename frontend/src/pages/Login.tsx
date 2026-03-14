@@ -39,11 +39,11 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Client-side validation
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
-    
+
     if (!isEmailValid || !isPasswordValid) {
       return;
     }
@@ -94,29 +94,32 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAzMmMtNy43MzIgMC0xNC02LjI2OC0xNC0xNHM2LjI2OC0xNCAxNCAxNCAxNCA2LjI2OCAxNCAxNC02LjI2OCAxNC0xNHoiIGZpbGw9IiM0ZmY0ZmYiIGZpbGwtb3BhY2l0eT0iLjAyIi8+PC9nPjwvc3ZnPg==')] opacity-30"></div>
-       
-      <div className="relative z-10 w-full max-w-md p-8 bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="min-h-screen flex items-center justify-center bg-bg-primary text-text font-sans relative overflow-hidden">
+      {/* Sfondo radiale ambientale profondo */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] bg-primary/10 rounded-full blur-[150px] pointer-events-none" />
+
+      <div className="relative z-10 w-full max-w-md p-8 premium-glass-panel border-primary/20 shadow-[0_0_50px_rgba(59,130,246,0.1)]">
+        {/* Sottile highlight superiore */}
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+        <div className="text-center mb-10">
+          <div className="mx-auto w-16 h-16 bg-primary/10 border border-primary/30 rounded-xl flex items-center justify-center mb-6 glow-primary">
+            <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2" id="login-heading">
-            AI Trading System
+          <h1 className="text-3xl font-extrabold text-text tracking-tight mb-2" id="login-heading">
+            Terminal Access
           </h1>
-          <p className="text-slate-400">Accedi al tuo account</p>
+          <p className="text-text-muted">Enter credentials to proceed</p>
         </div>
 
-        <form 
-          onSubmit={handleSubmit} 
+        <form
+          onSubmit={handleSubmit}
           className="space-y-6"
           onKeyDown={handleKeyDown}
         >
           {error && (
-            <div 
+            <div
               role="alert"
               className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm text-center"
             >
@@ -125,8 +128,8 @@ export default function Login() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
-              Email
+            <label htmlFor="email" className="block text-sm font-bold text-text-muted uppercase tracking-wider mb-2">
+              Email Address
             </label>
             <input
               id="email"
@@ -143,11 +146,11 @@ export default function Login() {
               aria-required="true"
               aria-invalid={!!emailError}
               aria-describedby={emailError ? 'email-error' : undefined}
-              className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              placeholder="tua@email.com"
+              className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-lg text-text placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-mono"
+              placeholder="operator@institution.com"
             />
             {emailError && (
-              <p 
+              <p
                 id="email-error"
                 className="text-red-400 text-sm mt-1"
                 role="alert"
@@ -158,8 +161,8 @@ export default function Login() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
-              Password
+            <label htmlFor="password" className="block text-sm font-bold text-text-muted uppercase tracking-wider mb-2">
+              Passphrase
             </label>
             <input
               id="password"
@@ -176,11 +179,11 @@ export default function Login() {
               aria-required="true"
               aria-invalid={!!passwordError}
               aria-describedby={passwordError ? 'password-error' : undefined}
-              className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-lg text-text placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-mono tracking-widest"
               placeholder="••••••••"
             />
             {passwordError && (
-              <p 
+              <p
                 id="password-error"
                 className="text-red-400 text-sm mt-1"
                 role="alert"
@@ -193,41 +196,41 @@ export default function Login() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold rounded-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-4 px-4 bg-primary/20 border border-primary/50 text-primary font-bold tracking-widest uppercase rounded-lg transition-all duration-300 hover:bg-primary hover:text-white glow-primary disabled:opacity-50 disabled:cursor-not-allowed mt-4"
           >
             {isLoading ? (
               <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Accesso in corso...
+                Authenticating...
               </span>
             ) : (
-              'Accedi'
+              'Initialize'
             )}
           </button>
 
-          <div className="text-center">
-            <a href="#" className="text-sm text-slate-400 hover:text-blue-400 transition-colors">
-              Password dimenticata?
+          <div className="text-center pt-2">
+            <a href="#" className="text-xs font-semibold text-text-muted hover:text-primary transition-colors uppercase tracking-wider">
+              Recover Access
             </a>
           </div>
         </form>
 
-        <div className="mt-6 pt-6 border-t border-slate-700/50">
-          <p className="text-center text-sm text-slate-400 mb-4">
-            Per il demo usa qualsiasi email e password
+        <div className="mt-8 pt-6 border-t border-white/5">
+          <p className="text-center text-xs font-bold text-text-muted mb-4 uppercase tracking-wider">
+            Demo Environment Active
           </p>
-          <div className="text-center text-xs text-slate-500">
-            <p>Email: test@test.com</p>
-            <p>Password: qualsiasi</p>
+          <div className="text-center text-xs text-text-muted/70 font-mono bg-black/30 py-3 rounded-lg border border-white/5 mx-4">
+            <p>ID: demo@terminal.ai</p>
+            <p className="mt-1">KEY: random_hash</p>
           </div>
         </div>
 
         <div className="mt-6 text-center">
-          <p className="text-xs text-slate-500">
-            Accedendo, accetti i Termini di Servizio e la Privacy Policy
+          <p className="text-[10px] text-text-muted/50 uppercase tracking-widest">
+            Secured via Quantum Encryption
           </p>
         </div>
       </div>
