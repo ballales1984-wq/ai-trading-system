@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { portfolioApi, riskApi } from '../services/api';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, AreaChart, Area, CartesianGrid } from 'recharts';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Wallet, TrendingUp, TrendingDown, Target, Shield, Activity, GitBranch } from 'lucide-react';
 
 const COLORS = ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#a371f7', '#f0883e'];
@@ -35,9 +35,19 @@ function SummaryCard({ title, value, icon: Icon, valueColor = 'text-text' }: Sum
 
 export default function Portfolio() {
   const [isMounted, setIsMounted] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setIsMounted(true);
+    // Wait for the container to have a non-zero width before mounting charts
+    const checkWidth = () => {
+      if (containerRef.current && containerRef.current.offsetWidth > 0) {
+        setIsMounted(true);
+      } else {
+        requestAnimationFrame(checkWidth);
+      }
+    };
+    const rafId = requestAnimationFrame(checkWidth);
+    return () => cancelAnimationFrame(rafId);
   }, []);
   const { data: dualSummary, isLoading: summaryLoading } = useQuery({
     queryKey: ['portfolio-dual-summary'],
@@ -183,7 +193,7 @@ export default function Portfolio() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="premium-glass-panel overflow-hidden">
+        <div className="premium-glass-panel overflow-hidden" ref={containerRef}>
           <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.05] bg-white/[0.02]">
             <h2 className="text-lg font-semibold text-text tracking-wide">Equity Curve</h2>
             <Activity className="w-5 h-5 text-primary drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />

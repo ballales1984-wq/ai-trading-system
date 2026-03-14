@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { portfolioApi, marketApi, ordersApi } from '../services/api';
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, Wallet, Wifi, WifiOff } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { DashboardSkeleton } from '@/components/ui/Skeleton';
 import { useMarketData } from '@/hooks/useMarketData';
@@ -10,9 +10,19 @@ import { useMarketData } from '@/hooks/useMarketData';
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isMounted, setIsMounted] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setIsMounted(true);
+    // Wait for the container to have a non-zero width before mounting charts
+    const checkWidth = () => {
+      if (containerRef.current && containerRef.current.offsetWidth > 0) {
+        setIsMounted(true);
+      } else {
+        requestAnimationFrame(checkWidth);
+      }
+    };
+    const rafId = requestAnimationFrame(checkWidth);
+    return () => cancelAnimationFrame(rafId);
   }, []);
 
   // ─── Real-time WebSocket data ─────────────────────────────────────────────
@@ -129,7 +139,7 @@ export default function Dashboard() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 premium-glass-panel overflow-hidden" style={{ minHeight: 300 }}>
+        <div className="lg:col-span-2 premium-glass-panel overflow-hidden" ref={containerRef} style={{ minHeight: 300 }}>
           <div className="p-6 border-b border-white/[0.05]">
             <h3 className="text-lg font-semibold text-text tracking-wide">Portfolio Equity</h3>
           </div>

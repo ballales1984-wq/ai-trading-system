@@ -97,9 +97,19 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, symbol, height = 400 }) => {
     const [isMounted, setIsMounted] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        setIsMounted(true);
+        // Wait for the container to have a non-zero width
+        const checkWidth = () => {
+            if (containerRef.current && containerRef.current.offsetWidth > 0) {
+                setIsMounted(true);
+            } else {
+                requestAnimationFrame(checkWidth);
+            }
+        };
+        const rafId = requestAnimationFrame(checkWidth);
+        return () => cancelAnimationFrame(rafId);
     }, []);
 
     // Prepariamo i dati per Recharts: il "valore" della barra è il range [low, high]
@@ -123,7 +133,7 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, symbol
     }
 
     return (
-        <div className="premium-glass-panel relative p-4 group">
+        <div className="premium-glass-panel relative p-4 group" ref={containerRef}>
             {/* Background ambient glow based on last close */}
             {data.length > 0 && (
                 <div className={`absolute -right-20 -top-20 w-64 h-64 rounded-full blur-[100px] opacity-10 pointer-events-none transition-colors duration-1000 
