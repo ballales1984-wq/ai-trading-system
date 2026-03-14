@@ -5,6 +5,8 @@ import type { MarketSentiment } from '../types';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { TrendingUp, TrendingDown, AlertTriangle, Brain } from 'lucide-react';
 import NewsFeed from '../components/NewsFeed';
+import { CandlestickChart } from '../components/trading/CandlestickChart';
+import { OrderBook, OrderBookLevel } from '../components/trading/OrderBook';
 
 
 
@@ -45,7 +47,7 @@ const fallbackPrices: PricesResponse = {
 };
 
 // Generate deterministic fallback candles to prevent inconsistent renders
-const generateFallbackCandles = (): CandleData[] => 
+const generateFallbackCandles = (): CandleData[] =>
   Array.from({ length: 50 }, (_, i) => ({
     timestamp: new Date(Date.now() - (50 - i) * 3600000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
     open: 43000 + i * 15,
@@ -61,6 +63,23 @@ export default function Market() {
 
   // Memoize fallback candles to prevent inconsistent renders
   const fallbackCandles = useMemo(() => generateFallbackCandles(), []);
+
+  // Generiamo un Order Book mock up realistico per dimostrazione visiva
+  const mockOrderBook = useMemo(() => {
+    const basePrice = selectedSymbol === 'BTCUSDT' ? 43500 : selectedSymbol === 'ETHUSDT' ? 2350 : 100;
+
+    const generateSide = (isAsk: boolean) => {
+      let total = 0;
+      return Array.from({ length: 15 }).map((_, i) => {
+        const distance = (i + 1) * (basePrice * 0.0005);
+        const price = isAsk ? basePrice + distance : basePrice - distance;
+        const size = Math.random() * (isAsk ? 2 : 5) + 0.1;
+        total += size;
+        return { price, size, total, depthPct: Math.min(100, (total / 50) * 100) };
+      });
+    };
+    return { asks: generateSide(true).reverse(), bids: generateSide(false), lastPrice: basePrice };
+  }, [selectedSymbol]);
 
   const { data: prices, isLoading: pricesLoading } = useQuery({
     queryKey: ['market-prices'],
@@ -140,10 +159,12 @@ export default function Market() {
 
       {/* Sentiment Gauge */}
       {sentiment && (
-        <div className="mb-6 bg-surface border border-border rounded-lg p-4">
+        <div className="mb-6 premium-glass-panel overflow-hidden p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Brain className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold text-text">Market Sentiment</h2>
+            <div className="p-2 rounded-lg bg-primary/20 border border-primary/30 glow-primary">
+              <Brain className="w-5 h-5 text-primary" />
+            </div>
+            <h2 className="text-lg font-semibold text-text tracking-wide">Market Sentiment</h2>
           </div>
           <SentimentGauge sentiment={sentiment} />
         </div>
@@ -157,11 +178,10 @@ export default function Market() {
             <button
               key={symbol}
               onClick={() => setSelectedSymbol(symbol)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                selectedSymbol === symbol
-                  ? 'bg-primary text-white'
-                  : 'bg-surface border border-border text-text-muted hover:text-text'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${selectedSymbol === symbol
+                  ? 'bg-primary text-white glow-primary border-primary shadow-lg shadow-primary/20'
+                  : 'bg-white/[0.03] border border-white/[0.08] text-text-muted hover:text-text hover:bg-white/[0.08]'
+                }`}
             >
               {symbol}
             </button>
@@ -172,11 +192,10 @@ export default function Market() {
             <button
               key={tf}
               onClick={() => setTimeframe(tf)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                timeframe === tf
-                  ? 'bg-primary/20 text-primary'
-                  : 'bg-surface border border-border text-text-muted hover:text-text'
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${timeframe === tf
+                  ? 'bg-primary/20 text-primary border-primary/50'
+                  : 'bg-white/[0.02] border border-transparent text-text-muted hover:text-text hover:bg-white/[0.05]'
+                }`}
             >
               {tf}
             </button>
@@ -210,56 +229,26 @@ export default function Market() {
         </div>
       )}
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Price Chart */}
-        <div className="lg:col-span-2 bg-surface border border-border rounded-lg p-4">
-          <h2 className="text-lg font-semibold text-text mb-4">{selectedSymbol} Price Chart</h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <XAxis dataKey="timestamp" stroke="#8b949e" fontSize={10} interval="preserveStartEnd" />
-                <YAxis stroke="#8b949e" fontSize={10} domain={['auto', 'auto']} tickFormatter={(v) => v !== null && v !== undefined ? formatPrice(v) : ''} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
-                  labelStyle={{ color: '#c9d1d9' }}
-                  formatter={(value: any) => {
-                    const numValue = typeof value === 'number' ? value : 0;
-                    return [formatCurrency(numValue), 'Price'];
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="close"
-                  stroke="#58a6ff"
-                  strokeWidth={2}
-                  dot={false}
-                  isAnimationActive={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+      {/* Advanced Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+        {/* Candlestick Chart (Span 3 cols) */}
+        <div className="lg:col-span-3">
+          <CandlestickChart
+            data={chartData}
+            symbol={selectedSymbol}
+            height={480}
+          />
         </div>
 
-        {/* Volume Chart */}
-        <div className="bg-surface border border-border rounded-lg p-4">
-          <h2 className="text-lg font-semibold text-text mb-4">Volume</h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <XAxis dataKey="timestamp" stroke="#8b949e" fontSize={10} interval="preserveStartEnd" />
-                <YAxis stroke="#8b949e" fontSize={10} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
-                  formatter={(value: any) => {
-                    const numValue = typeof value === 'number' ? value : 0;
-                    return [numValue.toFixed(2), 'Volume'];
-                  }}
-                />
-                <Bar dataKey="volume" fill="#3fb950" radius={[2, 2, 0, 0]} isAnimationActive={false} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        {/* Order Book (Span 1 col) */}
+        <div className="lg:col-span-1 h-[480px]">
+          <OrderBook
+            bids={mockOrderBook.bids}
+            asks={mockOrderBook.asks}
+            lastPrice={mockOrderBook.lastPrice}
+            symbol={selectedSymbol}
+          />
         </div>
       </div>
 
@@ -269,36 +258,47 @@ export default function Market() {
       </div>
 
       {/* All Markets Table */}
-      <div className="mt-6 bg-surface border border-border rounded-lg p-4">
-
-        <h2 className="text-lg font-semibold text-text mb-4">All Markets</h2>
+      <div className="mt-6 premium-glass-panel overflow-hidden">
+        <div className="px-6 py-5 border-b border-white/[0.05] bg-white/[0.02]">
+          <h2 className="text-lg font-semibold text-text tracking-wide flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-primary glow-primary"></span>
+            All Markets
+          </h2>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-3 px-4 text-text-muted font-medium">Symbol</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">Price</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">24h Change</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">24h High</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">24h Low</th>
-                <th className="text-right py-3 px-4 text-text-muted font-medium">Volume</th>
+            <thead className="bg-black/20">
+              <tr>
+                <th className="text-left py-4 px-6 text-xs text-text-muted font-semibold uppercase tracking-wider">Symbol</th>
+                <th className="text-right py-4 px-6 text-xs text-text-muted font-semibold uppercase tracking-wider">Price</th>
+                <th className="text-right py-4 px-6 text-xs text-text-muted font-semibold uppercase tracking-wider">24h Change</th>
+                <th className="text-right py-4 px-6 text-xs text-text-muted font-semibold uppercase tracking-wider">24h High</th>
+                <th className="text-right py-4 px-6 text-xs text-text-muted font-semibold uppercase tracking-wider">24h Low</th>
+                <th className="text-right py-4 px-6 text-xs text-text-muted font-semibold uppercase tracking-wider">Volume</th>
               </tr>
             </thead>
             <tbody>
-              {pricesData?.markets?.map((market) => (
+              {pricesData?.markets?.map((market: MarketData) => (
                 <tr
                   key={market.symbol}
-                  className="border-b border-border/50 hover:bg-border/20 cursor-pointer"
+                  className={`border-b border-white/[0.05] hover:bg-white/[0.04] cursor-pointer transition-colors ${selectedSymbol === market.symbol ? 'bg-primary/5' : ''}`}
                   onClick={() => setSelectedSymbol(market.symbol)}
                 >
-                  <td className="py-3 px-4 font-medium text-text">{market.symbol}</td>
-                  <td className="py-3 px-4 text-right text-text">{formatCurrency(market.price)}</td>
-                  <td className={`py-3 px-4 text-right ${market.change_pct_24h >= 0 ? 'text-success' : 'text-danger'}`}>
-                    {market.change_pct_24h >= 0 ? '+' : ''}{market.change_pct_24h.toFixed(2)}%
+                  <td className="py-4 px-6 font-semibold text-text flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs">
+                      {market.symbol.charAt(0)}
+                    </div>
+                    {market.symbol.replace('USDT', '')}
                   </td>
-                  <td className="py-3 px-4 text-right text-text-muted">{formatCurrency(market.high_24h)}</td>
-                  <td className="py-3 px-4 text-right text-text-muted">{formatCurrency(market.low_24h)}</td>
-                  <td className="py-3 px-4 text-right text-text-muted">{market.volume_24h.toLocaleString()}</td>
+                  <td className="py-4 px-6 text-right text-text font-mono-num text-lg">{formatCurrency(market.price)}</td>
+                  <td className={`py-4 px-6 text-right font-mono-num ${market.change_pct_24h >= 0 ? 'text-success drop-shadow-[0_0_5px_rgba(34,197,94,0.3)]' : 'text-danger drop-shadow-[0_0_5px_rgba(239,68,68,0.3)]'}`}>
+                    <div className="bg-black/20 inline-block px-2 py-1 rounded-md">
+                      {market.change_pct_24h >= 0 ? '+' : ''}{market.change_pct_24h.toFixed(2)}%
+                    </div>
+                  </td>
+                  <td className="py-4 px-6 text-right text-text-muted font-mono-num">{formatCurrency(market.high_24h)}</td>
+                  <td className="py-4 px-6 text-right text-text-muted font-mono-num">{formatCurrency(market.low_24h)}</td>
+                  <td className="py-4 px-6 text-right text-text-muted font-mono-num">{(market.volume_24h / 1000000).toFixed(2)}M</td>
                 </tr>
               ))}
             </tbody>
@@ -311,23 +311,23 @@ export default function Market() {
 
 function PriceCard({ title, value, icon: Icon, valueColor = 'text-text' }: { title: string; value: string; icon?: React.ElementType; valueColor?: string }) {
   return (
-    <div className="bg-surface border border-border rounded-lg p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-text-muted text-sm">{title}</span>
+    <div className="premium-glass-panel p-5 premium-glass-hover">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-text-muted text-sm font-medium uppercase tracking-wider">{title}</span>
         {Icon && <Icon className={`w-5 h-5 ${valueColor === 'text-success' ? 'text-success' : valueColor === 'text-danger' ? 'text-danger' : 'text-primary'}`} />}
       </div>
-      <div className={`text-xl font-bold ${valueColor}`}>{value}</div>
+      <div className={`text-2xl font-bold font-mono-num ${valueColor}`}>{value}</div>
     </div>
   );
 }
 
 function SentimentGauge({ sentiment }: { sentiment: MarketSentiment }) {
-  const { 
-    fear_greed_index = 50, 
-    sentiment_label = 'Neutral', 
-    sentiment_emoji = '😐', 
-    btc_dominance = 0, 
-    market_momentum = 0 
+  const {
+    fear_greed_index = 50,
+    sentiment_label = 'Neutral',
+    sentiment_emoji = '😐',
+    btc_dominance = 0,
+    market_momentum = 0
   } = sentiment || {};
 
   // Handle undefined values safely
