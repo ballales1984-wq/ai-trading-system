@@ -92,3 +92,12 @@ coverage_error.txt
 health_tmp.pyc.*
 fix_remaining
 %(upstream
+ChatGPT Image*
+
+# Estensioni e file temporanei aggiunti da review
+**/*.pyc
+**/__pycache__/
+**/node_modules/
+**/dist/
+**/logs/
+**/.history/
