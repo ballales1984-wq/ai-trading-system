@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { portfolioApi, riskApi } from '../services/api';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, AreaChart, Area, CartesianGrid } from 'recharts';
+import { useState, useEffect } from 'react';
 import { Wallet, TrendingUp, TrendingDown, Target, Shield, Activity, GitBranch } from 'lucide-react';
 
 const COLORS = ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#a371f7', '#f0883e'];
@@ -33,6 +34,11 @@ function SummaryCard({ title, value, icon: Icon, valueColor = 'text-text' }: Sum
 }
 
 export default function Portfolio() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   const { data: dualSummary, isLoading: summaryLoading } = useQuery({
     queryKey: ['portfolio-dual-summary'],
     queryFn: portfolioApi.getDualSummary,
@@ -183,7 +189,8 @@ export default function Portfolio() {
             <Activity className="w-5 h-5 text-primary drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
           </div>
           <div className="h-64 w-full p-4 relative" style={{ minHeight: '256px' }}>
-            <ResponsiveContainer width="100%" height="100%">
+            {isMounted && (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <AreaChart data={historyData}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
@@ -207,6 +214,7 @@ export default function Portfolio() {
                 />
               </AreaChart>
             </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -216,7 +224,8 @@ export default function Portfolio() {
             <Shield className="w-5 h-5 text-danger drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
           </div>
           <div className="h-64 w-full p-4 relative" style={{ minHeight: '256px' }}>
-            <ResponsiveContainer width="100%" height="100%">
+            {isMounted && (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={riskData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
                 <XAxis dataKey="name" stroke="#8b949e" />
@@ -231,6 +240,7 @@ export default function Portfolio() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            )}
           </div>
           {riskMetrics && (
             <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
@@ -261,7 +271,8 @@ export default function Portfolio() {
             <h2 className="text-lg font-semibold text-text tracking-wide">Asset Allocation</h2>
           </div>
           <div className="h-64 w-full p-4 relative" style={{ minHeight: '256px' }}>
-            <ResponsiveContainer width="100%" height="100%">
+            {isMounted && (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <PieChart>
                 <Pie
                   data={pieData}
@@ -281,6 +292,7 @@ export default function Portfolio() {
                 />
               </PieChart>
             </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -294,7 +306,8 @@ export default function Portfolio() {
             </div>
           ) : (
           <div className="h-64 w-full p-4 relative" style={{ minHeight: '256px' }}>
-              <ResponsiveContainer width="100%" height="100%">
+              {isMounted && (
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={tradeData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
                   <XAxis type="number" stroke="#8b949e" />
@@ -309,6 +322,7 @@ export default function Portfolio() {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+              )}
             </div>
           )}
         </div>

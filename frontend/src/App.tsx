@@ -8,6 +8,10 @@ import Orders from './pages/Orders';
 import News from './pages/News';
 import Marketing from './pages/Marketing';
 
+import Strategy from './pages/Strategy';
+import Risk from './pages/Risk';
+import Settings from './pages/Settings';
+
 // Lazy load login and payment pages
 const Login = lazy(() => import('./pages/Login'));
 const PaymentTest = lazy(() => import('./pages/PaymentTest'));
@@ -29,6 +33,9 @@ function App() {
           <Route path="market" element={<Market />} />
           <Route path="orders" element={<Orders />} />
           <Route path="news" element={<News />} />
+          <Route path="strategy" element={<Strategy />} />
+          <Route path="risk" element={<Risk />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </BrowserRouter>

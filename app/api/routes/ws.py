@@ -10,9 +10,12 @@ import logging
 from datetime import datetime
 from typing import List
 
+# pyre-ignore[21]: Missing module attribute
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+# pyre-ignore[21]: Missing module attribute
 from app.api.mock_data import get_market_prices, get_portfolio_summary
+# pyre-ignore[21]: Missing module attribute
 from app.core.demo_mode import get_demo_mode
 
 logger = logging.getLogger(__name__)

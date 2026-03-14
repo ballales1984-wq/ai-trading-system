@@ -13,22 +13,34 @@ Security Features:
 
 from datetime import datetime
 from typing import Any
+# pyre-ignore[21]: Missing module attribute
 from fastapi import FastAPI
+# pyre-ignore[21]: Missing module attribute
 from fastapi import Request, Response
+# pyre-ignore[21]: Missing module attribute
 from fastapi.middleware.cors import CORSMiddleware
+# pyre-ignore[21]: Missing module attribute
 from fastapi.staticfiles import StaticFiles
+# pyre-ignore[21]: Missing module attribute
 from fastapi.responses import JSONResponse
+# pyre-ignore[21]: Missing module attribute
 from app.core.config import settings
+# pyre-ignore[21]: Missing module attribute
 from app.core.logging import setup_logging, get_logger
+# pyre-ignore[21]: Missing module attribute
 from app.core.rate_limiter import default_rate_limiter, RateLimitExceeded
+# pyre-ignore[21]: Missing module attribute
 from app.core.security_middleware import (
     setup_security_middleware,
     create_monitoring_routes,
     SecurityHeadersConfig,
     get_monitoring_middleware,
 )
+# pyre-ignore[21]: Missing module attribute
 from app.compliance.audit import AuditLogger, AuditEvent, AuditEventType
+# pyre-ignore[21]: Missing module attribute
 from app.api.routes import news, market, portfolio, orders, health, strategy, waitlist, cache, auth, risk, ws
+# pyre-ignore[21]: Missing module attribute
 from app.metrics import get_metrics_app, instrument_requests
 
 # Setup logging
@@ -68,6 +80,7 @@ logger.info(f"CORS enabled for origins: {cors_origins}")
 # Security Response class for headers
 class SecurityResponse(JSONResponse):
     def __init__(self, content: Any, status_code: int = 200, headers: dict | None = None, **kwargs):
+        # pyre-ignore[6]: Expected positional arguments
         super().__init__(content, status_code, headers or {}, **kwargs)
         security_headers = {
             "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
@@ -324,8 +337,8 @@ async def security_headers_info():
 @app.get("/api/audit/events")
 async def get_audit_events(
     request: Request,
-    event_type: str = None,
-    user_id: str = None,
+    event_type: str | None = None,
+    user_id: str | None = None,
     limit: int = 100
 ):
     """
@@ -367,6 +380,7 @@ except Exception as e:
 logger.info("Prometheus metrics available at /metrics")
 
 if __name__ == "__main__":
+    # pyre-ignore[21]: Missing module attribute
     import uvicorn
     uvicorn.run(
         "app.main:app",

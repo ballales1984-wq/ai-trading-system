@@ -1,3 +1,4 @@
+/* Standard Tailwind directives - Handled by PostCSS */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { ResponsiveContainer, ComposedChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 export interface OHLCVData {
@@ -96,6 +96,12 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, symbol, height = 400 }) => {
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     // Prepariamo i dati per Recharts: il "valore" della barra è il range [low, high]
     const chartData = useMemo(() => {
         return data.map(d => ({
@@ -145,8 +151,9 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, symbol
                 </div>
             </div>
 
-            <div style={{ width: '100%', height: height - 80 }}>
-                <ResponsiveContainer width="100%" height={height - 80}>
+            <div style={{ width: '100%', height: height - 80, minHeight: height - 80 }}>
+                {isMounted ? (
+                    <ResponsiveContainer width="100%" height={height - 80} minWidth={0}>
                     <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                         <XAxis
@@ -177,6 +184,11 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, symbol
                         />
                     </ComposedChart>
                 </ResponsiveContainer>
+                ) : (
+                    <div className="w-full flex items-center justify-center opacity-10" style={{ height: height - 80 }}>
+                        <div className="animate-pulse bg-white/10 w-full h-full rounded-xl" />
+                    </div>
+                )}
             </div>
         </div>
     );

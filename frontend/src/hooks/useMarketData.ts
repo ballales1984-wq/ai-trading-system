@@ -43,15 +43,11 @@ export function useMarketData() {
     const [portfolio, setPortfolio] = useState<LivePortfolioData | null>(null);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-    // Derive WS url from current host (works on localhost and in production)
+    // Derive WS url - use relative path to leverage Vite proxy
     const wsUrl = (() => {
         if (typeof window === 'undefined') return '';
         const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const host =
-            window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? 'localhost:8000'
-                : window.location.host;
-        return `${proto}://${host}/ws/prices`;
+        return `${proto}://${window.location.host}/ws/prices`;
     })();
 
     const handleMessage = useCallback((raw: unknown) => {

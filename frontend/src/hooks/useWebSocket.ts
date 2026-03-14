@@ -82,7 +82,19 @@ export function useWebSocket({
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       // Prevent reconnect on intentional unmount
       attemptsRef.current = reconnectMaxAttempts;
-      wsRef.current?.close();
+      
+      const ws = wsRef.current;
+      if (ws) {
+        // If still connecting, we just nullify the listeners
+        ws.onopen = null;
+        ws.onerror = null;
+        ws.onclose = null;
+        ws.onmessage = null;
+        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+          ws.close();
+        }
+        wsRef.current = null;
+      }
     };
   }, [connect, enabled, reconnectMaxAttempts]);
 

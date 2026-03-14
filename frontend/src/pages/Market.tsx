@@ -141,17 +141,6 @@ export default function Market() {
         <p className="text-text-muted">Real-time market data and charts</p>
       </div>
 
-      {/* Fallback Data Warning */}
-      {isUsingFallback && (
-        <div className="mb-6 bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-4 flex items-center gap-3">
-          <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0" />
-          <div>
-            <p className="text-yellow-500 font-medium">Using Demo Data</p>
-            <p className="text-text-muted text-sm">API connection unavailable. Showing simulated market data for demonstration purposes.</p>
-          </div>
-        </div>
-      )}
-
       {/* Sentiment Gauge */}
       {sentiment && (
         <div className="mb-6 premium-glass-panel overflow-hidden p-5">

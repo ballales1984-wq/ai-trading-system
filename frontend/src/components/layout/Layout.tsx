@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
   import { Outlet, NavLink } from 'react-router-dom';
-  import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Menu, X, Bot, FileText } from 'lucide-react';
+import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Menu, X, Bot, FileText, Target, Shield, Settings, AlertTriangle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { marketApi } from '../../services/api';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -8,6 +10,9 @@ const navItems = [
   { to: '/market', icon: TrendingUp, label: 'Market' },
   { to: '/orders', icon: ClipboardList, label: 'Orders' },
   { to: '/news', icon: FileText, label: 'News' },
+  { to: '/strategy', icon: Target, label: 'Strategy' },
+  { to: '/risk', icon: Shield, label: 'Risk' },
+  { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export default function Layout() {
@@ -15,6 +20,16 @@ export default function Layout() {
   const [isMobile, setIsMobile] = useState(false);
   const [touchStartX, setTouchStartX] = useState(0);
   const [touchEndX, setTouchEndX] = useState(0);
+
+  // Global check for backend connectivity to show "Demo Mode" banner
+  const { data: prices } = useQuery({
+    queryKey: ['market-prices'],
+    queryFn: marketApi.getAllPrices,
+    retry: 1,
+    staleTime: 60000,
+  });
+
+  const isUsingFallback = !prices?.markets || prices.markets.length === 0;
 
   // Detect mobile device
   useEffect(() => {
@@ -157,6 +172,16 @@ export default function Layout() {
                        ${isMobile ? 'ml-0 mt-16' : 'ml-64'} 
                        overflow-y-auto`}
       >
+        {/* Global Fallback Data Warning */}
+        {isUsingFallback && (
+          <div className="m-6 mb-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0" />
+            <div>
+              <p className="text-yellow-500 font-bold text-sm uppercase tracking-wide">Demo Mode Active</p>
+              <p className="text-text-muted text-xs">System is operating with simulated data because the live terminal is unreachable.</p>
+            </div>
+          </div>
+        )}
         <Outlet />
       </main>
     </div>
