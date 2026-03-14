@@ -217,7 +217,7 @@ export default function Market() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
         {/* Candlestick Chart (Span 3 cols) */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 h-[480px]">
           <CandlestickChart
             data={chartData}
             symbol={selectedSymbol}

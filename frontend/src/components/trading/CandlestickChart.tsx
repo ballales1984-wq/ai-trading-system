@@ -17,34 +17,37 @@ interface CandlestickChartProps {
 }
 
 const CandlestickShape = (props: any) => {
-    const { x, width, yAxis, payload } = props;
-    if (!payload || !yAxis?.scale) return null;
+    const { x, width, y, height, payload } = props;
+    if (!payload) return null;
 
     const open = Number(payload.open);
     const close = Number(payload.close);
     const high = Number(payload.high);
     const low = Number(payload.low);
 
-    if (isNaN(open) || isNaN(close) || isNaN(high) || isNaN(low)) return null;
+    if (isNaN(open) || isNaN(close) || isNaN(high) || isNaN(low) || high === low) return null;
 
     const isBull = close > open;
-    const fill = isBull ? '#22c55e' : '#ef4444'; // Use direct colors for reliability
+    const fill = isBull ? '#22c55e' : '#ef4444';
 
-    const scaleY = yAxis.scale;
+    // Manual scale calculation based on the Bar's y (high) and height (high-low)
+    // In Recharts Y-axis, y=0 is top. So high price is at y pixels, low price is at y + height pixels.
+    const getYScaling = (val: number) => {
+        return y + ((high - val) / (high - low)) * height;
+    };
 
-    const highY = scaleY(high);
-    const lowY = scaleY(low);
-    const openY = scaleY(open);
-    const closeY = scaleY(close);
+    const highY = y;
+    const lowY = y + height;
+    const openY = getYScaling(open);
+    const closeY = getYScaling(close);
 
     const topBodyY = Math.min(openY, closeY);
     const bottomBodyY = Math.max(openY, closeY);
-    const bodyHeight = Math.max(2, bottomBodyY - topBodyY);
+    const bodyHeight = Math.max(1, bottomBodyY - topBodyY);
     const centerX = x + width / 2;
 
     return (
         <g>
-            {/* Wick */}
             <line 
                 x1={centerX} 
                 y1={highY} 
@@ -53,7 +56,6 @@ const CandlestickShape = (props: any) => {
                 stroke={fill} 
                 strokeWidth={1.5} 
             />
-            {/* Body */}
             <rect 
                 x={x} 
                 y={topBodyY} 
@@ -161,9 +163,9 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, symbol
                 </div>
             </div>
 
-            <div style={{ width: '100%', height: height - 80, minHeight: height - 80 }}>
+            <div style={{ width: '100%', height: height - 80, minHeight: height - 80 }} className="relative overflow-hidden">
                 {isMounted ? (
-                    <ResponsiveContainer width="100%" height={height - 80} minWidth={0}>
+                    <ResponsiveContainer width="100%" height={height - 80} minWidth={0} debounce={50}>
                     <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                         <XAxis
