@@ -23,7 +23,7 @@ const News = () => {
   const fetchNews = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/news');
+      const response = await api.get('/news');
       setNews(response.data);
     } catch (err) {
       // Demo data fallback
