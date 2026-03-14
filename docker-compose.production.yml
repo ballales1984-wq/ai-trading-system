@@ -179,7 +179,6 @@ services:
       dockerfile: docker/Dockerfile.production
       target: api
     image: ai-trading-api:${VERSION:-latest}
-    container_name: trading-api
     ports:
       - "${API_PORT:-8000}:8000"
     environment:
