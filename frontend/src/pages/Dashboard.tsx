@@ -128,7 +128,7 @@ export default function Dashboard() {
           <div className="p-6 border-b border-white/[0.05]">
             <h3 className="text-lg font-semibold text-text tracking-wide">Portfolio Equity</h3>
           </div>
-          <div className="h-72 w-full min-h-[280px] p-4">
+          <div className="h-72 w-full p-4 relative" style={{ minHeight: '288px' }}>
             {!summaryLoading && historyData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
@@ -259,7 +259,7 @@ export default function Dashboard() {
                 <div className="p-6 border-b border-white/[0.05]">
                   <h3 className="text-lg font-semibold text-text tracking-wide">Portfolio Equity</h3>
                 </div>
-                <div className="h-72 w-full min-h-[280px] p-4">
+                <div className="h-72 w-full p-4 relative" style={{ minHeight: '288px' }}>
                   {!summaryLoading && historyData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={historyData}>

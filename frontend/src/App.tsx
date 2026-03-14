@@ -16,16 +16,14 @@ function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
-        {/* Public routes - Marketing Landing Page */}
+        {/* Public routes */}
         <Route path="/" element={<Marketing />} />
         <Route path="/marketing" element={<Marketing />} />
-        
-        {/* Public routes - Login & Payment */}
         <Route path="/login" element={<Suspense fallback={<div>Loading...</div>}><Login /></Suspense>} />
         <Route path="/payment" element={<Suspense fallback={<div>Loading...</div>}><PaymentTest /></Suspense>} />
         
-        {/* Protected routes - with Layout (sidebar, header, etc.) */}
-        <Route path="/" element={<Layout />}>
+        {/* Protected routes - Layout already handles nested Outlets */}
+        <Route element={<Layout />}>
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="portfolio" element={<Portfolio />} />
           <Route path="market" element={<Market />} />

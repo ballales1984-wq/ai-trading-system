@@ -182,7 +182,7 @@ export default function Portfolio() {
             <h2 className="text-lg font-semibold text-text tracking-wide">Equity Curve</h2>
             <Activity className="w-5 h-5 text-primary drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
           </div>
-          <div className="h-64 p-4">
+          <div className="h-64 w-full p-4 relative" style={{ minHeight: '256px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={historyData}>
                 <defs>
@@ -215,7 +215,7 @@ export default function Portfolio() {
             <h2 className="text-lg font-semibold text-text tracking-wide">Risk Metrics (VaR/CVaR)</h2>
             <Shield className="w-5 h-5 text-danger drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
           </div>
-          <div className="h-64 p-4">
+          <div className="h-64 w-full p-4 relative" style={{ minHeight: '256px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={riskData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
@@ -260,7 +260,7 @@ export default function Portfolio() {
           <div className="px-6 py-4 border-b border-white/[0.05] bg-white/[0.02]">
             <h2 className="text-lg font-semibold text-text tracking-wide">Asset Allocation</h2>
           </div>
-          <div className="h-64 p-4">
+          <div className="h-64 w-full p-4 relative" style={{ minHeight: '256px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -293,7 +293,7 @@ export default function Portfolio() {
               Loading...
             </div>
           ) : (
-            <div className="h-64 p-4">
+          <div className="h-64 w-full p-4 relative" style={{ minHeight: '256px' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={tradeData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
