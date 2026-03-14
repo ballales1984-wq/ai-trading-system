@@ -54,6 +54,14 @@ def build_exe():
         "--hidden-import", "websockets",
         "--hidden-import", "ccxt",
         "--hidden-import", "binance",
+        "--exclude-module", "torch",
+        "--exclude-module", "matplotlib",
+        "--exclude-module", "scipy",
+        "--exclude-module", "tensorflow",
+        "--exclude-module", "tensorboard",
+        "--exclude-module", "IPython",
+        "--exclude-module", "jupyter",
+        "--exclude-module", "pytest",
         "--clean",
         str(main_script)
     ]
