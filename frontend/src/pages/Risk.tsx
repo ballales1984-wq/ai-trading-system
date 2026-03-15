@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { riskApi } from '../services/api';
-import { Shield, Lock, AlertTriangle, Eye, Loader2, BarChart3 } from 'lucide-react';
+import { Shield, Lock, Loader2, BarChart3 } from 'lucide-react';
 
 export default function Risk() {
   const { data: metrics, isLoading: metricsLoading } = useQuery({
@@ -53,14 +53,13 @@ export default function Risk() {
               <div key={limit.limit_id} className="p-4 bg-white/[0.02] border border-white/[0.05] rounded-xl">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-bold text-text uppercase">{limit.limit_type.replace('_', ' ')}</span>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
-                    limit.severity === 'green' ? 'text-success border-success/30' : 'text-yellow-500 border-yellow-500/30'
-                  }`}>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${limit.severity === 'green' ? 'text-success border-success/30' : 'text-yellow-500 border-yellow-500/30'
+                    }`}>
                     {limit.limit_percentage}% USED
                   </span>
                 </div>
                 <div className="h-2 bg-black/40 rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className={`h-full transition-all duration-500 ${limit.is_breached ? 'bg-danger' : limit.severity === 'yellow' ? 'bg-yellow-500' : 'bg-primary'}`}
                     style={{ width: `${limit.limit_percentage}%` }}
                   />
@@ -127,9 +126,9 @@ export default function Risk() {
 }
 
 function RiskMetric({ title, value, status }: any) {
-  const statusColor = status === 'Danger' ? 'text-danger border-danger/30 bg-danger/5' : 
-                     status === 'Warning' ? 'text-yellow-500 border-yellow-500/30 bg-yellow-500/5' : 
-                     'text-success border-success/30 bg-success/5';
+  const statusColor = status === 'Danger' ? 'text-danger border-danger/30 bg-danger/5' :
+    status === 'Warning' ? 'text-yellow-500 border-yellow-500/30 bg-yellow-500/5' :
+      'text-success border-success/30 bg-success/5';
 
   return (
     <div className="premium-glass-panel p-5 border-white/[0.05]">

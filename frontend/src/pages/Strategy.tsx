@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { strategyApi } from '../services/api';
-import { TrendingUp, Activity, Target, Zap, Play, Pause, Loader2 } from 'lucide-react';
+import { TrendingUp, Activity, Target, Zap, Play, Loader2 } from 'lucide-react';
 
 export default function Strategy() {
   const queryClient = useQueryClient();
-  
+
   const { data: strategies, isLoading, error } = useQuery({
     queryKey: ['strategies'],
     queryFn: () => strategyApi.list(),
@@ -43,10 +43,10 @@ export default function Strategy() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {strategies?.map((strat) => (
-          <StrategyCard 
+          <StrategyCard
             key={strat.strategy_id}
-            name={strat.name} 
-            status={strat.enabled ? 'Active' : 'Paused'} 
+            name={strat.name}
+            status={strat.enabled ? 'Active' : 'Paused'}
             pnl="+0.0%" // Performance metrics could be fetched separately if needed
             description={strat.description}
             type={strat.strategy_type}
@@ -104,7 +104,7 @@ function StrategyCard({ name, status, pnl, description, type, onRun, isRunning }
         </div>
         <div className="flex items-center gap-2">
           {status === 'Active' && (
-            <button 
+            <button
               onClick={onRun}
               disabled={isRunning}
               className="p-1.5 rounded-lg bg-success/10 text-success border border-success/30 hover:bg-success/20 transition-colors"

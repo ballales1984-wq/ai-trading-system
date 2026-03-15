@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { portfolioApi, riskApi } from '../services/api';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, AreaChart, Area, CartesianGrid } from 'recharts';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Wallet, TrendingUp, TrendingDown, Target, Shield, Activity, GitBranch } from 'lucide-react';
 
 const COLORS = ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#a371f7', '#f0883e'];
@@ -201,29 +201,29 @@ export default function Portfolio() {
           <div className="h-64 w-full p-4 relative" style={{ minHeight: '256px' }}>
             {isMounted && (
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-              <AreaChart data={historyData}>
-                <defs>
-                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3fb950" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3fb950" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
-                <XAxis dataKey="date" stroke="#8b949e" tickFormatter={(value) => value.slice(5, 10)} />
-                <YAxis stroke="#8b949e" tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#3fb950"
-                  fillOpacity={1}
-                  fill="url(#colorValue)"
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+                <AreaChart data={historyData}>
+                  <defs>
+                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3fb950" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#3fb950" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
+                  <XAxis dataKey="date" stroke="#8b949e" tickFormatter={(value) => value.slice(5, 10)} />
+                  <YAxis stroke="#8b949e" tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#3fb950"
+                    fillOpacity={1}
+                    fill="url(#colorValue)"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             )}
           </div>
         </div>
@@ -236,20 +236,20 @@ export default function Portfolio() {
           <div className="h-64 w-full p-4 relative" style={{ minHeight: '256px' }}>
             {isMounted && (
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-              <BarChart data={riskData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
-                <XAxis dataKey="name" stroke="#8b949e" />
-                <YAxis stroke="#8b949e" />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
-                />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                  {riskData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                <BarChart data={riskData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
+                  <XAxis dataKey="name" stroke="#8b949e" />
+                  <YAxis stroke="#8b949e" />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                    {riskData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             )}
           </div>
           {riskMetrics && (
@@ -283,25 +283,25 @@ export default function Portfolio() {
           <div className="h-64 w-full p-4 relative" style={{ minHeight: '256px' }}>
             {isMounted && (
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {pieData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {pieData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             )}
           </div>
         </div>
@@ -315,23 +315,23 @@ export default function Portfolio() {
               Loading...
             </div>
           ) : (
-          <div className="h-64 w-full p-4 relative" style={{ minHeight: '256px' }}>
+            <div className="h-64 w-full p-4 relative" style={{ minHeight: '256px' }}>
               {isMounted && (
                 <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <BarChart data={tradeData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
-                  <XAxis type="number" stroke="#8b949e" />
-                  <YAxis type="category" dataKey="name" stroke="#8b949e" width={60} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
-                  />
-                  <Bar dataKey="value" fill="#58a6ff" radius={[0, 4, 4, 0]}>
-                    {tradeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.name === 'Winning' ? '#3fb950' : '#f85149'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                  <BarChart data={tradeData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
+                    <XAxis type="number" stroke="#8b949e" />
+                    <YAxis type="category" dataKey="name" stroke="#8b949e" width={60} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d' }}
+                    />
+                    <Bar dataKey="value" fill="#58a6ff" radius={[0, 4, 4, 0]}>
+                      {tradeData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.name === 'Winning' ? '#3fb950' : '#f85149'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               )}
             </div>
           )}

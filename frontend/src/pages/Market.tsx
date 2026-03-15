@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { marketApi } from '../services/api';
 import type { MarketSentiment } from '../types';
-import { TrendingUp, TrendingDown, AlertTriangle, Brain } from 'lucide-react';
+import { TrendingUp, TrendingDown, Brain } from 'lucide-react';
 import NewsFeed from '../components/NewsFeed';
 import { CandlestickChart } from '../components/trading/CandlestickChart';
 import { OrderBook } from '../components/trading/OrderBook';
@@ -109,7 +109,6 @@ export default function Market() {
   const hasCandlesData = Array.isArray(candles) && candles.length > 0;
   const pricesData = hasPricesData ? prices : fallbackPrices;
   const candlesData = hasCandlesData ? candles : fallbackCandles;
-  const isUsingFallback = !hasPricesData || !hasCandlesData;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {

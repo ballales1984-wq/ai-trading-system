@@ -36,6 +36,25 @@ from app.core.security_middleware import (
     SecurityHeadersConfig,
     get_monitoring_middleware,
 )
+
+# Import route routers
+from app.api.routes import (
+    news,
+    market,
+    portfolio,
+    orders,
+    health,
+    strategy,
+    waitlist,
+    cache,
+    auth,
+    risk,
+    ws,
+)
+
+# Import audit classes
+from app.compliance.audit import AuditLogger, AuditEvent, AuditEventType
+
 # pyre-ignore[21]: Missing module attribute
 
 
@@ -370,9 +389,6 @@ async def get_audit_events(
 async def get_audit_stats():
     """Get audit statistics."""
     return audit_logger.get_stats()
-
-# Prometheus metrics
-app.mount("/metrics", get_metrics_app())
 
 # Serve frontend static files (for Render deployment)
 try:
