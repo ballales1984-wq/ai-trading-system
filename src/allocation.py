@@ -384,3 +384,414 @@ if __name__ == "__main__":
     
     print("\n6. Regime-Aware (BEAR):")
     print(regime_aware_allocation(returns_dict, "BEAR"))
+
+
+# ============================================================================
+# ADVANCED ALLOCATION STRATEGIES (NEW - No external dependencies)
+# ============================================================================
+
+def minimum_variance_allocation(
+    returns_dict: Dict[str, pd.Series],
+    lookback: int = 60,
+    min_weight: float = 0.01,
+) -> Dict[str, float]:
+    """
+    Minimum Variance Portfolio - Minimizes portfolio volatility.
+    
+    Args:
+        returns_dict: {asset: serie rendimenti}
+        lookback: Finestra per calcolo covarianza
+        min_weight: Peso minimo per asset
+    
+    Returns:
+        Dizionario {asset: weight}
+    """
+    if not returns_dict:
+        return {}
+    
+    assets = list(returns_dict.keys())
+    n = len(assets)
+    
+    returns_df = pd.DataFrame({a: returns_dict[a].tail(lookback) for a in assets})
+    
+    if len(returns_df) < 10:
+        return equal_weight_allocation(assets)
+    
+    cov_matrix = returns_df.cov().values
+    
+    try:
+        # Solve for minimum variance portfolio
+        # minimize: w' * Cov * w
+        # subject to: sum(w) = 1
+        
+        from scipy.optimize import minimize
+        
+        def portfolio_variance(weights):
+            return weights @ cov_matrix @ weights
+        
+        # Constraints
+        constraints = {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}
+        bounds = [(min_weight, 1.0) for _ in range(n)]
+        
+        # Initial guess: equal weight
+        w0 = np.ones(n) / n
+        
+        result = minimize(
+            portfolio_variance,
+            w0,
+            method='SLSQP',
+            bounds=bounds,
+            constraints=constraints
+        )
+        
+        weights = result.x if result.success else w0
+        weights = np.maximum(weights, min_weight)
+        weights = weights / weights.sum()
+        
+        return {assets[i]: float(weights[i]) for i in range(n)}
+    
+    except ImportError:
+        # Fallback without scipy
+        # Use simplified inverse variance weighting
+        variances = cov_matrix.diagonal()
+        inv_var = 1 / (variances + 1e-10)
+        weights = inv_var / inv_var.sum()
+        return {assets[i]: float(weights[i]) for i in range(n)}
+    except:
+        return equal_weight_allocation(assets)
+
+
+def maximum_diversification_allocation(
+    returns_dict: Dict[str, pd.Series],
+    lookback: int = 60,
+) -> Dict[str, float]:
+    """
+    Maximum Diversification Portfolio - Maximizes diversification ratio.
+    
+    The diversification ratio = portfolio volatility / weighted average vol
+    Higher ratio = better diversification.
+    
+    Args:
+        returns_dict: {asset: serie rendimenti}
+        lookback: Finestra per calcolo
+    
+    Returns:
+        Dizionario {asset: weight}
+    """
+    if not returns_dict:
+        return {}
+    
+    assets = list(returns_dict.keys())
+    n = len(assets)
+    
+    returns_df = pd.DataFrame({a: returns_dict[a].tail(lookback) for a in assets})
+    
+    if len(returns_df) < 10:
+        return equal_weight_allocation(assets)
+    
+    cov_matrix = returns_df.cov().values
+    vols = np.sqrt(np.diag(cov_matrix))
+    
+    if np.any(vols == 0):
+        return equal_weight_allocation(assets)
+    
+    try:
+        from scipy.optimize import minimize
+        
+        def neg_diversification_ratio(weights):
+            port_vol = np.sqrt(weights @ cov_matrix @ weights)
+            weighted_vol = weights @ vols
+            if weighted_vol == 0:
+                return 0
+            return -port_vol / weighted_vol  # Negative because we minimize
+        
+        constraints = {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}
+        bounds = [(0.01, 1.0) for _ in range(n)]
+        
+        w0 = np.ones(n) / n
+        
+        result = minimize(
+            neg_diversification_ratio,
+            w0,
+            method='SLSQP',
+            bounds=bounds,
+            constraints=constraints
+        )
+        
+        weights = result.x if result.success else w0
+        weights = np.maximum(weights, 0)
+        weights = weights / weights.sum()
+        
+        return {assets[i]: float(weights[i]) for i in range(n)}
+    
+    except:
+        return equal_weight_allocation(assets)
+
+
+def equal_risk_contribution_allocation(
+    returns_dict: Dict[str, pd.Series],
+    lookback: int = 60,
+    max_iterations: int = 100,
+) -> Dict[str, float]:
+    """
+    Equal Risk Contribution (ERC) - Each asset contributes equally to portfolio risk.
+    
+    Similar to risk parity but with iterative optimization.
+    
+    Args:
+        returns_dict: {asset: serie rendimenti}
+        lookback: Finestra per calcolo covarianza
+        max_iterations: Numero massimo iterazioni
+    
+    Returns:
+        Dizionario {asset: weight}
+    """
+    if not returns_dict:
+        return {}
+    
+    assets = list(returns_dict.keys())
+    n = len(assets)
+    
+    returns_df = pd.DataFrame({a: returns_dict[a].tail(lookback) for a in assets})
+    
+    if len(returns_df) < 10:
+        return equal_weight_allocation(assets)
+    
+    cov_matrix = returns_df.cov().values
+    
+    try:
+        from scipy.optimize import minimize
+        
+        def risk_contribution(weights):
+            port_vol = np.sqrt(weights @ cov_matrix @ weights)
+            marginal_contrib = cov_matrix @ weights
+            risk_contrib = weights * marginal_contrib / port_vol
+            
+            # Target: equal risk contribution
+            target = np.ones(n) / n * port_vol
+            return np.sum((risk_contrib - target) ** 2)
+        
+        constraints = {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}
+        bounds = [(0.01, 1.0) for _ in range(n)]
+        
+        w0 = np.ones(n) / n
+        
+        result = minimize(
+            risk_contribution,
+            w0,
+            method='SLSQP',
+            bounds=bounds,
+            constraints=constraints,
+            options={'maxiter': max_iterations}
+        )
+        
+        weights = result.x if result.success else w0
+        weights = np.maximum(weights, 0)
+        weights = weights / weights.sum()
+        
+        return {assets[i]: float(weights[i]) for i in range(n)}
+    
+    except ImportError:
+        # Fallback to risk parity
+        return risk_parity_allocation(returns_dict, lookback)
+    except:
+        return equal_weight_allocation(assets)
+
+
+def black_litterman_allocation(
+    returns_dict: Dict[str, pd.Series],
+    market_cap_weights: Optional[Dict[str, float]] = None,
+    risk_aversion: float = 2.5,
+    confidence: float = 0.5,
+    views: Optional[Dict[str, float]] = None,
+    lookback: int = 60,
+) -> Dict[str, float]:
+    """
+    Black-Litterman Model - Combines market equilibrium with views.
+    
+    Args:
+        returns_dict: {asset: serie rendimenti}
+        market_cap_weights: Pesi di mercato (cap weights)
+        risk_aversion: Coefficiente avversione al rischio
+        confidence: Fiducia nelle views (0-1)
+        views: Views opzionali {asset: expected return}
+        lookback: Finestra per calcolo
+    
+    Returns:
+        Dizionario {asset: weight}
+    """
+    if not returns_dict:
+        return {}
+    
+    assets = list(returns_dict.keys())
+    n = len(assets)
+    
+    returns_df = pd.DataFrame({a: returns_dict[a].tail(lookback) for a in assets})
+    
+    if len(returns_df) < 10:
+        return equal_weight_allocation(assets)
+    
+    cov_matrix = returns_df.cov().values
+    
+    # Default: equal market cap
+    if market_cap_weights is None:
+        market_cap_weights = {a: 1.0/n for a in assets}
+    
+    market_weights = np.array([market_cap_weights.get(a, 1.0/n) for a in assets])
+    market_weights = market_weights / market_weights.sum()
+    
+    # Implied equilibrium returns
+    implied_returns = risk_aversion * cov_matrix @ market_weights
+    
+    # If no views, use equilibrium
+    if views is None or len(views) == 0:
+        final_returns = implied_returns
+    else:
+        # Blend views with equilibrium
+        view_returns = np.array([views.get(a, implied_returns[i]) for i, a in enumerate(assets)])
+        final_returns = confidence * view_returns + (1 - confidence) * implied_returns
+    
+    # Mean-variance optimization with adjusted returns
+    try:
+        from scipy.optimize import minimize
+        
+        def neg_sharpe(weights):
+            port_return = weights @ final_returns
+            port_vol = np.sqrt(weights @ cov_matrix @ weights)
+            if port_vol == 0:
+                return 0
+            return -(port_return - risk_aversion / 252 * port_vol ** 2) / port_vol
+        
+        constraints = {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}
+        bounds = [(0.0, 1.0) for _ in range(n)]
+        
+        w0 = market_weights
+        
+        result = minimize(
+            neg_sharpe,
+            w0,
+            method='SLSQP',
+            bounds=bounds,
+            constraints=constraints
+        )
+        
+        weights = result.x if result.success else w0
+        weights = np.maximum(weights, 0)
+        weights = weights / weights.sum()
+        
+        return {assets[i]: float(weights[i]) for i in range(n)}
+    
+    except:
+        # Fallback: use implied returns with inverse vol
+        inv_vol = 1 / (np.sqrt(np.diag(cov_matrix)) + 1e-10)
+        weights = inv_vol * final_returns
+        weights = np.maximum(weights, 0)
+        weights = weights / weights.sum() if weights.sum() > 0 else market_weights
+        return {assets[i]: float(weights[i]) for i in range(n)}
+
+
+def momentum_based_allocation(
+    returns_dict: Dict[str, pd.Series],
+    lookback_short: int = 20,
+    lookback_long: int = 60,
+    min_weight: float = 0.05,
+    max_weight: float = 0.5,
+) -> Dict[str, float]:
+    """
+    Momentum-Based Allocation - Favor assets with strong recent performance.
+    
+    Args:
+        returns_dict: {asset: serie rendimenti}
+        lookback_short: Short-term momentum window
+        lookback_long: Long-term momentum window
+        min_weight: Peso minimo
+        max_weight: Peso massimo
+    
+    Returns:
+        Dizionario {asset: weight}
+    """
+    if not returns_dict:
+        return {}
+    
+    assets = list(returns_dict.keys())
+    momentum_scores = {}
+    
+    for asset, returns in returns_dict.items():
+        if len(returns) < lookback_long:
+            momentum_scores[asset] = 0.0
+            continue
+        
+        # Short-term momentum
+        short_ret = returns.tail(lookback_short).sum()
+        
+        # Long-term momentum
+        long_ret = returns.tail(lookback_long).sum()
+        
+        # Combined momentum score
+        # Higher short-term = recent strength
+        # Higher long-term = sustained performance
+        score = 0.3 * short_ret + 0.7 * long_ret
+        momentum_scores[asset] = score
+    
+    # Convert to weights (positive scores only)
+    scores = np.array([max(0, momentum_scores.get(a, 0)) for a in assets])
+    
+    if scores.sum() == 0:
+        return equal_weight_allocation(assets)
+    
+    weights = scores / scores.sum()
+    
+    # Apply bounds
+    weights = np.maximum(weights, min_weight)
+    weights = np.minimum(weights, max_weight)
+    
+    # Renormalize
+    weights = weights / weights.sum()
+    
+    return {assets[i]: float(weights[i]) for i in range(len(assets))}
+
+
+def cluster_based_allocation(
+    returns_dict: Dict[str, pd.Series],
+    lookback: int = 60,
+    min_cluster_correlation: float = 0.3,
+) -> Dict[str, float]:
+    """
+    Cluster-Based Allocation - Diversify across uncorrelated asset clusters.
+    
+    Simple hierarchical-like approach: weight assets inversely to their
+    average correlation with other assets.
+    
+    Args:
+        returns_dict: {asset: serie rendimenti}
+        lookback: Finestra per calcolo correlazioni
+        min_cluster_correlation: Soglia per considerare correlazione significativa
+    
+    Returns:
+        Dizionario {asset: weight}
+    """
+    if not returns_dict:
+        return {}
+    
+    assets = list(returns_dict.keys())
+    n = len(assets)
+    
+    if n < 2:
+        return equal_weight_allocation(assets)
+    
+    returns_df = pd.DataFrame({a: returns_dict[a].tail(lookback) for a in assets})
+    
+    if len(returns_df) < 10:
+        return equal_weight_allocation(assets)
+    
+    corr_matrix = returns_df.corr().values
+    
+    # Calculate average absolute correlation for each asset
+    # Lower correlation = better diversification = higher weight
+    avg_corr = np.mean(np.abs(corr_matrix - np.eye(n)), axis=1)
+    
+    # Invert: lower correlation = higher weight
+    inv_corr = 1 / (avg_corr + 0.01)
+    weights = inv_corr / inv_corr.sum()
+    
+    return {assets[i]: float(weights[i]) for i in range(n)}

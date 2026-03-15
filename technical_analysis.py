@@ -768,10 +768,22 @@ class TechnicalAnalyzer:
     def _determine_trend(self, ema_short: float, ema_medium: float, 
                         ema_long: float) -> str:
         """Determine trend from EMA values"""
-        if ema_short > ema_medium > ema_long:
-            return 'bullish'
-        elif ema_short < ema_medium < ema_long:
-            return 'bearish'
+        # Handle both scalar and array cases
+        try:
+            if isinstance(ema_short, (np.ndarray, np.generic)) or isinstance(ema_medium, (np.ndarray, np.generic)):
+                # Array case - use numpy all
+                if np.all(ema_short > ema_medium) and np.all(ema_medium > ema_long):
+                    return 'bullish'
+                elif np.all(ema_short < ema_medium) and np.all(ema_medium < ema_long):
+                    return 'bearish'
+            else:
+                # Scalar case
+                if ema_short > ema_medium > ema_long:
+                    return 'bullish'
+                elif ema_short < ema_medium < ema_long:
+                    return 'bearish'
+        except Exception:
+            pass
         return 'neutral'
     
     # ==================== SCORING ====================
@@ -887,6 +899,231 @@ class TechnicalAnalyzer:
         
         return rankings
     
+    # ==================== ADVANCED INDICATORS (NEW) ====================
+    
+    def calculate_keltner_channels(self, df: pd.DataFrame, period: int = 20, multiplier: float = 2.0) -> Dict[str, float]:
+        """
+        Calculate Keltner Channels - Volatility-based trend indicator.
+        
+        Returns:
+            Dictionary with 'upper', 'middle', 'lower'
+        """
+        if len(df) < period:
+            return {'upper': 0.0, 'middle': 0.0, 'lower': 0.0}
+        
+        # Middle line is EMA
+        middle = df['close'].ewm(span=period, adjust=False).mean()
+        
+        # Calculate ATR for the bands
+        atr = self.calculate_atr(df, period)
+        
+        upper = middle + multiplier * atr
+        lower = middle - multiplier * atr
+        
+        return {
+            'upper': upper.iloc[-1] if hasattr(upper, 'iloc') else upper,
+            'middle': middle.iloc[-1] if hasattr(middle, 'iloc') else middle,
+            'lower': lower.iloc[-1] if hasattr(lower, 'iloc') else lower
+        }
+    
+    def calculate_donchian_channels(self, df: pd.DataFrame, period: int = 20) -> Dict[str, float]:
+        """
+        Calculate Donchian Channels - Price channel indicator.
+        
+        Returns:
+            Dictionary with 'upper', 'middle', 'lower'
+        """
+        if len(df) < period:
+            return {'upper': 0.0, 'middle': 0.0, 'lower': 0.0}
+        
+        upper = df['high'].rolling(period).max()
+        lower = df['low'].rolling(period).min()
+        middle = (upper + lower) / 2
+        
+        return {
+            'upper': upper.iloc[-1],
+            'middle': middle.iloc[-1],
+            'lower': lower.iloc[-1]
+        }
+    
+    def calculate_ichimoku(self, df: pd.DataFrame) -> Dict[str, float]:
+        """
+        Calculate Ichimoku Cloud - Multi-component trend indicator.
+        
+        Returns:
+            Dictionary with 'tenkan', 'kijun', 'senkou_a', 'senkou_b', 'chikou'
+        """
+        nine_period = 9
+        twenty_six_period = 26
+        fifty_two_period = 52
+        
+        if len(df) < fifty_two_period:
+            return {
+                'tenkan': 0.0, 'kijun': 0.0, 
+                'senkou_a': 0.0, 'senkou_b': 0.0, 'chikou': 0.0
+            }
+        
+        # Tenkan-sen (Conversion Line)
+        tenkan = (df['high'].rolling(9).max() + df['low'].rolling(9).min()) / 2
+        
+        # Kijun-sen (Base Line)
+        kijun = (df['high'].rolling(26).max() + df['low'].rolling(26).min()) / 2
+        
+        # Senkou Span A (Leading Span A)
+        senkou_a = ((tenkan + kijun) / 2).shift(26)
+        
+        # Senkou Span B (Leading Span B)
+        senkou_b = ((df['high'].rolling(52).max() + df['low'].rolling(52).min()) / 2).shift(26)
+        
+        # Chikou Span (Lagging Span)
+        chikou = df['close'].shift(-26)
+        
+        return {
+            'tenkan': tenkan.iloc[-1] if not pd.isna(tenkan.iloc[-1]) else 0.0,
+            'kijun': kijun.iloc[-1] if not pd.isna(kijun.iloc[-1]) else 0.0,
+            'senkou_a': senkou_a.iloc[-1] if not pd.isna(senkou_a.iloc[-1]) else 0.0,
+            'senkou_b': senkou_b.iloc[-1] if not pd.isna(senkou_b.iloc[-1]) else 0.0,
+            'chikou': chikou.iloc[-1] if not pd.isna(chikou.iloc[-1]) else 0.0
+        }
+    
+    def calculate_mfi(self, df: pd.DataFrame, period: int = 14) -> float:
+        """
+        Calculate Money Flow Index (MFI) - Volume-weighted RSI.
+        
+        Returns:
+            MFI value (0-100)
+        """
+        if len(df) < period + 1 or 'volume' not in df.columns:
+            return 50.0
+        
+        typical_price = (df['high'] + df['low'] + df['close']) / 3
+        money_flow = typical_price * df['volume']
+        
+        positive_flow = money_flow.where(typical_price > typical_price.shift(1), 0)
+        negative_flow = money_flow.where(typical_price < typical_price.shift(1), 0)
+        
+        positive_mf = positive_flow.rolling(period).sum()
+        negative_mf = negative_flow.rolling(period).sum()
+        
+        mfi = 100 - (100 / (1 + positive_mf / negative_mf.replace(0, np.nan)))
+        
+        return mfi.iloc[-1] if not pd.isna(mfi.iloc[-1]) else 50.0
+    
+    def calculate_chaikin_mf(self, df: pd.DataFrame, period: int = 20) -> float:
+        """
+        Calculate Chaikin Money Flow - Volume-weighted accumulation/distribution.
+        
+        Returns:
+            CMF value (-1 to 1)
+        """
+        if len(df) < period + 1 or 'volume' not in df.columns:
+            return 0.0
+        
+        # Money Flow Multiplier
+        typical_price = (df['high'] + df['low'] + df['close']) / 3
+        money_flow_multiplier = ((df['close'] - df['low']) - (df['high'] - df['close'])) / (df['high'] - df['low']).replace(0, np.nan)
+        money_flow_multiplier = money_flow_multiplier.fillna(0)
+        
+        # Money Flow Volume
+        money_flow_volume = money_flow_multiplier * df['volume']
+        
+        # Chaikin Money Flow
+        cmf = money_flow_volume.rolling(period).sum() / df['volume'].rolling(period).sum()
+        
+        return cmf.iloc[-1] if not pd.isna(cmf.iloc[-1]) else 0.0
+    
+    def calculate_trix(self, df: pd.DataFrame, period: int = 15) -> float:
+        """
+        Calculate TRIX - Triple smoothed rate of change.
+        
+        Returns:
+            TRIX value
+        """
+        if len(df) < period * 3:
+            return 0.0
+        
+        # Triple EMA
+        ema1 = df['close'].ewm(span=period, adjust=False).mean()
+        ema2 = ema1.ewm(span=period, adjust=False).mean()
+        ema3 = ema2.ewm(span=period, adjust=False).mean()
+        
+        # TRIX = Rate of change of triple EMA
+        trix = ((ema3 - ema3.shift(1)) / ema3.shift(1)) * 100
+        
+        return trix.iloc[-1] if not pd.isna(trix.iloc[-1]) else 0.0
+    
+    def calculate_ulcer_index(self, df: pd.DataFrame, period: int = 14) -> float:
+        """
+        Calculate Ulcer Index - Downside risk measure.
+        
+        Returns:
+            Ulcer Index value
+        """
+        if len(df) < period:
+            return 0.0
+        
+        # Calculate drawdown percentage
+        rolling_max = df['close'].cummax()
+        drawdown = ((df['close'] - rolling_max) / rolling_max) * 100
+        
+        # Ulcer Index = Square root of mean squared drawdown
+        ulcer = np.sqrt((drawdown ** 2).rolling(period).mean())
+        
+        return ulcer.iloc[-1] if not pd.isna(ulcer.iloc[-1]) else 0.0
+    
+    def calculate_all_advanced_indicators(self, df: pd.DataFrame) -> Dict[str, float]:
+        """
+        Calculate all advanced indicators at once.
+        
+        Returns:
+            Dictionary with all indicator values
+        """
+        indicators = {}
+        
+        # Keltner Channels
+        kc = self.calculate_keltner_channels(df)
+        indicators['kc_upper'] = kc['upper']
+        indicators['kc_middle'] = kc['middle']
+        indicators['kc_lower'] = kc['lower']
+        
+        # Donchian Channels
+        dc = self.calculate_donchian_channels(df)
+        indicators['dc_upper'] = dc['upper']
+        indicators['dc_middle'] = dc['middle']
+        indicators['dc_lower'] = dc['lower']
+        
+        # Ichimoku
+        ichimoku = self.calculate_ichimoku(df)
+        indicators['ichimoku_tenkan'] = ichimoku['tenkan']
+        indicators['ichimoku_kijun'] = ichimoku['kijun']
+        indicators['ichimoku_senkou_a'] = ichimoku['senkou_a']
+        indicators['ichimoku_senkou_b'] = ichimoku['senkou_b']
+        
+        # Money Flow Index
+        indicators['mfi'] = self.calculate_mfi(df)
+        
+        # Chaikin Money Flow
+        indicators['cmf'] = self.calculate_chaikin_mf(df)
+        
+        # TRIX
+        indicators['trix'] = self.calculate_trix(df)
+        
+        # Ulcer Index
+        indicators['ulcer_index'] = self.calculate_ulcer_index(df)
+        
+        # Existing advanced indicators
+        adx = self.calculate_adx(df)
+        indicators['adx'] = adx['adx']
+        indicators['adx_plus_di'] = adx['plus_di']
+        indicators['adx_minus_di'] = adx['minus_di']
+        
+        indicators['vwap'] = self.calculate_vwap(df)
+        indicators['obv'] = self.calculate_obv(df)
+        indicators['cci'] = self.calculate_cci(df)
+        indicators['williams_r'] = self.calculate_williams_r(df)
+        
+        return indicators
+
     # ==================== UTILITY METHODS ====================
     
     def get_indicator_description(self, indicator: str) -> str:

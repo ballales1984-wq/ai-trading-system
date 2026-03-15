@@ -283,8 +283,7 @@ class LiveMultiAssetTrader:
         allocations = self.allocator.allocate(
             signals=signals,
             capital=self.portfolio.get_total_value(prices),
-            prices=prices,
-            data_frames=data_frames
+            prices=prices
         )
         
         # Close positions not in allocation

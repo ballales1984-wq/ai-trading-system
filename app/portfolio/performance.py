@@ -364,3 +364,268 @@ class PortfolioPerformance:
 
 # Alias for backward compatibility
 PerformanceTracker = PortfolioPerformance
+
+
+# ============================================================================
+# ADVANCED RISK METRICS (NEW - No external dependencies)
+# ============================================================================
+
+def calculate_value_at_risk(returns: np.ndarray, confidence: float = 0.95) -> float:
+    """
+    Calculate Value at Risk (VaR) using historical method.
+    
+    Args:
+        returns: Array of returns
+        confidence: Confidence level (default 0.95 for 95%)
+    
+    Returns:
+        VaR as a positive number (loss)
+    """
+    if len(returns) < 2:
+        return 0.0
+    var = np.percentile(returns, (1 - confidence) * 100)
+    return abs(var) if var < 0 else 0.0
+
+
+def calculate_conditional_var(returns: np.ndarray, confidence: float = 0.95) -> float:
+    """
+    Calculate Conditional Value at Risk (CVaR) / Expected Shortfall.
+    
+    Args:
+        returns: Array of returns
+        confidence: Confidence level
+    
+    Returns:
+        CVaR as a positive number (expected loss beyond VaR)
+    """
+    if len(returns) < 2:
+        return 0.0
+    var = np.percentile(returns, (1 - confidence) * 100)
+    cvar = returns[returns <= var].mean()
+    return abs(cvar) if cvar < 0 else 0.0
+
+
+def calculate_tail_ratio(returns: np.ndarray) -> float:
+    """
+    Calculate Tail Ratio - Ratio of right tail to left tail.
+    
+    A value > 1 means more positive extreme returns than negative.
+    """
+    if len(returns) < 20:
+        return 1.0
+    
+    right_tail = np.percentile(returns, 95)
+    left_tail = np.percentile(returns, 5)
+    
+    if left_tail == 0:
+        return 1.0
+    
+    return abs(right_tail / left_tail) if left_tail < 0 else 1.0
+
+
+def calculate_skewness(returns: np.ndarray) -> float:
+    """
+    Calculate skewness of returns distribution.
+    
+    - Negative: Left-skewed (more negative outliers)
+    - Positive: Right-skewed (more positive outliers)
+    - Near 0: Symmetric
+    """
+    if len(returns) < 3:
+        return 0.0
+    
+    mean = np.mean(returns)
+    std = np.std(returns)
+    
+    if std == 0:
+        return 0.0
+    
+    n = len(returns)
+    skew = (n / ((n - 1) * (n - 2))) * np.sum(((returns - mean) / std) ** 3)
+    
+    return float(skew)
+
+
+def calculate_kurtosis(returns: np.ndarray) -> float:
+    """
+    Calculate excess kurtosis of returns distribution.
+    
+    - Positive: Fat tails (more outliers than normal)
+    - Negative: Thin tails (fewer outliers)
+    """
+    if len(returns) < 4:
+        return 0.0
+    
+    mean = np.mean(returns)
+    std = np.std(returns)
+    
+    if std == 0:
+        return 0.0
+    
+    n = len(returns)
+    kurt = (n * (n + 1) / ((n - 1) * (n - 2) * (n - 3))) * \
+           np.sum(((returns - mean) / std) ** 4) - \
+           (3 * (n - 1) ** 2) / ((n - 2) * (n - 3))
+    
+    return float(kurt)
+
+
+def calculate_kelly_criterion(returns: np.ndarray) -> float:
+    """
+    Calculate Kelly Criterion for optimal bet sizing.
+    
+    Returns the optimal fraction of capital to risk.
+    
+    Returns:
+        Kelly percentage (0 to 1, where 1 = 100%)
+    """
+    if len(returns) < 10:
+        return 0.0
+    
+    wins = returns[returns > 0]
+    losses = returns[returns < 0]
+    
+    if len(wins) == 0 or len(losses) == 0:
+        return 0.0
+    
+    win_rate = len(wins) / len(returns)
+    avg_win = np.mean(wins)
+    avg_loss = abs(np.mean(losses))
+    
+    if avg_loss == 0:
+        return 0.0
+    
+    win_loss_ratio = avg_win / avg_loss
+    kelly = (win_rate * win_loss_ratio - (1 - win_rate)) / win_loss_ratio
+    
+    # Cap Kelly at reasonable levels (half-Kelly is safer)
+    return max(0.0, min(kelly, 1.0))
+
+
+def calculate_omega_ratio(returns: np.ndarray, threshold: float = 0.0) -> float:
+    """
+    Calculate Omega Ratio - Probability-weighted ratio of gains vs losses.
+    
+    Args:
+        returns: Array of returns
+        threshold: Minimum acceptable return (default 0)
+    
+    Returns:
+        Omega ratio (higher is better)
+    """
+    if len(returns) < 2:
+        return 1.0
+    
+    gains = returns[returns > threshold] - threshold
+    losses = threshold - returns[returns < threshold]
+    
+    total_gains = np.sum(gains)
+    total_losses = np.sum(losses)
+    
+    if total_losses == 0:
+        return float('inf') if total_gains > 0 else 1.0
+    
+    return total_gains / total_losses
+
+
+def calculate_ulcer_index(equity_curve: np.ndarray, period: int = 14) -> float:
+    """
+    Calculate Ulcer Index - Measures downside volatility in terms of depth and duration.
+    """
+    if len(equity_curve) < 2:
+        return 0.0
+    
+    # Calculate drawdown percentage
+    rolling_max = np.maximum.accumulate(equity_curve)
+    drawdown = ((equity_curve - rolling_max) / rolling_max) * 100
+    
+    # Ulcer Index = Square root of mean squared drawdown
+    ulcer = np.sqrt(np.mean(drawdown ** 2))
+    
+    return float(ulcer)
+
+
+def calculate_gain_to_pain_ratio(returns: np.ndarray) -> float:
+    """
+    Calculate Gain to Pain Ratio - Sum of returns / sum of absolute losses.
+    """
+    if len(returns) < 2:
+        return 0.0
+    
+    total_return = np.sum(returns)
+    pain = np.sum(np.abs(returns[returns < 0]))
+    
+    if pain == 0:
+        return float('inf') if total_return > 0 else 0.0
+    
+    return total_return / pain
+
+
+def calculate_rolling_sharpe(returns: np.ndarray, window: int = 30) -> np.ndarray:
+    """
+    Calculate rolling Sharpe ratio over a window.
+    
+    Returns:
+        Array of rolling Sharpe ratios
+    """
+    if len(returns) < window:
+        return np.array([0.0])
+    
+    rolling_mean = np.convolve(returns, np.ones(window)/window, mode='valid')
+    rolling_std = np.array([np.std(returns[i:i+window]) for i in range(len(returns)-window+1)])
+    
+    with np.errstate(divide='ignore', invalid='ignore'):
+        rolling_sharpe = rolling_mean / rolling_std * np.sqrt(252)
+        rolling_sharpe = np.nan_to_num(rolling_sharpe, nan=0.0, posinf=0.0, neginf=0.0)
+    
+    return rolling_sharpe
+
+
+class AdvancedRiskMetrics:
+    """
+    Advanced risk metrics calculator.
+    
+    Usage:
+        risk = AdvancedRiskMetrics()
+        metrics = risk.calculate_all(returns, equity_curve)
+    """
+    
+    @staticmethod
+    def calculate_all(
+        returns: np.ndarray,
+        equity_curve: Optional[np.ndarray] = None
+    ) -> Dict[str, float]:
+        """
+        Calculate all advanced risk metrics.
+        
+        Args:
+            returns: Array of returns
+            equity_curve: Optional array of equity values
+        
+        Returns:
+            Dictionary of risk metrics
+        """
+        metrics = {}
+        
+        # VaR and CVaR
+        metrics['var_95'] = calculate_value_at_risk(returns, 0.95)
+        metrics['var_99'] = calculate_value_at_risk(returns, 0.99)
+        metrics['cvar_95'] = calculate_conditional_var(returns, 0.95)
+        metrics['cvar_99'] = calculate_conditional_var(returns, 0.99)
+        
+        # Distribution metrics
+        metrics['tail_ratio'] = calculate_tail_ratio(returns)
+        metrics['skewness'] = calculate_skewness(returns)
+        metrics['kurtosis'] = calculate_kurtosis(returns)
+        
+        # Risk-adjusted
+        metrics['kelly_criterion'] = calculate_kelly_criterion(returns)
+        metrics['kelly_fraction'] = calculate_kelly_criterion(returns) * 0.5  # Half-Kelly
+        metrics['omega_ratio'] = calculate_omega_ratio(returns)
+        
+        if equity_curve is not None:
+            metrics['ulcer_index'] = calculate_ulcer_index(equity_curve)
+        
+        metrics['gain_to_pain'] = calculate_gain_to_pain_ratio(returns)
+        
+        return metrics
