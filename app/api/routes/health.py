@@ -49,3 +49,25 @@ async def liveness_check() -> Dict[str, str]:
     Returns 'alive' to indicate the process is running.
     """
     return {"status": "alive"}
+
+
+@router.get("/health/database", status_code=status.HTTP_200_OK)
+async def database_health_check() -> Dict[str, Any]:
+    """
+    Database health check with connection pool stats.
+    
+    Returns database status and connection pool information.
+    """
+    from app.core.database import get_db_manager
+    
+    db_manager = get_db_manager()
+    health = db_manager.health_check()
+    
+    # Include config limits
+    health["config"] = {
+        "pool_size": settings.db_pool_size,
+        "max_overflow": settings.db_max_overflow,
+        "total_max": settings.db_pool_size + settings.db_max_overflow
+    }
+    
+    return health

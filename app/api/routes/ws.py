@@ -27,6 +27,22 @@ class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
 
+    def _is_connection_alive(self, websocket: WebSocket) -> bool:
+        """Check if a WebSocket connection is still open."""
+        try:
+            # Check if the socket has the client_state attribute (FastAPI >= 0.95+)
+            if hasattr(websocket, 'client_state'):
+                # Try to access the state - will work on newer FastAPI versions
+                try:
+                    from fastapi import WebSocketState
+                    return websocket.client_state == WebSocketState.CONNECTED
+                except ImportError:
+                    # Fallback for older FastAPI versions
+                    return True
+            return True  # Default to trying if we can't determine
+        except Exception:
+            return False
+
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
@@ -38,13 +54,31 @@ class ConnectionManager:
             logger.info(f"WebSocket disconnected. Total: {len(self.active_connections)}")
 
     async def broadcast(self, message: dict):
+        """Broadcast message to all active connections, removing dead ones."""
+        dead_connections = []
         for connection in self.active_connections:
             try:
+                # Skip if connection is not alive
+                if not self._is_connection_alive(connection):
+                    dead_connections.append(connection)
+                    continue
                 await connection.send_json(message)
             except Exception as e:
                 logger.error(f"Error broadcasting to WebSocket: {e}")
-                # We'll clean up disconnected ones in the next disconnect call
-                # or if the send fails consistently.
+                # Mark connection as dead for removal
+                dead_connections.append(connection)
+        
+        # Clean up dead connections
+        for dead in dead_connections:
+            if dead in self.active_connections:
+                self.active_connections.remove(dead)
+                logger.info(f"Removed dead WebSocket connection. Remaining: {len(self.active_connections)}")
+
+    def cleanup_all(self):
+        """Remove all connections - useful after server reload."""
+        count = len(self.active_connections)
+        self.active_connections.clear()
+        logger.info(f"Cleaned up {count} WebSocket connections")
 
 manager = ConnectionManager()
 

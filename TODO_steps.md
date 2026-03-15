@@ -1,4 +1,5 @@
-# AI Trading System Improvements - Implementation Steps
+\n\n# AI Trading System Improvements - Implementation Steps\n\n
+
 Generated from approved plan. Track progress here. Update on completion.
 
 ## Phase 1: Status Updates & Docs [TODO: 3/3]

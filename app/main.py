@@ -37,11 +37,15 @@ from app.core.security_middleware import (
     get_monitoring_middleware,
 )
 # pyre-ignore[21]: Missing module attribute
-from app.compliance.audit import AuditLogger, AuditEvent, AuditEventType
+
+
 # pyre-ignore[21]: Missing module attribute
-from app.api.routes import news, market, portfolio, orders, health, strategy, waitlist, cache, auth, risk, ws
-# pyre-ignore[21]: Missing module attribute
-from app.metrics import get_metrics_app, instrument_requests
+try:
+    from app.metrics import get_metrics_app, instrument_requests
+except ImportError:
+    logger.warning("Prometheus metrics disabled - install prometheus_client")
+    get_metrics_app = None
+    instrument_requests = None
 
 # Setup logging
 setup_logging()
@@ -377,7 +381,11 @@ try:
 except Exception as e:
     logger.warning(f"Could not mount frontend static files: {e}")
     
-logger.info("Prometheus metrics available at /metrics")
+if get_metrics_app:
+    app.mount("/metrics", get_metrics_app())
+    logger.info("Prometheus metrics available at /metrics")
+else:
+    logger.warning("Metrics endpoint disabled")
 
 if __name__ == "__main__":
     # pyre-ignore[21]: Missing module attribute

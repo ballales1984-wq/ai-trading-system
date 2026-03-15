@@ -67,9 +67,9 @@ class Settings(BaseSettings):
         env="TIMESCALEDB_ENABLED"
     )
     
-    # Database pool settings
-    db_pool_size: int = 20
-    db_max_overflow: int = 40
+    # Database pool settings (aumentati per maggiore throughput)
+    db_pool_size: int = 100
+    db_max_overflow: int = 200
     db_pool_recycle: int = 3600
     
     redis_url: str = Field(

@@ -1,4 +1,6 @@
-<https://github.com/ballales1984-wq/ai-trading-systemThe> GitHub repository at <https://github.com/ballales1984-wq/ai-trading-system> exists and appears to be an actively developed, quite ambitious open-source project (last commit on March 13, 2026, with 513 commits total).
+# Piano 100 Giorni - AI Trading System
+\n\nhttps://github.com/ballales1984-wq/ai-trading-system\n\nThe GitHub repository at https://github.com/ballales1984-wq/ai-trading-system exists and appears to be an actively developed, quite ambitious open-source project (last commit on March 13, 2026, with 513 commits total).
+
 Overview
 
 Repository: ballales1984-wq / ai-trading-system
