@@ -225,8 +225,17 @@ class LiveMultiAssetTrader:
                 if ML_AVAILABLE and asset in self.models and self.models[asset].get('trained'):
                     model = self.models[asset]['ensemble']
                     
-                    # Get prediction
+                    # Get prediction - handle numpy array output
                     raw_signal = model.predict_signals(df)
+                    
+                    # Convert to scalar if needed
+                    try:
+                        raw_signal = int(raw_signal)
+                    except (TypeError, ValueError):
+                        try:
+                            raw_signal = int(raw_signal.item())
+                        except AttributeError:
+                            raw_signal = int(raw_signal[0]) if hasattr(raw_signal, '__len__') else int(raw_signal)
                     
                     # Apply filters (simple confidence check)
                     if raw_signal == 1 and np.random.random() > 0.3:  # Reduce false positives
@@ -239,10 +248,19 @@ class LiveMultiAssetTrader:
                     # Use technical analysis
                     analysis = self.technical_analyzer.analyze(df, asset)
                     
+                    # Get technical score as scalar (handle numpy arrays)
+                    try:
+                        score = float(analysis.technical_score)
+                    except (TypeError, ValueError):
+                        try:
+                            score = analysis.technical_score.item()
+                        except AttributeError:
+                            score = analysis.technical_score
+                    
                     # Generate signal based on technical score
-                    if analysis.technical_score > 0.65:
+                    if score > 0.65:
                         signals[asset] = 1
-                    elif analysis.technical_score < 0.35:
+                    elif score < 0.35:
                         signals[asset] = -1
                     else:
                         signals[asset] = 0
