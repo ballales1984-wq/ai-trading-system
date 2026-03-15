@@ -196,3 +196,11 @@ win32_setctime==1.2.0
 xgboost==3.2.0
 yarl==1.22.0
 zipp==3.23.0
+# New financial analysis packages (2026-03-15)
+arch==8.0.0
+pandas-ta==0.4.71b0
+pyportfolioopt==1.6.0
+quantstats==0.0.81
+QuantLib==1.41
+numba==0.61.2
+llvmlite==0.44.0

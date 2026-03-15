@@ -1,8 +1,8 @@
 # AI Trading System - STABLE Production Dependencies
 # ==================================================
-# Version: 1.0.0-stable
-# Python: 3.11.5
-# Last Updated: 2026-02-20
+# Version: 1.1.0-stable
+# Python: 3.13 (recommended for full package compatibility)
+# Last Updated: 2026-03-15
 # 
 # All versions are EXACTLY pinned for reproducibility.
 # Do NOT use >= or ~= operators.
@@ -30,6 +30,17 @@ werkzeug==3.0.1
 # Note: TA-Lib requires system library installation
 # If not available, comment out and use ta library
 TA-Lib==0.4.28
+
+# ============================================
+# ADVANCED FINANCIAL ANALYSIS (New)
+# ============================================
+pandas-ta==0.4.71b0
+pyportfolioopt==1.6.0
+quantstats==0.0.81
+arch==8.0.0
+QuantLib==1.41
+numba==0.61.2
+llvmlite==0.44.0
 
 # ============================================
 # DATA APIS - Exchange Connectors

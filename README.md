@@ -7,6 +7,17 @@
 [![Forks](https://img.shields.io/github/forks/ballales1984-wq/ai-trading-system.svg)](https://github.com/ballales1984-wq/ai-trading-system/network/members)
 [![Discord](https://img.shields.io/discord/1234567890.svg?label=Discord)](https://discord.gg/aitrading)
 
+## 🎯 Latest Updates (2026-03-15)
+
+### New Financial Analysis Packages Installed
+- **pandas-ta** (v0.4.71b0) - Technical analysis indicators
+- **PyPortfolioOpt** (v1.6.0) - Portfolio optimization algorithms
+- **QuantStats** (v0.0.81) - Portfolio performance analytics
+- **ARCH** (v8.0.0) - Volatility modeling (GARCH)
+- **QuantLib** (v1.41) - Quantitative finance library
+
+**Python Requirement:** Python 3.13+ recommended for full compatibility with all packages (numba dependency)
+
 ## 🎯 Why This Project Exists
 
 Most retail trading systems focus on single indicators, naive executions, and reactive strategies. They fail because they ignore what institutional quant desks know well:
@@ -115,6 +126,9 @@ Watch our 5-minute setup guide:
 - **HMM regime detection**: Market condition identification
 - **Sentiment analysis**: News and social media integration
 - **Cross-asset correlation**: Portfolio optimization
+- **GARCH volatility modeling**: ARCH package for advanced risk analysis
+- **Portfolio optimization**: Mean-variance, Black-Litterman, Risk Parity
+- **Performance analytics**: QuantStats for comprehensive portfolio metrics
 
 ### Frontend Dashboard
 

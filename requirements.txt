@@ -19,4 +19,10 @@ pandas>=2.1.0
 scipy>=1.11.0
 scikit-learn>=1.3.0
 prometheus_client>=0.20.0
+# New financial analysis packages
+pandas-ta>=0.4.71b
+pyportfolioopt>=1.6.0
+quantstats>=0.0.81
+arch>=8.0.0
+QuantLib>=1.41
 
