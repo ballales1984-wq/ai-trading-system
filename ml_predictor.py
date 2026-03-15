@@ -396,11 +396,11 @@ def get_ml_predictor() -> PricePredictor:
         _ml_predictor = PricePredictor()
     return _ml_predictor
 
-def get_sma_predictor() -> SimpleMovingAveragePredictor:
+def get_sma_predictor() -> PricePredictor:
     """Get SMA predictor singleton"""
     global _sma_predictor
     if _sma_predictor is None:
-        _sma_predictor = SimpleMovingAveragePredictor()
+        _sma_predictor = PricePredictor()
     return _sma_predictor
 
 
