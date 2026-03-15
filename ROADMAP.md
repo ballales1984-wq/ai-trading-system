@@ -7,7 +7,7 @@
 ## 📊 Version History
 
 | Version | Codename | Status | Release Date |
-|---------|----------|--------|--------------|
+| -------- | -------- | ------ | ------------ |
 | v0.1.0 | Alpha | ✅ Released | 2024-01 |
 | v0.5.0 | Beta | ✅ Released | 2024-06 |
 | v1.0.0 | Foundation | ✅ Released | 2025-01 |
@@ -29,7 +29,7 @@
 ### Features
 
 | Feature | Description | Priority | Status |
-|---------|-------------|----------|--------|
+| -------- | ------------ | -------- | ------ |
 | Backtest Engine | Historical strategy testing with realistic simulation | P0 | 🔄 In Progress |
 | Walk-Forward Analysis | Rolling window validation for robust backtests | P0 | 🔄 In Progress |
 | Strategy Optimization | Parameter tuning with genetic algorithms | P1 | 🔄 In Progress |
@@ -131,7 +131,7 @@ print(f"Win Rate: {results.win_rate}")
 **Planned Features:**
 
 | Category | Feature | Description |
-|----------|---------|-------------|
+| -------- | -------- | ----------- |
 | **AI/ML** | Strategy Generator | AI-generated trading strategies using LLMs |
 | **AI/ML** | Pattern Recognition | Deep learning for chart pattern detection |
 | **Execution** | Smart Order Routing | Best execution across multiple venues |
@@ -147,7 +147,7 @@ print(f"Win Rate: {results.win_rate}")
 
 ## 🗺️ Feature Roadmap Matrix
 
-```
+```text
                     Q1 2026    Q2 2026    Q3 2026    Q4 2026
                     ────────    ────────    ────────    ────────
 Backtest Engine    ████████
@@ -167,7 +167,7 @@ Factor Models                                        ████████
 
 ### Current (v1.x)
 
-```
+```text
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │  Dashboard  │     │  REST API   │     │     CLI     │
 │   (React)   │     │  (FastAPI)  │     │  Interface  │
@@ -204,7 +204,7 @@ Factor Models                                        ████████
 
 ### Target (v2.0)
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────┐
 │                     API Gateway (Kong/AWS API GW)            │
 └────────────────────────────┬────────────────────────────────┘
