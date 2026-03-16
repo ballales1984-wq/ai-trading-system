@@ -65,7 +65,8 @@ class MonteCarloEngine:
     def _run_level_1(self, current_price: float, mu: float, sigma: float,
                      n_simulations: int, n_days: int) -> Dict:
         """Level 1: Base GBM random walk"""
-        np.random.seed(42)
+        # Use system time for seed to get different results each run
+        np.random.seed()
         dt = 1.0 / 252
         paths = np.zeros((n_simulations, n_days))
         paths[:, 0] = current_price
@@ -105,7 +106,8 @@ class MonteCarloEngine:
         sigma_l2 = sigma * event_vol_adj * cmc_vol_adj
         mu_l2 = mu + sentiment_adj + cmc_sentiment_adj
         
-        np.random.seed(42)
+        # Use system time for seed
+        np.random.seed()
         dt = 1.0 / 252
         paths = np.zeros((n_simulations, n_days))
         paths[:, 0] = current_price
@@ -140,7 +142,8 @@ class MonteCarloEngine:
         
         mu_l3 = mu + accuracy_adj
         
-        np.random.seed(42)
+        # Use system time for seed
+        np.random.seed()
         dt = 1.0 / 252
         paths = np.zeros((n_simulations, n_days))
         paths[:, 0] = current_price
@@ -169,7 +172,8 @@ class MonteCarloEngine:
         
         mu_l4 = mu - natural_adj
         
-        np.random.seed(42)
+        # Use system time for seed
+        np.random.seed()
         dt = 1.0 / 252
         paths = np.zeros((n_simulations, n_days))
         paths[:, 0] = current_price
@@ -220,7 +224,8 @@ class MonteCarloEngine:
         mu_l5 = mu + semantic_adj
         df_t = max(3, int(10 - black_swan_prob * 100))
         
-        np.random.seed(42)
+        # Use system time for seed
+        np.random.seed()
         dt = 1.0 / 252
         paths = np.zeros((n_simulations, n_days))
         paths[:, 0] = current_price

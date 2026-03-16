@@ -427,8 +427,12 @@ class DecisionEngine:
         if self._hmm_detector and len(df) > 50:
             try:
                 from src.hmm_regime import get_regime_score
-                returns = df['close'].pct_change().dropna().values
-                volatility = returns.rolling(20).std().dropna().values if hasattr(returns, 'rolling') else None
+                # Keep as pandas Series for rolling, then convert to numpy for HMM
+                returns_series = df['close'].pct_change().dropna()
+                returns = returns_series.values
+                # Calculate volatility using pandas rolling
+                volatility_series = returns_series.rolling(20).std().dropna()
+                volatility = volatility_series.values if len(volatility_series) > 0 else None
                 
                 if not self._hmm_detector.is_fitted:
                     self._hmm_detector.fit(returns[-100:], volatility[-100:] if volatility is not None else None)
