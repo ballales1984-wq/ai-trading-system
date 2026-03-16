@@ -24,6 +24,36 @@ All notable changes to this project will be documented in this file.
 - Deployment configuration issues
 - Documentation inconsistencies
 
+## [2.2.0] - 2026-03-16
+
+### Added
+
+- **Emergency Stop API**: Complete emergency stop functionality with `/api/orders/emergency-stop`, `/api/orders/emergency-resume`, and status endpoint
+- **Demo Mode Support**: Full demo mode across all API endpoints (portfolio, market, orders)
+- **Performance Metrics**: Dynamic daily performance calculations
+- **ML Training**: Trained ML models for BTC, ETH, SOL price prediction
+- **Financial Analysis**: Advanced finance modules integration
+
+### Changed
+
+- **Monte Carlo Simulations**: Changed from fixed seeds (42) to system time for variability
+- **Risk Engine**: Improved risk metrics calculation
+- **HMM Detection**: Fixed rolling window bug in regime detection
+- **Frontend**: Optimized build with code splitting warnings addressed
+
+### Fixed
+
+- Monte Carlo random seed issues (deterministic simulations now variable)
+- Risk metrics using fake data - now uses dynamic calculations
+- HMM rolling window numpy array bug
+- Performance metrics dynamic calculation
+
+### Security
+
+- Enhanced security middleware
+- RBAC improvements
+- Rate limiter enhancements
+
 ## [2.1.0] - 2026-03-07
 
 ### Added
