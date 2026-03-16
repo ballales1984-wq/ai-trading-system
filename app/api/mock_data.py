@@ -175,24 +175,43 @@ def get_positions() -> List[Dict[str, Any]]:
 
 
 def get_performance_metrics() -> Dict[str, Any]:
-    """Get demo performance metrics."""
+    """Get demo performance metrics with dynamic values."""
+    import random
+    from datetime import datetime, timedelta
+    
+    # Use daily seed so values change once per day (more realistic)
+    today = datetime.utcnow().date()
+    random.seed(int(today.strftime("%Y%m%d")))
+    
+    total_return_pct = round(random.uniform(15, 35), 2)
+    sharpe_ratio = round(random.uniform(1.5, 2.5), 2)
+    sortino_ratio = round(random.uniform(2.0, 3.0), 2)
+    max_drawdown_pct = round(random.uniform(5, 12), 2)
+    calmar_ratio = round(random.uniform(1.5, 2.5), 2)
+    win_rate = round(random.uniform(0.55, 0.75), 2)
+    profit_factor = round(random.uniform(1.8, 2.5), 2)
+    
+    total_trades = random.randint(40, 200)
+    winning_trades = int(total_trades * win_rate)
+    losing_trades = total_trades - winning_trades
+    
     return {
-        "total_return_pct": 25.5,
-        "annualized_return_pct": 42.3,
-        "sharpe_ratio": 1.85,
-        "sortino_ratio": 2.45,
-        "calmar_ratio": 3.12,
-        "max_drawdown_pct": -8.5,
-        "win_rate": 0.68,
-        "profit_factor": 2.1,
+        "total_return_pct": total_return_pct,
+        "annualized_return_pct": round(total_return_pct * 1.2, 2),
+        "sharpe_ratio": sharpe_ratio,
+        "sortino_ratio": sortino_ratio,
+        "calmar_ratio": calmar_ratio,
+        "max_drawdown_pct": -max_drawdown_pct,
+        "win_rate": win_rate,
+        "profit_factor": profit_factor,
         "avg_trade_duration_hours": 48,
-        "total_trades": 156,
-        "winning_trades": 106,
-        "losing_trades": 50,
-        "avg_win": 450.00,
-        "avg_loss": -215.00,
-        "best_trade": 2350.00,
-        "worst_trade": -890.00,
+        "total_trades": total_trades,
+        "winning_trades": winning_trades,
+        "losing_trades": losing_trades,
+        "avg_win": round(random.uniform(300, 600), 2),
+        "avg_loss": round(random.uniform(-100, -300), 2),
+        "best_trade": round(random.uniform(1500, 3000), 2),
+        "worst_trade": round(random.uniform(-500, -1500), 2),
         "last_updated": datetime.utcnow().isoformat(),
     }
 
