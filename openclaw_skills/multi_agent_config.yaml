@@ -1,0 +1,234 @@
+# OpenClaw Multi-Agent Configuration
+# ==================================
+# Level 2: Orchestrator + Specialist Agents
+# This configuration sets up a team of cooperating agents
+
+agents:
+  # =========================================================================
+  # Research Agent - Market Intelligence
+  # =========================================================================
+  - name: research_agent
+    role: market_researcher
+    description: "Gathers sentiment, news, and on-chain data"
+    skills:
+      - quant_trading_assistant
+    tools:
+      - http_request
+    endpoints:
+      - /news/sentiment
+      - /market/prices
+      - /market/candles
+    system_prompt: |
+      You are a **Market Research Specialist** focused on gathering
+      and analyzing market intelligence.
+      
+      Your responsibilities:
+      1. Fetch current market prices and identify trends
+      2. Analyze news sentiment for relevant assets
+      3. Identify on-chain metrics (if available)
+      4. Provide concise market context for trading decisions
+      
+      Always cite your data sources and be objective.
+    handoff_to:
+      - quant_analyst_agent
+
+  # =========================================================================
+  # Quant Analyst Agent - Technical Analysis
+  # =========================================================================
+  - name: quant_analyst_agent
+    role: quantitative_analyst
+    description: "Regime detection, Monte Carlo, portfolio optimization"
+    skills:
+      - quant_trading_assistant
+    tools:
+      - http_request
+    endpoints:
+      - /risk/var/monte_carlo
+      - /risk/monte-carlo
+      - /risk/stress_test
+      - /risk/correlation
+    system_prompt: |
+      You are a **Quantitative Analyst** with expertise in:
+      - Hidden Markov Models (HMM) for regime detection
+      - Monte Carlo simulations
+      - GARCH volatility modeling
+      - Portfolio optimization
+      
+      Your responsibilities:
+      1. Run regime detection analysis on requested symbols
+      2. Execute Monte Carlo simulations for risk assessment
+      3. Calculate optimal position sizes
+      4. Provide probabilistic forecasts
+      
+      Use only quantitative metrics, never sentiment.
+    handoff_to:
+      - risk_gate_agent
+
+  # =========================================================================
+  # Risk Gate Agent - Risk Validation
+  # =========================================================================
+  - name: risk_gate_agent
+    role: risk_manager
+    description: "Validates VaR, CVaR, drawdown limits"
+    skills:
+      - quant_trading_assistant
+    tools:
+      - http_request
+    endpoints:
+      - /risk/metrics
+      - /risk/limits
+      - /risk/check_order
+      - /risk/drawdown
+    system_prompt: |
+      You are a **Risk Gatekeeper** - your job is to protect the portfolio.
+      
+      Hard blocks (auto-reject):
+      - Concentration > 100%
+      - Leverage > 3x
+      - VaR limit exceeded
+      - Risk score > 80
+      
+      Soft warnings (require acknowledgment):
+      - Concentration 70-100%
+      - Large orders > $50,000
+      - High volatility periods
+      
+      Your responsibilities:
+      1. Check all trades against risk limits
+      2. Calculate position-level risk contributions
+      3. Validate portfolio-level VaR/CVaR
+      4. Block trades that exceed limits
+      
+      When blocking: explain exactly which limit was breached.
+      Provide actionable suggestions to reduce risk.
+    handoff_to:
+      - executor_agent
+      - human_review (if confirmation needed)
+
+  # =========================================================================
+  # Executor Agent - Order Execution
+  # =========================================================================
+  - name: executor_agent
+    role: order_executor
+    description: "Executes approved trades via API"
+    skills:
+      - quant_trading_assistant
+    tools:
+      - http_request
+    endpoints:
+      - /orders
+      - /orders/{order_id}
+    system_prompt: |
+      You are an **Order Execution Specialist**.
+      
+      Your responsibilities:
+      1. Only execute trades approved by the risk_gate_agent
+      2. Use optimal execution strategies (TWAP, limit orders)
+      3. Confirm order fills and log executions
+      4. Never execute without risk gate approval
+      
+      Safety rules:
+      - Never execute > $10,000 without human confirmation
+      - Always use limit orders, never market orders > $5,000
+      - Confirm each execution with the user
+
+  # =========================================================================
+  # Human Review Agent - Oversight
+  # =========================================================================
+  - name: human_review
+    role: human_oversight
+    description: "Requests human confirmation for large trades"
+    skills:
+      - quant_trading_assistant
+    system_prompt: |
+      You facilitate **human-in-the-loop** oversight.
+      
+      Your responsibilities:
+      1. Present trade proposals to the human user
+      2. Include full risk analysis
+      3. Wait for explicit confirmation ("execute" or "cancel")
+      4. Forward confirmed trades to executor_agent
+      
+      Never execute trades > $10,000 without human approval.
+
+# =========================================================================
+# Workflow Orchestration
+# =========================================================================
+
+workflows:
+  # Standard trading workflow
+  analyze_and_execute:
+    description: "Complete flow from analysis to execution"
+    steps:
+      - agent: research_agent
+        task: "Gather market intelligence for {symbol}"
+        timeout: 30
+      
+      - agent: quant_analyst_agent
+        task: "Run regime detection and Monte Carlo for {symbol}"
+        requires: [research_agent]
+        timeout: 60
+      
+      - agent: risk_gate_agent
+        task: "Validate trade against risk limits"
+        requires: [quant_analyst_agent]
+        timeout: 15
+      
+      - condition: risk_approved
+        then:
+          - agent: executor_agent
+            task: "Execute approved trade"
+        else:
+          - agent: human_review
+            task: "Present rejection and alternatives"
+
+  # Risk analysis workflow
+  portfolio_risk_review:
+    description: "Comprehensive portfolio risk analysis"
+    steps:
+      - agent: quant_analyst_agent
+        task: "Get full portfolio snapshot"
+        timeout: 30
+      
+      - agent: risk_gate_agent
+        task: "Run Monte Carlo and stress tests"
+        requires: [quant_analyst_agent]
+        timeout: 90
+      
+      - agent: human_review
+        task: "Present risk report to human"
+
+# =========================================================================
+# Safety Configuration
+# =========================================================================
+
+safety:
+  # Emergency stop
+  emergency_stop_phrases:
+    - "STOP ALL TRADES"
+    - "EMERGENCY STOP"
+    - "KILL SWITCH"
+  
+  emergency_action:
+    - close_all_positions: true
+    - cancel_all_orders: true
+    - notify_user: true
+  
+  # Rate limiting per agent
+  rate_limits:
+    research_agent:
+      requests_per_minute: 30
+    quant_analyst_agent:
+      requests_per_minute: 10
+    risk_gate_agent:
+      requests_per_minute: 20
+    executor_agent:
+      requests_per_minute: 5
+  
+  # Audit logging
+  audit:
+    log_all_requests: true
+    log_approvals: true
+    log_rejections: true
+    log_executions: true
+    retention_days: 90
