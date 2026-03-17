@@ -9,19 +9,25 @@
 
 ## 🎯 Latest Updates (2026-03-17)
 
+### Autonomous Agent - Level 5 Architecture
+- **NEW**: UnifiedDecisionEngine - single source of truth for all trading decisions
+- **NEW**: AutonomousQuantAgent - orchestrates all components (HMM, GARCH, Monte Carlo, Portfolio, Risk)
+- **NEW**: CLI entrypoint: `python -m src.agents BTCUSDT --proposals`
+- **NEW**: API routes for agent control
+- ⚠️ **Note**: Agent generates proposals only - human approval required for execution
+
+### OpenClaw Integration - Level 3-4
+- **Level 3**: Natural language trading interface (chat)
+- **Level 4**: Multi-skill composition (HMM + GARCH + Monte Carlo + Portfolio)
+- Conversational portfolio queries ("What's my risk exposure?")
+- Monte Carlo simulations via chat
+
 ### Performance Analyzer - Hedge Fund Metrics
 - **NEW**: PerformanceAnalyzer module for professional trading evaluation
 - Sharpe ratio, Sortino ratio, Maximum Drawdown
 - Trade logging to CSV
 - Equity history tracking
 - Automated rating (A/B/C/D)
-
-### OpenClaw Integration - Conversational AI Trading
-- **NEW**: OpenClaw skill for natural language trading interface
-- Conversational portfolio queries ("What's my risk exposure?")
-- Monte Carlo simulations via chat
-- Multi-agent orchestration (Research → Quant → Risk → Execute)
-- Human-in-the-loop for large trades
 
 See [`openclaw_skills/`](openclaw_skills/) for full documentation.
 
