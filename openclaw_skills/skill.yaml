@@ -1,0 +1,193 @@
+# OpenClaw Skill Configuration
+# ============================
+# Quant Trading Assistant - Integration with ai-trading-system
+
+skill:
+  name: quant_trading_assistant
+  display_name: "Quant Trading Assistant"
+  version: "1.0.0"
+  description: "Institutional-grade quantitative trading assistant with risk management"
+  category: finance
+  tags:
+    - finance
+    - trading
+    - risk-management
+    - quantitative
+    - portfolio
+
+# API Configuration
+api:
+  base_url: "http://localhost:8000/api/v1"
+  timeout: 30
+  retry_attempts: 3
+  retry_delay: 1
+
+# Authentication
+auth:
+  type: bearer
+  login_endpoint: "/auth/login"
+  credentials:
+    username: "admin"
+    password: "admin123"
+  # Token will be stored in skill context
+
+# Risk Configuration
+risk:
+  # Hard limits (auto-reject)
+  max_concentration: 1.0       # 100% of portfolio
+  max_leverage: 3.0            # 3x leverage
+  max_var_pct: 0.02            # 2% of portfolio
+  max_risk_score: 80           # 0-100 scale
+
+  # Soft limits (warn but allow)
+  warn_concentration: 0.7      # 70%
+  warn_large_order: 50000      # $50k
+  warn_high_volatility: 0.5    # 50% annualized
+
+  # Human-in-the-loop
+  confirmation_threshold: 10000  # $10k requires confirmation
+
+# Available Actions
+actions:
+  # Portfolio Analysis
+  - name: get_portfolio_summary
+    endpoint: /portfolio/summary/dual
+    method: GET
+
+  - name: get_positions
+    endpoint: /portfolio/positions
+    method: GET
+
+  - name: get_performance
+    endpoint: /portfolio/performance
+    method: GET
+
+  # Risk Analysis
+  - name: get_risk_metrics
+    endpoint: /risk/metrics
+    method: GET
+
+  - name: get_risk_limits
+    endpoint: /risk/limits
+    method: GET
+
+  - name: check_order_risk
+    endpoint: /risk/check_order
+    method: POST
+    payload:
+      - symbol
+      - side
+      - quantity
+      - price
+
+  - name: run_monte_carlo
+    endpoint: /risk/var/monte_carlo
+    method: GET
+    params:
+      - simulations
+      - confidence
+
+  - name: run_stress_test
+    endpoint: /risk/stress_test
+    method: GET
+
+  - name: get_correlation_matrix
+    endpoint: /risk/correlation
+    method: GET
+
+  # Market Data
+  - name: get_market_prices
+    endpoint: /market/prices
+    method: GET
+
+  - name: get_candles
+    endpoint: /market/candles/{symbol}
+    method: GET
+    params:
+      - symbol
+      - interval
+
+  # Order Execution
+  - name: create_order
+    endpoint: /orders
+    method: POST
+
+  - name: get_orders
+    endpoint: /orders
+    method: GET
+
+# Response Templates
+templates:
+  portfolio_summary: |
+    📊 **Portfolio Summary**
+    
+    **Real Portfolio:**
+    - Total Value: ${real.total_value}
+    - Daily P&L: ${real.daily_pnl}
+    - Unrealized P&L: ${real.unrealized_pnl}
+    - Cash: ${real.cash_balance}
+    
+    **Simulated Portfolio:**
+    - Total Value: ${simulated.total_value}
+    - Daily P&L: ${simulated.daily_pnl}
+    - Positions: ${simulated.num_positions}
+
+  risk_metrics: |
+    ⚠️ **Risk Metrics**
+    
+    - VaR (1-day, 95%): ${var_1d}
+    - CVaR: ${cvar_1d}
+    - Volatility: ${volatility}
+    - Sharpe Ratio: ${sharpe_ratio}
+    - Leverage: ${leverage}x
+    - Margin Utilization: ${margin_utilization}%
+
+  order_approved: |
+    ✅ **Order Approved**
+    
+    - Symbol: {symbol}
+    - Side: {side}
+    - Quantity: {quantity}
+    - Price: {price}
+    - Risk Score: {risk_score}/100
+
+  order_rejected: |
+    ❌ **Order Rejected**
+    
+    - Symbol: {symbol}
+    - Risk Score: {risk_score}/100
+    
+    **Reasons:**
+    {rejection_reasons}
+    
+    **Suggestions:**
+    {suggestions}
+
+# Conversation Context
+context:
+  # Initial context to set when skill loads
+  trading_mode: "paper"  # paper or live
+  default_interval: "1h"
+  default_simulations: 10000
+
+# Safety Guards
+guards:
+  # Pre-execution checks
+  pre_execution:
+    - check_risk_limits
+    - check_concentration
+    - check_leverage
+    - check_order_size
+
+  # Post-execution
+  post_execution:
+    - confirm_order_filled
+    - log_to_audit
+
+# Metrics to track
+metrics:
+  - total_orders_submitted
+  - orders_approved
+  - orders_rejected
+  - monte_carlo_runs
+  - avg_risk_score
