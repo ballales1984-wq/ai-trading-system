@@ -1,0 +1,231 @@
+{
+  "timestamp": "2026-03-18T00:52:43.507935",
+  "total": 25,
+  "passed": 15,
+  "failed": 10,
+  "warnings": 0,
+  "elapsed_seconds": 73.389793,
+  "results": [
+    {
+      "name": "Portfolio Summary",
+      "status": "FAIL",
+      "message": "HTTPConnectionPool(host='localhost', port=8000): R",
+      "details": {
+        "url": "http://localhost:8000/api/v1/portfolio/summary",
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)"
+      }
+    },
+    {
+      "name": "Portfolio Positions",
+      "status": "FAIL",
+      "message": "HTTPConnectionPool(host='localhost', port=8000): R",
+      "details": {
+        "url": "http://localhost:8000/api/v1/portfolio/positions",
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)"
+      }
+    },
+    {
+      "name": "Portfolio History",
+      "status": "FAIL",
+      "message": "HTTPConnectionPool(host='localhost', port=8000): R",
+      "details": {
+        "url": "http://localhost:8000/api/v1/portfolio/history?days=30",
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)"
+      }
+    },
+    {
+      "name": "Market Prices",
+      "status": "FAIL",
+      "message": "HTTPConnectionPool(host='localhost', port=8000): R",
+      "details": {
+        "url": "http://localhost:8000/api/v1/market/prices",
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)"
+      }
+    },
+    {
+      "name": "News",
+      "status": "FAIL",
+      "message": "HTTPConnectionPool(host='localhost', port=8000): R",
+      "details": {
+        "url": "http://localhost:8000/api/v1/news",
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)"
+      }
+    },
+    {
+      "name": "Orders",
+      "status": "FAIL",
+      "message": "HTTPConnectionPool(host='localhost', port=8000): R",
+      "details": {
+        "url": "http://localhost:8000/api/v1/orders",
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)"
+      }
+    },
+    {
+      "name": "Risk Metrics",
+      "status": "FAIL",
+      "message": "HTTPConnectionPool(host='localhost', port=8000): R",
+      "details": {
+        "url": "http://localhost:8000/api/v1/risk/metrics",
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)"
+      }
+    },
+    {
+      "name": "Performance",
+      "status": "FAIL",
+      "message": "HTTPConnectionPool(host='localhost', port=8000): R",
+      "details": {
+        "url": "http://localhost:8000/api/v1/portfolio/performance",
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)"
+      }
+    },
+    {
+      "name": "Marketing Page",
+      "status": "PASS",
+      "message": "Route accessible",
+      "details": {
+        "url": "http://localhost:5173/"
+      }
+    },
+    {
+      "name": "Dashboard",
+      "status": "PASS",
+      "message": "Route accessible",
+      "details": {
+        "url": "http://localhost:5173/dashboard"
+      }
+    },
+    {
+      "name": "Portfolio",
+      "status": "PASS",
+      "message": "Route accessible",
+      "details": {
+        "url": "http://localhost:5173/portfolio"
+      }
+    },
+    {
+      "name": "Market",
+      "status": "PASS",
+      "message": "Route accessible",
+      "details": {
+        "url": "http://localhost:5173/market"
+      }
+    },
+    {
+      "name": "Orders",
+      "status": "PASS",
+      "message": "Route accessible",
+      "details": {
+        "url": "http://localhost:5173/orders"
+      }
+    },
+    {
+      "name": "News",
+      "status": "PASS",
+      "message": "Route accessible",
+      "details": {
+        "url": "http://localhost:5173/news"
+      }
+    },
+    {
+      "name": "Risk",
+      "status": "PASS",
+      "message": "Route accessible",
+      "details": {
+        "url": "http://localhost:5173/risk"
+      }
+    },
+    {
+      "name": "Strategy",
+      "status": "PASS",
+      "message": "Route accessible",
+      "details": {
+        "url": "http://localhost:5173/strategy"
+      }
+    },
+    {
+      "name": "Settings",
+      "status": "PASS",
+      "message": "Route accessible",
+      "details": {
+        "url": "http://localhost:5173/settings"
+      }
+    },
+    {
+      "name": "Python Dash Dashboard",
+      "status": "PASS",
+      "message": "Status: 200",
+      "details": {
+        "url": "http://localhost:8050",
+        "status_code": 200
+      }
+    },
+    {
+      "name": "Streamlit AI Assistant",
+      "status": "PASS",
+      "message": "Status: 200",
+      "details": {
+        "url": "http://localhost:8501",
+        "status_code": 200
+      }
+    },
+    {
+      "name": "OpenClaw: HMM Regime Detection",
+      "status": "PASS",
+      "message": "Skill 'HMM Regime Detection' disponibile",
+      "details": {
+        "skill": "hmm_regime_detect",
+        "symbol": "BTCUSDT"
+      }
+    },
+    {
+      "name": "OpenClaw: GARCH Volatility",
+      "status": "PASS",
+      "message": "Skill 'GARCH Volatility' disponibile",
+      "details": {
+        "skill": "garch_volatility",
+        "symbol": "BTCUSDT"
+      }
+    },
+    {
+      "name": "OpenClaw: Monte Carlo",
+      "status": "PASS",
+      "message": "Skill 'Monte Carlo' disponibile",
+      "details": {
+        "skill": "monte_carlo_paths",
+        "symbol": "BTCUSDT",
+        "simulations": 1000
+      }
+    },
+    {
+      "name": "OpenClaw: Portfolio Optimization",
+      "status": "PASS",
+      "message": "Skill 'Portfolio Optimization' disponibile",
+      "details": {
+        "skill": "portfolio_optimizer",
+        "symbols": [
+          "BTC",
+          "ETH",
+          "SOL"
+        ]
+      }
+    },
+    {
+      "name": "Create Order (simulated)",
+      "status": "FAIL",
+      "message": "HTTPConnectionPool(host='localhost', port=8000): R",
+      "details": {
+        "url": "http://localhost:8000/api/v1/orders",
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)"
+      }
+    },
+    {
+      "name": "Portfolio Rebalance",
+      "status": "FAIL",
+      "message": "HTTPConnectionPool(host='localhost', port=8000): R",
+      "details": {
+        "url": "http://localhost:8000/api/v1/portfolio/rebalance",
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)"
+      }
+    }
+  ]
+}
