@@ -9,6 +9,13 @@
 
 ## 🎯 Latest Updates (2026-03-17)
 
+### Performance Analyzer - Hedge Fund Metrics
+- **NEW**: PerformanceAnalyzer module for professional trading evaluation
+- Sharpe ratio, Sortino ratio, Maximum Drawdown
+- Trade logging to CSV
+- Equity history tracking
+- Automated rating (A/B/C/D)
+
 ### OpenClaw Integration - Conversational AI Trading
 - **NEW**: OpenClaw skill for natural language trading interface
 - Conversational portfolio queries ("What's my risk exposure?")
