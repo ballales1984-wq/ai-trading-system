@@ -5,7 +5,7 @@
 skill:
   name: quant_trading_assistant
   display_name: "Quant Trading Assistant"
-  version: "1.0.0"
+  version: "3.0.0"
   description: "Institutional-grade quantitative trading assistant with risk management"
   category: finance
   tags:
@@ -15,12 +15,16 @@ skill:
     - quantitative
     - portfolio
 
-# API Configuration
+# API Configuration (for external calls)
 api:
   base_url: "http://localhost:8000/api/v1"
   timeout: 30
   retry_attempts: 3
   retry_delay: 1
+
+# OpenClaw Integration - Python Router
+type: python_router
+entrypoint: openclaw_skills.intent_router:route_intent
 
 # Authentication
 auth:
