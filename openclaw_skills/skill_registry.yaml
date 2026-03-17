@@ -1,0 +1,521 @@
+# =============================================================================
+# OpenClaw Skill Registry - Level 3
+# =============================================================================
+# This registry defines all available quant skills with their security limits,
+# resource constraints, and metadata for the OpenClaw agent.
+#
+# Version: 2.0.0
+# Updated: 2024
+# =============================================================================
+
+# Global settings applied to all skills
+global:
+  # Execution environment
+  execution_mode: "sandboxed"  # sandboxed, subprocess, docker
+  isolation_level: "strict"    # strict, moderate, none
+  
+  # Resource limits
+  max_total_memory_mb: 512
+  max_execution_time_ms: 5000
+  max_iterations: 1000000
+  max_concurrent_skills: 5
+  
+  # Security
+  enable_audit_log: true
+  require_param_validation: true
+  sanitize_inputs: true
+  
+  # Caching
+  enable_cache: true
+  max_cache_size_mb: 100
+
+# =============================================================================
+# Skill Definitions
+# =============================================================================
+
+skills:
+  # ---------------------------------------------------------------------------
+  # HMM Regime Detection
+  # ---------------------------------------------------------------------------
+  hmm:
+    id: "hmm"
+    name: "HMM Regime Detection"
+    display_name: "Hidden Markov Model Regime Detection"
+    description: |
+      Detects market regimes (bull, bear, sideways) using Hidden Markov Models.
+      Analyzes historical price data to identify regime changes and transition probabilities.
+    category: "regime_detection"
+    version: "1.0.0"
+    
+    # File and function
+    module: "hmm_regime_detect"
+    function: "detect_regimes"
+    format_function: "format_output"
+    
+    # Resource limits (overrides global)
+    limits:
+      max_runtime_ms: 5000
+      max_memory_mb: 256
+      max_iterations: 500000
+      max_data_points: 10000
+    
+    # Cache settings
+    cache:
+      enabled: true
+      ttl_seconds: 3600  # 1 hour
+      invalidate_on_market_hours: true
+    
+    # Required dependencies
+    dependencies:
+      - "numpy"
+      - "pandas"
+      - "hmmlearn"
+    
+    # Parameters
+    parameters:
+      symbol:
+        type: "string"
+        required: true
+        pattern: "^[A-Z]{2,10}(USDT|USD|BTC|ETH)?$"
+        description: "Trading symbol"
+      n_states:
+        type: "integer"
+        required: false
+        default: 3
+        min: 2
+        max: 5
+        description: "Number of hidden states"
+      lookback_days:
+        type: "integer"
+        required: false
+        default: 90
+        min: 30
+        max: 365
+        description: "Days of historical data"
+    
+    # Output format
+    output:
+      format: "QuantResult"
+      metrics:
+        - "regime"
+        - "confidence"
+        - "regime_probabilities"
+        - "transition_matrix"
+        - "volatility"
+      recommendations:
+        - "strategy_adjustment"
+        - "risk_level"
+    
+    # Risk assessment
+    risk:
+      level: "low"
+      data_source: "local_historical"
+      external_calls: false
+    
+    # Example queries
+    example_queries:
+      - "What regime is BTC in?"
+      - "Is the market bullish or bearish?"
+      - "Detect market regime for ETH"
+    
+    # Fallback (if library missing)
+    fallback:
+      enabled: true
+      mock_data: true
+      returns: "regime: unknown, confidence: 0.0"
+  
+  # ---------------------------------------------------------------------------
+  # Monte Carlo Simulation
+  # ---------------------------------------------------------------------------
+  monte_carlo:
+    id: "monte_carlo"
+    name: "Monte Carlo Simulation"
+    display_name: "Monte Carlo Price Path Simulation"
+    description: |
+      Generates thousands of price paths using Geometric Brownian Motion.
+      Calculates VaR, CVaR, probability of profit, and percentile distributions.
+    category: "risk_analysis"
+    version: "1.0.0"
+    
+    module: "monte_carlo_paths"
+    function: "generate_price_paths"
+    format_function: "format_output"
+    
+    limits:
+      max_runtime_ms: 3000
+      max_memory_mb: 512
+      max_iterations: 500000
+      max_paths: 20000
+      max_days_ahead: 365
+    
+    cache:
+      enabled: true
+      ttl_seconds: 600  # 10 minutes
+    
+    dependencies:
+      - "numpy"
+      - "scipy"
+    
+    parameters:
+      initial_price:
+        type: "number"
+        required: true
+        min: 0.01
+        max: 1000000
+        description: "Starting price"
+      expected_return:
+        type: "number"
+        required: false
+        default: 0.0
+        min: -1.0
+        max: 1.0
+        description: "Expected daily return (decimal)"
+      volatility:
+        type: "number"
+        required: true
+        min: 0.001
+        max: 2.0
+        description: "Daily volatility (decimal)"
+      n_paths:
+        type: "integer"
+        required: false
+        default: 5000
+        min: 100
+        max: 20000
+        description: "Number of simulation paths"
+      days_ahead:
+        type: "integer"
+        required: false
+        default: 30
+        min: 1
+        max: 365
+        description: "Forecast horizon in days"
+    
+    output:
+      format: "QuantResult"
+      metrics:
+        - "percentiles"
+        - "var"
+        - "cvar"
+        - "probability_profit"
+        - "expected_value"
+        - "worst_case"
+    
+    risk:
+      level: "medium"
+      computationally_intensive: true
+    
+    example_queries:
+      - "Simulate 5000 paths for BTC"
+      - "What's the VaR for my position?"
+      - "Calculate probability of profit for next month"
+  
+  # ---------------------------------------------------------------------------
+  # GARCH Volatility
+  # ---------------------------------------------------------------------------
+  garch:
+    id: "garch"
+    name: "GARCH Volatility Forecasting"
+    display_name: "GARCH Volatility Model"
+    description: |
+      Fits GARCH volatility models and forecasts future volatility.
+      Provides VaR calculations and volatility term structure.
+    category: "volatility"
+    version: "1.0.0"
+    
+    module: "garch_volatility"
+    function: "fit_garch"
+    format_function: "format_output"
+    
+    limits:
+      max_runtime_ms: 4000
+      max_memory_mb: 256
+      max_iterations: 100000
+      min_data_points: 100
+    
+    cache:
+      enabled: true
+      ttl_seconds: 3600
+    
+    dependencies:
+      - "numpy"
+      - "pandas"
+      - "arch"
+    
+    parameters:
+      symbol:
+        type: "string"
+        required: true
+        pattern: "^[A-Z]{2,10}(USDT|USD|BTC|ETH)?$"
+      p:
+        type: "integer"
+        required: false
+        default: 1
+        min: 1
+        max: 3
+        description: "GARCH lag order"
+      q:
+        type: "integer"
+        required: false
+        default: 1
+        min: 1
+        max: 3
+        description: "ARCH lag order"
+      forecast_horizon:
+        type: "integer"
+        required: false
+        default: 5
+        min: 1
+        max: 30
+    
+    output:
+      format: "QuantResult"
+      metrics:
+        - "omega"
+        - "alpha"
+        - "beta"
+        - "current_volatility"
+        - "forecasted_volatility"
+        - "var_95"
+    
+    risk:
+      level: "low"
+    
+    example_queries:
+      - "What's the GARCH volatility forecast for BTC?"
+      - "Calculate volatility for ETH"
+  
+  # ---------------------------------------------------------------------------
+  # Portfolio Optimizer
+  # ---------------------------------------------------------------------------
+  portfolio_optimizer:
+    id: "portfolio_optimizer"
+    name: "Portfolio Optimization"
+    display_name: "Modern Portfolio Theory Optimizer"
+    description: |
+      Optimizes portfolio weights using Modern Portfolio Theory.
+      Supports max Sharpe, min volatility, max return, and risk parity objectives.
+    category: "portfolio"
+    version: "1.0.0"
+    
+    module: "portfolio_optimizer"
+    function: "optimize_portfolio"
+    format_function: "format_output"
+    
+    limits:
+      max_runtime_ms: 5000
+      max_memory_mb: 512
+      max_iterations: 100000
+      max_assets: 50
+    
+    cache:
+      enabled: true
+      ttl_seconds: 1800  # 30 minutes
+    
+    dependencies:
+      - "numpy"
+      - "pandas"
+      - "pypfopt"
+    
+    parameters:
+      assets:
+        type: "array"
+        required: true
+        min_items: 2
+        max_items: 50
+        items:
+          type: "string"
+        description: "List of asset symbols"
+      objective:
+        type: "string"
+        required: false
+        default: "max_sharpe"
+        allowed: ["max_sharpe", "min_volatility", "max_return", "risk_parity"]
+      risk_free_rate:
+        type: "number"
+        required: false
+        default: 0.02
+        min: 0.0
+        max: 0.2
+    
+    output:
+      format: "QuantResult"
+      metrics:
+        - "weights"
+        - "expected_return"
+        - "volatility"
+        - "sharpe_ratio"
+        - "efficient_frontier"
+    
+    risk:
+      level: "medium"
+    
+    example_queries:
+      - "Optimize my portfolio: BTC, ETH, SOL"
+      - "What's the max Sharpe portfolio?"
+      - "Calculate efficient frontier for these assets"
+
+# =============================================================================
+# Skill Pipelines (Orchestration)
+# =============================================================================
+
+pipelines:
+  # ---------------------------------------------------------------------------
+  # Complete Risk Analysis Pipeline
+  # ---------------------------------------------------------------------------
+  full_risk_analysis:
+    id: "full_risk_analysis"
+    name: "Complete Risk Analysis"
+    description: "Full risk analysis combining HMM, GARCH, and Monte Carlo"
+    
+    steps:
+      - skill: "hmm"
+        input_from: "user"
+        output_to: "regime_data"
+      - skill: "garch"
+        input_from: "user"
+        output_to: "volatility_data"
+      - skill: "monte_carlo"
+        input_from: ["regime_data", "volatility_data"]
+        output_to: "risk_metrics"
+        combine: true
+    
+    cache:
+      enabled: true
+      ttl_seconds: 1800
+    
+    risk:
+      level: "medium"
+      requires_confirmation: false
+  
+  # ---------------------------------------------------------------------------
+  # Smart Portfolio Optimization
+  # ---------------------------------------------------------------------------
+  smart_portfolio:
+    id: "smart_portfolio"
+    name: "Smart Portfolio Optimization"
+    description: "Portfolio optimization with regime-aware risk adjustment"
+    
+    steps:
+      - skill: "hmm"
+        input_from: "user"
+        output_to: "regime"
+      - skill: "portfolio_optimizer"
+        input_from: "user"
+        output_to: "weights"
+      - skill: "monte_carlo"
+        input_from: ["weights", "regime"]
+        output_to: "backtest"
+    
+    cache:
+      enabled: true
+      ttl_seconds: 3600
+
+# =============================================================================
+# Intent Mapping
+# =============================================================================
+
+intents:
+  # Regime detection intents
+  regime_detection:
+    keywords:
+      - "what regime is"
+      - "is the market"
+      - "market regime"
+      - "bull or bear"
+      - "detect regime"
+    skill: "hmm"
+    priority: 1
+  
+  # Monte Carlo intents
+  monte_carlo:
+    keywords:
+      - "simulate"
+      - "Monte Carlo"
+      - "price paths"
+      - "VaR"
+      - "probability of profit"
+    skill: "monte_carlo"
+    priority: 1
+  
+  # Volatility intents
+  volatility:
+    keywords:
+      - "volatility"
+      - "GARCH"
+      - "forecast volatility"
+      - "expected volatility"
+    skill: "garch"
+    priority: 1
+  
+  # Portfolio intents
+  portfolio:
+    keywords:
+      - "optimize portfolio"
+      - "optimal weights"
+      - "efficient frontier"
+      - "Sharpe ratio"
+      - "portfolio allocation"
+    skill: "portfolio_optimizer"
+    priority: 1
+
+# =============================================================================
+# Fallback Configuration
+# =============================================================================
+
+fallbacks:
+  # What to do when a skill fails
+  on_failure:
+    strategy: "graceful_degradation"
+    return_mock_data: true
+    log_error: true
+    notify_user: false
+  
+  # What to do when library is missing
+  on_missing_library:
+    strategy: "use_mock"
+    mock_data: true
+    warn_user: true
+  
+  # What to do on timeout
+  on_timeout:
+    strategy: "return_partial"
+    return_best_effort: true
+    log_timeout: true
+
+# =============================================================================
+# Audit and Monitoring
+# =============================================================================
+
+audit:
+  enabled: true
+  log_level: "INFO"
+  
+  # What to log
+  log_execution_time: true
+  log_parameters: true
+  log_results: false  # Don't log sensitive data
+  log_errors: true
+  
+  # Retention
+  retention_days: 90
+  
+  # Alerts
+  alerts:
+    - condition: "execution_time_ms > 4000"
+      level: "warning"
+    - condition: "memory_mb > 400"
+      level: "warning"
+    - condition: "status == 'failed'"
+      level: "error"
+
+# =============================================================================
+# Version and Compatibility
+# =============================================================================
+
+metadata:
+  registry_version: "2.0.0"
+  created: "2024-01-15"
+  updated: "2024-01-15"
+  supported_openclaw_versions: [">=1.0.0"]
+  python_version: ">=3.9"
