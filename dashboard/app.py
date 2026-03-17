@@ -331,13 +331,21 @@ app.layout = html.Div([
 )
 def load_market_data(symbol, timeframe, n_clicks, n_intervals):
     """Load market data (using sample data for demo)."""
-    # In production, use: loader = DataLoader(); df = loader.fetch_ohlcv(symbol, timeframe)
-    df = generate_sample_data(365)
-    
-    # Calculate indicators
-    df_with_indicators = calculate_all_indicators(df)
-    
-    return df_with_indicators.to_dict()
+    try:
+        # In production, use: loader = DataLoader(); df = loader.fetch_ohlcv(symbol, timeframe)
+        df = generate_sample_data(365)
+        
+        # Calculate indicators
+        df_with_indicators = calculate_all_indicators(df)
+        
+        # Convert to dict with proper serialization
+        return df_with_indicators.to_dict(orient='records')
+    except Exception as e:
+        # Return sample data on error
+        print(f"Error loading market data: {e}")
+        df = generate_sample_data(365)
+        # Use simpler serialization without date_format
+        return df.to_dict(orient='records')
 
 
 @callback(
@@ -346,26 +354,34 @@ def load_market_data(symbol, timeframe, n_clicks, n_intervals):
 )
 def run_backtest_analysis(data):
     """Run backtest on loaded data."""
-    df = pd.DataFrame.from_dict(data)
-    
-    # Generate signals
-    signals = generate_composite_signal(df)
-    
-    # Run backtest
-    result = run_backtest(df, signals, initial_capital=10000)
-    
-    # Calculate risk metrics
-    risk_metrics = calculate_all_risk_metrics(
-        result.strategy_returns,
-        result.equity_curve
-    )
-    
-    return {
-        'metrics': result.metrics,
-        'risk_metrics': risk_metrics,
-        'signals': signals.to_dict(),
-        'equity': result.equity_curve.to_dict()
-    }
+    try:
+        if not data:
+            return {'error': 'No data available'}
+        
+        # Convert list of records back to DataFrame
+        df = pd.DataFrame(data)
+        
+        # Generate signals
+        signals = generate_composite_signal(df)
+        
+        # Run backtest
+        result = run_backtest(df, signals, initial_capital=10000)
+        
+        # Calculate risk metrics
+        risk_metrics = calculate_all_risk_metrics(
+            result.strategy_returns,
+            result.equity_curve
+        )
+
+        return {
+            'metrics': result.metrics,
+            'risk_metrics': risk_metrics,
+            'signals': signals.to_dict(orient='records') if hasattr(signals, 'to_dict') else signals,
+            'equity': result.equity_curve.to_dict(orient='records') if hasattr(result.equity_curve, 'to_dict') else result.equity_curve
+        }
+    except Exception as e:
+        print(f"Error running backtest: {e}")
+        return {'error': str(e)[:100]}
 
 
 @callback(
