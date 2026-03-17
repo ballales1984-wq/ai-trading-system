@@ -7,7 +7,16 @@
 [![Forks](https://img.shields.io/github/forks/ballales1984-wq/ai-trading-system.svg)](https://github.com/ballales1984-wq/ai-trading-system/network/members)
 [![Discord](https://img.shields.io/discord/1234567890.svg?label=Discord)](https://discord.gg/aitrading)
 
-## 🎯 Latest Updates (2026-03-15)
+## 🎯 Latest Updates (2026-03-17)
+
+### OpenClaw Integration - Conversational AI Trading
+- **NEW**: OpenClaw skill for natural language trading interface
+- Conversational portfolio queries ("What's my risk exposure?")
+- Monte Carlo simulations via chat
+- Multi-agent orchestration (Research → Quant → Risk → Execute)
+- Human-in-the-loop for large trades
+
+See [`openclaw_skills/`](openclaw_skills/) for full documentation.
 
 ### New Financial Analysis Packages Installed
 - **pandas-ta** (v0.4.71b0) - Technical analysis indicators
@@ -38,6 +47,7 @@ This project is different. It's designed from scratch as modular quantitative in
 |                    | drawdown protection                                                           |
 | Adaptive Regime    | HMM market regime detection, strategy rotation based on market conditions     |
 | Multi-Source       | 18+ API integrations, sentiment analysis, on-chain metrics, macro indicators  |
+| AI Agents          | OpenClaw conversational interface, multi-agent orchestration, chat-driven       |
 
 ## 🏗️ Architecture Overview
 
@@ -48,6 +58,17 @@ ai-trading-system/
 ├── app/                    # FastAPI application
 │   ├── api/routes/        # REST endpoints
 │   ├── core/             # Security, cache, DB
+│   ├── execution/        # Order execution engines
+│   ├── market_data/      # Data feeds
+│   ├── portfolio/        # Portfolio management
+│   └── risk/             # Risk engines
+├── openclaw_skills/      # OpenClaw AI agent integration
+│   ├── quant_trading_assistant.md
+│   ├── skill.yaml
+│   ├── multi_agent_config.yaml
+│   ├── api_wrapper.py
+│   └── test_api_wrapper.py
+├── agent_coordination/   # Multi-agent coordination
 │   ├── execution/        # Broker connectors
 │   └── database/         # SQLAlchemy models
 ├── src/                   # Core trading logic
