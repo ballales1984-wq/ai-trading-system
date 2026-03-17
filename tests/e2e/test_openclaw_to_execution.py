@@ -15,7 +15,7 @@ from unittest.mock import patch, MagicMock
 
 # Import components to test
 from openclaw_skills.intent_router import route_intent
-from src.risk.risk_book import RiskBook, RiskLimits, Position
+from app.risk.risk_book import RiskBook, RiskLimits, Position
 from src.research.model_registry import ModelRegistry, ModelMeta
 
 
@@ -258,23 +258,25 @@ class TestEndToEndFlow:
     
     def test_risk_limit_blocks_trade(self, risk_book):
         """Test that risk limits can block trades."""
-        # Setup: already have large position
+        # Register equity first
+        risk_book.register_equity(100000)
+        
+        # Setup: create a large position (25% of equity, exceeds 10% limit)
         risk_book.update_position(Position(
             symbol="BTCUSDT",
-            quantity=0.5,  # 25000 exposure
+            quantity=0.5,  # 25000 exposure = 25%
             avg_price=50000,
             side="long"
         ))
         
         prices = {"BTCUSDT": 50000}
-        equity = 100000  # 25000 / 100000 = 25% > 10% limit
+        equity = 100000
         
-        # Try to add more
-        new_pos = Position(symbol="BTCUSDT", quantity=0.1, avg_price=50000, side="long")
-        risk_book.update_position(new_pos)
-        
-        # Should exceed limit
-        assert not risk_book.check_position_limit("BTCUSDT", prices, equity)
+        # Check position - should exceed limit
+        # Note: check_position_limit checks current position, not adding new
+        result = risk_book.check_position_limit("BTCUSDT", prices, equity)
+        # Position is 25% which exceeds 10% limit
+        assert result == False  # 25% > 10%
     
     def test_full_trading_flow_with_mock_execution(self, risk_book, model_registry):
         """Test complete flow with mocked execution."""
