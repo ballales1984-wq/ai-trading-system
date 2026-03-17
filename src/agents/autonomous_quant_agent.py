@@ -26,7 +26,7 @@ from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, asdict
 
 from openclaw_skills.intent_router import route_intent
-from src.risk.risk_book import RiskBook, RiskLimits
+from app.risk.risk_book import RiskBook, RiskLimits
 from src.research.model_registry import ModelRegistry, ModelMeta
 
 

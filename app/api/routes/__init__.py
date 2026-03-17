@@ -15,5 +15,6 @@ from app.api.routes.news import router as news # type: ignore
 from app.api.routes.auth import router as auth # type: ignore
 from app.api.routes.risk import router as risk # type: ignore
 from app.api.routes.ws import router as ws # type: ignore
+from app.api.routes.agents import router as agents # type: ignore
 
-__all__ = ["health", "orders", "portfolio", "strategy", "market", "waitlist", "cache", "news", "auth", "risk", "ws"]
+__all__ = ["health", "orders", "portfolio", "strategy", "market", "waitlist", "cache", "news", "auth", "risk", "ws", "agents"]

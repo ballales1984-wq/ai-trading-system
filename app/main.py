@@ -50,6 +50,7 @@ from app.api.routes import (
     auth,
     risk,
     ws,
+    agents,
 )
 
 # Import audit classes
@@ -217,6 +218,12 @@ app.include_router(
     ws,
     prefix="/ws",
     tags=["WebSocket"]
+)
+
+app.include_router(
+    agents,
+    prefix=f"{settings.api_prefix}/agents/autonomous",
+    tags=["Autonomous Agent"]
 )
 
 # Health check with audit

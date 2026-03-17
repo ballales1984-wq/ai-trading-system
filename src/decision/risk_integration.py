@@ -17,7 +17,7 @@ Usage:
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 
-from src.risk.risk_book import RiskBook, RiskLimits, Position
+from app.risk.risk_book import RiskBook, RiskLimits, Position
 
 
 @dataclass
