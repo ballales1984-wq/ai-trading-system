@@ -1,0 +1,41 @@
+# =============================================================================
+# OpenClaw Skill Registry - Simplified Configuration
+# =============================================================================
+# This registry defines all available quant skills with their security limits,
+# resource constraints, and metadata for the OpenClaw agent.
+#
+# Version: 3.0.0 (Simplified format for skill_registry.py loader)
+# =============================================================================
+
+skills:
+  hmm_regime_detect:
+    file: hmm_regime_detect.py
+    function: detect_regimes
+    description: Hidden Markov Model regime detection
+    max_runtime_ms: 200
+    max_memory_mb: 256
+    enabled: true
+
+  garch_volatility:
+    file: garch_volatility.py
+    function: fit_garch
+    description: GARCH volatility modeling and forecast
+    max_runtime_ms: 300
+    max_memory_mb: 256
+    enabled: true
+
+  monte_carlo_paths:
+    file: monte_carlo_paths.py
+    function: generate_price_paths
+    description: Monte Carlo price path simulation
+    max_runtime_ms: 500
+    max_memory_mb: 512
+    enabled: true
+
+  portfolio_optimizer:
+    file: portfolio_optimizer.py
+    function: optimize_portfolio
+    description: Modern Portfolio Theory portfolio optimization
+    max_runtime_ms: 400
+    max_memory_mb: 512
+    enabled: true
