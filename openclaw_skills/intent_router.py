@@ -536,6 +536,129 @@ class SkillExecutor:
 
 
 # =============================================================================
+# Intent to Skill Mapping (for route_intent function)
+# =============================================================================
+
+_INTENT_MAP = {
+    "regime_analysis": "hmm_regime_detect",
+    "hmm_regime": "hmm_regime_detect",
+    "detect_regime": "hmm_regime_detect",
+    "volatility_analysis": "garch_volatility",
+    "garch_vol": "garch_volatility",
+    "volatility_forecast": "garch_volatility",
+    "simulate_paths": "monte_carlo_paths",
+    "monte_carlo": "monte_carlo_paths",
+    "price_simulation": "monte_carlo_paths",
+    "portfolio_optimization": "portfolio_optimizer",
+    "optimize_portfolio": "portfolio_optimizer",
+    "portfolio_allocation": "portfolio_optimizer",
+}
+
+
+def _load_skill_callable(skill_name: str):
+    """
+    Load a skill's callable function based on registry configuration.
+    
+    Args:
+        skill_name: Name of the skill to load
+        
+    Returns:
+        Tuple of (function, format_function)
+    """
+    # Import the registry
+    try:
+        from skill_registry import get_registry
+        registry = get_registry()
+        cfg = registry.get(skill_name)
+    except (ImportError, FileNotFoundError):
+        # Fallback to direct imports if registry not available
+        cfg = {}
+    
+    # Map skill names to module functions
+    skill_modules = {
+        "hmm_regime_detect": ("hmm_regime_detect", "detect_regimes"),
+        "garch_volatility": ("garch_volatility", "fit_garch"),
+        "monte_carlo_paths": ("monte_carlo_paths", "generate_price_paths"),
+        "portfolio_optimizer": ("portfolio_optimizer", "optimize_portfolio"),
+    }
+    
+    if skill_name not in skill_modules:
+        raise ValueError(f"Unknown skill: {skill_name}")
+    
+    module_name, func_name = skill_modules[skill_name]
+    
+    # Import the module dynamically
+    import importlib
+    module = importlib.import_module(module_name)
+    func = getattr(module, func_name)
+    
+    # Try to get format_output function if it exists
+    format_func = getattr(module, "format_output", None)
+    
+    return func, format_func
+
+
+def route_intent(intent: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Route an intent to the appropriate skill and execute it.
+    
+    This is the main entry point for executing skills based on intent.
+    Used by composed_strategies.py for multi-skill orchestration.
+    
+    Args:
+        intent: The intent identifier (e.g., "regime_analysis", "simulate_paths")
+        params: Dictionary of parameters to pass to the skill
+        
+    Returns:
+        Dictionary containing the skill's results
+        
+    Raises:
+        ValueError: If the intent is not recognized
+        RuntimeError: If the skill is disabled
+    """
+    # Map intent to skill name
+    if intent not in _INTENT_MAP:
+        raise ValueError(f"Unknown intent: {intent}")
+    
+    skill_name = _INTENT_MAP[intent]
+    
+    # Check if skill is enabled (if registry available)
+    try:
+        from skill_registry import get_registry
+        registry = get_registry()
+        if not registry.is_enabled(skill_name):
+            raise RuntimeError(f"Skill disabled: {skill_name}")
+    except (ImportError, FileNotFoundError):
+        pass  # Continue if registry not available
+    
+    # Load and execute the skill
+    func, format_func = _load_skill_callable(skill_name)
+    
+    try:
+        result = func(**params)
+        
+        # Apply formatting if available
+        if format_func and hasattr(result, '__dict__'):
+            return format_func(result)
+        
+        return result
+    
+    except TypeError as e:
+        # Handle missing or invalid parameters
+        return {
+            "error": f"Invalid parameters for {skill_name}: {str(e)}",
+            "skill": skill_name,
+            "intent": intent,
+        }
+    except Exception as e:
+        return {
+            "error": f"Skill execution failed: {str(e)}",
+            "skill": skill_name,
+            "intent": intent,
+        }
+
+
+# =============================================================================
 # Main entry point
 # =============================================================================
 
