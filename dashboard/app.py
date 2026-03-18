@@ -305,10 +305,11 @@ app.layout = html.Div([
     dcc.Store(id='fund-results'),
     dcc.Store(id='hedgefund-results'),
     
-    # Auto-refresh interval
+    # Auto-refresh interval - fires immediately on page load to populate charts
     dcc.Interval(
         id='auto-refresh',
         interval=60*1000,  # 1 minute
+        max_intervals=1,   # Fire immediately on load
         n_intervals=0
     ),
     
