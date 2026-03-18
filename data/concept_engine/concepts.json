@@ -1,0 +1,847 @@
+[
+  {
+    "id": "long_position",
+    "term": "Long Position",
+    "definition": "Posizione d'acquisto che guadagna quando il prezzo sale",
+    "category": "trading",
+    "keywords": [
+      "buy",
+      "long",
+      "acquisto",
+      "rialzo",
+      "rialzista",
+      "purchase"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.176931",
+    "last_updated": "2026-03-18T08:02:45.176949",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "short_position",
+    "term": "Short Position",
+    "definition": "Posizione di vendita che guadagna quando il prezzo scende",
+    "category": "trading",
+    "keywords": [
+      "sell",
+      "short",
+      "ribasso",
+      "ribassista",
+      "shortare",
+      "shorting"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.176966",
+    "last_updated": "2026-03-18T08:02:45.176972",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "stop_loss",
+    "term": "Stop Loss",
+    "definition": "Ordine automatico per limitare le perdite a un livello predefined",
+    "category": "risk_management",
+    "keywords": [
+      "stop",
+      "stop loss",
+      "protezione",
+      "limite",
+      "exit"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.176986",
+    "last_updated": "2026-03-18T08:02:45.176990",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "take_profit",
+    "term": "Take Profit",
+    "definition": "Ordine automatico per chiudere in profitto a un target",
+    "category": "risk_management",
+    "keywords": [
+      "take profit",
+      "target",
+      "obiettivo",
+      "chiusura",
+      "exit profit"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177001",
+    "last_updated": "2026-03-18T08:02:45.177005",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "leverage",
+    "term": "Leverage",
+    "definition": "Moltiplicatore che amplifica l'esposizione con meno capitale",
+    "category": "trading",
+    "keywords": [
+      "leverage",
+      "leva",
+      "margine",
+      "x10",
+      "x100",
+      "leveraged"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177013",
+    "last_updated": "2026-03-18T08:02:45.177016",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "var",
+    "term": "Value at Risk (VaR)",
+    "definition": "Massima perdita attesa in un intervallo di confidenza (es. 95%)",
+    "category": "risk",
+    "keywords": [
+      "var",
+      "value at risk",
+      "rischio",
+      "confidenza",
+      "maximum loss"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177027",
+    "last_updated": "2026-03-18T08:02:45.177031",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "cvar",
+    "term": "Conditional VaR (CVaR)",
+    "definition": "Perdita attesa media quando si supera il VaR (Expected Shortfall)",
+    "category": "risk",
+    "keywords": [
+      "cvar",
+      "expected shortfall",
+      "tail risk",
+      "average loss"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177041",
+    "last_updated": "2026-03-18T08:02:45.177044",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "drawdown",
+    "term": "Drawdown",
+    "definition": "Calo massimo dal picco al minimo del portafoglio",
+    "category": "risk",
+    "keywords": [
+      "drawdown",
+      "perdita",
+      "calo",
+      "ribasso",
+      "peak to trough"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177053",
+    "last_updated": "2026-03-18T08:02:45.177057",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "sharpe_ratio",
+    "term": "Sharpe Ratio",
+    "definition": "Ritorno aggiustato per il rischio (excess return / std dev)",
+    "category": "metrics",
+    "keywords": [
+      "sharpe",
+      "ratio",
+      "performance",
+      "risk adjusted",
+      "risk-reward"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177066",
+    "last_updated": "2026-03-18T08:02:45.177070",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "sortino_ratio",
+    "term": "Sortino Ratio",
+    "definition": "Sharpe Ratio usando solo la volatilità negativa (downside)",
+    "category": "metrics",
+    "keywords": [
+      "sortino",
+      "downside risk",
+      "downside volatility"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177077",
+    "last_updated": "2026-03-18T08:02:45.177081",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "volatility",
+    "term": "Volatilità",
+    "definition": "Misura delle oscillazioni dei prezzi nel tempo",
+    "category": "market",
+    "keywords": [
+      "volatility",
+      "volatile",
+      "oscillazione",
+      "instabilita",
+      "variance"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177089",
+    "last_updated": "2026-03-18T08:02:45.177093",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "liquidity",
+    "term": "Liquidità",
+    "definition": "Facilità di comprare/vendere un asset senza impattare il prezzo",
+    "category": "market",
+    "keywords": [
+      "liquidity",
+      "liquidita",
+      "depth",
+      "volume",
+      "slippage"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177102",
+    "last_updated": "2026-03-18T08:02:45.177106",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "spread",
+    "term": "Spread",
+    "definition": "Differenza tra prezzo bid (acquisto) e ask (vendita)",
+    "category": "market",
+    "keywords": [
+      "spread",
+      "bid",
+      "ask",
+      "denaro",
+      "lettera",
+      "bid-ask"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177115",
+    "last_updated": "2026-03-18T08:02:45.177119",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "volume",
+    "term": "Volume",
+    "definition": "Quantità di asset scambiati in un periodo",
+    "category": "market",
+    "keywords": [
+      "volume",
+      "trading volume",
+      "scambi",
+      "turnover"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177126",
+    "last_updated": "2026-03-18T08:02:45.177130",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "market_cap",
+    "term": "Market Cap",
+    "definition": "Valore totale di un asset (prezzo * offerta in circolazione)",
+    "category": "market",
+    "keywords": [
+      "market cap",
+      "capitalization",
+      "valuation"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177137",
+    "last_updated": "2026-03-18T08:02:45.177140",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "rsi",
+    "term": "RSI",
+    "definition": "Relative Strength Index - indicatore di momentum (0-100)",
+    "category": "technical",
+    "keywords": [
+      "rsi",
+      "momentum",
+      "overbought",
+      "oversold",
+      "strength"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177145",
+    "last_updated": "2026-03-18T08:02:45.177148",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "macd",
+    "term": "MACD",
+    "definition": "Moving Average Convergence Divergence - indicatore di trend",
+    "category": "technical",
+    "keywords": [
+      "macd",
+      "trend",
+      "moving average",
+      "convergence",
+      "divergence",
+      "signal"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177152",
+    "last_updated": "2026-03-18T08:02:45.177155",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "moving_average",
+    "term": "Media Mobile",
+    "definition": "Media dei prezzi su un periodo (SMA, EMA)",
+    "category": "technical",
+    "keywords": [
+      "ma",
+      "moving average",
+      "sma",
+      "ema",
+      "media mobile",
+      "average price"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177159",
+    "last_updated": "2026-03-18T08:02:45.177162",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "bollinger_bands",
+    "term": "Bollinger Bands",
+    "definition": "Bande di volatilità basate su media mobile ± 2 deviazioni standard",
+    "category": "technical",
+    "keywords": [
+      "bollinger",
+      "bands",
+      "volatility",
+      "envelope",
+      "bands"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177166",
+    "last_updated": "2026-03-18T08:02:45.177168",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "support",
+    "term": "Supporto",
+    "definition": "Livello di prezzo dove la domanda supera l'offerta",
+    "category": "technical",
+    "keywords": [
+      "support",
+      "supporto",
+      "bottom",
+      "floor",
+      "demand"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177173",
+    "last_updated": "2026-03-18T08:02:45.177175",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "resistance",
+    "term": "Resistenza",
+    "definition": "Livello di prezzo dove l'offerta supera la domanda",
+    "category": "technical",
+    "keywords": [
+      "resistance",
+      "resistenza",
+      "ceiling",
+      "tetto",
+      "supply"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177181",
+    "last_updated": "2026-03-18T08:02:45.177185",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "staking",
+    "term": "Staking",
+    "definition": "Blocco di token per validare transazioni e ricevere rewards",
+    "category": "defi",
+    "keywords": [
+      "staking",
+      "stake",
+      "reward",
+      "validator",
+      "delegation"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177196",
+    "last_updated": "2026-03-18T08:02:45.177234",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "liquidity_pool",
+    "term": "Liquidity Pool",
+    "definition": "Pool di liquidità per trading automatizzato (AMM)",
+    "category": "defi",
+    "keywords": [
+      "liquidity pool",
+      "amm",
+      "dex",
+      "swap",
+      "pool"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177253",
+    "last_updated": "2026-03-18T08:02:45.177257",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "impermanent_loss",
+    "term": "Impermanent Loss",
+    "definition": "Perdita temporanea vs holding nei liquidity pool",
+    "category": "defi",
+    "keywords": [
+      "impermanent loss",
+      "il",
+      "divergence",
+      " IL"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177264",
+    "last_updated": "2026-03-18T08:02:45.177267",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "yield_farming",
+    "term": "Yield Farming",
+    "definition": "Strategia per massimizzare i rendimenti spostando liquidity",
+    "category": "defi",
+    "keywords": [
+      "yield farming",
+      "farming",
+      "apy",
+      "apr",
+      "yield"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177272",
+    "last_updated": "2026-03-18T08:02:45.177275",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "layer2",
+    "term": "Layer 2",
+    "definition": "Soluzioni di scalabilità sulla blockchain principale (L2)",
+    "category": "crypto",
+    "keywords": [
+      "l2",
+      "layer 2",
+      "arbitrum",
+      "optimism",
+      "rollup",
+      "scalability"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177279",
+    "last_updated": "2026-03-18T08:02:45.177282",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "spot_etf",
+    "term": "Spot ETF",
+    "definition": "ETF che detiene l'asset fisico (es. Bitcoin spot ETF)",
+    "category": "crypto",
+    "keywords": [
+      "spot etf",
+      "bitcoin etf",
+      "ether etf",
+      "exchange traded"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177288",
+    "last_updated": "2026-03-18T08:02:45.177290",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "inflation",
+    "term": "Inflazione",
+    "definition": "Aumento generalizzato dei prezzi nel tempo",
+    "category": "economics",
+    "keywords": [
+      "inflation",
+      "inflazione",
+      "cpi",
+      "ppi",
+      "price index"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177295",
+    "last_updated": "2026-03-18T08:02:45.177297",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "interest_rate",
+    "term": "Tasso d'interesse",
+    "definition": "Costo del denaro prestato, strumento di politica monetaria",
+    "category": "economics",
+    "keywords": [
+      "interest rate",
+      "tasso",
+      "fed",
+      "ecb",
+      "policy",
+      "monetary"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177302",
+    "last_updated": "2026-03-18T08:02:45.177304",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "gdp",
+    "term": "GDP",
+    "definition": "Prodotto Interno Lordo - misura dell'attività economica",
+    "category": "economics",
+    "keywords": [
+      "gdp",
+      "gdp growth",
+      "pil",
+      "economy"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177308",
+    "last_updated": "2026-03-18T08:02:45.177311",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "recession",
+    "term": "Recessione",
+    "definition": "Contrazione economica per due trimestri consecutivi",
+    "category": "economics",
+    "keywords": [
+      "recession",
+      "recessione",
+      "downturn",
+      "contraction",
+      "economic contraction"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177315",
+    "last_updated": "2026-03-18T08:02:45.177318",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "unemployment",
+    "term": "Unemployment",
+    "definition": "Tasso di disoccupazione - indicatore economico chiave",
+    "category": "economics",
+    "keywords": [
+      "unemployment",
+      "jobs",
+      "labor",
+      "employment",
+      "payroll"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177324",
+    "last_updated": "2026-03-18T08:02:45.177327",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "bullish",
+    "term": "Bullish",
+    "definition": "Outlook positivo sui prezzi, aspettativa di rialzo",
+    "category": "sentiment",
+    "keywords": [
+      "bullish",
+      "rialzista",
+      "buy",
+      "accumulation",
+      "optimistic"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177339",
+    "last_updated": "2026-03-18T08:02:45.177346",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "bearish",
+    "term": "Bearish",
+    "definition": "Outlook negativo sui prezzi, aspettativa di ribasso",
+    "category": "sentiment",
+    "keywords": [
+      "bearish",
+      "ribassista",
+      "sell",
+      "distribution",
+      "pessimistic"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177354",
+    "last_updated": "2026-03-18T08:02:45.177357",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "fear_greed",
+    "term": "Fear & Greed Index",
+    "definition": "Indicatore del sentiment di mercato (0=Extreme Fear, 100=Extreme Greed)",
+    "category": "sentiment",
+    "keywords": [
+      "fear",
+      "greed",
+      "sentiment",
+      "emotion",
+      "market sentiment"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177365",
+    "last_updated": "2026-03-18T08:02:45.177370",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "diversification",
+    "term": "Diversificazione",
+    "definition": "Distribuzione del capitale su asset diversi per ridurre rischio",
+    "category": "portfolio",
+    "keywords": [
+      "diversification",
+      "diversify",
+      "portfolio",
+      "allocazione",
+      "spread"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177379",
+    "last_updated": "2026-03-18T08:02:45.177382",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "rebalancing",
+    "term": "Ribilanciamento",
+    "definition": "Aggiustamento periodico del portafoglio per mantenere allocazione target",
+    "category": "portfolio",
+    "keywords": [
+      "rebalancing",
+      "ribilanciamento",
+      "adjust",
+      "reallocate"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177391",
+    "last_updated": "2026-03-18T08:02:45.177394",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "asset_allocation",
+    "term": "Asset Allocation",
+    "definition": "Distribuzione del capitale tra diverse asset classi",
+    "category": "portfolio",
+    "keywords": [
+      "allocation",
+      "allocazione",
+      "mix",
+      "weights",
+      "distribution"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177400",
+    "last_updated": "2026-03-18T08:02:45.177405",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "tail_risk",
+    "term": "Tail Risk",
+    "definition": "Rischio di eventi estremi rari (black swan)",
+    "category": "risk",
+    "keywords": [
+      "tail risk",
+      "black swan",
+      "extreme",
+      "outlier"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177411",
+    "last_updated": "2026-03-18T08:02:45.177414",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "liquidity_crunch",
+    "term": "Liquidity Crunch",
+    "definition": "Carenza improvvisa di liquidità nel mercato",
+    "category": "risk",
+    "keywords": [
+      "liquidity crunch",
+      "liquidity crisis",
+      "funding crisis"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177421",
+    "last_updated": "2026-03-18T08:02:45.177425",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "correlation",
+    "term": "Correlazione",
+    "definition": "Misura di come due asset si muovono insieme",
+    "category": "risk",
+    "keywords": [
+      "correlation",
+      "correlazione",
+      "beta",
+      "relationship"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177432",
+    "last_updated": "2026-03-18T08:02:45.177436",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "trending_market",
+    "term": "Trending Market",
+    "definition": "Mercato con trend definito (rialzista o ribassista)",
+    "category": "regime",
+    "keywords": [
+      "trend",
+      "trending",
+      "directional",
+      "momentum"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177443",
+    "last_updated": "2026-03-18T08:02:45.177447",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "range_bound",
+    "term": "Range Bound",
+    "definition": "Mercato che oscilla tra supporto e resistenza",
+    "category": "regime",
+    "keywords": [
+      "range",
+      "sideways",
+      "consolidation",
+      "oscillating"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177453",
+    "last_updated": "2026-03-18T08:02:45.177458",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "high_volatility",
+    "term": "High Volatility",
+    "definition": "Periodo di alta volatilità con grandi movimenti",
+    "category": "regime",
+    "keywords": [
+      "high volatility",
+      "volatile",
+      "turbulent",
+      "chaotic"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177468",
+    "last_updated": "2026-03-18T08:02:45.177471",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "low_volatility",
+    "term": "Low Volatility",
+    "definition": "Periodo di bassa volatilità e consolidamento",
+    "category": "regime",
+    "keywords": [
+      "low volatility",
+      "calm",
+      "quiet",
+      "stable"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-03-18T08:02:45.177477",
+    "last_updated": "2026-03-18T08:02:45.177480",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  }
+]
