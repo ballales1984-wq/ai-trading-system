@@ -2,15 +2,15 @@
 
 
 a = Analysis(
-    ['C:\\ai-trading-system\\desktop_app\\main_tkinter.py'],
+    ['c:\\ai-trading-system\\desktop_app\\main_tkinter.py'],
     pathex=[],
     binaries=[],
-    datas=[('C:\\ai-trading-system\\app', 'app'), ('C:\\ai-trading-system\\src', 'src'), ('C:\\ai-trading-system\\decision_engine', 'decision_engine'), ('C:\\ai-trading-system\\requirements.txt', '.')],
+    datas=[('c:\\ai-trading-system\\app', 'app'), ('c:\\ai-trading-system\\src', 'src'), ('c:\\ai-trading-system\\decision_engine', 'decision_engine'), ('c:\\ai-trading-system\\requirements.txt', '.')],
     hiddenimports=['tkinter', 'fastapi', 'uvicorn', 'pydantic', 'sqlalchemy', 'numpy', 'pandas', 'requests', 'websockets', 'ccxt', 'binance'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['torch', 'matplotlib', 'scipy', 'tensorflow', 'tensorboard', 'IPython', 'jupyter', 'pytest'],
     noarchive=False,
     optimize=0,
 )
