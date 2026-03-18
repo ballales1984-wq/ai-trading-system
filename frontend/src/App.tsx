@@ -7,13 +7,12 @@ import Market from './pages/Market';
 import Orders from './pages/Orders';
 import News from './pages/News';
 import Marketing from './pages/Marketing';
-
+import Login from './pages/Login';
 import Strategy from './pages/Strategy';
 import Risk from './pages/Risk';
 import Settings from './pages/Settings';
 
-// Lazy load login and payment pages
-const Login = lazy(() => import('./pages/Login'));
+// Lazy load payment page only
 const PaymentTest = lazy(() => import('./pages/PaymentTest'));
 
 function App() {
@@ -23,7 +22,7 @@ function App() {
         {/* Public routes */}
         <Route path="/" element={<Marketing />} />
         <Route path="/marketing" element={<Marketing />} />
-        <Route path="/login" element={<Suspense fallback={<div>Loading...</div>}><Login /></Suspense>} />
+        <Route path="/login" element={<Login />} />
         <Route path="/payment" element={<Suspense fallback={<div>Loading...</div>}><PaymentTest /></Suspense>} />
         
         {/* Protected routes - Layout already handles nested Outlets */}
