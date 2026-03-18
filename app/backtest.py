@@ -454,8 +454,8 @@ class BacktestEngine:
             base_price = close
             
         return candles
-    
-async def _run_simulation(
+
+    async def _run_simulation(
         self,
         strategy,
         historical_data: Dict[str, List[OHLCV]],
@@ -570,7 +570,7 @@ async def _run_simulation(
                 "capital": self.capital,
                 "positions_value": total_equity - self.capital
             })
-    
+
     async def _execute_signal(self, symbol: str, signal, current_price: float):
         """Execute a trading signal"""
         # Calculate position size
