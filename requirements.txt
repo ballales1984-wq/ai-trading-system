@@ -25,4 +25,7 @@ pyportfolioopt>=1.6.0
 quantstats>=0.0.81
 arch>=8.0.0
 QuantLib>=1.41
+# Concept Engine - Semantic Search
+faiss-cpu>=1.7.0
+sentence-transformers>=2.2.0
 
