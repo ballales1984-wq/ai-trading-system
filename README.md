@@ -1,288 +1,287 @@
-# 🤖 AI Trading System — Mini Hedge Fund Infrastructure
+# 🤖 AI Trading System - Professional Trading Platform
 
-[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/Tests-927%2B_Passing-green.svg)](tests)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/ballales1984-wq/ai-trading-system.svg)](https://github.com/ballales1984-wq/ai-trading-system)
-[![Forks](https://img.shields.io/github/forks/ballales1984-wq/ai-trading-system.svg)](https://github.com/ballales1984-wq/ai-trading-system/network/members)
-[![Discord](https://img.shields.io/discord/1234567890.svg?label=Discord)](https://discord.gg/aitrading)
+<div align="center">
 
-## 🎯 Latest Updates (2026-03-17)
+![Version](https://img.shields.io/badge/version-2.3.0-blue)
+![Python](https://img.shields.io/badge/python-3.14+-green)
+![React](https://img.shields.io/badge/react-18+-blue)
+![License](https://img.shields.io/badge/license-MIT-yellow)
+![Status](https://img.shields.io/badge/status-active-success)
 
-### Autonomous Agent - Level 5 Architecture
-- **NEW**: UnifiedDecisionEngine - single source of truth for all trading decisions
-- **NEW**: AutonomousQuantAgent - orchestrates all components (HMM, GARCH, Monte Carlo, Portfolio, Risk)
-- **NEW**: CLI entrypoint: `python -m src.agents BTCUSDT --proposals`
-- **NEW**: API routes for agent control
-- ⚠️ **Note**: Agent generates proposals only - human approval required for execution
+**Advanced algorithmic trading platform with AI-powered market analysis**
 
-### OpenClaw Integration - Level 3-4
-- **Level 3**: Natural language trading interface (chat)
-- **Level 4**: Multi-skill composition (HMM + GARCH + Monte Carlo + Portfolio)
-- Conversational portfolio queries ("What's my risk exposure?")
-- Monte Carlo simulations via chat
+[English](#english) | [Italiano](#italiano)
 
-### Performance Analyzer - Hedge Fund Metrics
-- **NEW**: PerformanceAnalyzer module for professional trading evaluation
-- Sharpe ratio, Sortino ratio, Maximum Drawdown
-- Trade logging to CSV
-- Equity history tracking
-- Automated rating (A/B/C/D)
+</div>
 
-See [`openclaw_skills/`](openclaw_skills/) for full documentation.
+---
 
-### New Financial Analysis Packages Installed
-- **pandas-ta** (v0.4.71b0) - Technical analysis indicators
-- **PyPortfolioOpt** (v1.6.0) - Portfolio optimization algorithms
-- **QuantStats** (v0.0.81) - Portfolio performance analytics
-- **ARCH** (v8.0.0) - Volatility modeling (GARCH)
-- **QuantLib** (v1.41) - Quantitative finance library
+## 🇬🇧 English
 
-**Python Requirement:** Python 3.13+ recommended for full compatibility with all packages (numba dependency)
+### Overview
 
-## 🎯 Why This Project Exists
+AI Trading System is a comprehensive algorithmic trading platform that combines:
 
-Most retail trading systems focus on single indicators, naive executions, and reactive strategies. They fail because they ignore what institutional quant desks know well:
+- ⚡ **FastAPI Backend** - High-performance REST API
+- 🎨 **React Frontend** - Modern dark-themed dashboard
+- 📊 **Python Dashboards** - Advanced analytics (Dash + Streamlit)
+- 🧠 **AI Assistant** - Natural language trading assistant
+- 🧠 **Concept Engine** - Semantic knowledge layer for financial concepts
 
-**It's not the signal that generates alpha. It's the infrastructure.**
+### Key Features
 
-This project is different. It's designed from scratch as modular quantitative infrastructure — event-driven, risk-aware, and capable of evolving toward institutional-level architecture.
+| Feature | Description |
+|---------|-------------|
+| **Multi-Asset Trading** | Support for Crypto, Stocks, Forex, Options |
+| **Risk Management** | VaR, CVaR, Drawdown, Sharpe Ratio |
+| **Technical Analysis** | RSI, MACD, Bollinger Bands, Moving Averages |
+| **Machine Learning** | Price prediction, trend detection, HMM regime detection |
+| **Sentiment Analysis** | News analysis with NLP |
+| **Semantic Search** | FAISS-powered concept engine |
 
-**It's not a bot. It's a trading system.**
-
-## 🧠 System Philosophy
-
-| Principle          | Implementation                                                                 |
-|--------------------|--------------------------------------------------------------------------------|
-| Event-Driven       | Async data pipelines, non-blocking execution, reactive decision engine        |
-| Probabilistic      | 5-level Monte Carlo simulation, uncertainty quantification, ensemble design   |
-| Risk-First         | VaR/CVaR limits, GARCH volatility modeling, dynamic position sizing,          |
-|                    | drawdown protection                                                           |
-| Adaptive Regime    | HMM market regime detection, strategy rotation based on market conditions     |
-| Multi-Source       | 18+ API integrations, sentiment analysis, on-chain metrics, macro indicators  |
-| AI Agents          | OpenClaw conversational interface, multi-agent orchestration, chat-driven       |
-
-## 🏗️ Architecture Overview
-
-![Architecture Diagram](https://raw.githubusercontent.com/ballales1984-wq/ai-trading-system/main/docs/architecture_diagram.png)
-
-```text
-ai-trading-system/
-├── app/                    # FastAPI application
-│   ├── api/routes/        # REST endpoints
-│   ├── core/             # Security, cache, DB
-│   ├── execution/        # Order execution engines
-│   ├── market_data/      # Data feeds
-│   ├── portfolio/        # Portfolio management
-│   └── risk/             # Risk engines
-├── openclaw_skills/      # OpenClaw AI agent integration
-│   ├── quant_trading_assistant.md
-│   ├── skill.yaml
-│   ├── multi_agent_config.yaml
-│   ├── api_wrapper.py
-│   └── test_api_wrapper.py
-├── agent_coordination/   # Multi-agent coordination
-│   ├── execution/        # Broker connectors
-│   └── database/         # SQLAlchemy models
-├── src/                   # Core trading logic
-│   ├── agents/           # AI agents (MonteCarlo, Risk, MarketData)
-│   ├── core/             # Event bus, state manager
-│   ├── decision/         # Decision engine
-│   ├── strategy/         # Trading strategies
-│   ├── research/         # Alpha Lab, Feature Store
-│   └── external/         # API integrations
-├── tests/                # Test suite (927+ tests)
-├── dashboard/            # Dash dashboard
-├── frontend/            # React frontend
-├── docker/              # Docker configs
-└── infra/               # Kubernetes configs
-```
-
-## ⚡ Quick Start (5 Minutes)
-
-### Option 1: Docker (Recommended)
+### Quick Start
 
 ```bash
-# Clone and run with Docker
+# Clone repository
 git clone https://github.com/ballales1984-wq/ai-trading-system.git
 cd ai-trading-system
-docker-compose up -d
 
-# Wait 2-3 minutes for services to start
-# Then open http://localhost:8000 in your browser
-```
-
-### Option 2: Local Development
-
-```bash
 # Install dependencies
 pip install -r requirements.txt
-cd frontend
-npm install
+cd frontend && npm install
 
-# Start services
-# Terminal 1: Backend
-uvicorn app.main:app --reload
-
-# Terminal 2: Frontend
-cd frontend
-npm run dev
-
-# Open http://localhost:5173
+# Start all services
+./start_all_services.bat
 ```
 
-### Option 3: Cloud Deployment
+### Services
 
-Deploy to Render or Vercel with one click:
+| Service | URL | Port |
+|---------|-----|------|
+| Backend API | http://localhost:8000 | 8000 |
+| API Docs | http://localhost:8000/docs | 8000 |
+| React Frontend | http://localhost:5173 | 5173 |
+| Python Dashboard | http://localhost:8050 | 8050 |
+| AI Assistant | http://localhost:8501 | 8501 |
 
-**Live Demo:** <https://ai-trading-system-1reg.onrender.com>
+### Project Structure
 
-- [Deploy to Render](https://render.com/deploy?repo=ballales1984-wq/ai-trading-system)
-- [Deploy to Vercel](https://vercel.com/new/git/external?repository-url=https://github.com/ballales1984-wq/ai-trading-system)
+```
+ai-trading-system/
+├── app/                    # FastAPI backend
+│   ├── api/              # API routes
+│   ├── core/             # Core utilities
+│   ├── database/         # Database models
+│   ├── execution/        # Order execution
+│   ├── portfolio/        # Portfolio management
+│   ├── risk/             # Risk engine
+│   └── strategies/       # Trading strategies
+├── frontend/              # React frontend
+│   ├── src/
+│   │   ├── pages/       # Page components
+│   │   ├── components/  # Reusable components
+│   │   └── services/    # API services
+│   └── dist/            # Production build
+├── dashboard/            # Python Dash dashboards
+├── concept_engine.py     # Semantic knowledge layer
+├── sentiment_news.py     # News sentiment analysis
+├── decision_engine.py    # Trading decision engine
+├── technical_analysis.py # Technical indicators
+└── requirements.txt      # Python dependencies
+```
 
-## 🎥 Video Tutorial
+### Technology Stack
 
-Watch our 5-minute setup guide:
-[![Setup Tutorial](https://img.youtube.com/vi/VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=VIDEO_ID)
+#### Backend
+- **FastAPI** - Modern async web framework
+- **SQLAlchemy** - Database ORM
+- **Pydantic** - Data validation
+- **Redis** - Caching
 
-## 📊 Key Features
+#### Frontend
+- **React 18** - UI library
+- **TypeScript** - Type safety
+- **Vite** - Build tool
+- **Tailwind CSS** - Styling
+- **Recharts** - Charts
 
-### Trading Infrastructure
+#### AI/ML
+- **sentence-transformers** - Semantic embeddings
+- **FAISS** - Vector similarity search
+- **scikit-learn** - ML algorithms
+- **pandas** - Data analysis
 
-- **Multi-broker support**: Binance, Bybit, Paper Trading
-- **Smart order routing**: TWAP, VWAP, POV, Iceberg orders
-- **Risk management**: VaR/CVaR limits, GARCH volatility, dynamic position sizing
-- **Execution algorithms**: Best execution with latency optimization
+### API Endpoints
 
-### AI & Analytics
+#### Portfolio
+- `GET /api/portfolio/summary` - Portfolio overview
+- `GET /api/portfolio/positions` - Open positions
+- `GET /api/portfolio/performance` - Performance metrics
+- `GET /api/portfolio/allocation` - Asset allocation
 
-- **Monte Carlo simulation**: 5-level probabilistic forecasting
-- **HMM regime detection**: Market condition identification
-- **Sentiment analysis**: News and social media integration
-- **Cross-asset correlation**: Portfolio optimization
-- **GARCH volatility modeling**: ARCH package for advanced risk analysis
-- **Portfolio optimization**: Mean-variance, Black-Litterman, Risk Parity
-- **Performance analytics**: QuantStats for comprehensive portfolio metrics
+#### Orders
+- `GET /api/orders` - List orders
+- `POST /api/orders` - Create order
+- `POST /api/orders/emergency-stop` - Emergency stop
 
-### Frontend Dashboard
+#### Market
+- `GET /api/market/prices` - Current prices
+- `GET /api/market/candles/{symbol}` - OHLCV data
 
-- **Real-time monitoring**: Live P&L, positions, risk metrics
-- **Interactive charts**: Price action, equity curves, correlation matrices
-- **Mobile responsive**: Works on all devices
-- **Dark mode**: Eye-friendly interface
+### Risk Metrics
 
-## 📈 Performance Metrics
+The system calculates:
+- **VaR (Value at Risk)** - Maximum expected loss
+- **CVaR (Conditional VaR)** - Expected shortfall
+- **Sharpe Ratio** - Risk-adjusted returns
+- **Max Drawdown** - Peak-to-trough loss
+- **Sortino Ratio** - Downside risk-adjusted returns
 
-| Metric | Value | Benchmark |
-|--------|-------|-----------|
-| CAGR | 23.5% | 18.2% |
-| Max Drawdown | 7.2% | 45.8% |
-| Sharpe Ratio | 1.95 | 0.82 |
-| Sortino Ratio | 2.45 | 1.12 |
-| Win Rate | 68% | - |
-
-## 🛡️ Risk Management
-
-### Capital Protection
-
-- **Max position size**: 10% per asset
-- **Daily drawdown limit**: 5% circuit breaker
-- **VaR confidence**: 95% (industry standard)
-- **CVaR limit**: 8% tail risk protection
-
-### Failure Modes & Mitigations
-
-| Failure Mode | Probability | Mitigation |
-|--------------|-------------|------------|
-| API Failure | Medium | Multi-exchange fallback |
-| Model Decay | High | Continuous retraining |
-| Liquidity Crisis | Low | Position size limits |
-| Flash Crash | Low | Circuit breakers |
-
-## 🔬 Backtest Integrity
-
-- **Walk-forward validation**: Rolling 6-month windows
-- **Look-ahead bias prevention**: Feature scaling only on training data
-- **Survivorship bias**: Includes delisted assets
-- **Latency simulation**: 100-500ms random delay
-- **Slippage model**: Volume-weighted impact
-
-## 🚀 Getting Started Guide
-
-### Step 1: Choose Your Deployment Method
-
-- **Docker**: Easiest for beginners
-- **Local**: Best for development
-- **Cloud**: For production use
-
-### Step 2: Configure API Keys
-
-Create `.env` file with your exchange API keys:
+### Development
 
 ```bash
-# Binance
-BINANCE_API_KEY=your_key
-BINANCE_SECRET_KEY=your_secret
-BINANCE_TESTNET=false
+# Backend only
+python -m uvicorn app.main:app --reload --port 8000
 
-# Bybit
-BYBIT_API_KEY=your_key
-BYBIT_SECRET_KEY=your_secret
-BYBIT_TESTNET=true
+# Frontend only
+cd frontend && npm run dev
+
+# Dashboard
+cd dashboard && python app.py
+
+# AI Assistant
+streamlit run ai_financial_dashboard.py --server.port 8501
 ```
 
-### Step 3: Start Trading
+### Environment Variables
 
-1. Paper trading (recommended first)
-2. Live trading with small capital
-3. Scale up gradually
+Create `.env` file:
 
-- [API Reference](app/docs)
-- [Architecture Guide](docs/ARCHITECTURE.md)
-- [Deployment Guide](docs/DEPLOYMENT.md)
-- [Risk Management](docs/RISK_MANAGEMENT.md)
+```env
+# Database
+DATABASE_URL=postgresql://user:pass@localhost:5432/aitrading
 
-## 🤝 Community
+# API Keys
+BINANCE_API_KEY=your_key
+BINANCE_SECRET=your_secret
 
-Join our community to get support and share ideas:
+# Security
+SECRET_KEY=your_secret_key
+ALGORITHM=HS256
 
-- [Discord Server](https://discord.gg/aitrading)
-- [GitHub Discussions](https://github.com/ballales1984-wq/ai-trading-system/discussions)
-- [Twitter](https://twitter.com/aitrading_system)
+# Demo Mode
+DEMO_MODE=true
+```
 
-## ⭐ Contributing
+### Contributing
 
-We welcome contributions! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) guide.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-## 📝 License
+### License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - See [LICENSE](LICENSE) for details.
 
-## 📧 Contact
+---
 
-For questions or support, please use GitHub Issues or join our Discord community.
+## 🇮🇹 Italiano
 
-## 📚 Documentation
+### Panoramica
 
-- [API Reference](app/docs)
-- [Architecture Guide](docs/ARCHITECTURE.md)
-- [Deployment Guide](docs/DEPLOYMENT.md)
-- [Risk Management](docs/RISK_MANAGEMENT.md)
+AI Trading System è una piattaforma di trading algoritmica completa che combina:
 
-## 🤝 Community
+- ⚡ **Backend FastAPI** - API REST ad alte prestazioni
+- 🎨 **Frontend React** - Dashboard moderna con tema scuro
+- 📊 **Dashboard Python** - Analisi avanzata (Dash + Streamlit)
+- 🧠 **Assistente AI** - Assistente trading in linguaggio naturale
+- 🧠 **Concept Engine** - Layer semantico per concetti finanziari
 
-Join our community to get support and share ideas:
+### Caratteristiche Principali
 
-- [Discord Server](https://discord.gg/aitrading)
-- [GitHub Discussions](https://github.com/ballales1984-wq/ai-trading-system/discussions)
-- [Twitter](https://twitter.com/aitrading_system)
+| Caratteristica | Descrizione |
+|---------------|-------------|
+| **Trading Multi-Asset** | Crypto, Azioni, Forex, Opzioni |
+| **Risk Management** | VaR, CVaR, Drawdown, Sharpe Ratio |
+| **Analisi Tecnica** | RSI, MACD, Bollinger Bands, Medie Mobili |
+| **Machine Learning** | Previsione prezzi, rilevamento trend, HMM |
+| **Analisi Sentiment** | Analisi news con NLP |
+| **Ricerca Semantica** | Concept engine con FAISS |
 
-## ⭐ Contributing
+### Avvio Rapido
 
-We welcome contributions! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) guide.
+```bash
+# Clona repository
+git clone https://github.com/ballales1984-wq/ai-trading-system.git
+cd ai-trading-system
 
-## 📝 License
+# Installa dipendenze
+pip install -r requirements.txt
+cd frontend && npm install
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+# Avvia tutti i servizi
+./start_all_services.bat
+```
 
-## 📧 Contact
+### Servizi
+
+| Servizio | URL | Porta |
+|----------|-----|-------|
+| Backend API | http://localhost:8000 | 8000 |
+| Documentazione API | http://localhost:8000/docs | 8000 |
+| Frontend React | http://localhost:5173 | 5173 |
+| Dashboard Python | http://localhost:8050 | 8050 |
+| Assistente AI | http://localhost:8501 | 8501 |
+
+### Stack Tecnologico
+
+#### Backend
+- **FastAPI** - Framework web asincrono moderno
+- **SQLAlchemy** - ORM per database
+- **Pydantic** - Validazione dati
+- **Redis** - Caching
+
+#### Frontend
+- **React 18** - Libreria UI
+- **TypeScript** - Tipo-sicurezza
+- **Vite** - Tool di build
+- **Tailwind CSS** - Stiling
+- **Recharts** - Grafici
+
+#### AI/ML
+- **sentence-transformers** - Embedding semantici
+- **FAISS** - Ricerca similarità vettoriale
+- **scikit-learn** - Algoritmi ML
+- **pandas** - Analisi dati
+
+### Variabili di Ambiente
+
+Crea file `.env`:
+
+```env
+# Database
+DATABASE_URL=postgresql://user:pass@localhost:5432/aitrading
+
+# Chiavi API
+BINANCE_API_KEY=tua_chiave
+BINANCE_SECRET=tuo_segreto
+
+# Sicurezza
+SECRET_KEY=tua_chiave_segreta
+ALGORITHM=HS256
+
+# Modalità Demo
+DEMO_MODE=true
+```
+
+### Licenza
+
+Licenza MIT - Vedi [LICENSE](LICENSE) per dettagli.
+
+---
+
+<div align="center">
+
+**🚀 Built with ❤️ for algorithmic trading**
+
+*Copyright © 2024-2026 AI Trading System*
+
+</div>
