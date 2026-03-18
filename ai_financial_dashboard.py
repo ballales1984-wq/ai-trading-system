@@ -599,7 +599,7 @@ def main():
                     'Current': '{:.2f}', 
                     'P&L (USDT)': '{:+,.2f}'
                 }),
-                use_container_width=True
+                width='stretch'
             )
             
             # Grafico P&L
