@@ -664,7 +664,7 @@ def run_ml_analysis(data):
             'recall': metrics.get('recall', 0),
             'f1': metrics.get('f1', 0),
             'confidence': latest_prob,
-            'signals': signals.to_dict()
+            'signals': signals.to_dict(orient='records') if hasattr(signals, 'to_dict') else signals
         }
     except Exception as e:
         print(f"ML Error: {e}")
@@ -797,7 +797,7 @@ def run_hedgefund_analysis(market_data, backtest_data):
         df = pd.DataFrame.from_dict(market_data)
         
         # Run regime detection
-        regime_detector = HiddenMarkovRegimeDetector(n_states=4)
+        regime_detector = HiddenMarkovRegimeDetector(n_regimes=4)
         regime_result = regime_detector.fit_predict(df)
         
         # Get current regime
