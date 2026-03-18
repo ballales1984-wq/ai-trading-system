@@ -398,7 +398,7 @@ def run_backtest_analysis(data):
         return {
             'metrics': result.metrics,
             'risk_metrics': risk_metrics,
-            'signals': signals.to_dict(orient='records') if hasattr(signals, 'to_dict') else signals,
+            'signals': _serialize_series(signals) if hasattr(signals, 'to_dict') else signals,
             'equity': _serialize_series(result.equity_curve) if hasattr(result.equity_curve, 'to_dict') else result.equity_curve,
             'returns': _serialize_series(result.strategy_returns) if hasattr(result.strategy_returns, 'to_dict') else result.strategy_returns
         }
@@ -722,7 +722,7 @@ def run_ml_analysis(data):
             'recall': metrics.get('recall', 0),
             'f1': metrics.get('f1', 0),
             'confidence': latest_prob,
-            'signals': signals.to_dict(orient='records') if hasattr(signals, 'to_dict') else signals
+            'signals': _serialize_series(signals) if hasattr(signals, 'to_dict') else signals
         }
     except Exception as e:
         print(f"ML Error: {e}")
@@ -866,22 +866,19 @@ def run_hedgefund_analysis(market_data, backtest_data):
         # Run regime detection with error handling
         regime_history = []
         try:
-            regime_detector = HiddenMarkovRegimeDetector(n_states=3)
-            regime_result = regime_detector.fit_predict(df['close'] if 'close' in df.columns else df.iloc[:, 0])
+            regime_detector = HiddenMarkovRegimeDetector(n_regimes=3)
+            # Fit and predict separately since there's no fit_predict method
+            price_series = df['close'] if 'close' in df.columns else df.iloc[:, 0]
+            X = price_series.values.reshape(-1, 1)
+            regime_detector.fit(X)
+            regime_pred = regime_detector.predict(X)
             
             # Get current regime
-            current_regime = 'unknown'
-            regime_confidence = 0.5
+            current_regime = str(regime_pred[-1]) if len(regime_pred) > 0 else 'unknown'
+            regime_confidence = 0.7  # Default confidence
             
-            # Try to get regime from result
-            if hasattr(regime_result, 'current_state'):
-                current_regime = str(regime_result.current_state) if regime_result.current_state else 'unknown'
-            if hasattr(regime_result, 'probabilities') and regime_result.probabilities is not None:
-                regime_confidence = float(max(regime_result.probabilities)) if len(regime_result.probabilities) > 0 else 0.5
-                
-            # Try to get regime history
-            if hasattr(regime_result, 'state_sequence'):
-                regime_history = [str(s) for s in regime_result.state_sequence]
+            # Get regime history
+            regime_history = [str(s) for s in regime_pred[-50:]] if len(regime_pred) > 0 else []
             
         except Exception as e:
             print(f"Regime detection error: {e}")
