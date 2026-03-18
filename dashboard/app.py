@@ -79,6 +79,27 @@ def generate_sample_data(days: int = 365) -> pd.DataFrame:
     return df
 
 
+def _serialize_series(s: pd.Series) -> dict:
+    """Convert pandas Series to JSON-serializable dict with index as keys."""
+    if s is None or len(s) == 0:
+        return {}
+    # Convert index to string for JSON serialization
+    return {
+        'index': [str(idx) for idx in s.index],
+        'values': s.values.tolist()
+    }
+
+
+def _deserialize_series(data: dict) -> pd.Series:
+    """Reconstruct pandas Series from serialized dict."""
+    if not data or not isinstance(data, dict):
+        return pd.Series()
+    if 'index' in data and 'values' in data:
+        return pd.Series(data['values'], index=data['index'])
+    # Fallback for old format
+    return pd.Series(data)
+
+
 # Layout
 app.layout = html.Div([
     # Header
@@ -378,7 +399,8 @@ def run_backtest_analysis(data):
             'metrics': result.metrics,
             'risk_metrics': risk_metrics,
             'signals': signals.to_dict(orient='records') if hasattr(signals, 'to_dict') else signals,
-            'equity': result.equity_curve.to_dict(orient='records') if hasattr(result.equity_curve, 'to_dict') else result.equity_curve
+            'equity': _serialize_series(result.equity_curve) if hasattr(result.equity_curve, 'to_dict') else result.equity_curve,
+            'returns': _serialize_series(result.strategy_returns) if hasattr(result.strategy_returns, 'to_dict') else result.strategy_returns
         }
     except Exception as e:
         print(f"Error running backtest: {e}")
@@ -496,7 +518,15 @@ def update_equity_curve(data):
         )
         return fig
     
-    equity = pd.Series(data['equity'])
+    equity = _deserialize_series(data['equity'])
+    if len(equity) == 0:
+        fig = go.Figure()
+        fig.update_layout(
+            title='Equity Curve',
+            template='plotly_dark',
+            height=300
+        )
+        return fig
     
     fig = go.Figure()
     fig.add_trace(
@@ -620,12 +650,39 @@ def update_signal_dist(data):
         )
         return fig
     
-    signals = pd.Series(data['signals'])
+    # Handle both old format (list) and new format
+    signals_data = data['signals']
+    if isinstance(signals_data, list) and len(signals_data) > 0:
+        # Old format: list of dicts
+        if isinstance(signals_data[0], dict):
+            # Try to extract signal values
+            signal_values = []
+            for s in signals_data:
+                if isinstance(s, dict):
+                    for val in s.values():
+                        signal_values.append(val)
+                else:
+                    signal_values.append(s)
+            signals = pd.Series(signal_values)
+        else:
+            signals = pd.Series(signals_data)
+    else:
+        signals = pd.Series()
+    
+    if len(signals) == 0:
+        fig = go.Figure()
+        fig.update_layout(
+            title='Signal Distribution',
+            template='plotly_dark',
+            height=250
+        )
+        return fig
+    
     signal_counts = signals.value_counts()
     
     fig = go.Figure(data=[
         go.Pie(
-            labels=signal_counts.index,
+            labels=signal_counts.index.astype(str),
             values=signal_counts.values,
             hole=0.4,
             marker=dict(colors=['#00ff88', '#ff4444', '#888888'])
@@ -757,7 +814,16 @@ def update_drawdown_chart(data):
         )
         return fig
     
-    equity = pd.Series(data['equity'])
+    equity = _deserialize_series(data['equity'])
+    if len(equity) == 0:
+        fig = go.Figure()
+        fig.update_layout(
+            title='Drawdown',
+            template='plotly_dark',
+            height=250
+        )
+        return fig
+        
     peak = equity.expanding().max()
     drawdown = (equity - peak) / peak * 100
     
@@ -792,18 +858,35 @@ def update_drawdown_chart(data):
 def run_hedgefund_analysis(market_data, backtest_data):
     """Run hedge fund analysis including regime detection and meta-labeling."""
     if not market_data:
-        return {'regime': 'unknown', 'confidence': 0, 'meta_acc': 0, 'cvar': 0, 'best_strategy': 'N/A'}
+        return {'regime': 'unknown', 'confidence': 0, 'meta_acc': 0, 'cvar': 0, 'best_strategy': 'N/A', 'regime_history': []}
     
     try:
         df = pd.DataFrame.from_dict(market_data)
         
-        # Run regime detection
-        regime_detector = HiddenMarkovRegimeDetector(n_regimes=4)
-        regime_result = regime_detector.fit_predict(df)
-        
-        # Get current regime
-        current_regime = regime_result.current_regime.regime.value if regime_result.current_regime else 'unknown'
-        regime_confidence = regime_result.current_regime.probability if regime_result.current_regime else 0
+        # Run regime detection with error handling
+        regime_history = []
+        try:
+            regime_detector = HiddenMarkovRegimeDetector(n_states=3)
+            regime_result = regime_detector.fit_predict(df['close'] if 'close' in df.columns else df.iloc[:, 0])
+            
+            # Get current regime
+            current_regime = 'unknown'
+            regime_confidence = 0.5
+            
+            # Try to get regime from result
+            if hasattr(regime_result, 'current_state'):
+                current_regime = str(regime_result.current_state) if regime_result.current_state else 'unknown'
+            if hasattr(regime_result, 'probabilities') and regime_result.probabilities is not None:
+                regime_confidence = float(max(regime_result.probabilities)) if len(regime_result.probabilities) > 0 else 0.5
+                
+            # Try to get regime history
+            if hasattr(regime_result, 'state_sequence'):
+                regime_history = [str(s) for s in regime_result.state_sequence]
+            
+        except Exception as e:
+            print(f"Regime detection error: {e}")
+            current_regime = 'unknown'
+            regime_confidence = 0.5
         
         # Run meta-labeling if we have backtest signals
         meta_acc = 0
@@ -825,25 +908,26 @@ def run_hedgefund_analysis(market_data, backtest_data):
         cvar = 0
         if backtest_data and 'equity' in backtest_data:
             try:
-                equity = pd.Series(backtest_data['equity'])
-                returns = equity.pct_change().dropna()
-                # CVaR 95%
-                var_threshold = returns.quantile(0.05)
-                cvar = returns[returns <= var_threshold].mean() * 100
-            except:
-                pass
+                equity = _deserialize_series(backtest_data['equity'])
+                if len(equity) > 0:
+                    returns = equity.pct_change().dropna()
+                    # CVaR 95%
+                    var_threshold = returns.quantile(0.05)
+                    cvar = returns[returns <= var_threshold].mean() * 100
+            except Exception as e:
+                print(f"CVaR calculation error: {e}")
         
         # Determine best strategy based on regime
         best_strategy = 'momentum'  # default
-        if current_regime == 'trending_up':
+        if current_regime in ['trending_up', 'bull', '0']:
             best_strategy = 'momentum'
-        elif current_regime == 'trending_down':
+        elif current_regime in ['trending_down', 'bear', '1']:
             best_strategy = 'mean_reversion'
-        elif current_regime == 'mean_reverting':
+        elif current_regime in ['mean_reverting', 'sideways', '2']:
             best_strategy = 'mean_reversion'
-        elif current_regime == 'high_volatility':
+        elif current_regime in ['high_volatility', 'volatile', '3']:
             best_strategy = 'risk_parity'
-        elif current_regime == 'low_volatility':
+        elif current_regime in ['low_volatility', 'calm', '4']:
             best_strategy = 'momentum'
         
         return {
@@ -852,11 +936,11 @@ def run_hedgefund_analysis(market_data, backtest_data):
             'meta_acc': meta_acc,
             'cvar': cvar,
             'best_strategy': best_strategy,
-            'regime_history': [r.regime.value for r in regime_result.regime_history[-50:]] if regime_result.regime_history else []
+            'regime_history': regime_history
         }
     except Exception as e:
         print(f"Hedge fund analysis error: {e}")
-        return {'regime': 'unknown', 'confidence': 0, 'meta_acc': 0, 'cvar': 0, 'best_strategy': 'N/A'}
+        return {'regime': 'unknown', 'confidence': 0, 'meta_acc': 0, 'cvar': 0, 'best_strategy': 'N/A', 'regime_history': []}
 
 
 # Hedge Fund Metrics Callback
