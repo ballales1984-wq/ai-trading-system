@@ -4,25 +4,31 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-03-18
+
 ### Added
 
-- GitHub Projects board for issue tracking
-- CONTRIBUTING.md for community contributions
-- CODE_OF_CONDUCT.md for community guidelines
-- 5-minute video tutorial (placeholder)
-- Quick start guide with Docker deployment
-- Discord community server
-
-### Changed
-
-- Improved README with screenshots and quick start guide
-- Enhanced documentation structure
-- Added deployment badges to README
+- **Concept Engine v2.0**: Knowledge layer finanziario con FAISS + sentence-transformers
+  - Ricerca semantica ibrida (semantic + keyword)
+  - 45+ concetti finanziari (trading, risk, market, DeFi, crypto, economics)
+  - Estrazione concetti da news e testi
+  - Sentiment analysis integrato
+- Nuovo modulo `concept_engine.py` per NLP finanziario
+- Librerie: faiss-cpu, sentence-transformers aggiunte ai requirements
 
 ### Fixed
 
-- Deployment configuration issues
-- Documentation inconsistencies
+- Dashboard Python (porta 8050): Corretto errore Series.to_dict() senza parametri
+- Dashboard Python: Corretto parametro HiddenMarkovRegimeDetector (n_states → n_regimes)
+- AI Assistant Streamlit: Sostituito use_container_width deprecato con width='stretch'
+- Embedding manager: Corretto bug model_name non definito
+
+### Changed
+
+- Aggiornato versione a 2.3.0
+- Migliorata compatibilità con pandas e hmmlearn
+
+---
 
 ## [2.2.0] - 2026-03-16
 
