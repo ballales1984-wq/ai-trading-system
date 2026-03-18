@@ -344,9 +344,17 @@ class DataProvider:
         
         data = self._fetch_json("/portfolio/summary")
         if data:
-            self._cache[cache_key] = data
+            # Map API field names to Dashboard field names
+            mapped_data = {
+                "total_equity": data.get("total_value", data.get("total_equity", 10000)),
+                "total_pnl": data.get("total_pnl", 0),
+                "total_pnl_percent": data.get("total_return_pct", 0),
+                "open_positions": data.get("num_positions", data.get("open_positions", 0)),
+                "win_rate": data.get("win_rate", 0)
+            }
+            self._cache[cache_key] = mapped_data
             self._cache_time[cache_key] = time.time()
-            return data
+            return mapped_data
         
         # Fallback to mock
         return {
@@ -1040,9 +1048,10 @@ class TradingDashboard:
                     resp = requests.get("http://localhost:8000/api/v1/portfolio/summary", timeout=2)
                     if resp.status_code == 200:
                         data = resp.json()
-                        equity = data.get('total_equity', 10000)
+                        # Map API field names to Dashboard field names
+                        equity = data.get('total_value', data.get('total_equity', 10000))
                         pnl = data.get('total_pnl', 0)
-                        positions = data.get('open_positions', 0)
+                        positions = data.get('num_positions', data.get('open_positions', 0))
                         winrate = data.get('win_rate', 0)
                     else:
                         raise Exception("API not available")
