@@ -97,7 +97,9 @@ export const marketApi = {
     interval: string = '1h',
     limit: number = 100
   ): Promise<CandleData[]> => {
-    const { data } = await api.get<CandleData[]>(`/market/candles/${symbol}`, {
+    // Convert symbol format from "BTC/USDT" to "BTCUSDT" if needed
+    const normalizedSymbol = symbol.replace('/', '');
+    const { data } = await api.get<CandleData[]>(`/market/candles/${normalizedSymbol}`, {
       params: { interval, limit },
     });
     return data;
