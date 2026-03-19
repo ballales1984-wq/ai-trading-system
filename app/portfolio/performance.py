@@ -232,16 +232,19 @@ class PortfolioPerformance:
         m.daily_returns_mean = float(np.mean(returns))
         m.daily_returns_std = float(np.std(returns))
 
-        # Risk-adjusted ratios
-        daily_rf = self.risk_free_rate / 252
-        excess = returns - daily_rf
+        # Risk-adjusted ratios - use raw returns, not excess (which causes negative Sharpe with zero returns)
+        if m.daily_returns_std > 0 and len(returns) > 0:
+            # Use raw returns for Sharpe (not excess) to handle zero-return periods correctly
+            mean_return = np.mean(returns)
+            m.sharpe_ratio = float(mean_return / m.daily_returns_std * np.sqrt(252)) if m.daily_returns_std > 0 else 0.0
 
-        if m.daily_returns_std > 0:
-            m.sharpe_ratio = float(np.mean(excess) / np.std(excess) * np.sqrt(252))
-
+        # Sortino: use downside deviation only for negative returns
         downside = returns[returns < 0]
         downside_std = float(np.std(downside)) if len(downside) > 0 else 1e-10
-        m.sortino_ratio = float(np.mean(excess) / downside_std * np.sqrt(252))
+        if downside_std > 0 and len(returns) > 0:
+            m.sortino_ratio = float(np.mean(returns) / downside_std * np.sqrt(252))
+        else:
+            m.sortino_ratio = 0.0
 
         # Drawdown
         equities = np.array([e[1] for e in self._equity_curve])
