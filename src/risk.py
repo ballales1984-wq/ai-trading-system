@@ -21,17 +21,17 @@ from typing import Dict, Optional, Tuple, Any
 
 def annualized_return(returns: pd.Series, periods_per_year: int = 252) -> float:
     """
-    Calculate annualized compounded return (CAGR-style).
+    Calculate annualized return - simple method more suitable for trading.
     """
     if len(returns) == 0:
         return 0.0
-
-    total_return = (1 + returns).prod() - 1
-    n_years = len(returns) / periods_per_year
-    if n_years <= 0:
+    
+    valid_returns = returns.dropna()
+    if len(valid_returns) == 0:
         return 0.0
-
-    return (1 + total_return) ** (1 / n_years) - 1
+    
+    mean_return = valid_returns.mean()
+    return mean_return * periods_per_year
 
 
 def sharpe_ratio(returns: pd.Series, risk_free: float = 0.0, periods_per_year: int = 252) -> float:
