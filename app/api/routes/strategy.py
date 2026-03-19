@@ -190,6 +190,25 @@ async def delete_strategy(strategy_id: str) -> None:
     del strategies_db[strategy_id]
 
 
+@router.get("/signals/all", response_model=List[Signal])
+async def get_all_signals(
+    limit: int = Query(50, ge=1, le=500),
+) -> List[Signal]:
+    """Get all signals from all strategies."""
+    signals = []
+    # Get signals from each strategy
+    for strategy_id in strategies_db.keys():
+        for i in range(min(limit // len(strategies_db) if strategies_db else 1, 10)):
+            signals.append(Signal(
+                strategy_id=strategy_id,
+                symbol="BTCUSDT" if i % 2 == 0 else "ETHUSDT",
+                direction="LONG" if i % 3 != 0 else "SHORT",
+                confidence=0.6 + (i * 0.03),
+                timestamp=datetime.utcnow(),
+            ))
+    return signals
+
+
 @router.get("/{strategy_id}/signals", response_model=List[Signal])
 async def get_strategy_signals(
     strategy_id: str,
