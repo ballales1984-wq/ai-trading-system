@@ -285,17 +285,18 @@ def generate_composite_signal(
     """
     if weights is None:
         weights = {
-            'rsi': 0.25,
-            'macd': 0.25,
+            'rsi': 0.20,
+            'macd': 0.20,
             'ema': 0.20,
             'bb': 0.15,
-            'sentiment': 0.15
+            'trend': 0.15,
+            'sentiment': 0.10
         }
     
     # Normalize weights
     total = sum(weights.values())
     weights = {k: v/total for k, v in weights.items()}
-    
+
     signals = pd.Series(0.0, index=df.index)
     
     # RSI component
@@ -330,14 +331,31 @@ def generate_composite_signal(
         bb_signal[df['bb_position'] > 0.9] = -1.0
         signals += weights.get('bb', 0) * bb_signal
     
+    # Trend component (simple moving average crossover with price)
+    if 'sma_20' in df.columns and 'sma_50' in df.columns:
+        trend_signal = pd.Series(0.0, index=df.index)
+        # Price above SMA20 = bullish
+        trend_signal[df['close'] > df['sma_20']] = 0.5
+        trend_signal[df['close'] < df['sma_20']] = -0.5
+        # SMA20 above SMA50 = strong bullish
+        trend_signal[df['sma_20'] > df['sma_50']] = 1.0
+        trend_signal[df['sma_20'] < df['sma_50']] = -1.0
+        signals += weights.get('trend', 0) * trend_signal
+    elif 'sma_20' in df.columns:
+        # Fallback to just price vs SMA20
+        trend_signal = pd.Series(0.0, index=df.index)
+        trend_signal[df['close'] > df['sma_20']] = 1.0
+        trend_signal[df['close'] < df['sma_20']] = -1.0
+        signals += weights.get('trend', 0) * trend_signal
+    
     # Sentiment component
     if sentiment is not None:
         signals += weights.get('sentiment', 0) * sentiment
     
-    # Convert to signals
+    # Convert to signals (lower thresholds for more signals)
     result = pd.Series('HOLD', index=df.index)
-    result[signals > 0.3] = 'BUY'
-    result[signals < -0.3] = 'SELL'
+    result[signals > 0.25] = 'BUY'
+    result[signals < -0.25] = 'SELL'
     
     return result
 
