@@ -103,20 +103,18 @@ class RiskOptimizer:
         returns: pd.Series,
         periods_per_year: int = 252
     ) -> float:
-        """Calculate annualized Sharpe ratio."""
+        """Calculate annualized Sharpe ratio using raw returns."""
         if len(returns) == 0 or returns.std() == 0:
             return 0.0
-        
-        excess_returns = returns.mean() - self.risk_free_rate / periods_per_year
-        sharpe = excess_returns / returns.std() * np.sqrt(periods_per_year)
-        return sharpe
+        # Use raw returns directly without subtracting risk-free rate
+        return returns.mean() / returns.std() * np.sqrt(periods_per_year)
     
     def calculate_sortino_ratio(
         self,
         returns: pd.Series,
         periods_per_year: int = 252
     ) -> float:
-        """Calculate Sortino ratio (downside deviation only)."""
+        """Calculate Sortino ratio (downside deviation only) using raw returns."""
         if len(returns) == 0:
             return 0.0
         
@@ -127,10 +125,8 @@ class RiskOptimizer:
         downside_std = downside_returns.std()
         if downside_std == 0:
             return 0.0
-        
-        excess_returns = returns.mean() - self.risk_free_rate / periods_per_year
-        sortino = excess_returns / downside_std * np.sqrt(periods_per_year)
-        return sortino
+        # Use raw returns directly without subtracting risk-free rate
+        return returns.mean() / downside_std * np.sqrt(periods_per_year)
     
     def calculate_max_drawdown(self, equity_curve: pd.Series) -> float:
         """Calculate maximum drawdown."""

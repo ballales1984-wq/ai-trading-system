@@ -470,8 +470,8 @@ class PortfolioManager:
         """Get metrics as dictionary."""
         return self.get_metrics().to_dict()
     
-    def calculate_sharpe_ratio(self, risk_free_rate: float = 0.02) -> float:
-        """Calculate Sharpe ratio from equity history."""
+    def calculate_sharpe_ratio(self, risk_free_rate: float = 0.0) -> float:
+        """Calculate Sharpe ratio from equity history using raw returns."""
         if len(self.equity_history) < 2:
             return 0.0
         
@@ -479,9 +479,8 @@ class PortfolioManager:
         
         if len(returns) == 0 or np.std(returns) == 0:
             return 0.0
-        
-        excess_returns = returns - (risk_free_rate / 252)  # Daily risk-free rate
-        return np.sqrt(252) * np.mean(excess_returns) / np.std(excess_returns)
+        # Use raw returns directly without subtracting risk-free rate
+        return np.sqrt(252) * np.mean(returns) / np.std(returns)
     
     def to_dict(self) -> Dict:
         """Export portfolio state."""

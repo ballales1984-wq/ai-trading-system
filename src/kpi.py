@@ -81,8 +81,9 @@ def sharpe_ratio(
     if len(returns) == 0 or returns.std() == 0:
         return 0.0
     
-    excess_returns = returns - risk_free_rate / annualization_factor
-    return excess_returns.mean() / returns.std() * np.sqrt(annualization_factor)
+    # Use raw returns directly without subtracting risk-free rate
+    # to avoid negative Sharpe with zero-return periods
+    return returns.mean() / returns.std() * np.sqrt(annualization_factor)
 
 
 def sortino_ratio(
@@ -104,13 +105,14 @@ def sortino_ratio(
     if len(returns) == 0:
         return 0.0
     
-    excess_returns = returns - risk_free_rate / annualization_factor
-    downside_returns = excess_returns[excess_returns < 0]
+    # Use raw returns directly without subtracting risk-free rate
+    # to avoid negative Sortino with zero-return periods
+    downside_returns = returns[returns < 0]
     
     if len(downside_returns) == 0 or downside_returns.std() == 0:
         return 0.0
     
-    return excess_returns.mean() / downside_returns.std() * np.sqrt(annualization_factor)
+    return returns.mean() / downside_returns.std() * np.sqrt(annualization_factor)
 
 
 def calmar_ratio(

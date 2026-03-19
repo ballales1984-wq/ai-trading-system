@@ -1,12 +1,16 @@
 import pandas as pd
 import numpy as np
 
-def calculate_risk_adjusted_returns(returns, risk_free_rate=0.02):
+def calculate_risk_adjusted_returns(returns, risk_free_rate=0.0):
     """
     Calculate risk-adjusted returns (Sharpe ratio).
+    Uses raw returns without subtracting risk-free rate to avoid
+    negative Sharpe with zero-return periods.
     """
-    excess_returns = returns - risk_free_rate / 252
-    return excess_returns.mean() / excess_returns.std() * np.sqrt(252) if excess_returns.std() > 0 else 0
+    if len(returns) == 0 or returns.std() == 0:
+        return 0.0
+    # Use raw returns directly, not excess_returns
+    return returns.mean() / returns.std() * np.sqrt(252)
 
 def generate_performance_report(returns, equity_curve):
     """

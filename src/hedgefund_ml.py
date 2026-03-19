@@ -1432,11 +1432,11 @@ def calculate_sharpe_ratio(
     risk_free_rate: float = 0.0,
     periods_per_year: int = 252
 ) -> float:
-    """Calculate Sharpe ratio"""
-    excess_returns = returns - risk_free_rate / periods_per_year
-    if np.std(excess_returns) == 0:
+    """Calculate Sharpe ratio using raw returns (not excess returns)"""
+    if len(returns) == 0 or np.std(returns) == 0:
         return 0.0
-    return np.mean(excess_returns) / np.std(excess_returns) * np.sqrt(periods_per_year)
+    # Use raw returns directly without subtracting risk-free rate
+    return np.mean(returns) / np.std(returns) * np.sqrt(periods_per_year)
 
 
 def calculate_sortino_ratio(
@@ -1444,14 +1444,16 @@ def calculate_sortino_ratio(
     risk_free_rate: float = 0.0,
     periods_per_year: int = 252
 ) -> float:
-    """Calculate Sortino ratio (downside deviation)"""
-    excess_returns = returns - risk_free_rate / periods_per_year
-    downside_returns = excess_returns[excess_returns < 0]
+    """Calculate Sortino ratio using raw returns (not excess returns)"""
+    if len(returns) == 0:
+        return 0.0
+    # Use raw returns directly without subtracting risk-free rate
+    downside_returns = returns[returns < 0]
     
     if len(downside_returns) == 0 or np.std(downside_returns) == 0:
         return 0.0
         
-    return np.mean(excess_returns) / np.std(downside_returns) * np.sqrt(periods_per_year)
+    return np.mean(returns) / np.std(downside_returns) * np.sqrt(periods_per_year)
 
 
 def calculate_max_drawdown(equity: np.ndarray) -> Tuple[float, int, int]:
