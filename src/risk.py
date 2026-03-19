@@ -59,12 +59,14 @@ def sharpe_ratio(returns: pd.Series, risk_free: float = 0.0, periods_per_year: i
     if np.isclose(std_dev, 0.0, atol=1e-10):
         return 0.0
     
+    # Use simple annualized return (mean * periods) for consistency with trading returns
     ann_return = annualized_return(returns, periods_per_year)
     ann_vol = returns.std() * np.sqrt(periods_per_year)
     if np.isclose(ann_vol, 0.0, atol=1e-12):
         return 0.0
 
-    return (ann_return - risk_free) / ann_vol
+    # Don't subtract risk_free - it causes negative Sharpe with zero-return periods
+    return ann_return / ann_vol
 
 
 def sortino_ratio(returns: pd.Series, risk_free: float = 0.0, periods_per_year: int = 252) -> float:
@@ -87,8 +89,8 @@ def sortino_ratio(returns: pd.Series, risk_free: float = 0.0, periods_per_year: 
     if len(returns) == 0:
         return 0.0
     
-    excess_returns = returns - risk_free / periods_per_year
-    downside_returns = excess_returns[excess_returns < 0]
+    # Use raw returns, not excess returns (which causes negative values with zero periods)
+    downside_returns = returns[returns < 0]
     
     if len(downside_returns) == 0 or downside_returns.std() == 0:
         return 0.0
@@ -98,7 +100,8 @@ def sortino_ratio(returns: pd.Series, risk_free: float = 0.0, periods_per_year: 
     if np.isclose(downside_std, 0.0, atol=1e-12):
         return 0.0
 
-    return (ann_return - risk_free) / downside_std
+    # Don't subtract risk_free - it causes negative Sortino with zero-return periods
+    return ann_return / downside_std
 
 
 def max_drawdown(equity_curve: pd.Series) -> Tuple[float, Any, Any]:
