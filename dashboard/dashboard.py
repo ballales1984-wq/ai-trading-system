@@ -475,6 +475,38 @@ class DataProvider:
                 returns_dict[asset] = pd.Series(np.random.randn(100) * 0.02)
         
         return pd.DataFrame(returns_dict)
+    
+    def get_signal_history(self) -> List[Dict]:
+        """Get signal history from API"""
+        try:
+            import requests
+            response = requests.get(
+                f"{self._api_base}/strategy/signals/all",
+                timeout=5
+            )
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    return data
+                elif isinstance(data, dict) and 'signals' in data:
+                    return data['signals']
+            return []
+        except Exception as e:
+            # Return sample data if API is not available
+            return self._get_sample_signals()
+    
+    def _get_sample_signals(self) -> List[Dict]:
+        """Generate sample signal data for visualization"""
+        import random
+        actions = ['BUY', 'SELL', 'HOLD']
+        signals = []
+        for i in range(20):
+            signals.append({
+                'action': random.choice(actions),
+                'symbol': random.choice(['BTCUSDT', 'ETHUSDT', 'SOLUSDT']),
+                'timestamp': f"2024-01-{(i%28)+1:02d}"
+            })
+        return signals
 
 
 # ==================== MAIN DASHBOARD ====================
@@ -762,6 +794,15 @@ class TradingDashboard:
                     html.Div([
                         html.H3("🔗 Correlation Matrix", style={'color': theme['text']}),
                         dcc.Graph(id='correlation-chart', style={'height': '350px'}),
+                    ], style={'background': theme['card'], 'padding': '20px',
+                             'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
+                ], style={'display': 'flex', 'gap': '20px', 'margin-bottom': '20px'}),
+                
+                # Row 2b: Signal Distribution
+                html.Div([
+                    html.Div([
+                        html.H3("📈 Signal Distribution", style={'color': theme['text']}),
+                        dcc.Graph(id='signal-dist-chart', style={'height': '350px'}),
                     ], style={'background': theme['card'], 'padding': '20px',
                              'border-radius': '8px', 'border': f"1px solid {theme['border']}", 'flex': '1'}),
                 ], style={'display': 'flex', 'gap': '20px', 'margin-bottom': '20px'}),
@@ -1482,6 +1523,64 @@ class TradingDashboard:
                 return fig
             except Exception as e:
                 logger.error(f"Correlation error: {e}")
+                return go.Figure()
+        
+        # Signal Distribution
+        @self.app.callback(
+            Output('signal-dist-chart', 'figure'),
+            [Input('refresh', 'n_intervals')]
+        )
+        def update_signal_dist(n):
+            try:
+                # Get signal history from data provider
+                signals = self.data_provider.get_signal_history()
+                
+                if signals is None or len(signals) == 0:
+                    fig = go.Figure()
+                    fig.update_layout(
+                        title='Signal Distribution',
+                        template='plotly_dark',
+                        height=350
+                    )
+                    return fig
+                
+                # Count signals by type
+                signal_counts = {}
+                for sig in signals:
+                    if isinstance(sig, dict):
+                        sig_type = sig.get('action', sig.get('signal', 'UNKNOWN'))
+                    else:
+                        sig_type = str(sig)
+                    signal_counts[sig_type] = signal_counts.get(sig_type, 0) + 1
+                
+                if not signal_counts:
+                    fig = go.Figure()
+                    fig.update_layout(
+                        title='Signal Distribution',
+                        template='plotly_dark',
+                        height=350
+                    )
+                    return fig
+                
+                # Create pie chart
+                fig = go.Figure(data=[
+                    go.Pie(
+                        labels=list(signal_counts.keys()),
+                        values=list(signal_counts.values()),
+                        hole=0.4,
+                        marker=dict(colors=['#00ff88', '#ff4444', '#ffaa00', '#888888'])
+                    )
+                ])
+                fig.update_layout(
+                    title='Signal Distribution',
+                    template='plotly_dark',
+                    height=350,
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)'
+                )
+                return fig
+            except Exception as e:
+                logger.error(f"Signal distribution error: {e}")
                 return go.Figure()
         
         # News Feed
