@@ -21,6 +21,9 @@ import cProfile
 import pstats
 import io
 import functools
+
+# profile is used as a decorator class
+profile = cProfile.Profile
 from datetime import datetime, timedelta
 from typing import Callable, Dict, List, Optional, Any
 from enum import Enum

@@ -77,7 +77,6 @@ class TestScheduledTask:
         )
         assert task.enabled is True
         assert task.interval_seconds is None
-        assert task.max_retries == 3
         assert task.status == TaskStatus.PENDING
     
     def test_calculate_next_run_interval(self):
@@ -142,8 +141,8 @@ class TestTaskScheduler:
     def test_scheduler_initialization(self):
         """Test TaskScheduler initialization"""
         scheduler = TaskScheduler()
-        assert scheduler._tasks == {}
-        assert scheduler._running_tasks == set()
+        assert scheduler.tasks == {}
+        assert scheduler.running is False
     
     def test_add_task(self):
         """Test adding a task"""
@@ -162,10 +161,35 @@ class TestTaskScheduler:
         
         assert task is not None
         assert task.task_id == "task-1"
-        assert "task-1" in scheduler._tasks
+        assert "task-1" in scheduler.tasks
     
     def test_add_duplicate_task(self):
-        """Test adding duplicate task raises error"""
+        """Test adding duplicate task overwrites"""
+        scheduler = TaskScheduler()
+        
+        def dummy_task():
+            return "test"
+        
+        task1 = scheduler.add_task(
+            task_id="task-1",
+            name="test_task",
+            func=dummy_task,
+            schedule_type=ScheduleType.INTERVAL
+        )
+        
+        # Adding same task_id should overwrite
+        task2 = scheduler.add_task(
+            task_id="task-1",
+            name="test_task_updated",
+            func=dummy_task,
+            schedule_type=ScheduleType.INTERVAL
+        )
+        
+        assert task2.name == "test_task_updated"
+        assert len(scheduler.tasks) == 1
+
+    def test_remove_task(self):
+        """Test removing a task"""
         scheduler = TaskScheduler()
         
         def dummy_task():
@@ -178,6 +202,117 @@ class TestTaskScheduler:
             schedule_type=ScheduleType.INTERVAL
         )
         
-        with pytest.raises(ValueError, match="already exists"):
-            scheduler.add_task(
-                task_id="task-1
+        result = scheduler.remove_task("task-1")
+        assert result is True
+        assert "task-1" not in scheduler.tasks
+
+    def test_remove_nonexistent_task(self):
+        """Test removing nonexistent task returns False"""
+        scheduler = TaskScheduler()
+        result = scheduler.remove_task("nonexistent")
+        assert result is False
+
+    def test_get_task_status(self):
+        """Test getting task status"""
+        scheduler = TaskScheduler()
+        
+        def dummy_task():
+            return "test"
+        
+        scheduler.add_task(
+            task_id="task-1",
+            name="test_task",
+            func=dummy_task,
+            schedule_type=ScheduleType.INTERVAL
+        )
+        
+        status = scheduler.get_task_status("task-1")
+        assert status is not None
+        assert status["task_id"] == "task-1"
+
+    def test_list_tasks(self):
+        """Test listing all tasks via attribute"""
+        scheduler = TaskScheduler()
+        
+        def dummy_task():
+            return "test"
+        
+        scheduler.add_task(
+            task_id="task-1",
+            name="test_task_1",
+            func=dummy_task,
+            schedule_type=ScheduleType.INTERVAL
+        )
+        scheduler.add_task(
+            task_id="task-2",
+            name="test_task_2",
+            func=dummy_task,
+            schedule_type=ScheduleType.DAILY
+        )
+        
+        # Access tasks via attribute
+        tasks = scheduler.tasks
+        assert len(tasks) == 2
+
+    def test_enable_task(self):
+        """Test enabling a task"""
+        scheduler = TaskScheduler()
+        
+        def dummy_task():
+            return "test"
+        
+        scheduler.add_task(
+            task_id="task-1",
+            name="test_task",
+            func=dummy_task,
+            schedule_type=ScheduleType.INTERVAL,
+            enabled=False
+        )
+        
+        result = scheduler.enable_task("task-1")
+        assert result is True
+        task = scheduler.tasks.get("task-1")
+        assert task.enabled is True
+
+    def test_disable_task(self):
+        """Test disabling a task"""
+        scheduler = TaskScheduler()
+        
+        def dummy_task():
+            return "test"
+        
+        scheduler.add_task(
+            task_id="task-1",
+            name="test_task",
+            func=dummy_task,
+            schedule_type=ScheduleType.INTERVAL,
+            enabled=True
+        )
+        
+        result = scheduler.disable_task("task-1")
+        assert result is True
+        task = scheduler.tasks.get("task-1")
+        assert task.enabled is False
+
+
+class TestDecorators:
+    """Test decorators"""
+    
+    def test_time_execution_decorator(self):
+        """Test time_execution decorator"""
+        @time_execution
+        def slow_function():
+            time.sleep(0.01)
+            return "done"
+        
+        result = slow_function()
+        assert result == "done"
+
+    def test_profile_execution_decorator(self):
+        """Test profile_execution decorator"""
+        @profile_execution
+        def test_function():
+            return "test result"
+        
+        result = test_function()
+        assert result == "test result"

@@ -42,6 +42,13 @@ QuantLib==1.41
 numba==0.61.2
 llvmlite==0.44.0
 
+# Portfolio Optimization & Risk Management
+riskfolio-lib==4.0.0
+empyrical-reloaded==0.5.11
+
+# Time Series Analysis
+statsmodels==0.14.1
+
 # ============================================
 # DATA APIS - Exchange Connectors
 # ============================================
