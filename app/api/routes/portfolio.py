@@ -249,6 +249,71 @@ def _build_performance_metrics_from_mock() -> PerformanceMetrics:
     )
 
 
+def _build_performance_metrics_from_portfolio_data() -> PerformanceMetrics:
+    """
+    Build performance metrics from actual portfolio_data (in-memory positions).
+    This ensures consistency between /summary and /performance endpoints.
+    """
+    # Get the summary which has the correct calculations
+    summary = _compute_simulated_portfolio_summary(use_realtime_prices=True)
+    
+    # Extract values from summary
+    total_value = summary.total_value
+    total_return = summary.total_pnl
+    total_return_pct = summary.total_return_pct
+    
+    # For drawdown, we need to calculate it from positions
+    # Since we don't have historical data, we'll estimate from unrealized PnL
+    positions = portfolio_data.get("positions", [])
+    
+    # Calculate max drawdown from positions (estimate based on current unrealized PnL)
+    total_unrealized_pnl = sum(
+        float(p.get("unrealized_pnl", 0)) for p in positions
+    )
+    max_drawdown_pct = (total_unrealized_pnl / total_value * 100) if total_value > 0 else 0.0
+    max_drawdown = total_unrealized_pnl
+    
+    # Calculate win rate from positions
+    # Count positions with positive PnL vs negative PnL
+    winning_positions = len([p for p in positions if float(p.get("unrealized_pnl", 0)) > 0])
+    losing_positions = len([p for p in positions if float(p.get("unrealized_pnl", 0)) < 0])
+    total_positions = winning_positions + losing_positions
+    win_rate = winning_positions / total_positions if total_positions > 0 else 0.0
+    
+    # Calculate profit factor
+    total_wins = sum(float(p.get("unrealized_pnl", 0)) for p in positions if float(p.get("unrealized_pnl", 0)) > 0)
+    total_losses = abs(sum(float(p.get("unrealized_pnl", 0)) for p in positions if float(p.get("unrealized_pnl", 0)) < 0))
+    profit_factor = total_wins / total_losses if total_losses > 0 else 0.0
+    
+    # Calculate average win/loss
+    winning_pnls = [float(p.get("unrealized_pnl", 0)) for p in positions if float(p.get("unrealized_pnl", 0)) > 0]
+    losing_pnls = [float(p.get("unrealized_pnl", 0)) for p in positions if float(p.get("unrealized_pnl", 0)) < 0]
+    avg_win = sum(winning_pnls) / len(winning_pnls) if winning_pnls else 0.0
+    avg_loss = sum(losing_pnls) / len(losing_pnls) if losing_pnls else 0.0
+    
+    # Sharpe and Sortino - use default values since we don't have historical data
+    sharpe_ratio = 0.0
+    sortino_ratio = 0.0
+    calmar_ratio = 0.0
+    
+    return PerformanceMetrics(
+        total_return=total_return,
+        total_return_pct=total_return_pct,
+        sharpe_ratio=sharpe_ratio,
+        sortino_ratio=sortino_ratio,
+        max_drawdown=max_drawdown,
+        max_drawdown_pct=max_drawdown_pct,
+        calmar_ratio=calmar_ratio,
+        win_rate=win_rate,
+        profit_factor=profit_factor,
+        avg_win=avg_win,
+        avg_loss=avg_loss,
+        num_trades=len(positions),
+        num_winning_trades=winning_positions,
+        num_losing_trades=losing_positions,
+    )
+
+
 def _compute_simulated_portfolio_summary(use_realtime_prices: bool = True) -> PortfolioSummary:
     """
     Build simulated portfolio summary from in-memory paper portfolio.
@@ -862,7 +927,11 @@ async def get_performance_metrics() -> PerformanceMetrics:
     
     Returns Sharpe ratio, max drawdown, win rate, etc.
     """
-    # Use mock data if demo mode is enabled
+    # Use real data from portfolio_data if available (even in demo mode)
+    if get_demo_mode() and len(portfolio_data.get("positions", [])) > 0:
+        return _build_performance_metrics_from_portfolio_data()
+    
+    # Use mock data if demo mode is enabled and no positions
     if get_demo_mode():
         return _build_performance_metrics_from_mock()
     
