@@ -21,6 +21,8 @@ import numpy as np
 from datetime import datetime, timedelta
 import sys
 import os
+import requests
+import json
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -54,6 +56,128 @@ app = dash.Dash(
 # Default configuration
 DEFAULT_SYMBOL = "BTC/USDT"
 DEFAULT_TIMEFRAME = "1d"
+
+# API Configuration
+API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
+
+
+def fetch_market_data_from_api(symbol: str = "BTCUSDT", interval: str = "1h", limit: int = 365) -> pd.DataFrame:
+    """Fetch real market data from the trading API."""
+    try:
+        # Map symbol format BTC/USDT -> BTCUSDT
+        api_symbol = symbol.replace("/", "")
+        
+        # Fetch candles from API
+        url = f"{API_BASE_URL}/api/v1/market/candles/{api_symbol}"
+        params = {"interval": interval, "limit": limit}
+        
+        response = requests.get(url, params=params, timeout=10)
+        
+        if response.status_code == 200:
+            # The API returns a list directly, not wrapped in 'candles' key
+            candles = response.json()
+            
+            # Debug: Print response type and first item
+            print(f"API response type: {type(candles)}, length: {len(candles) if isinstance(candles, list) else 'N/A'}")
+            if candles and isinstance(candles, list) and len(candles) > 0:
+                print(f"First item keys: {candles[0].keys()}")
+            
+            if candles and isinstance(candles, list):
+                # Convert to DataFrame
+                df = pd.DataFrame(candles)
+                
+                # Ensure proper column names - API uses 'timestamp' not 'open_time'
+                if 'timestamp' in df.columns:
+                    df['date'] = pd.to_datetime(df['timestamp'])
+                    df = df.drop('timestamp', axis=1)
+                
+                # Ensure required columns exist
+                required_cols = ['open', 'high', 'low', 'close', 'volume']
+                if all(col in df.columns for col in required_cols):
+                    df.set_index('date', inplace=True)
+                    print(f"Successfully fetched {len(df)} candles from API")
+                    return df
+                else:
+                    print(f"Missing required columns. Have: {df.columns.tolist()}")
+        
+        print(f"API returned status {response.status_code}, using sample data")
+        return None
+    except Exception as e:
+        print(f"Error fetching from API: {e}")
+        return None
+
+
+def fetch_portfolio_metrics_from_api() -> dict:
+    """Fetch real portfolio metrics from the trading API."""
+    try:
+        # Fetch portfolio summary
+        url = f"{API_BASE_URL}/api/v1/portfolio/summary"
+        response = requests.get(url, timeout=10)
+        
+        if response.status_code == 200:
+            return response.json()
+        return {}
+    except Exception as e:
+        print(f"Error fetching portfolio from API: {e}")
+        return {}
+
+
+def fetch_performance_from_api() -> dict:
+    """Fetch real performance metrics from the trading API."""
+    try:
+        # Fetch performance data
+        url = f"{API_BASE_URL}/api/v1/portfolio/performance"
+        response = requests.get(url, timeout=10)
+        
+        if response.status_code == 200:
+            return response.json()
+        return {}
+    except Exception as e:
+        print(f"Error fetching performance from API: {e}")
+        return {}
+
+
+# Cache for portfolio metrics to avoid too many API calls
+_portfolio_cache = {"data": None, "timestamp": 0}
+CACHE_DURATION = 30  # seconds
+
+
+def get_live_portfolio_metrics():
+    """Get live portfolio metrics from API with caching."""
+    import time
+    current_time = time.time()
+    
+    # Return cached data if still valid
+    if (_portfolio_cache["data"] is not None and 
+        current_time - _portfolio_cache["timestamp"] < CACHE_DURATION):
+        return _portfolio_cache["data"]
+    
+    try:
+        # Fetch portfolio summary
+        summary_url = f"{API_BASE_URL}/api/v1/portfolio/summary"
+        summary_response = requests.get(summary_url, timeout=10)
+        
+        # Fetch performance data
+        perf_url = f"{API_BASE_URL}/api/v1/portfolio/performance"
+        perf_response = requests.get(perf_url, timeout=10)
+        
+        # Fetch positions
+        positions_url = f"{API_BASE_URL}/api/v1/portfolio/positions"
+        positions_response = requests.get(positions_url, timeout=10)
+        
+        data = {
+            "summary": summary_response.json() if summary_response.status_code == 200 else {},
+            "performance": perf_response.json() if perf_response.status_code == 200 else {},
+            "positions": positions_response.json() if positions_response.status_code == 200 else []
+        }
+        
+        _portfolio_cache["data"] = data
+        _portfolio_cache["timestamp"] = current_time
+        
+        return data
+    except Exception as e:
+        print(f"Error fetching portfolio data: {e}")
+        return {"summary": {}, "performance": {}, "positions": []}
 
 # Sample data generator for demo
 def generate_sample_data(days: int = 365) -> pd.DataFrame:
@@ -354,10 +478,25 @@ app.layout = html.Div([
      Input('auto-refresh', 'n_intervals')]
 )
 def load_market_data(symbol, timeframe, n_clicks, n_intervals):
-    """Load market data (using sample data for demo)."""
+    """Load market data from API or use sample data as fallback."""
     try:
-        # In production, use: loader = DataLoader(); df = loader.fetch_ohlcv(symbol, timeframe)
-        df = generate_sample_data(365)
+        # Map timeframe to API format
+        timeframe_map = {
+            "1 Day": "1d",
+            "4 Hour": "4h",
+            "1 Hour": "1h",
+            "15 Min": "15m",
+            "5 Min": "5m"
+        }
+        api_interval = timeframe_map.get(timeframe, "1d")
+        
+        # Try to fetch from API first
+        df = fetch_market_data_from_api(symbol, api_interval, 365)
+        
+        # If API fails, use sample data
+        if df is None or len(df) == 0:
+            print("Using sample data (API unavailable)")
+            df = generate_sample_data(365)
         
         # Calculate indicators
         df_with_indicators = calculate_all_indicators(df)
@@ -415,10 +554,59 @@ def run_backtest_analysis(data):
      Output('max-drawdown', 'children'),
      Output('win-rate', 'children'),
      Output('current-signal', 'children')],
-    Input('backtest-results', 'data')
+    [Input('backtest-results', 'data'),
+     Input('auto-refresh', 'n_intervals')]
 )
-def update_metrics(results):
-    """Update metric displays."""
+def update_metrics(results, n_intervals):
+    """Update metric displays with live portfolio data."""
+    # Try to get live portfolio data from API
+    try:
+        portfolio_data = get_live_portfolio_metrics()
+        summary = portfolio_data.get('summary', {})
+        performance = portfolio_data.get('performance', {})
+        
+        if summary:
+            # Use live portfolio data
+            total_return = summary.get('total_return_pct', 0)
+            
+            # Get sharpe ratio from performance data
+            sharpe = performance.get('sharpe_ratio', 0)
+            if sharpe is None:
+                sharpe = 0
+            
+            # Get sortino ratio from performance data
+            sortino = performance.get('sortino_ratio', 0)
+            if sortino is None:
+                sortino = 0
+            
+            # Get max drawdown from performance data (use _pct version)
+            max_dd = performance.get('max_drawdown_pct', 0)
+            if max_dd is None:
+                max_dd = 0
+            
+            # Win rate is already in decimal format (0.57 = 57%), convert to percentage
+            win_rate = performance.get('win_rate', 0) * 100 if performance.get('win_rate', 0) else 0
+            
+            # Determine signal based on daily return
+            daily_return = summary.get('daily_return_pct', 0)
+            if daily_return > 0.5:
+                current_signal = 'BUY'
+            elif daily_return < -0.5:
+                current_signal = 'SELL'
+            else:
+                current_signal = 'HOLD'
+            
+            return (
+                f"{total_return:+.2f}%",
+                f"{sharpe:.2f}",
+                f"{max_dd:.2f}%",
+                f"{win_rate:.2f}%",
+                current_signal
+            )
+    except Exception as e:
+        print(f"Error fetching live metrics: {e}")
+    
+    # Fallback to backtest results
     if not results:
         return "0.00%", "0.00", "0.00%", "0.00%", "HOLD"
     
@@ -648,11 +836,11 @@ def update_macd_chart(data):
 
 @callback(
     Output('signal-dist', 'figure'),
-    Input('backtest-results', 'data')
+    Input('hedgefund-results', 'data')
 )
 def update_signal_dist(data):
     """Update signal distribution chart."""
-    if not data or 'signals' not in data:
+    if not data:
         fig = go.Figure()
         fig.update_layout(
             title='Signal Distribution',
@@ -661,24 +849,16 @@ def update_signal_dist(data):
         )
         return fig
     
-    # Handle both old format (list) and new format
-    signals_data = data['signals']
-    if isinstance(signals_data, list) and len(signals_data) > 0:
-        # Old format: list of dicts
-        if isinstance(signals_data[0], dict):
-            # Try to extract signal values
-            signal_values = []
-            for s in signals_data:
-                if isinstance(s, dict):
-                    for val in s.values():
-                        signal_values.append(val)
-                else:
-                    signal_values.append(s)
-            signals = pd.Series(signal_values)
-        else:
-            signals = pd.Series(signals_data)
+    # Get signal data from hedgefund results
+    current_signal = data.get('current_signal', 'HOLD')
+    signal_history = data.get('signal_history', [])
+    
+    # Build signal distribution from history
+    if signal_history:
+        signals = pd.Series(signal_history)
     else:
-        signals = pd.Series()
+        # Use current signal if no history
+        signals = pd.Series([current_signal])
     
     if len(signals) == 0:
         fig = go.Figure()
@@ -689,14 +869,27 @@ def update_signal_dist(data):
         )
         return fig
     
+    # Count signals
     signal_counts = signals.value_counts()
+    
+    # Define colors for signals
+    signal_colors = {
+        'BUY': '#00ff88',
+        'SELL': '#ff4444',
+        'HOLD': '#ffaa00',
+        'strong_buy': '#00cc66',
+        'strong_sell': '#cc0000',
+        'neutral': '#888888'
+    }
+    
+    colors = [signal_colors.get(str(s), '#00aaff') for s in signal_counts.index]
     
     fig = go.Figure(data=[
         go.Pie(
             labels=signal_counts.index.astype(str),
             values=signal_counts.values,
             hole=0.4,
-            marker=dict(colors=['#00ff88', '#ff4444', '#888888'])
+            marker=dict(colors=colors)
         )
     ])
     
@@ -789,26 +982,54 @@ def run_fund_simulation(data):
      Output('fund-net-return', 'children')],
     [Input('ml-results', 'data'),
      Input('backtest-results', 'data'),
-     Input('fund-results', 'data')]
+     Input('fund-results', 'data'),
+     Input('auto-refresh', 'n_intervals')]
 )
-def update_ml_fund_metrics(ml_data, backtest_data, fund_data):
-    """Update ML and Fund metrics."""
+def update_ml_fund_metrics(ml_data, backtest_data, fund_data, n_intervals):
+    """Update ML and Fund metrics from live API."""
     # ML metrics
     ml_acc = f"{ml_data.get('accuracy', 0)*100:.1f}%" if ml_data else "N/A"
     ml_conf = f"{ml_data.get('confidence', 0.5)*100:.1f}%" if ml_data else "N/A"
     
-    # Risk metrics from backtest
-    sortino = "N/A"
-    var_val = "N/A"
-    if backtest_data and 'risk_metrics' in backtest_data:
-        risk = backtest_data['risk_metrics']
-        sortino = f"{risk.get('sortino_ratio', 0):.2f}"
-        var_val = f"{risk.get('var_95', 0)*100:.2f}%"
+    # Try to get risk metrics from live portfolio API
+    try:
+        portfolio_data = get_live_portfolio_metrics()
+        performance = portfolio_data.get('performance', {})
+        
+        if performance:
+            # Get sortino from live API
+            sortino = performance.get('sortino_ratio', 0)
+            if sortino is not None:
+                sortino = f"{sortino:.2f}"
+            else:
+                sortino = "N/A"
+            
+            # Get VaR from live API
+            var_val = performance.get('var_95', 0)
+            if var_val is not None:
+                var_val = f"{var_val*100:.2f}%"  # Convert to percentage
+            else:
+                var_val = "N/A"
+        else:
+            sortino = "N/A"
+            var_val = "N/A"
+    except Exception as e:
+        print(f"Error fetching risk metrics: {e}")
+        sortino = "N/A"
+        var_val = "N/A"
     
-    # Fund metrics
+    # Fund metrics - try live API first
     fund_net = "N/A"
-    if fund_data:
-        fund_net = f"{fund_data.get('net_return', 0):+.2f}%"
+    try:
+        portfolio_data = get_live_portfolio_metrics()
+        summary = portfolio_data.get('summary', {})
+        if summary:
+            fund_net = f"{summary.get('total_return_pct', 0):+.2f}%"
+        elif fund_data:
+            fund_net = f"{fund_data.get('net_return', 0):+.2f}%"
+    except:
+        if fund_data:
+            fund_net = f"{fund_data.get('net_return', 0):+.2f}%"
     
     return ml_acc, ml_conf, sortino, var_val, fund_net
 
