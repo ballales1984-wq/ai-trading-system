@@ -32,7 +32,7 @@ Usage:
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 
@@ -64,7 +64,7 @@ class Position:
         if self.side not in ["long", "short"]:
             raise ValueError(f"Invalid side: {self.side}")
         if self.entry_time is None:
-            self.entry_time = datetime.utcnow()
+            self.entry_time = datetime.now(timezone.utc)
     
     @property
     def value(self) -> float:
@@ -151,7 +151,7 @@ class RiskBook:
             pos: Position to add/update
         """
         self.positions[pos.symbol] = pos
-        self.last_update = datetime.utcnow()
+        self.last_update = datetime.now(timezone.utc)
 
     def sync_positions(self, positions: List[Position]) -> None:
         """
@@ -163,7 +163,7 @@ class RiskBook:
         """
         new_positions = {pos.symbol: pos for pos in positions}
         self.positions = new_positions
-        self.last_update = datetime.utcnow()
+        self.last_update = datetime.now(timezone.utc)
     
     def remove_position(self, symbol: str) -> None:
         """
@@ -173,7 +173,7 @@ class RiskBook:
             symbol: Symbol to remove
         """
         self.positions.pop(symbol, None)
-        self.last_update = datetime.utcnow()
+        self.last_update = datetime.now(timezone.utc)
     
     def get_position(self, symbol: str) -> Optional[Position]:
         """
@@ -253,7 +253,7 @@ class RiskBook:
         """
         self._equity = equity
         self.equity_history.append(equity)
-        self.last_update = datetime.utcnow()
+        self.last_update = datetime.now(timezone.utc)
     
     @property
     def equity(self) -> float:
