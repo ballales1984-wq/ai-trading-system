@@ -57,8 +57,8 @@ class MultiStrategyManager:
                 "threshold": 0.02,
                 "rsi_oversold": 30,
                 "rsi_overbought": 70,
-                "stop_loss_pct": 0.02,
-                "take_profit_pct": 0.05
+                "stop_loss_pct": 0.07,  # 7% for crypto
+                "take_profit_pct": 0.10  # 10% for crypto
             }
         )
         self.register_strategy(MomentumStrategy(momentum_config), weight=1.0)

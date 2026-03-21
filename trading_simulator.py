@@ -93,8 +93,8 @@ class TradingSimulator:
         self.trade_interval = 60  # seconds between trades
         self.max_positions = 3
         self.position_size_percent = 0.2  # 20% per trade
-        self.stop_loss_percent = 0.02  # 2%
-        self.take_profit_percent = 0.05  # 5%
+        self.stop_loss_percent = 0.07  # 7% (adjusted for crypto volatility)
+        self.take_profit_percent = 0.10  # 10% (better risk/reward)
         
         # State
         self.running = False

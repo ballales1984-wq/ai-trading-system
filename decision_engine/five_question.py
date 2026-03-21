@@ -88,8 +88,8 @@ class FiveQuestionFramework:
             risk_result.get('risk_score', 0.5) * 0.25
         )
         
-        stop_loss_pct = self.settings.get('stop_loss_percent', 0.02)
-        take_profit_pct = self.settings.get('take_profit_percent', 0.05)
+        stop_loss_pct = self.settings.get('stop_loss_percent', 0.07)  # 7% for crypto
+        take_profit_pct = self.settings.get('take_profit_percent', 0.10)  # 10% for crypto
         
         if action == 'BUY':
             entry_price = market_data.current_price

@@ -85,9 +85,9 @@ class LiveStreamingManager:
         initial_balance: float = 100000,
         interval: str = "1m",
         testnet: bool = False,
-        default_stop_loss_pct: float = 0.02,
+        default_stop_loss_pct: float = 0.07,  # Changed from 2% to 7% for crypto
         enable_trailing_stop: bool = True,
-        trailing_stop_pct: float = 0.015,
+        trailing_stop_pct: float = 0.08,  # Changed from 1.5% to 8% for crypto volatility
         log_interval_seconds: int = 60,
     ):
         """
@@ -98,9 +98,9 @@ class LiveStreamingManager:
             initial_balance: Bilancio iniziale
             interval: Intervallo candele WebSocket
             testnet: Usa testnet Binance
-            default_stop_loss_pct: Stop-loss default (2%)
+            default_stop_loss_pct: Stop-loss default (7%)
             enable_trailing_stop: Abilita trailing stop
-            trailing_stop_pct: Percentuale trailing stop (1.5%)
+            trailing_stop_pct: Percentuale trailing stop (8%)
             log_interval_seconds: Intervallo log posizioni
         """
         self.symbols = [s.upper().replace('/', '') for s in symbols]
@@ -517,7 +517,7 @@ def create_live_manager(
         symbols=symbols,
         initial_balance=initial_balance,
         testnet=testnet,
-        default_stop_loss_pct=0.02,
+        default_stop_loss_pct=0.07,  # Updated: 7% for crypto
         enable_trailing_stop=True,
-        trailing_stop_pct=0.015,
+        trailing_stop_pct=0.08,  # Updated: 8% for crypto
     )

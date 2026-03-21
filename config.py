@@ -478,8 +478,8 @@ DECISION_SETTINGS: Dict[str, Any] = {
     
     # Risk management
     'max_position_size': 0.1,
-    'stop_loss_percent': 0.02,
-    'take_profit_percent': 0.05,
+    'stop_loss_percent': 0.07,  # Increased from 2% to 7% for crypto volatility
+    'take_profit_percent': 0.10,  # Increased from 5% to 10% for better risk/reward
     
     # Correlation thresholds
     'correlation_lookback': 24,

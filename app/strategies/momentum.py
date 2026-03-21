@@ -46,8 +46,8 @@ class MomentumStrategy(BaseStrategy):
         self.threshold = self.parameters.get("threshold", 0.02)
         self.rsi_oversold = self.parameters.get("rsi_oversold", 30)
         self.rsi_overbought = self.parameters.get("rsi_overbought", 70)
-        self.stop_loss_pct = self.parameters.get("stop_loss_pct", 0.02)
-        self.take_profit_pct = self.parameters.get("take_profit_pct", 0.05)
+        self.stop_loss_pct = self.parameters.get("stop_loss_pct", 0.07)  # 7% for crypto
+        self.take_profit_pct = self.parameters.get("take_profit_pct", 0.10)  # 10% for crypto
         
         # State
         self.position = SignalDirection.FLAT
