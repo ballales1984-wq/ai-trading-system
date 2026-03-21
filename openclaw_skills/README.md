@@ -198,6 +198,109 @@ Agent: "❌ Order Rejected
 
 ---
 
+## MiniMax API Integration (AI-Powered Agents)
+
+> **Note**: MiniMax-M2 requires ~16GB VRAM to run locally. For systems with limited VRAM (like 5GB), use the API instead.
+
+### Getting Started
+
+#### Step 1: Get Your Free API Key
+1. Go to [platform.minimax.io](https://platform.minimax.io/)
+2. Register for a free account
+3. Create a new project
+4. Generate an API key (starts with `ey`)
+5. Note your Group ID from the dashboard
+
+#### Step 2: Configure Environment Variables
+
+Add to your `.env` file:
+```bash
+MINIMAX_API_KEY=your_api_key_here
+MINIMAX_GROUP_ID=your_group_id_here
+```
+
+Or set environment variables:
+```bash
+# Windows
+set MINIMAX_API_KEY=your_key
+set MINIMAX_GROUP_ID=your_group
+
+# Linux/Mac
+export MINIMAX_API_KEY=your_key
+export MINIMAX_GROUP_ID=your_group
+```
+
+#### Step 3: Test the Connection
+```bash
+cd c:/ai-trading-system
+python openclaw_skills/test_minimax_connection.py
+```
+
+Or with inline credentials:
+```bash
+python openclaw_skills/test_minimax_connection.py --api-key "your_key" --group-id "your_group"
+```
+
+### Using MiniMax in Your Code
+
+```python
+from openclaw_skills.minimax_connector import (
+    MiniMaxClient,
+    MiniMaxConfig,
+    OpenClawMiniMaxBridge
+)
+
+# Simple usage
+config = MiniMaxConfig()  # Loads from env vars
+client = MiniMaxClient(config)
+
+response = client.chat_completion(
+    messages=[
+        {"role": "system", "content": "You are a trading assistant"},
+        {"role": "user", "content": "Analyze BTC market"}
+    ]
+)
+print(response['choices'][0]['message']['content'])
+
+# Trading-specific analysis
+analysis = client.analyze_market(
+    symbol="BTCUSDT",
+    market_data={"price": 67500, "volume": 1000000},
+    analysis_type="regime"
+)
+
+# OpenClaw integration
+bridge = OpenClawMiniMaxBridge(config)
+response = bridge.process_agent_message(
+    agent_name="research_agent",
+    message="What's the market sentiment for BTC?",
+    context={"price": 67500}
+)
+```
+
+### Available Models
+
+| Model | Description | Use Case |
+|-------|-------------|----------|
+| `MiniMax-M2` | General purpose (recommended) | Trading analysis, general queries |
+| `abab6.5s-chat` | Fast model | Simple queries, high throughput |
+| `abab6.5g-chat` | General chat | Balanced performance |
+
+### Configuration Options
+
+In `skill.yaml` or `multi_agent_config.yaml`:
+```yaml
+llm:
+  provider: "minimax"
+  model: "MiniMax-M2"
+  temperature: 0.7
+  max_tokens: 2048
+  # Fallback if API fails
+  fallback_to_keyword_matching: true
+```
+
+---
+
 ## Files Overview
 
 | File | Purpose |
@@ -206,6 +309,8 @@ Agent: "❌ Order Rejected
 | `skill.yaml` | Skill configuration |
 | `multi_agent_config.yaml` | Multi-agent orchestration |
 | `api_wrapper.py` | Python API wrapper |
+| `minimax_connector.py` | MiniMax API connector |
+| `test_minimax_connection.py` | Connection test script |
 | `README.md` | This file |
 
 ---

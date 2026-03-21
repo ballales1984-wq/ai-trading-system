@@ -2,6 +2,49 @@
 # ==================================
 # Level 2: Orchestrator + Specialist Agents
 # This configuration sets up a team of cooperating agents
+#
+# LLM Configuration (MiniMax API)
+# ==================================
+llm:
+  # Provider: minimax (uses MiniMax API), openai, anthropic, local
+  provider: "minimax"
+  
+  # MiniMax API Settings
+  # Get your free API key at: https://platform.minimax.io/
+  # Set environment variables: MINIMAX_API_KEY, MINIMAX_GROUP_ID
+  api_key_env: "MINIMAX_API_KEY"
+  group_id_env: "MINIMAX_GROUP_ID"
+  api_base: "https://api.minimax.chat/v1"
+  
+  # Model (MiniMax-M2.7 recommended for trading analysis)
+  # Available models:
+  # - MiniMax-M2.7: Latest with recursive self-improvement (~60 tps)
+  # - MiniMax-M2.7-highspeed: Faster version (~100 tps)
+  # - MiniMax-M2.5: Peak performance for complex tasks
+  # - MiniMax-M2.1: Strong programming capabilities
+  # - MiniMax-M2: Original with agentic capabilities
+  model: "MiniMax-M2.7"
+  
+  # Generation parameters
+  temperature: 0.7
+  max_tokens: 2048
+  top_p: 0.95
+  
+  # Retry settings
+  max_retries: 3
+  timeout: 60
+  
+  # Fallback mode (use keyword matching if API unavailable)
+  fallback_to_keyword_matching: true
+  
+  # Cache settings for LLM responses
+  cache_enabled: true
+  cache_ttl_seconds: 300
+
+# Agents can override LLM settings
+agent_defaults:
+  temperature: 0.7
+  max_tokens: 1024
 
 agents:
   # =========================================================================
