@@ -32,7 +32,8 @@ class SignalGenerator:
                        correlations: Dict,
                        volatility_score: float,
                        ml_score: float = 0.5,
-                       mc_score: float = 0.5) -> float:
+                       mc_score: float = 0.5,
+                       regime_score: float = 0.5) -> float:
         """
         Combine all factors into a single score.
         
@@ -43,6 +44,7 @@ class SignalGenerator:
             volatility_score: Volatility score (0-1)
             ml_score: ML prediction score (0-1)
             mc_score: Monte Carlo probability (0-1)
+            regime_score: HMM regime score (-1 bear to +1 bull)
             
         Returns:
             Combined score (0-1)
@@ -52,31 +54,69 @@ class SignalGenerator:
         # Normalize sentiment score to 0-1
         sentiment_score = (sentiment.get('combined_score', 0) + 1) / 2
         
-        # Correlation score (use absolute value)
-        correlation_score = abs(correlations.get('avg_correlation', 0))
+        # Correlation score - preserve direction, don't use abs!
+        # Positive correlation = follow market direction
+        # Negative correlation = hedge/contrarian
+        correlation_raw = correlations.get('avg_correlation', 0)
+        # Convert -1/+1 to 0/1 for scoring
+        correlation_score = (correlation_raw + 1) / 2
         
-        # Weights for ML and Monte Carlo
-        ml_weight = 0.10
-        mc_weight = 0.10
-        base_weight = 1.0 - ml_weight - mc_weight
+        # Normalize regime score from -1/+1 to 0/1
+        regime_norm = (regime_score + 1) / 2
         
-        # Calculate base score
+        # Weights for ML, Monte Carlo, and Regime (from config or defaults)
+        ml_weight = self.settings.get('ml_weight', 0.10)
+        mc_weight = self.settings.get('mc_weight', 0.10)
+        regime_weight = self.settings.get('regime_weight', 0.10)
+        base_weight = 1.0 - ml_weight - mc_weight - regime_weight
+        
+        # Calculate base score (including regime)
         base_score = (
             technical.technical_score * weights['technical'] +
             technical.momentum_score * weights['momentum'] +
             correlation_score * weights['correlation'] +
             sentiment_score * weights['sentiment'] +
-            volatility_score * weights['volatility']
+            volatility_score * weights['volatility'] +
+            regime_norm * weights.get('regime', 0.10)  # Default 10% weight for regime
         )
         
-        # Blend with ML and MC scores
-        score = base_score * base_weight + ml_score * ml_weight + mc_score * mc_weight
+        # Blend with ML, Monte Carlo, and Regime scores
+        score = (base_score * base_weight + 
+                 ml_score * ml_weight + 
+                 mc_score * mc_weight + 
+                 regime_norm * regime_weight)
         
-        return max(0, min(1, score))
+        # Normalize score to center around 0.5
+        # This reduces bias by shifting the mean to 0.5
+        normalized_score = self._normalize_score(score)
+        
+        return normalized_score
+    
+    def _normalize_score(self, score: float) -> float:
+        """
+        Normalize score to reduce bias toward BUY.
+        Adaptive compression - only compresses noisy middle zone.
+        
+        Args:
+            score: Raw score (0-1)
+            
+        Returns:
+            Normalized score (0-1)
+        """
+        # Adaptive normalization - only compress middle zone
+        if 0.40 <= score <= 0.65:
+            # Compress noisy middle zone (where most false signals occur)
+            # This is where the bias is most problematic
+            return 0.5 + (score - 0.5) * 0.5
+        else:
+            # Keep strong signals (high confidence) mostly unchanged
+            return score
     
     def determine_action(self, score: float) -> str:
         """
         Determine action based on combined score.
+        
+        Wide HOLD zone (20%) to reduce overtrading and bias.
         
         Args:
             score: Combined score (0-1)
@@ -84,19 +124,30 @@ class SignalGenerator:
         Returns:
             Action: 'BUY', 'SELL', or 'HOLD'
         """
-        strong_buy = self.settings['strong_signal_threshold']
-        buy_threshold = self.settings['min_signal_confidence']
+        # Get thresholds from settings
+        strong_buy = self.settings.get('strong_signal_threshold', 0.70)
+        buy_threshold = self.settings.get('min_signal_confidence', 0.60)
+        sell_threshold = self.settings.get('sell_threshold', 0.40)
+        strong_sell = self.settings.get('strong_sell_threshold', 0.30)
         
+        # Strong BUY (score >= 0.70)
         if score >= strong_buy:
             return 'BUY'
-        elif score >= buy_threshold:
-            return 'BUY' if score > 0.5 else 'SELL'
-        elif score <= (1 - strong_buy):
-            return 'SELL'
-        elif score <= (1 - buy_threshold):
-            return 'SELL' if score < 0.5 else 'BUY'
         
-        return 'HOLD'
+        # Moderate BUY (score >= 0.60)
+        if score >= buy_threshold:
+            return 'BUY'
+        
+        # HOLD zone (0.40 < score < 0.60) - 20% of range
+        if score > sell_threshold and score < buy_threshold:
+            return 'HOLD'
+        
+        # Moderate SELL (score > 0.30)
+        if score > strong_sell:
+            return 'SELL'
+        
+        # Strong SELL (score <= 0.30)
+        return 'SELL'
     
     def calculate_confidence(self,
                             technical: 'TechnicalAnalysis',

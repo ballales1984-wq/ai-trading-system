@@ -314,7 +314,7 @@ class DecisionEngine:
         mc_results = mc_engine.run(symbol, df, level=5)
         mc_score = mc_results.get('probability_up', 0.5)
         
-        # Combine factors
+        # Combine factors (NOW including regime_score!)
         generator = SignalGenerator(self.settings)
         combined_score = generator.combine_factors(
             technical_analysis,
@@ -322,7 +322,8 @@ class DecisionEngine:
             correlations,
             volatility_score,
             ml_score,
-            mc_score
+            mc_score,
+            regime_score  # Added - was missing before!
         )
         
         # Determine action

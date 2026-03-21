@@ -470,8 +470,11 @@ INDICATOR_SETTINGS: Dict[str, Any] = {
 # ==================== DECISION ENGINE ====================
 DECISION_SETTINGS: Dict[str, Any] = {
     # Signal generation thresholds
-    'min_signal_confidence': 0.55,
-    'strong_signal_threshold': 0.70,
+    # Wide HOLD zone to reduce overtrading and bias
+    'min_signal_confidence': 0.60,   # BUY above this
+    'strong_signal_threshold': 0.70,  # Strong BUY above this
+    'sell_threshold': 0.40,           # SELL below this
+    'strong_sell_threshold': 0.30,    # Strong SELL below this
     
     # Risk management
     'max_position_size': 0.1,
@@ -484,17 +487,23 @@ DECISION_SETTINGS: Dict[str, Any] = {
     'negative_correlation': -0.3,
     
     # Position scoring weights
+    # Balanced to reduce bullish bias
     'weights': {
-        'technical': 0.30,
-        'momentum': 0.25,
-        'correlation': 0.20,
-        'sentiment': 0.15,
-        'volatility': 0.10,
+        'technical': 0.20,    # Reduced from 0.30
+        'momentum': 0.15,     # Reduced from 0.25
+        'correlation': 0.10, # Reduced from 0.20
+        'sentiment': 0.15,   # Increased from 0.15
+        'volatility': 0.15,  # Increased from 0.10
+        'regime': 0.10,      # NEW: HMM regime weight
     },
+    
+    # ML and Monte Carlo weights
+    'ml_weight': 0.10,
+    'mc_weight': 0.10,
+    'regime_weight': 0.10,  # NEW: regime from HMM
     
     # ML Blackbox Agent settings
     'ml_enabled': True,
-    'ml_weight': 0.15,
     'ml_confidence_weight': 0.30,
     'ml_model_path': 'models/ml_predictor.pkl',
 }
