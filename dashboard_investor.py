@@ -475,70 +475,78 @@ class InvestorDashboard:
             Input("selected-investor-store", "data")
         )
         def update_performance_chart(investor_id):
-            if len(self.fund.nav_history) < 2:
+            try:
+                if not self.fund or len(self.fund.nav_history) < 2:
+                    return go.Figure()
+                
+                returns = []
+                dates = []
+                
+                base_nav = float(self.fund.nav_history[0].nav_per_share)
+                
+                for i, nav in enumerate(self.fund.nav_history[1:], 1):
+                    current_nav = float(nav.nav_per_share)
+                    # Vero calcolo cumulativo percentuale
+                    cumulative = ((current_nav / base_nav) - 1) * 100
+                    returns.append(cumulative)
+                    dates.append(nav.date.strftime("%Y-%m-%d"))
+                
+                colors = ["#48bb78" if r >= 0 else "#f56565" for r in returns]
+                
+                fig = go.Figure()
+                fig.add_trace(go.Bar(
+                    x=dates,
+                    y=returns,
+                    marker_color=colors
+                ))
+                
+                fig.update_layout(
+                    title="Cumulative Returns",
+                    paper_bgcolor="transparent",
+                    plot_bgcolor="transparent",
+                    font=dict(color="#a0aec0"),
+                    xaxis=dict(showgrid=False),
+                    yaxis=dict(showgrid=True, gridcolor="#2d3748"),
+                    margin=dict(l=40, r=40, t=40, b=40)
+                )
+                
+                return fig
+            except Exception as e:
+                print(f"Error in performance chart: {e}")
                 return go.Figure()
-            
-            returns = []
-            dates = []
-            
-            base_nav = float(self.fund.nav_history[0].nav_per_share)
-            
-            for i, nav in enumerate(self.fund.nav_history[1:], 1):
-                current_nav = float(nav.nav_per_share)
-                # Vero calcolo cumulativo percentuale
-                cumulative = ((current_nav / base_nav) - 1) * 100
-                returns.append(cumulative)
-                dates.append(nav.date.strftime("%Y-%m-%d"))
-            
-            colors = ["#48bb78" if r >= 0 else "#f56565" for r in returns]
-            
-            fig = go.Figure()
-            fig.add_trace(go.Bar(
-                x=dates,
-                y=returns,
-                marker_color=colors
-            ))
-            
-            fig.update_layout(
-                title="Cumulative Returns",
-                paper_bgcolor="transparent",
-                plot_bgcolor="transparent",
-                font=dict(color="#a0aec0"),
-                xaxis=dict(showgrid=False),
-                yaxis=dict(showgrid=True, gridcolor="#2d3748"),
-                margin=dict(l=40, r=40, t=40, b=40)
-            )
-            
-            return fig
         
         @self.app.callback(
             Output("allocation-chart", "figure"),
             Input("selected-investor-store", "data")
         )
         def update_allocation_chart(investor_id):
-            # Simplified allocation - in real app would come from portfolio
-            labels = ["Crypto", "Stablecoins", "Cash", "Options"]
-            values = [60, 25, 10, 5]
-            colors = ["#4fd1c5", "#48bb78", "#ed8936", "#9f7aea"]
-            
-            fig = go.Figure(data=[go.Pie(
-                labels=labels,
-                values=values,
-                marker=dict(colors=colors),
-                textinfo="label+percent",
-                hole=0.4
-            )])
-            
-            fig.update_layout(
-                title="Portfolio Allocation",
-                paper_bgcolor="transparent",
-                plot_bgcolor="transparent",
-                font=dict(color="#a0aec0"),
-                showlegend=False,
-                margin=dict(l=40, r=40, t=40, b=40)
-            )
-            
-            return fig
+            try:
+                # Simplified allocation - in real app would come from portfolio
+                labels = ["Crypto", "Stablecoins", "Cash", "Options"]
+                values = [60, 25, 10, 5]
+                colors = ["#4fd1c5", "#48bb78", "#ed8936", "#9f7aea"]
+                
+                fig = go.Figure(data=[go.Pie(
+                    labels=labels,
+                    values=values,
+                    marker=dict(colors=colors),
+                    textinfo="label+percent",
+                    hole=0.4
+                )])
+                
+                fig.update_layout(
+                    title="Portfolio Allocation",
+                    paper_bgcolor="transparent",
+                    plot_bgcolor="transparent",
+                    font=dict(color="#a0aec0"),
+                    showlegend=False,
+                    margin=dict(l=40, r=40, t=40, b=40)
+                )
+                
+                return fig
+            except Exception as e:
+                print(f"Error in allocation chart: {e}")
+                return go.Figure()
         
         @self.app.callback(
             Output("transactions-table", "children"),
