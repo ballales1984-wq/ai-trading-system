@@ -297,7 +297,7 @@ class AlphaResearcher:
         turnover = signals.diff().abs().mean()
         
         return AlphaPerformance(
-            alpha_id=hashlib.md5(str(alpha_signals.name).encode()).hexdigest()[:8],
+            alpha_id=hashlib.sha256(str(alpha_signals.name).encode()).hexdigest()[:8],
             total_return=total_return,
             sharpe_ratio=sharpe,
             max_drawdown=max_dd,
@@ -435,8 +435,7 @@ class AlphaLab:
         prices: pd.Series,
         alpha_names: Optional[List[str]] = None,
     ) -> Dict:
-        """Run research experiment."""
-        experiment_id = hashlib.md5(f"{name}_{datetime.now()}".encode()).hexdigest()[:8]
+        experiment_id = hashlib.sha256(f"{name}_{datetime.now()}".encode()).hexdigest()[:8]
         
         results = {
             "experiment_id": experiment_id,
