@@ -201,3 +201,327 @@ class ImprovedPricePredictor:
         features['close_open_ratio'] = (close - open_price) / open_price
         
         return features.fillna(0).replace([np.inf, -np.inf], 0)
+
+    def create_labels(
+        self,
+        df: pd.DataFrame,
+        forward_periods: int = 5,
+        threshold: float = 0.02
+    ) -> pd.Series:
+        """
+        Create labels for training.
+        
+        Args:
+            df: Price dataframe
+            forward_periods: Periods to look ahead
+            threshold: Minimum return to consider as signal
+            
+        Returns:
+            Series with labels (1=up, 0=down/neutral)
+        """
+        if not SKLEARN_AVAILABLE:
+            return pd.Series()
+        
+        future_returns = df['close'].pct_change(forward_periods).shift(-forward_periods)
+        
+        if self.use_meta_labeling:
+            # Use risk-adjusted labels
+            labels = pd.Series(0, index=df.index)
+            
+            # Calculate position sizing based on volatility
+            volatility = df['close'].pct_change().rolling(20).std()
+            risk_adjusted_threshold = threshold * (1 + volatility)
+            
+            labels[future_returns > risk_adjusted_threshold] = 1
+            labels[future_returns < -risk_adjusted_threshold] = -1
+        else:
+            # Simple binary labels
+            labels = (future_returns > threshold).astype(int)
+        
+        return labels.fillna(0)
+
+    def train(
+        self,
+        df: pd.DataFrame,
+        test_size: float = 0.2
+    ) -> Dict[str, float]:
+        """
+        Train the ensemble model.
+        
+        Args:
+            df: OHLCV dataframe
+            test_size: Fraction for test split
+            
+        Returns:
+            Training metrics dictionary
+        """
+        if not SKLEARN_AVAILABLE:
+            logger.warning("sklearn not available, cannot train")
+            return self.training_metrics
+        
+        # Prepare features
+        features = self.prepare_features(df)
+        labels = self.create_labels(df)
+        
+        # Align features and labels
+        valid_idx = features.index.intersection(labels.index)
+        X = features.loc[valid_idx]
+        y = labels.loc[valid_idx]
+        
+        # Remove samples with NaN labels
+        valid_mask = y.notna()
+        X = X[valid_mask]
+        y = y[valid_mask]
+        
+        if len(X) < 100:
+            logger.warning("Insufficient training data")
+            return self.training_metrics
+        
+        # Scale features
+        X_scaled = self.scaler.fit_transform(X)
+        
+        # Train models
+        n_samples = len(X_scaled)
+        train_size = int(n_samples * (1 - test_size))
+        
+        X_train, X_test = X_scaled[:train_size], X_scaled[train_size:]
+        y_train, y_test = y.values[:train_size], y.values[train_size:]
+        
+        # Random Forest
+        self.rf_model = RandomForestClassifier(
+            n_estimators=100,
+            max_depth=10,
+            random_state=42,
+            n_jobs=-1
+        )
+        self.rf_model.fit(X_train, y_train)
+        
+        # Gradient Boosting
+        self.gb_model = GradientBoostingClassifier(
+            n_estimators=100,
+            max_depth=5,
+            random_state=42
+        )
+        self.gb_model.fit(X_train, y_train)
+        
+        # Extra Trees
+        self.et_model = ExtraTreesClassifier(
+            n_estimators=100,
+            max_depth=10,
+            random_state=42,
+            n_jobs=-1
+        )
+        self.et_model.fit(X_train, y_train)
+        
+        # XGBoost (if available)
+        if XGBOOST_AVAILABLE:
+            self.xgb_model = XGBClassifier(
+                n_estimators=100,
+                max_depth=5,
+                learning_rate=0.1,
+                random_state=42,
+                use_label_encoder=False,
+                eval_metric='logloss'
+            )
+            self.xgb_model.fit(X_train, y_train)
+        
+        # Calculate metrics
+        self.is_trained = True
+        self.training_metrics['n_samples'] = n_samples
+        
+        # Ensemble prediction
+        y_pred_proba = self._ensemble_predict_proba(X_test)
+        y_pred = (y_pred_proba > 0.5).astype(int)
+        
+        # Calculate metrics
+        self.training_metrics['accuracy'] = accuracy_score(y_test, y_pred)
+        self.training_metrics['precision'] = precision_score(y_test, y_pred, zero_division=0)
+        self.training_metrics['recall'] = recall_score(y_test, y_pred, zero_division=0)
+        self.training_metrics['f1'] = f1_score(y_test, y_pred, zero_division=0)
+        
+        try:
+            self.training_metrics['auc'] = roc_auc_score(y_test, y_pred_proba)
+        except ValueError:
+            self.training_metrics['auc'] = 0.0
+        
+        # Cross-validation
+        tscv = TimeSeriesSplit(n_splits=3)
+        cv_scores = cross_val_score(
+            self.rf_model, X_scaled, y.values, cv=tscv, scoring='accuracy'
+        )
+        self.training_metrics['cv_mean'] = cv_scores.mean()
+        self.training_metrics['cv_std'] = cv_scores.std()
+        
+        logger.info(f"Training complete. Metrics: {self.training_metrics}")
+        return self.training_metrics
+    
+    def _ensemble_predict_proba(self, X: np.ndarray) -> np.ndarray:
+        """Get ensemble probability predictions"""
+        probas = []
+        
+        if self.rf_model:
+            probas.append(self.rf_model.predict_proba(X)[:, 1] if len(self.rf_model.classes_) > 1 else np.zeros(len(X)))
+        if self.gb_model:
+            probas.append(self.gb_model.predict_proba(X)[:, 1] if len(self.gb_model.classes_) > 1 else np.zeros(len(X)))
+        if self.et_model:
+            probas.append(self.et_model.predict_proba(X)[:, 1] if len(self.et_model.classes_) > 1 else np.zeros(len(X)))
+        if self.xgb_model and XGBOOST_AVAILABLE:
+            probas.append(self.xgb_model.predict_proba(X)[:, 1])
+        
+        if not probas:
+            return np.zeros(len(X))
+        
+        # Weighted average
+        weights = [self.model_weights.get(k, 0.25) for k in ['rf', 'gb', 'et', 'xgb'][:len(probas)]]
+        total = sum(weights)
+        weights = [w/total for w in weights]
+        
+        ensemble = np.zeros(len(X))
+        for proba, weight in zip(probas, weights):
+            ensemble += proba * weight
+        
+        return ensemble
+    
+    def predict(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """
+        Make predictions on new data.
+        
+        Args:
+            df: OHLCV dataframe
+            
+        Returns:
+            Prediction dictionary with signal, probability, and confidence
+        """
+        if not self.is_trained or not SKLEARN_AVAILABLE:
+            return {
+                'signal': 0,
+                'probability': 0.5,
+                'confidence': 0.0,
+                'model_ready': False
+            }
+        
+        # Prepare features
+        features = self.prepare_features(df)
+        
+        if len(features) == 0:
+            return {
+                'signal': 0,
+                'probability': 0.5,
+                'confidence': 0.0,
+                'error': 'No features available'
+            }
+        
+        # Use last row for prediction
+        X = features.iloc[-1:]
+        X_scaled = self.scaler.transform(X)
+        
+        # Get ensemble prediction
+        proba = self._ensemble_predict_proba(X_scaled)[0]
+        
+        # Signal based on probability
+        signal = 1 if proba > 0.6 else -1 if proba < 0.4 else 0
+        
+        # Confidence based on distance from 0.5
+        confidence = abs(proba - 0.5) * 2
+        
+        return {
+            'signal': signal,
+            'probability': float(proba),
+            'confidence': float(confidence),
+            'model_ready': True
+        }
+    
+    def predict_multi(
+        self,
+        df: pd.DataFrame,
+        window: int = 10
+    ) -> List[Dict[str, Any]]:
+        """
+        Make predictions over a window of data.
+        
+        Args:
+            df: OHLCV dataframe
+            window: Number of recent predictions
+            
+        Returns:
+            List of prediction dictionaries
+        """
+        if not self.is_trained or not SKLEARN_AVAILABLE:
+            return []
+        
+        predictions = []
+        
+        for i in range(min(window, len(df))):
+            # Use data up to current point
+            df_slice = df.iloc[:len(df)-i]
+            pred = self.predict(df_slice)
+            predictions.append(pred)
+        
+        return predictions
+    
+    def get_feature_importance(self) -> pd.DataFrame:
+        """
+        Get feature importance from Random Forest.
+        
+        Returns:
+            DataFrame with features and importance scores
+        """
+        if not self.is_trained or self.rf_model is None:
+            return pd.DataFrame()
+        
+        importance = self.rf_model.feature_importances_
+        
+        return pd.DataFrame({
+            'feature': self.feature_names,
+            'importance': importance
+        }).sort_values('importance', ascending=False)
+    
+    def save_model(self, filepath: str):
+        """
+        Save trained model to disk.
+        
+        Args:
+            filepath: Path to save model
+        """
+        import pickle
+        
+        model_data = {
+            'rf_model': self.rf_model,
+            'gb_model': self.gb_model,
+            'xgb_model': self.xgb_model,
+            'et_model': self.et_model,
+            'scaler': self.scaler,
+            'training_metrics': self.training_metrics,
+            'feature_names': self.feature_names,
+            'model_weights': self.model_weights,
+            'is_trained': self.is_trained
+        }
+        
+        with open(filepath, 'wb') as f:
+            pickle.dump(model_data, f)
+        
+        logger.info(f"Model saved to {filepath}")
+    
+    def load_model(self, filepath: str):
+        """
+        Load trained model from disk.
+        
+        Args:
+            filepath: Path to load model from
+        """
+        import pickle
+        
+        with open(filepath, 'rb') as f:
+            model_data = pickle.load(f)
+        
+        self.rf_model = model_data.get('rf_model')
+        self.gb_model = model_data.get('gb_model')
+        self.xgb_model = model_data.get('xgb_model')
+        self.et_model = model_data.get('et_model')
+        self.scaler = model_data.get('scaler')
+        self.training_metrics = model_data.get('training_metrics', {})
+        self.feature_names = model_data.get('feature_names', [])
+        self.model_weights = model_data.get('model_weights', {})
+        self.is_trained = model_data.get('is_trained', False)
+        
+        logger.info(f"Model loaded from {filepath}")

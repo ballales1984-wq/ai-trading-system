@@ -53,6 +53,23 @@ except ImportError:
     ML_AVAILABLE = False
     logging.warning("ML Predictor not available")
 
+# Broker Connectors
+try:
+    from app.execution.connectors.bybit_connector import BybitConnector
+    from app.execution.connectors.coinbase_connector import CoinbaseConnector
+    BROKERS_AVAILABLE = True
+except ImportError:
+    BROKERS_AVAILABLE = False
+    logging.warning("Broker Connectors not available")
+
+# Sentiment Bridge
+try:
+    from sentiment_concept_bridge import SentimentConceptBridge
+    BRIDGE_AVAILABLE = True
+except ImportError:
+    BRIDGE_AVAILABLE = False
+    logging.warning("Sentiment Concept Bridge not available")
+
 logger = logging.getLogger(__name__)
 
 
@@ -93,6 +110,10 @@ class UnifiedEngineConfig:
     # Model selection
     use_champion_model: bool = True
     
+    # Broker integration
+    broker_type: str = "bybit"  # or "coinbase", "none"
+    broker_config: Dict[str, Any] = field(default_factory=dict)
+    
     # OpenClaw integration
     use_openclaw_skills: bool = True
 
@@ -128,6 +149,10 @@ class UnifiedDecisionEngine:
         self.last_update: Optional[datetime] = None
         self.decision_count: int = 0
         
+        # Initialize Brokers and Sentiment Bridge
+        self._init_broker()
+        self._init_sentiment_bridge()
+        
         logger.info("UnifiedDecisionEngine initialized")
     
     def _init_risk_book(self) -> None:
@@ -141,6 +166,34 @@ class UnifiedDecisionEngine:
         self.risk_book = RiskBook(limits)
         self.risk_book.register_equity(self.config.default_equity)
         logger.info("RiskBook initialized")
+        
+    def _init_broker(self) -> None:
+        """Initialize appropriate Broker Connector."""
+        self.broker = None
+        if not BROKERS_AVAILABLE or self.config.broker_type == "none":
+            return
+            
+        try:
+            if self.config.broker_type.lower() == "bybit":
+                self.broker = BybitConnector(self.config.broker_config)
+                logger.info("BybitConnector initialized in UnifiedDecisionEngine")
+            elif self.config.broker_type.lower() == "coinbase":
+                self.broker = CoinbaseConnector(self.config.broker_config)
+                logger.info("CoinbaseConnector initialized in UnifiedDecisionEngine")
+            else:
+                logger.warning(f"Unknown broker type: {self.config.broker_type}")
+        except Exception as e:
+            logger.error(f"Failed to initialize broker {self.config.broker_type}: {e}")
+            
+    def _init_sentiment_bridge(self) -> None:
+        """Initialize SentimentConceptBridge for dynamic risk checking."""
+        self.sentiment_bridge = None
+        if BRIDGE_AVAILABLE:
+            try:
+                self.sentiment_bridge = SentimentConceptBridge(enable_semantic=True)
+                logger.info("SentimentConceptBridge initialized in UnifiedDecisionEngine")
+            except Exception as e:
+                logger.error(f"Failed to initialize SentimentConceptBridge: {e}")
     
     def _init_model_registry(self) -> None:
         """Initialize Model Registry."""
@@ -544,6 +597,53 @@ class UnifiedDecisionEngine:
         
         self.risk_book.update_position(position)
         logger.info(f"Position updated: {side} {quantity} {symbol} @ {avg_price}")
+
+    async def sync_portfolio(self) -> bool:
+        """
+        Synchronize the internal RiskBook with the real Broker Exchange.
+        Fetches true Account Balance and Open Positions to update the risk baseline.
+        
+        Returns:
+            True if sync successful, False otherwise.
+        """
+        if not self.broker:
+            logger.warning("Cannot sync portfolio: No broker configured.")
+            return False
+            
+        try:
+            # Assicurati che il broker sia connesso
+            if not getattr(self.broker, '_connected', False):
+                await self.broker.connect()
+                
+            balance = await self.broker.get_balance()
+            if balance and balance.total_equity > 0:
+                self.risk_book.register_equity(balance.total_equity)
+                logger.info(f"Equity synchronized: {balance.total_equity}")
+                
+            positions = await self.broker.get_positions()
+            # Convert broker positions to RiskBook positions
+            rb_positions = []
+            for bp in positions:
+                rb_pos = Position(
+                    symbol=bp.symbol,
+                    quantity=bp.quantity,
+                    avg_price=bp.entry_price,
+                    side="long" if bp.quantity >= 0 else "short"
+                )
+                rb_positions.append(rb_pos)
+                
+            if hasattr(self.risk_book, 'sync_positions'):
+                self.risk_book.sync_positions(rb_positions)
+            else:
+                # Fallback if RiskBook is an old version without sync_positions
+                for rp in rb_positions:
+                    self.risk_book.update_position(rp)
+                    
+            logger.info(f"Positions synchronized from exchange: {len(rb_positions)} open")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to synchronize portfolio with broker: {e}")
+            return False
 
 
 # Global instance for convenience

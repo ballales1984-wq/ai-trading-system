@@ -439,6 +439,14 @@ class CoinbaseConnector(BrokerConnector):
         
         return orders
 
+    async def get_order_status(self, order_id: str) -> Optional[Dict]:
+        """Get order status"""
+        return {}
+
+    async def get_symbol_price(self, symbol: str) -> Optional[float]:
+        """Get current symbol price"""
+        return await self.get_market_price(symbol)
+
 
 # Import missing json
 import json

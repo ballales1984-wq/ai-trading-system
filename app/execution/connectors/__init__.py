@@ -1,6 +1,6 @@
 """
 Connectors Module
-==============
+===============
 Exchange connectors for order execution.
 """
 
@@ -18,10 +18,30 @@ except (ImportError, RuntimeError) as e:
     create_ib_connector = None
     IB_AVAILABLE = False
 
+# Import CoinbaseConnector
+try:
+    from .coinbase_connector import CoinbaseConnector
+    COINBASE_AVAILABLE = True
+except ImportError:
+    CoinbaseConnector = None
+    COINBASE_AVAILABLE = False
+
+# Import BybitConnector
+try:
+    from .bybit_connector import BybitConnector
+    BYBIT_AVAILABLE = True
+except ImportError:
+    BybitConnector = None
+    BYBIT_AVAILABLE = False
+
 __all__ = [
     "BinanceConnector",
     "PaperConnector",
     "IBConnector",
     "create_ib_connector",
     "IB_AVAILABLE",
+    "CoinbaseConnector",
+    "BybitConnector",
+    "COINBASE_AVAILABLE",
+    "BYBIT_AVAILABLE",
 ]

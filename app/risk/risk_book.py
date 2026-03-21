@@ -152,6 +152,18 @@ class RiskBook:
         """
         self.positions[pos.symbol] = pos
         self.last_update = datetime.utcnow()
+
+    def sync_positions(self, positions: List[Position]) -> None:
+        """
+        Synchronize all positions from an external source (e.g. broker).
+        Removes any positions that are no longer active and updates existing ones.
+        
+        Args:
+            positions: List of current open positions
+        """
+        new_positions = {pos.symbol: pos for pos in positions}
+        self.positions = new_positions
+        self.last_update = datetime.utcnow()
     
     def remove_position(self, symbol: str) -> None:
         """

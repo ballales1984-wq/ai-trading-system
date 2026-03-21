@@ -19,6 +19,11 @@ from dataclasses import dataclass
 
 from app.risk.risk_book import RiskBook, RiskLimits, Position
 
+try:
+    from sentiment_concept_bridge import SentimentConceptBridge
+except ImportError:
+    SentimentConceptBridge = None
+
 
 @dataclass
 class TradingSignal:
@@ -55,6 +60,7 @@ class RiskIntegratedDecisionEngine:
     def __init__(
         self,
         risk_book: Optional[RiskBook] = None,
+        sentiment_bridge: Optional['SentimentConceptBridge'] = None,
         portfolio_balance: float = 100000,
         threshold_confidence: float = 0.6,
         max_risk_per_trade: float = 0.02,
@@ -80,6 +86,7 @@ class RiskIntegratedDecisionEngine:
         else:
             self.risk_book = risk_book
         
+        self.sentiment_bridge = sentiment_bridge
         self.portfolio_balance = portfolio_balance
         self.threshold_confidence = threshold_confidence
         self.max_risk_per_trade = max_risk_per_trade
@@ -132,20 +139,43 @@ class RiskIntegratedDecisionEngine:
         # Get current drawdown
         drawdown_pct = self.risk_book.daily_drawdown_pct()
         
+        # Dynamic Limits based on Sentiment
+        dynamic_max_pos_pct = self.risk_book.limits.max_position_pct
+        dynamic_threshold_conf = self.threshold_confidence
+        sentiment_note = ""
+        
+        if self.sentiment_bridge and signal.symbol:
+            try:
+                # Fetch concept-aware sentiment
+                sentiment = self.sentiment_bridge.analyze_asset_sentiment_with_concepts(signal.symbol)
+                
+                if sentiment.confidence > 0.4:
+                    if sentiment.sentiment_score < -0.3:
+                        # Bearish: Halve max position, require higher confidence
+                        dynamic_max_pos_pct *= 0.5
+                        dynamic_threshold_conf = min(0.95, dynamic_threshold_conf + 0.15)
+                        sentiment_note = f" (Bearish sentiment {sentiment.sentiment_score:.2f}: strict limits applied)"
+                    elif sentiment.sentiment_score > 0.3:
+                        # Bullish: slightly relax confidence threshold
+                        dynamic_threshold_conf = max(0.4, dynamic_threshold_conf - 0.1)
+                        sentiment_note = f" (Bullish sentiment {sentiment.sentiment_score:.2f}: relaxed limits)"
+            except Exception as e:
+                pass # Ignore sentiment errors and use defaults
+        
         # Calculate risk score (0-100)
         risk_factors = []
         
         # Check position limit
-        if position_pct > self.risk_book.limits.max_position_pct:
-            risk_factors.append(f"Position {position_pct:.1%} exceeds limit {self.risk_book.limits.max_position_pct:.1%}")
+        if position_pct > dynamic_max_pos_pct:
+            risk_factors.append(f"Position {position_pct:.1%} exceeds limit {dynamic_max_pos_pct:.1%}{sentiment_note}")
         
         # Check drawdown
         if drawdown_pct > self.risk_book.limits.max_daily_drawdown_pct:
             risk_factors.append(f"Drawdown {drawdown_pct:.1%} exceeds limit {self.risk_book.limits.max_daily_drawdown_pct:.1%}")
         
         # Check confidence
-        if signal.confidence < self.threshold_confidence:
-            risk_factors.append(f"Confidence {signal.confidence:.2f} below threshold {self.threshold_confidence}")
+        if signal.confidence < dynamic_threshold_conf:
+            risk_factors.append(f"Confidence {signal.confidence:.2f} below threshold {dynamic_threshold_conf:.2f}{sentiment_note}")
         
         # Calculate risk score
         risk_score = len(risk_factors) * 33.33  # 0, 33, 66, 100
