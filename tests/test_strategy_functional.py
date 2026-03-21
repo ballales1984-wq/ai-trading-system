@@ -10,7 +10,7 @@ class TestStrategyAPI:
     
     def test_list_strategies(self):
         """Test listing strategies."""
-        response = client.get("/api/v1/strategy")
+        response = client.get("/api/v1/strategy/")
         assert response.status_code in [200, 500]
     
     def test_get_strategy(self):
@@ -20,9 +20,10 @@ class TestStrategyAPI:
     
     def test_create_strategy(self):
         """Test creating a strategy."""
-        response = client.post("/api/v1/strategy", json={
+        response = client.post("/api/v1/strategy/", json={
             "name": "test_strategy",
-            "type": "momentum",
+            "description": "test description",
+            "strategy_type": "momentum",
             "parameters": {}
         })
         # Accept validation errors (422) and redirects (307) as valid responses
@@ -30,7 +31,7 @@ class TestStrategyAPI:
     
     def test_update_strategy(self):
         """Test updating a strategy."""
-        response = client.put("/api/v1/strategy/test", json={"parameters": {}})
+        response = client.patch("/api/v1/strategy/test", json={"parameters": {}})
         # Accept method not allowed (405) as valid - endpoint may not support PUT
         assert response.status_code in [200, 404, 405, 500]
     
@@ -38,3 +39,5 @@ class TestStrategyAPI:
         """Test deleting a strategy."""
         response = client.delete("/api/v1/strategy/test")
         assert response.status_code in [200, 204, 404, 500]
+
+

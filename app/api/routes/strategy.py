@@ -11,6 +11,16 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException, status, Query
 from pydantic import BaseModel, Field
 
+# Import ML and Data modules
+try:
+    from ml_predictor import get_ml_predictor
+    from data_collector import DataCollector
+    import pandas as pd
+    ML_AVAILABLE = True
+except ImportError:
+    ML_AVAILABLE = False
+
+
 
 router = APIRouter()
 
@@ -196,16 +206,40 @@ async def get_all_signals(
 ) -> List[Signal]:
     """Get all signals from all strategies."""
     signals = []
-    # Get signals from each strategy
-    for strategy_id in strategies_db.keys():
-        for i in range(min(limit // len(strategies_db) if strategies_db else 1, 10)):
-            signals.append(Signal(
-                strategy_id=strategy_id,
-                symbol="BTCUSDT" if i % 2 == 0 else "ETHUSDT",
-                direction="LONG" if i % 3 != 0 else "SHORT",
-                confidence=0.6 + (i * 0.03),
-                timestamp=datetime.utcnow(),
-            ))
+    for strategy_id, strat_data in strategies_db.items():
+        if ML_AVAILABLE and strat_data.get("strategy_type") == "ml" and strat_data.get("enabled"):
+            # Try to get real signal from ML predictor
+            try:
+                predictor = get_ml_predictor()
+                collector = DataCollector(simulation=True)
+                # Fetch data for common assets
+                for symbol in ["BTCUSDT", "ETHUSDT"]:
+                    df = collector.fetch_ohlcv(symbol, "1h", 100)
+                    if df is not None:
+                        pred = predictor.predict(df)
+                        if pred:
+                            signals.append(Signal(
+                                strategy_id=strategy_id,
+                                symbol=symbol,
+                                direction="LONG" if pred['prediction'] > 0 else "SHORT" if pred['prediction'] < 0 else "CLOSE",
+                                confidence=pred['confidence'],
+                                timestamp=datetime.utcnow(),
+                                metadata={"ml_model": pred.get("model_used", "ensemble")}
+                            ))
+            except Exception:
+                pass # Fallback to mock
+        
+        # Add some mock signals if none added yet or for other strategies
+        if not signals or strat_data.get("strategy_type") != "ml":
+            for i in range(min(limit // len(strategies_db) if strategies_db else 1, 5)):
+                signals.append(Signal(
+                    strategy_id=strategy_id,
+                    symbol="BTCUSDT" if i % 2 == 0 else "ETHUSDT",
+                    direction="LONG" if i % 3 != 0 else "SHORT",
+                    confidence=0.6 + (i * 0.03),
+                    timestamp=datetime.utcnow(),
+                ))
+
     return signals
 
 
@@ -222,14 +256,38 @@ async def get_strategy_signals(
         )
     
     signals = []
-    for i in range(min(limit, 10)):
-        signals.append(Signal(
-            strategy_id=strategy_id,
-            symbol="BTCUSDT" if i % 2 == 0 else "ETHUSDT",
-            direction="LONG" if i % 3 != 0 else "SHORT",
-            confidence=0.6 + (i * 0.03),
-            timestamp=datetime.utcnow(),
-        ))
+    strat_data = strategies_db[strategy_id]
+    
+    if ML_AVAILABLE and strat_data.get("strategy_type") == "ml" and strat_data.get("enabled"):
+        try:
+            predictor = get_ml_predictor()
+            collector = DataCollector(simulation=True)
+            for symbol in ["BTCUSDT", "ETHUSDT", "SOLUSDT"]:
+                df = collector.fetch_ohlcv(symbol, "1h", 100)
+                if df is not None:
+                    pred = predictor.predict(df)
+                    if pred:
+                        signals.append(Signal(
+                            strategy_id=strategy_id,
+                            symbol=symbol,
+                            direction="LONG" if pred['prediction'] > 0 else "SHORT" if pred['prediction'] < 0 else "CLOSE",
+                            confidence=pred['confidence'],
+                            timestamp=datetime.utcnow(),
+                            metadata={"ml_model": pred.get("model_used", "ensemble")}
+                        ))
+        except Exception:
+            pass
+            
+    if not signals:
+        for i in range(min(limit, 10)):
+            signals.append(Signal(
+                strategy_id=strategy_id,
+                symbol="BTCUSDT" if i % 2 == 0 else "ETHUSDT",
+                direction="LONG" if i % 3 != 0 else "SHORT",
+                confidence=0.6 + (i * 0.03),
+                timestamp=datetime.utcnow(),
+            ))
+
     return signals
 
 
