@@ -2,7 +2,7 @@
 # ==================================================
 # Version: 1.1.0-stable
 # Python: 3.13 (recommended for full package compatibility)
-# Last Updated: 2026-03-15
+# Last Updated: 2026-03-21
 # 
 # All versions are EXACTLY pinned for reproducibility.
 # Do NOT use >= or ~= operators.
@@ -142,6 +142,7 @@ pylint==3.0.3
 python-dotenv==1.0.0
 tqdm==4.66.1
 colorlog==6.8.0
+pyyaml==6.0.3
 
 # ============================================
 # INTERACTIVE BROKERS (Optional)
