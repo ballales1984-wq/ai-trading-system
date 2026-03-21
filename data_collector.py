@@ -565,13 +565,13 @@ if __name__ == "__main__":
     print("="*60)
     
     # Test fetching prices
-    print("\n📊 Fetching crypto prices...")
+    print("\n[P] Fetching crypto prices...")
     for symbol in ['BTC/USDT', 'ETH/USDT', 'PAXG/USDT']:
         price = collector.fetch_current_price(symbol)
         print(f"  {symbol}: ${price:,.2f}" if price else f"  {symbol}: Failed")
     
     # Test OHLCV
-    print("\n📈 Fetching OHLCV data...")
+    print("\n[C] Fetching OHLCV data...")
     df = collector.fetch_ohlcv('BTC/USDT', '1h', 24)
     if df is not None:
         print(f"  Got {len(df)} candles")

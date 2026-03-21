@@ -305,7 +305,7 @@ class TradingSimulator:
         pnl = self.portfolio.total_pnl
         pnl_pct = (pnl / self.portfolio.initial_balance) * 100
         
-        print(f"  📊 Portfolio: ${total_value:,.2f} | PnL: ${pnl:,.2f} ({pnl_pct:+.2f}%)")
+        print(f"  [P] Portfolio: ${total_value:,.2f} | PnL: ${pnl:,.2f} ({pnl_pct:+.2f}%)")
         print(f"     Positions: {len(self.portfolio.positions)} | Trades: {self.portfolio.trade_count}")
         
         if self.portfolio.positions:
