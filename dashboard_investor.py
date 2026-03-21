@@ -481,17 +481,13 @@ class InvestorDashboard:
             
             returns = []
             dates = []
-            cumulative = 0
+            
+            base_nav = float(self.fund.nav_history[0].nav_per_share)
             
             for i, nav in enumerate(self.fund.nav_history[1:], 1):
-                if i > 0:
-                    prev = self.fund.nav_history[i-1]
-                    daily_return = (float(nav.nav_per_share) - float(prev.nav_per_share)) / float(prev.nav_per_share) * 100
-                    cumulative += daily_return
-                else:
-                    daily_return = 0
-                    cumulative = 0
-                
+                current_nav = float(nav.nav_per_share)
+                # Vero calcolo cumulativo percentuale
+                cumulative = ((current_nav / base_nav) - 1) * 100
                 returns.append(cumulative)
                 dates.append(nav.date.strftime("%Y-%m-%d"))
             
