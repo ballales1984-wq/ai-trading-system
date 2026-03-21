@@ -22,7 +22,7 @@ timeout /t 3 /nobreak >nul
 
 :: 4. Avvio Monitoraggio ML (Porta 8050)
 echo [4/8] Avvio Monitoraggio ML (Porta 8050)...
-start "ML MONITOR - Porta 8050" cmd /c "python dashboard/dashboard.py"
+start "ML MONITOR - Porta 8050" cmd /c "python dashboard/app.py"
 timeout /t 3 /nobreak >nul
 
 :: 5. Avvio Investor Portal (Porta 8051)
