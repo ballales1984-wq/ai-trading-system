@@ -1,0 +1,56 @@
+{
+  "timestamp": "2026-03-21T19:53:55.278954",
+  "levels_passed": {
+    "level1_walkforward": "True",
+    "level2_paper": false,
+    "level3_small_capital": false,
+    "level4_stress": true
+  },
+  "recommendation": "NEEDS IMPROVEMENT",
+  "walk_forward": {
+    "periods": 5,
+    "mean_return": 0.03469372335674923,
+    "sharpe_mean": 1.1826490034742136,
+    "sharpe_std": 0.525080834315892,
+    "bootstrap_ci": [
+      0.009251550354837823,
+      0.07000199635254425
+    ],
+    "p_value": 1.0
+  },
+  "paper_trading": {
+    "sharpe_ratio": 1.678392730173686,
+    "sortino_ratio": 1.897987726295555,
+    "max_drawdown_percent": 14.50714306409916,
+    "win_rate": 0.0,
+    "profit_factor": 0.0,
+    "total_pnl": -17930.077000417237
+  },
+  "stress_tests": [
+    {
+      "scenario": "Flash Crash -30%",
+      "max_drawdown": 0.0524610346732011,
+      "survived": "True"
+    },
+    {
+      "scenario": "Regulatory Ban",
+      "max_drawdown": 0.06976707266654261,
+      "survived": "True"
+    },
+    {
+      "scenario": "Liquidity Crisis",
+      "max_drawdown": 0.036272273546102435,
+      "survived": "True"
+    },
+    {
+      "scenario": "Extended Sideways (6M)",
+      "max_drawdown": 0.1212757320786922,
+      "survived": "True"
+    },
+    {
+      "scenario": "Flash Rally +50%",
+      "max_drawdown": 0.002372945588606351,
+      "survived": "True"
+    }
+  ]
+}
