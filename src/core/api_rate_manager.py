@@ -152,7 +152,7 @@ class APIRateManager:
         """Genera una chiave di cache."""
         params_str = json.dumps(params or {}, sort_keys=True)
         hash_input = f"{api_name}:{endpoint}:{params_str}"
-        return hashlib.md5(hash_input.encode()).hexdigest()
+        return hashlib.sha256(hash_input.encode()).hexdigest()
     
     def _get_cache_file(self, cache_key: str) -> Path:
         """Ottiene il file di cache."""
@@ -216,7 +216,7 @@ class APIRateManager:
     def _hash_news(self, title: str, source: str = '') -> str:
         """Genera hash per una notizia."""
         content = f"{title.lower().strip()}:{source.lower()}"
-        return hashlib.md5(content.encode()).hexdigest()
+        return hashlib.sha256(content.encode()).hexdigest()
     
     def is_news_duplicate(self, title: str, source: str = '') -> bool:
         """Verifica se una notizia è duplicata."""
