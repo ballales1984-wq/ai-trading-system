@@ -1012,10 +1012,23 @@ def update_ml_fund_metrics(ml_data, backtest_data, fund_data, n_intervals):
                 if risk_resp.status_code == 200:
                     risk_data = risk_resp.json()
                     var_val = risk_data.get('var_1d', 0)
-                    if var_val and var_val > 0:
-                        var_val = f"{var_val:.2f}%"
-                    else:
-                        var_val = "N/A"
+                    # Get portfolio value to calculate VaR as percentage
+                    try:
+                        portfolio_resp = requests.get(f"{API_BASE_URL}/api/v1/portfolio/summary", timeout=5)
+                        if portfolio_resp.status_code == 200:
+                            portfolio_data = portfolio_resp.json()
+                            total_value = portfolio_data.get('total_value', 1)
+                            if total_value > 0 and var_val and var_val > 0:
+                                var_pct = (var_val / total_value) * 100
+                                var_val = f"${var_val:,.0f} ({var_pct:.1f}%)"
+                            elif var_val and var_val > 0:
+                                var_val = f"${var_val:,.0f}"
+                            else:
+                                var_val = "N/A"
+                        else:
+                            var_val = f"${var_val:,.0f}" if var_val and var_val > 0 else "N/A"
+                    except:
+                        var_val = f"${var_val:,.0f}" if var_val and var_val > 0 else "N/A"
                 else:
                     var_val = "N/A"
             except Exception as e:

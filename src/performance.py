@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from src.risk import sortino_ratio, calmar_ratio, max_drawdown as calculate_max_drawdown
 
 def calculate_risk_adjusted_returns(returns, risk_free_rate=0.0):
     """
@@ -35,21 +36,21 @@ def calculate_all_performance_metrics(returns, equity_curve, benchmark_returns=N
     ann_ret = annual_return(returns, periods_per_year)
     ann_vol = annual_volatility(returns, periods_per_year)
     
-    # Placeholder for other metrics
+    # Calculate ratios using robust risk module
     sharpe = calculate_risk_adjusted_returns(returns, risk_free_rate)
+    sortino = sortino_ratio(returns, risk_free_rate, periods_per_year)
+    calmar = calmar_ratio(returns, equity_curve, periods_per_year)
     
     # Calculate drawdown
-    peak = equity_curve.expanding().max()
-    drawdown = (equity_curve - peak) / peak
-    max_dd = drawdown.min()
+    max_dd_val, _, _ = calculate_max_drawdown(equity_curve)
     
     return {
         'annual_return': ann_ret,
         'annual_volatility': ann_vol,
         'sharpe_ratio': sharpe,
-        'sortino_ratio': sharpe,  # placeholder
-        'calmar_ratio': sharpe,   # placeholder
-        'max_drawdown': abs(max_dd)
+        'sortino_ratio': sortino,
+        'calmar_ratio': calmar,
+        'max_drawdown': abs(max_dd_val)
     }
 
 def annual_return(returns, periods_per_year=252):
