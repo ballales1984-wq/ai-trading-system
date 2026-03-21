@@ -525,3 +525,26 @@ class ImprovedPricePredictor:
         self.is_trained = model_data.get('is_trained', False)
         
         logger.info(f"Model loaded from {filepath}")
+
+
+# ============================================================================
+# COMPATIBILITY LAYER
+# ============================================================================
+
+_predictor_instance = None
+
+
+def get_ml_predictor(config: Optional[Dict] = None) -> ImprovedPricePredictor:
+    """
+    Get or create singleton ML predictor instance.
+    This provides a consistent interface for the entire application.
+    """
+    global _predictor_instance
+    if _predictor_instance is None:
+        _predictor_instance = ImprovedPricePredictor(config)
+    return _predictor_instance
+
+
+# Alias for backward compatibility with older modules
+PricePredictor = ImprovedPricePredictor
+
