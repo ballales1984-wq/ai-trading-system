@@ -17,6 +17,23 @@ import logging
 from datetime import datetime
 from typing import Dict, List, Optional
 import time
+from pathlib import Path
+
+def load_env_paper_trading():
+    """Load environment variables from .env.paper_trading if exists."""
+    env_path = Path(__file__).parent.parent / ".env.paper_trading"
+    if env_path.exists():
+        with open(env_path) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    # Skip placeholder values
+                    if value and not value.startswith('your_') and not value.endswith('_here'):
+                        os.environ.setdefault(key, value)
+                        
+# Load env on import
+load_env_paper_trading()
 
 # Configure logging
 logging.basicConfig(
@@ -47,16 +64,20 @@ class BinanceTestnetTrader:
         api_secret: Optional[str] = None,
         initial_balance: float = 100000.0
     ):
-        self.api_key = api_key or os.getenv('BINANCE_TESTNET_API_KEY')
-        self.api_secret = api_secret or os.getenv('BINANCE_TESTNET_API_SECRET')
+        # Try different env var names
+        self.api_key = api_key or os.getenv('BINANCE_API_KEY') or os.getenv('BINANCE_TESTNET_API_KEY')
+        self.api_secret = api_secret or os.getenv('BINANCE_SECRET_KEY') or os.getenv('BINANCE_TESTNET_API_SECRET')
         self.initial_balance = initial_balance
         
         self.client = None
         self.connected = False
         self.trades: List[Dict] = []
         self.balance = initial_balance
+        self.symbol_filters = {}  # Store min quantity per symbol
         
         self._connect()
+        if self.connected:
+            self._load_symbol_filters()
     
     def _connect(self):
         """Connect to Binance Testnet."""
@@ -73,6 +94,24 @@ class BinanceTestnetTrader:
             logger.warning("python-binance not installed - simulation mode")
         except Exception as e:
             logger.warning(f"Connection failed: {e}")
+    
+    def _load_symbol_filters(self):
+        """Load symbol filters to get min quantity per symbol."""
+        try:
+            info = self.client.get_exchange_info()
+            for symbol_info in info['symbols']:
+                symbol = symbol_info['symbol']
+                for f in symbol_info.get('filters', []):
+                    if f['filterType'] == 'LOT_SIZE':
+                        self.symbol_filters[symbol] = {
+                            'minQty': float(f['minQty']),
+                            'maxQty': float(f['maxQty']),
+                            'stepSize': float(f['stepSize'])
+                        }
+                        break
+            logger.info(f"Loaded filters for {len(self.symbol_filters)} symbols")
+        except Exception as e:
+            logger.warning(f"Could not load symbol filters: {e}")
     
     def get_balance(self) -> float:
         """Get current USDT balance."""
@@ -108,13 +147,30 @@ class BinanceTestnetTrader:
             return self._simulate_order(symbol, side, quantity)
         
         try:
+            # Apply symbol filters (LOT_SIZE)
+            if symbol in self.symbol_filters:
+                filters = self.symbol_filters[symbol]
+                min_qty = filters['minQty']
+                step_size = filters['stepSize']
+                # Round to step size and ensure min quantity
+                quantity = max(min_qty, quantity)
+                quantity = round(quantity / step_size) * step_size
+                # Format to remove floating point errors
+                quantity = float(f'{quantity:.8f}'.rstrip('0').rstrip('.'))
+            else:
+                # Fallback: round to 8 decimals
+                quantity = round(quantity, 8)
+            
             order = self.client.create_order(
                 symbol=symbol, side=side, type=order_type, quantity=quantity
             )
+            # Get price from order response (for MARKET orders)
+            price = float(order.get('price', order.get('cummulativeQuoteAssetQty', 0)))
             self.trades.append({
                 'timestamp': datetime.now().isoformat(),
                 'symbol': symbol, 'side': side, 'quantity': quantity,
-                'order_id': order.get('orderId'), 'status': order.get('status')
+                'price': price, 'order_id': order.get('orderId'), 
+                'status': order.get('status'), 'real': True
             })
             logger.info(f"Order: {side} {quantity} {symbol}")
             return order
