@@ -1,0 +1,100 @@
+# Nightly Validation Workflow
+# Runs automated testing framework every night
+
+name: Nightly Validation
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # Every day at 3 AM UTC
+  workflow_dispatch:  # Allow manual trigger
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+      
+      - name: Run Level 1 - Walk-Forward Backtest
+        run: |
+          python -m tests.automated_testing_framework --level 1 --output walkforward_report.json
+        continue-on-error: true
+      
+      - name: Run Level 2 - Paper Trading
+        run: |
+          python -m tests.automated_testing_framework --level 2 --output paper_trading_report.json
+        continue-on-error: true
+      
+      - name: Run Level 3 - Small Capital
+        run: |
+          python -m tests.automated_testing_framework --level 3 --output small_capital_report.json
+        continue-on-error: true
+      
+      - name: Run Level 4 - Stress Tests
+        run: |
+          python -m tests.automated_testing_framework --level 4 --output stress_test_report.json
+        continue-on-error: true
+      
+      - name: Run Full Validation
+        run: |
+          python -m tests.automated_testing_framework --output validation_report.json
+      
+      - name: Upload Validation Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: validation-report
+          path: |
+            validation_report.json
+            walkforward_report.json
+            paper_trading_report.json
+            small_capital_report.json
+            stress_test_report.json
+          retention-days: 30
+      
+      - name: Create Summary Comment
+        if: github.event_name == 'schedule'
+        run: |
+          echo "## Nightly Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f validation_report.json ]; then
+            echo "Full validation report available in artifacts" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Check if Ready for Production
+        if: always()
+        run: |
+          if [ -f validation_report.json ]; then
+            REC=$(python -c "import json; print(json.load(open('validation_report.json')).get('recommendation', 'UNKNOWN'))")
+            if [ "$REC" = "APPROVED FOR PRODUCTION" ]; then
+              echo "✅ System ready for production"
+              exit 0
+            else
+              echo "❌ System needs improvement: $REC"
+              exit 1
+            fi
+          fi
