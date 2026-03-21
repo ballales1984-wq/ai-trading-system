@@ -149,7 +149,7 @@ class DataAggregator:
             try:
                 if self.data_collector:
                     # Usa DataCollector reale
-                    data = self.data_collector.get_market_data(symbol)
+                    data = self.data_collector.fetch_market_data(symbol)
                     market_data[symbol] = data
                 else:
                     # Simula dati
@@ -176,7 +176,7 @@ class DataAggregator:
             try:
                 if self.sentiment_analyzer:
                     # Usa SentimentAnalyzer reale
-                    data = self.sentiment_analyzer.analyze(symbol)
+                    data = self.sentiment_analyzer.analyze_asset_sentiment(symbol)
                     sentiment_data[symbol] = data
                 else:
                     # Simula sentiment

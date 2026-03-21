@@ -221,7 +221,7 @@ async def get_all_signals(
                             signals.append(Signal(
                                 strategy_id=strategy_id,
                                 symbol=symbol,
-                                direction="LONG" if pred['prediction'] > 0 else "SHORT" if pred['prediction'] < 0 else "CLOSE",
+                                direction="LONG" if pred['signal'] > 0 else "SHORT" if pred['signal'] < 0 else "CLOSE",
                                 confidence=pred['confidence'],
                                 timestamp=datetime.utcnow(),
                                 metadata={"ml_model": pred.get("model_used", "ensemble")}
@@ -270,7 +270,7 @@ async def get_strategy_signals(
                         signals.append(Signal(
                             strategy_id=strategy_id,
                             symbol=symbol,
-                            direction="LONG" if pred['prediction'] > 0 else "SHORT" if pred['prediction'] < 0 else "CLOSE",
+                            direction="LONG" if pred['signal'] > 0 else "SHORT" if pred['signal'] < 0 else "CLOSE",
                             confidence=pred['confidence'],
                             timestamp=datetime.utcnow(),
                             metadata={"ml_model": pred.get("model_used", "ensemble")}

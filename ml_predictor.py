@@ -534,14 +534,14 @@ class ImprovedPricePredictor:
 _predictor_instance = None
 
 
-def get_ml_predictor(config: Optional[Dict] = None) -> ImprovedPricePredictor:
+def get_ml_predictor(use_meta_labeling: bool = True) -> ImprovedPricePredictor:
     """
     Get or create singleton ML predictor instance.
     This provides a consistent interface for the entire application.
     """
     global _predictor_instance
     if _predictor_instance is None:
-        _predictor_instance = ImprovedPricePredictor(config)
+        _predictor_instance = ImprovedPricePredictor(use_meta_labeling=use_meta_labeling)
     return _predictor_instance
 
 
