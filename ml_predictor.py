@@ -238,6 +238,10 @@ class ImprovedPricePredictor:
             # Simple binary labels
             labels = (future_returns > threshold).astype(int)
         
+        # Final check: ensure it's a Series
+        if isinstance(labels, pd.DataFrame):
+            labels = labels.iloc[:, 0]
+            
         return labels.fillna(0)
 
     def train(
@@ -280,105 +284,90 @@ class ImprovedPricePredictor:
         # Scale features
         X_scaled = self.scaler.fit_transform(X)
         
+        # Map labels to [0, 1, 2] if multiclass [-1, 0, 1]
+        y_mapped = y.copy()
+        if set(y.unique()).issubset({-1, 0, 1}):
+            y_mapped = y.replace({-1: 0, 0: 1, 1: 2})
+            logger.info("Mapped labels [-1, 0, 1] to [0, 1, 2]")
+        
         # Train models
         n_samples = len(X_scaled)
         train_size = int(n_samples * (1 - test_size))
         
         X_train, X_test = X_scaled[:train_size], X_scaled[train_size:]
-        y_train, y_test = y.values[:train_size], y.values[train_size:]
+        y_train, y_test = y_mapped.values[:train_size], y_mapped.values[train_size:]
         
         # Random Forest
-        self.rf_model = RandomForestClassifier(
-            n_estimators=100,
-            max_depth=10,
-            random_state=42,
-            n_jobs=-1
-        )
+        self.rf_model = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42, n_jobs=-1)
         self.rf_model.fit(X_train, y_train)
         
         # Gradient Boosting
-        self.gb_model = GradientBoostingClassifier(
-            n_estimators=100,
-            max_depth=5,
-            random_state=42
-        )
+        self.gb_model = GradientBoostingClassifier(n_estimators=100, max_depth=5, random_state=42)
         self.gb_model.fit(X_train, y_train)
         
         # Extra Trees
-        self.et_model = ExtraTreesClassifier(
-            n_estimators=100,
-            max_depth=10,
-            random_state=42,
-            n_jobs=-1
-        )
+        self.et_model = ExtraTreesClassifier(n_estimators=100, max_depth=10, random_state=42, n_jobs=-1)
         self.et_model.fit(X_train, y_train)
         
         # XGBoost (if available)
         if XGBOOST_AVAILABLE:
-            self.xgb_model = XGBClassifier(
-                n_estimators=100,
-                max_depth=5,
-                learning_rate=0.1,
-                random_state=42,
-                use_label_encoder=False,
-                eval_metric='logloss'
-            )
+            self.xgb_model = XGBClassifier(n_estimators=100, max_depth=5, learning_rate=0.1, random_state=42, use_label_encoder=False, eval_metric='mlogloss')
             self.xgb_model.fit(X_train, y_train)
         
-        # Calculate metrics
         self.is_trained = True
         self.training_metrics['n_samples'] = n_samples
         
         # Ensemble prediction
-        y_pred_proba = self._ensemble_predict_proba(X_test)
-        y_pred = (y_pred_proba > 0.5).astype(int)
-        
-        # Calculate metrics
-        self.training_metrics['accuracy'] = accuracy_score(y_test, y_pred)
-        self.training_metrics['precision'] = precision_score(y_test, y_pred, zero_division=0)
-        self.training_metrics['recall'] = recall_score(y_test, y_pred, zero_division=0)
-        self.training_metrics['f1'] = f1_score(y_test, y_pred, zero_division=0)
-        
         try:
-            self.training_metrics['auc'] = roc_auc_score(y_test, y_pred_proba)
-        except ValueError:
-            self.training_metrics['auc'] = 0.0
-        
-        # Cross-validation
-        tscv = TimeSeriesSplit(n_splits=3)
-        cv_scores = cross_val_score(
-            self.rf_model, X_scaled, y.values, cv=tscv, scoring='accuracy'
-        )
-        self.training_metrics['cv_mean'] = cv_scores.mean()
-        self.training_metrics['cv_std'] = cv_scores.std()
+            y_pred_proba = self._ensemble_predict_proba(X_test)
+            if len(y_pred_proba.shape) > 1 and y_pred_proba.shape[1] > 1:
+                y_pred_idx = np.argmax(y_pred_proba, axis=1)
+                classes = self.rf_model.classes_
+                y_pred = np.array([classes[i] for i in y_pred_idx])
+            else:
+                y_pred = (y_pred_proba > 0.5).astype(int)
+            
+            # Ensure 1D for metrics
+            y_test_1d = np.array(y_test).flatten()
+            y_pred_1d = np.array(y_pred).flatten()
+            
+            self.training_metrics['accuracy'] = accuracy_score(y_test_1d, y_pred_1d)
+            self.training_metrics['precision'] = precision_score(y_test_1d, y_pred_1d, average='weighted', zero_division=0)
+            self.training_metrics['recall'] = recall_score(y_test_1d, y_pred_1d, average='weighted', zero_division=0)
+            self.training_metrics['f1'] = f1_score(y_test_1d, y_pred_1d, average='weighted', zero_division=0)
+        except Exception as e:
+            logger.warning(f"Error calculating training metrics: {e}")
         
         logger.info(f"Training complete. Metrics: {self.training_metrics}")
+        return self.training_metrics
         return self.training_metrics
     
     def _ensemble_predict_proba(self, X: np.ndarray) -> np.ndarray:
         """Get ensemble probability predictions"""
         probas = []
+        n_classes = len(self.rf_model.classes_) if self.rf_model else 2
         
         if self.rf_model:
-            probas.append(self.rf_model.predict_proba(X)[:, 1] if len(self.rf_model.classes_) > 1 else np.zeros(len(X)))
+            probas.append(self.rf_model.predict_proba(X))
         if self.gb_model:
-            probas.append(self.gb_model.predict_proba(X)[:, 1] if len(self.gb_model.classes_) > 1 else np.zeros(len(X)))
+            probas.append(self.gb_model.predict_proba(X))
         if self.et_model:
-            probas.append(self.et_model.predict_proba(X)[:, 1] if len(self.et_model.classes_) > 1 else np.zeros(len(X)))
+            probas.append(self.et_model.predict_proba(X))
         if self.xgb_model and XGBOOST_AVAILABLE:
-            probas.append(self.xgb_model.predict_proba(X)[:, 1])
+            probas.append(self.xgb_model.predict_proba(X))
         
         if not probas:
-            return np.zeros(len(X))
+            return np.zeros((len(X), n_classes))
         
         # Weighted average
         weights = [self.model_weights.get(k, 0.25) for k in ['rf', 'gb', 'et', 'xgb'][:len(probas)]]
         total = sum(weights)
         weights = [w/total for w in weights]
         
-        ensemble = np.zeros(len(X))
+        ensemble = np.zeros_like(probas[0])
         for proba, weight in zip(probas, weights):
-            ensemble += proba * weight
+            if proba.shape == ensemble.shape:
+                ensemble += proba * weight
         
         return ensemble
     
@@ -416,18 +405,39 @@ class ImprovedPricePredictor:
         X_scaled = self.scaler.transform(X)
         
         # Get ensemble prediction
-        proba = self._ensemble_predict_proba(X_scaled)[0]
+        probs = self._ensemble_predict_proba(X_scaled)[0]
         
-        # Signal based on probability
-        signal = 1 if proba > 0.6 else -1 if proba < 0.4 else 0
+        if len(probs) > 1:
+            # Multiclass [-1, 0, 1]
+            # Assumiamo mapping: idx 0 -> -1, idx 1 -> 0, idx 2 -> 1
+            # Se le classi sono diverse, usiamo il mapping del modello
+            classes = list(self.rf_model.classes_)
+            prob_up = probs[classes.index(1)] if 1 in classes else 0
+            prob_down = probs[classes.index(-1)] if -1 in classes else 0
+            
+            # Signal based on the strongest class if it exceeds threshold
+            if prob_up > 0.45: # Soglia multiclasse
+                signal = 1
+                probability = float(prob_up)
+            elif prob_down > 0.45:
+                signal = -1
+                probability = float(prob_down)
+            else:
+                signal = 0
+                probability = float(probs[classes.index(0)] if 0 in classes else 0.5)
+        else:
+            # Binary
+            proba = float(probs[0])
+            signal = 1 if proba > 0.6 else -1 if proba < 0.4 else 0
+            probability = proba
         
-        # Confidence based on distance from 0.5
-        confidence = abs(proba - 0.5) * 2
+        # Confidence based on max probability
+        confidence = float(np.max(probs)) if len(probs) > 1 else abs(probability - 0.5) * 2
         
         return {
             'signal': signal,
-            'probability': float(proba),
-            'confidence': float(confidence),
+            'probability': probability,
+            'confidence': confidence,
             'model_ready': True
         }
     
