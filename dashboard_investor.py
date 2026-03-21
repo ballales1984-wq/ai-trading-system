@@ -460,8 +460,8 @@ class InvestorDashboard:
             
             fig.update_layout(
                 title="NAV History",
-                paper_bgcolor="transparent",
-                plot_bgcolor="transparent",
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
                 font=dict(color="#a0aec0"),
                 xaxis=dict(showgrid=False),
                 yaxis=dict(showgrid=True, gridcolor="#2d3748"),
@@ -502,8 +502,8 @@ class InvestorDashboard:
                 
                 fig.update_layout(
                     title="Cumulative Returns",
-                    paper_bgcolor="transparent",
-                    plot_bgcolor="transparent",
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
                     font=dict(color="#a0aec0"),
                     xaxis=dict(showgrid=False),
                     yaxis=dict(showgrid=True, gridcolor="#2d3748"),
@@ -536,8 +536,8 @@ class InvestorDashboard:
                 
                 fig.update_layout(
                     title="Portfolio Allocation",
-                    paper_bgcolor="transparent",
-                    plot_bgcolor="transparent",
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
                     font=dict(color="#a0aec0"),
                     showlegend=False,
                     margin=dict(l=40, r=40, t=40, b=40)
