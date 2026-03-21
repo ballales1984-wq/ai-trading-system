@@ -527,8 +527,8 @@ def run_backtest_analysis(data):
         # Generate signals
         signals = generate_composite_signal(df)
         
-        # Run backtest
-        result = run_backtest(df, signals, initial_capital=10000)
+        # Run backtest with Hedge Fund standard capital
+        result = run_backtest(df, signals, initial_capital=1000000)
         
         # Calculate risk metrics
         risk_metrics = calculate_all_risk_metrics(
@@ -999,40 +999,19 @@ def update_ml_fund_metrics(ml_data, backtest_data, fund_data, n_intervals):
         performance = portfolio_data.get('performance', {})
         
         if performance:
-            # Get sortino from live API
+            # Get sortino and VaR directly from performance metrics
             sortino = performance.get('sortino_ratio', 0)
-            if sortino is not None:
-                sortino = f"{sortino:.2f}"
-            else:
-                sortino = "N/A"
+            sortino = f"{sortino:.2f}" if sortino is not None else "N/A"
             
-            # Get VaR from risk API (not performance!)
-            try:
-                risk_resp = requests.get(f"{API_BASE_URL}/api/v1/risk/metrics", timeout=5)
-                if risk_resp.status_code == 200:
-                    risk_data = risk_resp.json()
-                    var_val = risk_data.get('var_1d', 0)
-                    # Get portfolio value to calculate VaR as percentage
-                    try:
-                        portfolio_resp = requests.get(f"{API_BASE_URL}/api/v1/portfolio/summary", timeout=5)
-                        if portfolio_resp.status_code == 200:
-                            portfolio_data = portfolio_resp.json()
-                            total_value = portfolio_data.get('total_value', 1)
-                            if total_value > 0 and var_val and var_val > 0:
-                                var_pct = (var_val / total_value) * 100
-                                var_val = f"${var_val:,.0f} ({var_pct:.1f}%)"
-                            elif var_val and var_val > 0:
-                                var_val = f"${var_val:,.0f}"
-                            else:
-                                var_val = "N/A"
-                        else:
-                            var_val = f"${var_val:,.0f}" if var_val and var_val > 0 else "N/A"
-                    except:
-                        var_val = f"${var_val:,.0f}" if var_val and var_val > 0 else "N/A"
-                else:
-                    var_val = "N/A"
-            except Exception as e:
-                print(f"Error fetching VaR: {e}")
+            # Use VaR from performance API (already calculates based on total value)
+            var_val_abs = performance.get('var_1d')
+            var_pct_val = performance.get('var_pct')
+            
+            if var_val_abs and var_pct_val:
+                var_val = f"${var_val_abs:,.0f} ({var_pct_val:.1f}%)"
+            elif var_val_abs:
+                var_val = f"${var_val_abs:,.0f}"
+            else:
                 var_val = "N/A"
         else:
             sortino = "N/A"
@@ -1042,11 +1021,10 @@ def update_ml_fund_metrics(ml_data, backtest_data, fund_data, n_intervals):
         sortino = "N/A"
         var_val = "N/A"
     
-    # Fund metrics - try live API first
+    # Fund metrics - try live API first (using summary already fetched above)
     fund_net = "N/A"
     try:
-        portfolio_data = get_live_portfolio_metrics()
-        summary = portfolio_data.get('summary', {})
+        # summary was already populated from portfolio_data at lines 998-1000
         if summary:
             fund_net = f"{summary.get('total_return_pct', 0):+.2f}%"
         elif fund_data:

@@ -246,6 +246,8 @@ def _build_performance_metrics_from_mock() -> PerformanceMetrics:
         num_trades=int(data.get("total_trades", 0)),
         num_winning_trades=int(data.get("winning_trades", 0)),
         num_losing_trades=int(data.get("losing_trades", 0)),
+        var_1d=12500.0,  # Default mock
+        var_pct=1.25     # Default mock
     )
 
 
@@ -390,6 +392,8 @@ class PerformanceMetrics(BaseModel):
     num_trades: int
     num_winning_trades: int
     num_losing_trades: int
+    var_1d: Optional[float] = None
+    var_pct: Optional[float] = None
 
 
 class HistoryEntry(BaseModel):
@@ -916,6 +920,18 @@ async def get_performance_metrics() -> PerformanceMetrics:
         if num_winning_trades == 0 and num_losing_trades == 0:
             return _build_performance_metrics_from_mock()
 
+        # Calculate real VaR if we have enough data
+        var_1d = None
+        var_pct = None
+        
+        if len(daily_returns) > 5:
+            from src.risk import value_at_risk
+            returns_series = pd.Series(daily_returns)
+            var_pct_val = value_at_risk(returns_series, confidence=0.95)
+            var_pct = var_pct_val * 100
+            current_value = values[-1] if values else 1.0
+            var_1d = var_pct_val * current_value
+
         return PerformanceMetrics(
             total_return=total_return_abs,
             total_return_pct=m.total_return * 100,
@@ -931,6 +947,8 @@ async def get_performance_metrics() -> PerformanceMetrics:
             num_trades=num_trades,
             num_winning_trades=num_winning_trades,
             num_losing_trades=num_losing_trades,
+            var_1d=var_1d,
+            var_pct=var_pct
         )
 
     # Fallback when historical series is not available yet.
