@@ -22,9 +22,7 @@ import pstats
 import io
 import functools
 
-# profile is used as a decorator class
-profile = cProfile.Profile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Callable, Dict, List, Optional, Any
 from enum import Enum
 import json
@@ -92,8 +90,6 @@ def time_execution(func: Callable) -> Callable:
     
     return wrapper
 
-logger = logging.getLogger(__name__)
-
 
 class ScheduleType(Enum):
     """Types of scheduled tasks"""
@@ -146,7 +142,7 @@ class ScheduledTask:
         
     def calculate_next_run(self) -> datetime:
         """Calculate next run time based on schedule type"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         if self.schedule_type == ScheduleType.INTERVAL:
             self.next_run = now + timedelta(seconds=self.interval_seconds or 60)
@@ -294,7 +290,7 @@ class TaskScheduler:
                 task.last_error = str(e)
                 logger.error(f"Task {task_id} failed: {e}")
             finally:
-                task.last_run = datetime.utcnow()
+                task.last_run = datetime.now(timezone.utc)
                 task.run_count += 1
                 task.calculate_next_run()
                 self._save_state()
@@ -330,39 +326,12 @@ class TaskScheduler:
         self._save_state()
         logger.info("Task scheduler stopped")
     
-    @profile
-    async def _execute_task(self, task: ScheduledTask):
-        """Execute a single task"""
-        task.status = TaskStatus.RUNNING
-        
-        try:
-            if asyncio.iscoroutinefunction(task.func):
-                await task.func(**task.kwargs)
-            else:
-                task.func(**task.kwargs)
-                
-            task.status = TaskStatus.COMPLETED
-            task.last_error = None
-            logger.debug(f"Task {task.task_id} completed successfully")
-            
-        except Exception as e:
-            task.status = TaskStatus.FAILED
-            task.error_count += 1
-            task.last_error = str(e)
-            logger.error(f"Task {task.task_id} failed: {e}")
-            
-        finally:
-            task.last_run = datetime.utcnow()
-            task.run_count += 1
-            task.calculate_next_run()
-            self._save_state()
-    
     async def _run_scheduler(self):
         """Main scheduler loop"""
         while self.running:
             try:
                 async with self._lock:
-                    now = datetime.utcnow()
+                    now = datetime.now(timezone.utc)
                     
                     for task_id, task in list(self.tasks.items()):
                         if not task.enabled:
@@ -398,7 +367,7 @@ class TaskScheduler:
             logger.error(f"Task {task.task_id} failed: {e}")
             
         finally:
-            task.last_run = datetime.utcnow()
+            task.last_run = datetime.now(timezone.utc)
             task.run_count += 1
             task.calculate_next_run()
             self._save_state()
@@ -510,7 +479,7 @@ def init_scheduler() -> TaskScheduler:
         name="Daily Risk Check",
         func=perform_risk_check,
         schedule_type=ScheduleType.DAILY,
-        run_time=datetime.utcnow().replace(hour=8, minute=0)
+        run_time=datetime.now(timezone.utc).replace(hour=8, minute=0, second=0, microsecond=0)
     )
     
     scheduler.add_task(
@@ -518,7 +487,8 @@ def init_scheduler() -> TaskScheduler:
         name="Weekly Performance Report",
         func=generate_performance_report,
         schedule_type=ScheduleType.WEEKLY,
-        run_time=datetime.utcnow().replace(hour=9, minute=0, weekday=0)
+        run_time=datetime.now(timezone.utc).replace(hour=9, minute=0, second=0, microsecond=0)
+        # weekday is NOT a valid argument for datetime.replace(); use calculate_next_run() logic instead
     )
     
     return scheduler

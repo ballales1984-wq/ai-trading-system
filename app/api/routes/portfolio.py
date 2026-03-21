@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 import random
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Dict
 from uuid import uuid4
 
@@ -210,7 +210,7 @@ def _initialize_default_positions():
                 "leverage": 1.0,
                 "margin_used": value,
                 "opened_at": "2026-02-15T10:00:00",
-                "updated_at": datetime.now().isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
             })
         
         portfolio_data["cash_balance"] = round(remaining_cash, 2)
@@ -568,8 +568,9 @@ async def get_portfolio_summary() -> PortfolioSummary:
         starting_capital = portfolio_data.get("initial_balance", PAPER_INITIAL_BALANCE)
         if starting_capital <= 0:
             starting_capital = 1000000.0
-        daily_pnl = total_pnl * 0.1
-        daily_return_pct = (daily_pnl / starting_capital) * 100 if starting_capital > 0 else 0
+        # daily_pnl cannot be calculated without historical baseline; use 0 as safe default
+        daily_pnl = 0.0
+        daily_return_pct = 0.0
         total_return_pct = ((total_value - starting_capital) / starting_capital) * 100 if starting_capital > 0 else 0
     
     return PortfolioSummary(
@@ -684,7 +685,7 @@ def _safe_parse_timestamp(value: str) -> datetime:
     try:
         return datetime.fromisoformat(value)
     except Exception:
-        return datetime.utcnow()
+        return datetime.now(timezone.utc)
 
 
 def _compute_performance_from_history(
@@ -699,7 +700,7 @@ def _compute_performance_from_history(
     tracker = PortfolioPerformanceTracker(initial_capital=float(values[0]), risk_free_rate=risk_free_rate)
     ts = timestamps or []
     for i, val in enumerate(values[1:], start=1):
-        timestamp = ts[i] if i < len(ts) else datetime.utcnow()
+        timestamp = ts[i] if i < len(ts) else datetime.now(timezone.utc)
         tracker.record_equity(float(val), timestamp=timestamp)
 
     return tracker
@@ -763,7 +764,7 @@ async def list_positions(
             leverage=1.0,
             margin_used=p["market_value"],
             opened_at=datetime.fromisoformat(p["opened_at"]),
-            updated_at=datetime.utcnow(),
+            updated_at=datetime.now(timezone.utc),
         ) for p in positions]
     
     # DEMO_MODE is false - check for existing portfolio_data (paper trading positions)

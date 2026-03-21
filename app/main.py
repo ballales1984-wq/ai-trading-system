@@ -56,20 +56,16 @@ from app.api.routes import (
 # Import audit classes
 from app.compliance.audit import AuditLogger, AuditEvent, AuditEventType
 
-# pyre-ignore[21]: Missing module attribute
+# Setup logging — must be defined BEFORE any usage (e.g. in the Prometheus try/except)
+setup_logging()
+logger = get_logger(__name__)
 
-
-# pyre-ignore[21]: Missing module attribute
 try:
     from app.metrics import get_metrics_app, instrument_requests
 except ImportError:
     logger.warning("Prometheus metrics disabled - install prometheus_client")
     get_metrics_app = None
     instrument_requests = None
-
-# Setup logging
-setup_logging()
-logger = get_logger(__name__)
 
 # Create FastAPI app
 app = FastAPI(

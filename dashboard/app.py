@@ -1004,11 +1004,20 @@ def update_ml_fund_metrics(ml_data, backtest_data, fund_data, n_intervals):
             else:
                 sortino = "N/A"
             
-            # Get VaR from live API
-            var_val = performance.get('var_95', 0)
-            if var_val is not None:
-                var_val = f"{var_val*100:.2f}%"  # Convert to percentage
-            else:
+            # Get VaR from risk API (not performance!)
+            try:
+                risk_resp = requests.get(f"{API_BASE_URL}/api/v1/risk/metrics", timeout=5)
+                if risk_resp.status_code == 200:
+                    risk_data = risk_resp.json()
+                    var_val = risk_data.get('var_1d', 0)
+                    if var_val and var_val > 0:
+                        var_val = f"{var_val:.2f}%"
+                    else:
+                        var_val = "N/A"
+                else:
+                    var_val = "N/A"
+            except Exception as e:
+                print(f"Error fetching VaR: {e}")
                 var_val = "N/A"
         else:
             sortino = "N/A"

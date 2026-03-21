@@ -4,7 +4,7 @@ Market Data Routes
 REST API for market data and price feeds.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 import random
 import os
@@ -116,7 +116,7 @@ async def get_price(symbol: str) -> PriceData:
             high_24h=data["high_24h"],
             low_24h=data["low_24h"],
             volume_24h=data["volume_24h"],
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
     
     # Simulated price data
@@ -149,7 +149,7 @@ async def get_price(symbol: str) -> PriceData:
         high_24h=base_price * 1.03,
         low_24h=base_price * 0.97,
         volume_24h=random.uniform(1000000, 10000000),
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
     )
 
 
@@ -174,7 +174,7 @@ async def get_all_prices() -> MarketOverview:
                 timestamp=datetime.utcnow(),
             ))
         return MarketOverview(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             markets=markets,
         )
     
@@ -190,7 +190,7 @@ async def get_all_prices() -> MarketOverview:
         markets.append(price_data)
     
     return MarketOverview(
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         markets=markets,
     )
 
@@ -216,12 +216,12 @@ async def get_candles(
             volume=c["volume"],
         ) for c in data]
     
-    # Generate sample candles
-    base_price = 43500.0 if "BTC" in symbol.upper() else 2350.0
+    # Use the same base_prices map to keep candles consistent with price endpoint
+    base_price = base_prices.get(symbol.upper(), 100.0)
     candles = []
     
     for i in range(limit):
-        timestamp = datetime.utcnow() - timedelta(hours=limit - i)
+        timestamp = datetime.now(timezone.utc) - timedelta(hours=limit - i)
         open_price = base_price * (1 + random.uniform(-0.02, 0.02))
         close_price = open_price * (1 + random.uniform(-0.01, 0.01))
         high_price = max(open_price, close_price) * (1 + random.uniform(0, 0.005))
@@ -258,7 +258,7 @@ async def get_orderbook(symbol: str) -> OrderBook:
         symbol=symbol.upper(),
         bids=bids,
         asks=asks,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
     )
 
 
@@ -289,7 +289,7 @@ async def get_recent_trades(
             "id": str(i),
             "price": price,
             "quantity": quantity,
-            "time": (datetime.utcnow() - timedelta(seconds=i * 10)).isoformat(),
+            "time": (datetime.now(timezone.utc) - timedelta(seconds=i * 10)).isoformat(),
             "is_buyer_maker": random.choice([True, False]),
         })
     
@@ -304,7 +304,7 @@ async def get_funding_rate(symbol: str) -> dict:
     return {
         "symbol": symbol.upper(),
         "funding_rate": 0.0001,
-        "next_funding_time": (datetime.utcnow() + timedelta(hours=8)).isoformat(),
+        "next_funding_time": (datetime.now(timezone.utc) + timedelta(hours=8)).isoformat(),
         "predicted_rate": 0.0001,
     }
 
@@ -320,7 +320,7 @@ async def get_index_price(symbol: str) -> dict:
         "symbol": symbol.upper(),
         "index_price": base_price,
         "mark_price": base_price * 1.0001,
-        "last_update": datetime.utcnow().isoformat(),
+        "last_update": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -346,7 +346,6 @@ async def get_market_sentiment() -> MarketSentiment:
             market_momentum=data["market_momentum"],
             last_updated=datetime.fromisoformat(data["last_updated"]),
         )
-
     
     # Fallback to simulated data
     fear_greed = random.randint(20, 80)
@@ -373,7 +372,7 @@ async def get_market_sentiment() -> MarketSentiment:
         trading_indicator=indicator,
         btc_dominance=round(random.uniform(52.0, 58.0), 2),
         market_momentum=round(random.uniform(-5.0, 15.0), 2),
-        last_updated=datetime.utcnow(),
+        last_updated=datetime.now(timezone.utc),
     )
 
 
@@ -410,7 +409,7 @@ async def get_cmc_global_metrics() -> dict:
         metrics = await client.get_global_metrics()
         return {
             "source": "coinmarketcap",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "data": metrics,
         }
     except Exception as e:

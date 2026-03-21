@@ -62,13 +62,24 @@ class DataAdapter:
         if self.simulator:
             try:
                 status = self.simulator.check_portfolio()
+                
+                # Calculate unrealized PnL from open positions
+                positions = status.get('positions_detail', {})
+                unrealized_pnl = 0.0
+                for pos in positions.values() if isinstance(positions, dict) else []:
+                    unrealized_pnl += pos.get('unrealized_pnl', 0)
+                
+                # total_pnl = realized + unrealized
+                total_pnl = status.get('total_pnl', 0)
+                realized_pnl = total_pnl - unrealized_pnl
+                
                 return {
                     "total_value": status.get('total_value', 0),
                     "cash_balance": status.get('balance', 0),
                     "market_value": status.get('total_value', 0) - status.get('balance', 0),
-                    "total_pnl": status.get('total_pnl', 0),
-                    "unrealized_pnl": status.get('total_pnl', 0),
-                    "realized_pnl": 0.0,
+                    "total_pnl": total_pnl,
+                    "unrealized_pnl": unrealized_pnl,
+                    "realized_pnl": realized_pnl,
                     "daily_pnl": 0.0,
                     "daily_return_pct": 0.0,
                     "total_return_pct": status.get('pnl_percent', 0),

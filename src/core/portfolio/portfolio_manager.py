@@ -38,6 +38,8 @@ class Position:
     realized_pnl: float = 0.0
     commission: float = 0.0
     leverage: float = 1.0
+    stop_loss: float = None  # Stop-loss price
+    take_profit: float = None  # Take-profit price
     opened_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
     
@@ -257,10 +259,12 @@ class PortfolioManager:
         quantity: float,
         price: float,
         commission: float = 0.0,
-        leverage: float = 1.0
+        leverage: float = 1.0,
+        stop_loss_pct: float = None,
+        take_profit_pct: float = None
     ) -> Position:
         """
-        Open a new position.
+        Open a new position with optional stop-loss and take-profit.
         
         Args:
             symbol: Trading symbol
@@ -269,6 +273,8 @@ class PortfolioManager:
             price: Entry price
             commission: Commission paid
             leverage: Position leverage
+            stop_loss_pct: Stop-loss percentage (e.g., 0.02 = 2%)
+            take_profit_pct: Take-profit percentage (e.g., 0.05 = 5%)
             
         Returns:
             Opened position
@@ -282,6 +288,21 @@ class PortfolioManager:
         if position_cost > self.available_balance:
             raise ValueError(f"Insufficient balance: {self.available_balance} < {position_cost}")
         
+        # Calculate stop-loss and take-profit prices
+        stop_loss_price = None
+        take_profit_price = None
+        
+        if side.upper() == 'LONG':
+            if stop_loss_pct is not None:
+                stop_loss_price = price * (1 - stop_loss_pct)
+            if take_profit_pct is not None:
+                take_profit_price = price * (1 + take_profit_pct)
+        else:  # SHORT
+            if stop_loss_pct is not None:
+                stop_loss_price = price * (1 + stop_loss_pct)
+            if take_profit_pct is not None:
+                take_profit_price = price * (1 - take_profit_pct)
+        
         # Get or create position
         position = self.positions.get(symbol)
         
@@ -291,9 +312,15 @@ class PortfolioManager:
                 entry_price=price,
                 current_price=price,
                 commission=commission,
-                leverage=leverage
+                leverage=leverage,
+                stop_loss=stop_loss_price,
+                take_profit=take_profit_price
             )
             self.positions[symbol] = position
+        else:
+            # Update existing position
+            position.stop_loss = stop_loss_price
+            position.take_profit = take_profit_price
         
         # Update position
         position.side = PositionSide.LONG if side.upper() == 'LONG' else PositionSide.SHORT
@@ -403,6 +430,61 @@ class PortfolioManager:
             'realized_pnl': self.realized_pnl,
             'commission': commission
         }
+    
+    def check_stop_loss_take_profit(self, prices: Dict[str, float], commission_pct: float = 0.001) -> List[Dict]:
+        """
+        Check all positions for stop-loss or take-profit triggers and close if needed.
+        
+        Args:
+            prices: Dict of symbol -> current price
+            commission_pct: Commission percentage per trade (default 0.1%)
+            
+        Returns:
+            List of closed positions with details
+        """
+        closed_positions = []
+        
+        for symbol, current_price in prices.items():
+            position = self.positions.get(symbol)
+            if not position or position.quantity == 0:
+                continue
+            
+            triggered = None
+            
+            # Check stop-loss
+            if position.stop_loss is not None:
+                if position.side == PositionSide.LONG and current_price <= position.stop_loss:
+                    triggered = 'stop_loss'
+                elif position.side == PositionSide.SHORT and current_price >= position.stop_loss:
+                    triggered = 'stop_loss'
+            
+            # Check take-profit
+            if triggered is None and position.take_profit is not None:
+                if position.side == PositionSide.LONG and current_price >= position.take_profit:
+                    triggered = 'take_profit'
+                elif position.side == PositionSide.SHORT and current_price <= position.take_profit:
+                    triggered = 'take_profit'
+            
+            if triggered:
+                # Close position
+                commission = position.quantity * current_price * commission_pct
+                try:
+                    result = self.close_position(
+                        symbol=symbol,
+                        quantity=position.quantity,
+                        price=current_price,
+                        commission=commission
+                    )
+                    result['trigger'] = triggered
+                    result['exit_price'] = current_price
+                    result['stop_loss'] = position.stop_loss
+                    result['take_profit'] = position.take_profit
+                    closed_positions.append(result)
+                    logger.info(f"🔒 {triggered.upper()} closed {symbol} @ {current_price} (SL: {position.stop_loss}, TP: {position.take_profit})")
+                except Exception as e:
+                    logger.error(f"Error closing {symbol}: {e}")
+        
+        return closed_positions
     
     def update_prices(self, prices: Dict[str, float]):
         """

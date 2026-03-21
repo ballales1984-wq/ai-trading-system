@@ -262,13 +262,7 @@ export default function Dashboard() {
       <div className="p-6">
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <MetricCard title="Total Value" value={formatCurrency(summary?.total_value || 0)} icon={DollarSign} trend={summary?.daily_return_pct} />
-              <MetricCard title="Daily P&L" value={formatCurrency(summary?.daily_pnl || 0)} icon={summary?.daily_pnl >= 0 ? TrendingUp : TrendingDown} color={summary?.daily_pnl >= 0 ? 'success' : 'danger'} />
-              <MetricCard title="Unrealized P&L" value={formatCurrency(summary?.unrealized_pnl || 0)} icon={summary?.unrealized_pnl >= 0 ? TrendingUp : TrendingDown} color={summary?.unrealized_pnl >= 0 ? 'success' : 'danger'} />
-              <MetricCard title="Open Positions" value={String(summary?.num_positions || 0)} icon={Wallet} />
-            </div>
-
+            {/* MetricCards are already shown above the tabs — no duplication here */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 premium-glass-panel">
                 <div className="p-6 border-b border-white/[0.05]">
