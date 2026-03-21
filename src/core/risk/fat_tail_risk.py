@@ -255,6 +255,10 @@ class FatTailRisk:
             """CVaR using POT method."""
             var = self.var_pot(alpha)
             
+            n = len(self.returns)
+            N_u = len(self.exceedances)
+            p = N_u / n
+            
             if abs(self.xi) < 1e-6:
                 cvar = self.threshold + self.beta * (1 + np.log(p / alpha))
             else:

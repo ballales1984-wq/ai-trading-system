@@ -100,6 +100,25 @@ class MarketSentiment(BaseModel):
 # ============================================================================
 
 
+# Simulated price data
+base_prices = {
+    "BTCUSDT": 66461.78,
+    "ETHUSDT": 3333.52,
+    "SOLUSDT": 152.12,
+    "BNBUSDT": 610.50,
+    "XRPUSDT": 2.45,
+    "ADAUSDT": 0.98,
+    "DOGEUSDT": 0.32,
+    "AVAXUSDT": 38.50,
+    "LINKUSDT": 18.20,
+    "MATICUSDT": 0.85,
+    "ATOMUSDT": 9.80,
+    "DOTUSDT": 7.20,
+    "UNIUSDT": 12.50,
+    "EURUSD": 1.0850,
+    "AAPL": 185.50,
+}
+
 @router.get("/price/{symbol}", response_model=PriceData)
 async def get_price(symbol: str) -> PriceData:
     """
@@ -118,25 +137,6 @@ async def get_price(symbol: str) -> PriceData:
             volume_24h=data["volume_24h"],
             timestamp=datetime.now(timezone.utc),
         )
-    
-    # Simulated price data
-    base_prices = {
-        "BTCUSDT": 66461.78,
-        "ETHUSDT": 3333.52,
-        "SOLUSDT": 152.12,
-        "BNBUSDT": 610.50,
-        "XRPUSDT": 2.45,
-        "ADAUSDT": 0.98,
-        "DOGEUSDT": 0.32,
-        "AVAXUSDT": 38.50,
-        "LINKUSDT": 18.20,
-        "MATICUSDT": 0.85,
-        "ATOMUSDT": 9.80,
-        "DOTUSDT": 7.20,
-        "UNIUSDT": 12.50,
-        "EURUSD": 1.0850,
-        "AAPL": 185.50,
-    }
     
     base_price = base_prices.get(symbol.upper(), 100.0)
     change = random.uniform(-5, 5)

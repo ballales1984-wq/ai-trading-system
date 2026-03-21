@@ -38,6 +38,11 @@ def calculate_all_performance_metrics(returns, equity_curve, benchmark_returns=N
     # Placeholder for other metrics
     sharpe = calculate_risk_adjusted_returns(returns, risk_free_rate)
     
+    # Calculate drawdown
+    peak = equity_curve.expanding().max()
+    drawdown = (equity_curve - peak) / peak
+    max_dd = drawdown.min()
+    
     return {
         'annual_return': ann_ret,
         'annual_volatility': ann_vol,

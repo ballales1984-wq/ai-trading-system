@@ -721,9 +721,8 @@ class BestExecutionEngine:
             if hasattr(algorithm, 'record_execution_result'):
                 algorithm.record_execution_result(
                     filled_quantity,
-                    sum(s.quantity for s in plan.slices),
                     execution_price,
-                    market_data.mid if hasattr(self, 'market_data') else execution_price
+                    execution_price  # Arrival price unknown here
                 )
     
     def calculate_expected_cost(

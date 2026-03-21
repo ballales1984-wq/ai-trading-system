@@ -459,8 +459,6 @@ async def update_balance(new_balance: float = Query(..., ge=1000, le=100000000, 
     Update the paper trading initial balance.
     This allows changing the portfolio value without restarting the server.
     """
-    global portfolio_data
-    
     # Update the balance
     portfolio_data["initial_balance"] = new_balance
     portfolio_data["cash_balance"] = new_balance
