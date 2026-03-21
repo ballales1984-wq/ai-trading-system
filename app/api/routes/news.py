@@ -15,6 +15,13 @@ from app.api.mock_data import get_news as mock_get_news
 # Import demo mode functions from portfolio (they share the same state)
 from app.core.demo_mode import get_demo_mode
 
+# AI Integration
+try:
+    from sentiment_concept_bridge import create_bridge
+    news_bridge = create_bridge()
+except ImportError:
+    news_bridge = None
+
 router = APIRouter()
 
 
@@ -69,32 +76,59 @@ async def get_news(
     Supports filtering by sentiment and category.
     Use refresh parameter to get fresh data with varied news.
     """
-    # Use mock data if demo mode is enabled
-    if get_demo_mode():
-        news_data = mock_get_news(limit=limit, refresh=refresh)
-        
-        # Apply sentiment filter if provided
-        if sentiment:
-            sentiment_lower = sentiment.lower()
-            news_data = [n for n in news_data if n["sentiment"] == sentiment_lower]
-        
-        # Apply category filter if provided
-        if category:
-            category_lower = category.lower()
-            news_data = [n for n in news_data if n["category"] == category_lower]
-        
-        # Convert to Pydantic models
-        news_items = [NewsItem(**n) for n in news_data]
-        
-        return NewsListResponse(
-            news=news_items,
-            total=len(news_items),
-            last_updated=datetime.utcnow()
-        )
-    
-    # Production mode: would fetch from real news API
-    # For now, return mock data as fallback
+    # Production mode: try to fetch from real news API using the Bridge
+    if news_bridge and not get_demo_mode():
+        try:
+            # Use 'BTC' as default if no filter provided, or get general market news
+            asset_to_query = "BTC"  # Default for general news
+            analysis = news_bridge.get_comprehensive_analysis(asset_to_query)
+            
+            # Map Bridge result to NewsItem models
+            # Bridge provides 'news_sentiment' with 'news_count', etc.
+            # To get list of news, we might need to call fetch_news from bridge's analyzer
+            if bridge_analyzer := getattr(news_bridge, 'sentiment_analyzer', None):
+                raw_news = bridge_analyzer.fetch_news(assets=[asset_to_query], limit=limit, force_real=True)
+                news_items = []
+                for n in raw_news:
+                    # Detect concepts for this specific item for extra enrichment
+                    concepts = news_bridge.detect_concepts_in_text(f"{n.title} {n.description}")
+                    
+                    news_items.append(NewsItem(
+                        id=str(hash(n.url)),
+                        title=n.title,
+                        source=n.source,
+                        url=n.url,
+                        summary=n.description[:200] + "..." if len(n.description) > 200 else n.description,
+                        sentiment="positive" if n.sentiment > 0.1 else ("negative" if n.sentiment < -0.1 else "neutral"),
+                        sentiment_score=n.sentiment,
+                        symbols=[asset_to_query],
+                        published_at=n.published_at,
+                        category=n.category or "market"
+                    ))
+                
+                return NewsListResponse(
+                    news=news_items,
+                    total=len(news_items),
+                    last_updated=datetime.utcnow()
+                )
+        except Exception as e:
+            from fastapi import logger as fast_logger
+            fast_logger.warning(f"AI News Bridge failed: {e}. Falling back to mock.")
+
+    # Fallback to mock data
     news_data = mock_get_news(limit=limit, refresh=refresh)
+    
+    # Apply sentiment filter if provided
+    if sentiment:
+        sentiment_lower = sentiment.lower()
+        news_data = [n for n in news_data if n["sentiment"] == sentiment_lower]
+    
+    # Apply category filter if provided
+    if category:
+        category_lower = category.lower()
+        news_data = [n for n in news_data if n["category"] == category_lower]
+    
+    # Convert to Pydantic models
     news_items = [NewsItem(**n) for n in news_data]
     
     return NewsListResponse(
@@ -117,20 +151,39 @@ async def get_news_by_symbol(
     """
     # Normalize symbol
     symbol_upper = symbol.upper()
+    asset_to_query = symbol_upper.replace("USDT", "")
     
-    # Use mock data if demo mode is enabled
-    if get_demo_mode():
-        news_data = mock_get_news(symbol=symbol_upper, limit=limit, refresh=refresh)
-        news_items = [NewsItem(**n) for n in news_data]
-        
-        return NewsBySymbolResponse(
-            symbol=symbol_upper,
-            news=news_items,
-            total=len(news_items),
-            last_updated=datetime.utcnow()
-        )
-    
-    # Production mode: would fetch from real news API with symbol filter
+    # Production mode: try to fetch from real news API using the Bridge
+    if news_bridge and not get_demo_mode():
+        try:
+            if bridge_analyzer := getattr(news_bridge, 'sentiment_analyzer', None):
+                raw_news = bridge_analyzer.fetch_news(assets=[asset_to_query], limit=limit, force_real=True)
+                news_items = []
+                for n in raw_news:
+                    news_items.append(NewsItem(
+                        id=str(hash(n.url)),
+                        title=n.title,
+                        source=n.source,
+                        url=n.url,
+                        summary=n.description[:200] + "..." if len(n.description) > 200 else n.description,
+                        sentiment="positive" if n.sentiment > 0.1 else ("negative" if n.sentiment < -0.1 else "neutral"),
+                        sentiment_score=n.sentiment,
+                        symbols=[symbol_upper],
+                        published_at=n.published_at,
+                        category=n.category or "market"
+                    ))
+                
+                return NewsBySymbolResponse(
+                    symbol=symbol_upper,
+                    news=news_items,
+                    total=len(news_items),
+                    last_updated=datetime.utcnow()
+                )
+        except Exception as e:
+            from fastapi import logger as fast_logger
+            fast_logger.warning(f"AI News Bridge (symbol) failed: {e}. Falling back to mock.")
+
+    # Fallback to mock data
     news_data = mock_get_news(symbol=symbol_upper, limit=limit, refresh=refresh)
     news_items = [NewsItem(**n) for n in news_data]
     
@@ -187,7 +240,34 @@ async def get_sentiment_overview() -> dict:
             "last_updated": datetime.utcnow().isoformat()
         }
     
-    # Production mode: would calculate from real news data
+    # Production mode: try to calculate from real news data using the Bridge
+    if news_bridge and not get_demo_mode():
+        try:
+            # Use 'BTC' as general market proxy for overall sentiment
+            analysis = news_bridge.get_comprehensive_analysis("BTC")
+            concept_sent = analysis.get('concept_sentiment', {})
+            
+            return {
+                "overall_sentiment": concept_sent.get('sentiment_label', 'Neutral').capitalize(),
+                "average_score": concept_sent.get('sentiment_score', 0.0),
+                "distribution": {
+                    "positive": concept_sent.get('positive_count', 0),
+                    "negative": concept_sent.get('negative_count', 0),
+                    "neutral": concept_sent.get('neutral_count', 0),
+                    "total": concept_sent.get('news_count', 0)
+                },
+                "percentages": {
+                    "positive": round(concept_sent.get('positive_count', 0) / concept_sent.get('news_count', 1) * 100, 1) if concept_sent.get('news_count', 0) > 0 else 0,
+                    "negative": round(concept_sent.get('negative_count', 0) / concept_sent.get('news_count', 1) * 100, 1) if concept_sent.get('news_count', 0) > 0 else 0,
+                    "neutral": round(concept_sent.get('neutral_count', 0) / concept_sent.get('news_count', 1) * 100, 1) if concept_sent.get('news_count', 0) > 0 else 0,
+                },
+                "last_updated": datetime.utcnow().isoformat()
+            }
+        except Exception as e:
+            from fastapi import logger as fast_logger
+            fast_logger.warning(f"AI Sentiment Overview failed: {e}. Falling back to default.")
+
+    # Production mode: fallback or default
     return {
         "overall_sentiment": "Neutral",
         "average_score": 0.0,

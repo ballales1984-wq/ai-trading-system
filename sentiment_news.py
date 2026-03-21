@@ -133,7 +133,7 @@ class SentimentAnalyzer:
     # ==================== NEWS FETCHING ====================
     
     def fetch_news(self, query: str = None, assets: List[str] = None,
-                   hours: int = 24) -> List[NewsItem]:
+                   hours: int = 24, force_real: bool = False) -> List[NewsItem]:
         """
         Fetch news articles related to specified assets.
         
@@ -145,8 +145,8 @@ class SentimentAnalyzer:
         Returns:
             List of NewsItem objects
         """
-        # In simulation mode, generate simulated news
-        if not self.news_api_key or config.SIMULATION_MODE:
+        # In simulation mode, generate simulated news unless force_real is True
+        if (not self.news_api_key or config.SIMULATION_MODE) and not force_real:
             return self._generate_simulated_news(assets, hours)
         
         # Real API implementation would go here

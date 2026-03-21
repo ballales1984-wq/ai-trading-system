@@ -46,6 +46,7 @@ try:
         AutoExecutor, SafetyConfig, SimulatedExchangeClient, OrderStatus
     )
     from src.decision.filtro_opportunita import OpportunityFilter
+    import src.trading_completo as trading_tracker
     MODULES_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Some modules not available: {e}")
@@ -150,7 +151,14 @@ class DataAggregator:
                 if self.data_collector:
                     # Usa DataCollector reale
                     data = self.data_collector.fetch_market_data(symbol)
-                    market_data[symbol] = data
+                    # Convert to dict if it's a dataclass/object
+                    if hasattr(data, 'to_dict'):
+                        market_data[symbol] = data.to_dict()
+                    elif hasattr(data, '__dict__'):
+                        # Basic object to dict conversion
+                        market_data[symbol] = {k: v for k, v in data.__dict__.items() if not k.startswith('_')}
+                    else:
+                        market_data[symbol] = data
                 else:
                     # Simula dati
                     market_data[symbol] = self._simulate_market_data(symbol)
@@ -177,7 +185,13 @@ class DataAggregator:
                 if self.sentiment_analyzer:
                     # Usa SentimentAnalyzer reale
                     data = self.sentiment_analyzer.analyze_asset_sentiment(symbol)
-                    sentiment_data[symbol] = data
+                    # Convert to dict if it's a dataclass/object
+                    if hasattr(data, 'to_dict'):
+                        sentiment_data[symbol] = data.to_dict()
+                    elif hasattr(data, '__dict__'):
+                        sentiment_data[symbol] = {k: v for k, v in data.__dict__.items() if not k.startswith('_')}
+                    else:
+                        sentiment_data[symbol] = data
                 else:
                     # Simula sentiment
                     sentiment_data[symbol] = self._simulate_sentiment(symbol)
@@ -312,6 +326,10 @@ class AutoTrader:
             dry_run=config.dry_run
         )
         
+        # Inizializza registro trading
+        if MODULES_AVAILABLE:
+            trading_tracker.inizializza_registro()
+        
         # Auto Executor
         self.executor = AutoExecutor(safety_config=safety_config)
         
@@ -427,6 +445,21 @@ class AutoTrader:
         executed_count = sum(1 for o in executed_orders if o.status == OrderStatus.EXECUTED)
         self.stats["orders_executed"] += executed_count
         self.stats["total_volume"] += sum(o.amount for o in executed_orders if o.status == OrderStatus.EXECUTED)
+        
+        # Registra i trade nel tracker per P&L e Awards
+        for o in executed_orders:
+            if o.status == OrderStatus.EXECUTED:
+                try:
+                    if MODULES_AVAILABLE:
+                        trading_tracker.registra_trade({
+                            "asset": o.asset,
+                            "tipo": o.action, # 'BUY' o 'SELL'
+                            "quantita": o.amount / market_data.get(o.asset, {}).get('current_price', 1),
+                            "prezzo": market_data.get(o.asset, {}).get('current_price', 0),
+                            "strategy": "AutoTrader"
+                        })
+                except Exception as e:
+                    logger.error(f"Errore registrazione trade in tracker: {e}")
         
         logger.info(f"   Executed {executed_count}/{len(orders)} orders")
         
