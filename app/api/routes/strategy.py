@@ -108,7 +108,7 @@ strategies_db = {
             "features": ["rsi", "macd", "bbands", "volume"],
             "prediction_horizon": 24,
         },
-        "enabled": False,
+        "enabled": True,
         "created_at": "2026-02-01T00:00:00",
         "updated_at": "2026-02-10T00:00:00",
     },
