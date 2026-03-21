@@ -534,7 +534,7 @@ class TradingDashboard:
         # Initialize Dash
         self.app = Dash(
             __name__,
-            title="Quantum AI Trading Dashboard",
+            title="ML Trading Monitor",
             suppress_callback_exceptions=True,
             assets_folder='dashboard/assets' if os.path.exists('dashboard/assets') else 'assets'
         )
@@ -680,7 +680,7 @@ class TradingDashboard:
             # Header with gradient background
             html.Div([
                 html.Div([
-                    html.H1("🚀 Quantum AI Trading System", 
+                    html.H1("🚀 ML Trading Monitor", 
                             style={'margin': '0', 'color': '#ffffff', 'font-size': '32px', 
                                    'text-shadow': '0 0 20px rgba(102, 126, 234, 0.8)',
                                    'background': '-webkit-linear-gradient(45deg, #00ff88, #00d4ff)',
