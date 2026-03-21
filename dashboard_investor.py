@@ -29,8 +29,7 @@ class InvestorDashboard:
         self.fund = fund_manager
         self.app = dash.Dash(
             __name__,
-            title="Investor Portal",
-            updates_title="AI Trading Fund - Investor Portal"
+            title="Investor Portal"
         )
         self._setup_layout()
         self._setup_callbacks()
@@ -596,7 +595,7 @@ class InvestorDashboard:
     
     def run_server(self, debug: bool = True, port: int = 8050):
         """Avvia il server"""
-        self.app.run_server(debug=debug, port=port)
+        self.app.run(debug=debug, port=port)
 
 
 def create_sample_fund() -> FundManager:
@@ -623,5 +622,5 @@ def create_sample_fund() -> FundManager:
 if __name__ == "__main__":
     fund = create_sample_fund()
     dashboard = InvestorDashboard(fund)
-    print("Starting Investor Dashboard on http://localhost:8050")
-    dashboard.run_server()
+    print("Starting Investor Dashboard on http://localhost:8051")
+    dashboard.app.run(debug=True, port=8051)

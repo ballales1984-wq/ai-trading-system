@@ -18,8 +18,8 @@ import type {
 // In production (Vercel), requests to /api/v1/* are proxied to Render backend
 // In local development, use localhost:8000
 const defaultApiBase =
-  typeof window !== 'undefined' && ['5173', '3000'].includes(window.location.port)
-    ? 'http://localhost:8000/api/v1'
+  typeof window !== 'undefined' && ['5173', '5174', '3000'].includes(window.location.port)
+    ? 'http://127.0.0.1:8000/api/v1'
     : '/api/v1';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || defaultApiBase;

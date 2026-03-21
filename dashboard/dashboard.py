@@ -26,6 +26,10 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from collections import deque
+import sys
+
+# Add parent directory to path to allow importing from root
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 import pandas as pd
@@ -316,7 +320,7 @@ class DataProvider:
         self._cache_time: Dict = {}
         self._cache_ttl = 5  # 5 seconds for real-time data
         # Use REAL API backend instead of mock data
-        self._api_base = "http://localhost:8000/api/v1"
+        self._api_base = "http://127.0.0.1:8000/api/v1"
         self._collector = DataCollector()
     
     def _is_cache_valid(self, key: str) -> bool:
@@ -531,7 +535,6 @@ class TradingDashboard:
         self.app = Dash(
             __name__,
             title="Quantum AI Trading Dashboard",
-            update_title=None,
             suppress_callback_exceptions=True,
             assets_folder='dashboard/assets' if os.path.exists('dashboard/assets') else 'assets'
         )
@@ -1772,5 +1775,6 @@ def print_dashboard_summary():
 
 
 if __name__ == "__main__":
+    # Create and run dashboard
     dashboard = TradingDashboard(debug=True)
-    dashboard.run()
+    dashboard.app.run(host="127.0.0.1", port=8050, debug=True)
