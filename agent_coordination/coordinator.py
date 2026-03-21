@@ -80,7 +80,7 @@ class FileLock:
     
     @staticmethod
     def get_lock_file(filepath: str) -> Path:
-        safe_name = hashlib.md5(filepath.encode()).hexdigest()[:8]
+        safe_name = hashlib.sha256(filepath.encode()).hexdigest()[:8]
         return LOCKS / f"{safe_name}.lock"
     
     @staticmethod
