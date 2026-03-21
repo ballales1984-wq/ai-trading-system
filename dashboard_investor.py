@@ -124,7 +124,7 @@ class InvestorDashboard:
             html.Div([
                 html.Div([
                     html.H2("Request Subscription"),
-                    html.Label("Amount ($)"),
+                    html.Label("Amount ($)", htmlFor="sub-amount"),
                     dcc.Input(id="sub-amount", type="number", placeholder="Enter amount"),
                     html.Button("Submit", id="btn-submit-sub", className="modal-btn"),
                     html.Button("Cancel", id="btn-cancel-sub", className="modal-btn secondary")
@@ -135,7 +135,7 @@ class InvestorDashboard:
             html.Div([
                 html.Div([
                     html.H2("Request Redemption"),
-                    html.Label("Shares"),
+                    html.Label("Shares", htmlFor="redeem-shares"),
                     dcc.Input(id="redeem-shares", type="number", placeholder="Enter shares"),
                     html.Button("Submit", id="btn-submit-redeem", className="modal-btn"),
                     html.Button("Cancel", id="btn-cancel-redeem", className="modal-btn secondary")
