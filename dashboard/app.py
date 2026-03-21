@@ -587,14 +587,16 @@ def update_metrics(results, n_intervals):
             # Win rate is already in decimal format (0.57 = 57%), convert to percentage
             win_rate = performance.get('win_rate', 0) * 100 if performance.get('win_rate', 0) else 0
             
-            # Determine signal based on daily return
-            daily_return = summary.get('daily_return_pct', 0)
-            if daily_return > 0.5:
-                current_signal = 'BUY'
-            elif daily_return < -0.5:
-                current_signal = 'SELL'
-            else:
-                current_signal = 'HOLD'
+            # The signal should NOT be guessed from PnL! That creates fake/wrong values for the users. 
+            # If we don't have a real ML/algorithm signal, we just keep it neutral.
+            current_signal = 'HOLD' 
+            # Try to fetch from results if available
+            if results and 'signals' in results:
+                signals = results.get('signals', [])
+                if isinstance(signals, dict) and 'values' in signals and signals['values']:
+                    current_signal = signals['values'][-1]
+                elif isinstance(signals, list) and signals:
+                    current_signal = signals[-1]
             
             return (
                 f"{total_return:+.2f}%",
