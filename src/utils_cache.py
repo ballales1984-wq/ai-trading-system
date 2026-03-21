@@ -38,7 +38,7 @@ class Cache:
             'kwargs': sorted(kwargs.items())
         }
         key_str = json.dumps(key_data, sort_keys=True, default=str)
-        return hashlib.md5(key_str.encode()).hexdigest()
+        return hashlib.sha256(key_str.encode()).hexdigest()
     
     def get(self, key: str) -> Optional[Any]:
         """Get value from cache"""
