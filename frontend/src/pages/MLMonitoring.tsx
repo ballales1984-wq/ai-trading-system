@@ -7,14 +7,12 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { portfolioApi, marketApi, riskApi } from '../services/api';
-import { 
+import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, PieChart, Pie, Cell
+  BarChart, Bar
 } from 'recharts';
 import { Brain, TrendingUp, Activity, Zap, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
-
-const COLORS = ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#a371f7'];
 
 interface MLModel {
   name: string;
@@ -49,7 +47,8 @@ const mockFeatureImportance = [
 export default function MLMonitoring() {
   const [selectedModel, setSelectedModel] = useState<string>('BTC Price Predictor');
 
-  const { data: performance } = useQuery({
+  // Performance data is fetched but can be used for future features
+  useQuery({
     queryKey: ['portfolio-performance'],
     queryFn: portfolioApi.getPerformance,
     refetchInterval: 60000,
@@ -101,11 +100,10 @@ export default function MLMonitoring() {
       {/* Model Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {mockModels.map((model) => (
-          <div 
+          <div
             key={model.name}
-            className={`premium-glass-panel p-4 cursor-pointer transition-all ${
-              selectedModel === model.name ? 'border-primary glow-primary' : ''
-            }`}
+            className={`premium-glass-panel p-4 cursor-pointer transition-all ${selectedModel === model.name ? 'border-primary glow-primary' : ''
+              }`}
             onClick={() => setSelectedModel(model.name)}
           >
             <div className="flex items-center justify-between mb-2">
@@ -133,7 +131,7 @@ export default function MLMonitoring() {
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="day" stroke="#9CA3AF" fontSize={12} />
               <YAxis stroke="#9CA3AF" fontSize={12} />
-              <Tooltip 
+              <Tooltip
                 contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px' }}
                 labelStyle={{ color: '#9CA3AF' }}
               />
@@ -154,7 +152,7 @@ export default function MLMonitoring() {
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis type="number" stroke="#9CA3AF" fontSize={12} />
               <YAxis dataKey="feature" type="category" stroke="#9CA3AF" fontSize={12} width={80} />
-              <Tooltip 
+              <Tooltip
                 contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px' }}
               />
               <Bar dataKey="importance" fill="#58A6FF" radius={[0, 4, 4, 0]} />
@@ -173,7 +171,7 @@ export default function MLMonitoring() {
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
               <YAxis stroke="#9CA3AF" fontSize={12} />
-              <Tooltip 
+              <Tooltip
                 contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px' }}
               />
               <Line type="monotone" dataKey="value" stroke="#A371F7" strokeWidth={2} dot={false} />
@@ -220,7 +218,7 @@ export default function MLMonitoring() {
       <div className="premium-glass-panel p-6">
         <h2 className="text-lg font-bold text-text mb-4">Market Predictions vs Actual</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {markets?.markets?.slice(0, 3).map((market: any, index: number) => (
+          {markets?.markets?.slice(0, 3).map((market: any) => (
             <div key={market.symbol} className="bg-black/20 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-bold text-text">{market.symbol}</span>

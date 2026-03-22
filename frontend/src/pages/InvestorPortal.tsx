@@ -9,10 +9,10 @@ import { useQuery } from '@tanstack/react-query';
 import { portfolioApi, riskApi } from '../services/api';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, PieChart, Pie, Cell
+  PieChart, Pie, Cell
 } from 'recharts';
 import { 
-  Wallet, TrendingUp, TrendingDown, DollarSign, Shield, 
+  Wallet, TrendingUp, TrendingDown, Shield, 
   PieChart as PieChartIcon, Calendar, Download, FileText 
 } from 'lucide-react';
 import { useState } from 'react';
@@ -38,7 +38,7 @@ const mockReports: InvestorReport[] = [
 export default function InvestorPortal() {
   const [reportPeriod, setReportPeriod] = useState<string>('March 2026');
 
-  const { data: summary, isLoading: summaryLoading } = useQuery({
+  const { data: summary } = useQuery({
     queryKey: ['portfolio-summary'],
     queryFn: portfolioApi.getSummary,
     refetchInterval: 30000,
@@ -113,7 +113,7 @@ export default function InvestorPortal() {
         <div className="premium-glass-panel p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-text-muted">Total Return</span>
-            {performance?.total_return_pct >= 0 ? (
+            {(performance?.total_return_pct ?? 0) >= 0 ? (
               <TrendingUp className="w-5 h-5 text-success" />
             ) : (
               <TrendingDown className="w-5 h-5 text-danger" />
@@ -193,14 +193,14 @@ export default function InvestorPortal() {
                 paddingAngle={2}
                 dataKey="value"
               >
-                {allocationData.length > 0 ? allocationData.map((entry, index) => (
+                {allocationData.length > 0 ? allocationData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 )) : [
                   { name: 'BTC', value: 45 },
                   { name: 'ETH', value: 30 },
                   { name: 'SOL', value: 15 },
                   { name: 'Other', value: 10 },
-                ].map((entry, index) => (
+                ].map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
