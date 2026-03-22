@@ -333,6 +333,7 @@ class AutoTrader:
         # Inizializza registro trading
         if MODULES_AVAILABLE:
             trading_tracker.inizializza_registro()
+            trading_tracker.set_balance(100000)  # Initialize balance to 100000 USDT
         
         # Auto Executor
         self.executor = AutoExecutor(safety_config=safety_config)
@@ -496,11 +497,25 @@ class AutoTrader:
             if o.status == OrderStatus.EXECUTED:
                 try:
                     if MODULES_AVAILABLE:
+                        # Get commission (0.1% by default)
+                        current_price = market_data.get(o.asset, {}).get('current_price', 0)
+                        quantity = o.amount / current_price if current_price > 0 else 0
+                        commission = o.amount * 0.001  # 0.1% commission
+                        
+                        # Get entry price for SELL orders from positions
+                        prezzo_acquisto = None
+                        if o.action == "SELL":
+                            posizioni = trading_tracker.get_all_posizioni()
+                            if o.asset in posizioni:
+                                prezzo_acquisto = posizioni[o.asset].get("prezzo_acquisto")
+                        
                         trading_tracker.registra_trade({
                             "asset": o.asset,
                             "tipo": o.action, # 'BUY' o 'SELL'
-                            "quantita": o.amount / market_data.get(o.asset, {}).get('current_price', 1),
-                            "prezzo": market_data.get(o.asset, {}).get('current_price', 0),
+                            "quantita": quantity,
+                            "prezzo": current_price,
+                            "commissione": commission,
+                            "prezzo_acquisto": prezzo_acquisto,
                             "strategy": "AutoTrader"
                         })
                 except Exception as e:
