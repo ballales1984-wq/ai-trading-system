@@ -19,8 +19,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-const COLORS = ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#a371f7', '#f0883e'];
-
 interface InvestorReport {
   period: string;
   totalReturn: number;
