@@ -22,6 +22,8 @@ def test_core_imports():
 
 async def test_paper_broker():
     """Test paper broker."""
+    from src.core import PaperBroker
+    
     print("\n" + "=" * 50)
     print("Testing Paper Broker...")
     print("=" * 50)
@@ -115,6 +117,8 @@ async def test_risk_engine():
 
 async def test_order_manager():
     """Test order manager."""
+    from src.core import PaperBroker, RiskEngine, OrderManager
+    
     print("\n" + "=" * 50)
     print("Testing Order Manager...")
     print("=" * 50)
@@ -151,11 +155,12 @@ async def test_order_manager():
 
 async def test_trading_engine():
     """Test trading engine."""
+    from src.core import PaperBroker
+    from src.core.engine import EngineConfig, TradingMode
+    
     print("\n" + "=" * 50)
     print("Testing Trading Engine...")
     print("=" * 50)
-    
-    from src.core.engine import EngineConfig, TradingMode
     
     config = EngineConfig(
         mode=TradingMode.PAPER,
