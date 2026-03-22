@@ -452,6 +452,43 @@ class AutoExecutor:
         
         return stop_orders
     
+    def check_take_profits(self, current_prices: Dict[str, float]) -> List[Dict]:
+        """
+        Verifica se qualche posizione ha raggiunto il take-profit.
+        
+        Args:
+            current_prices: Dizionario {symbol: price}
+            
+        Returns:
+            Lista di ordini di vendita da eseguire
+        """
+        tp_orders = []
+        
+        for asset, position in self.open_positions.items():
+            current_price = current_prices.get(asset)
+            if not current_price:
+                continue
+            
+            entry_price = position.get("entry_price")
+            take_profit_pct = position.get("take_profit_pct", 0.05)  # Default 5%
+            
+            if entry_price:
+                take_profit_price = entry_price * (1 + take_profit_pct)
+                if current_price >= take_profit_price:
+                    # Trigger take-profit
+                    logger.warning(
+                        f"🎯 Take-profit triggered for {asset} at {current_price} "
+                        f"(target: {take_profit_price:.2f})")
+                    tp_orders.append({
+                        "asset": asset,
+                        "action": "SELL",
+                        "amount": position["amount"],
+                        "reason": "take_profit",
+                        "entry_price": entry_price
+                    })
+        
+        return tp_orders
+    
     def get_summary(self) -> Dict:
         """
         Ritorna un riepilogo dell'esecuzione.

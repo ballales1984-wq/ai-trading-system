@@ -10,7 +10,7 @@ import numpy as np
 import logging
 from datetime import datetime
 
-from .filtro_opportunita import OpportunityFilter
+from .filtro_opportunita_pro import OpportunityFilterPro as OpportunityFilter
 
 logger = logging.getLogger(__name__)
 
@@ -202,7 +202,8 @@ class DecisionEngine:
         self.filter = OpportunityFilter(
             threshold_confidence=threshold_confidence,
             semantic_weight=semantic_weight,
-            numeric_weight=numeric_weight
+            numeric_weight=numeric_weight,
+            mode="aggressive"
         )
         
         self.monte_carlo = MonteCarloSimulator(n_simulations=monte_carlo_sims)
@@ -298,7 +299,7 @@ class DecisionEngine:
             
             # RISK ENGINE PRO: Check VaR threshold
             var_95 = risk_assessment.get('var', 0)
-            max_var = 0.05  # 5% max VaR
+            max_var = 0.30  # 30% max VaR (increased to allow trades with high volatility)
             
             if abs(var_95) > max_var:
                 logger.warning(

@@ -45,7 +45,7 @@ try:
     from src.execution.auto_executor import (
         AutoExecutor, SafetyConfig, SimulatedExchangeClient, OrderStatus
     )
-    from src.decision.filtro_opportunita import OpportunityFilter
+    from src.decision.filtro_opportunita_pro import OpportunityFilterPro as OpportunityFilter
     import src.trading_completo as trading_tracker
     MODULES_AVAILABLE = True
 except ImportError as e:
@@ -452,6 +452,18 @@ class AutoTrader:
         # 1️⃣ Raccolta dati
         logger.info("1. Fetching market data...")
         market_data = self.data_aggregator.fetch_market_data(self.config.assets)
+        
+        # 1.5️⃣ Check stop-losses e take-profit per posizioni esistenti
+        logger.info("1b. Checking stop-losses and take-profit...")
+        current_prices = {asset: data.get('current_price', 0) for asset, data in market_data.items()}
+        closed_positions = self.executor.check_stop_losses(current_prices)
+        if closed_positions:
+            logger.info(f"   Closed {len(closed_positions)} positions due to stop-loss")
+        
+        # Check take-profit
+        tp_closed = self.executor.check_take_profits(current_prices)
+        if tp_closed:
+            logger.info(f"   Closed {len(tp_closed)} positions due to take-profit")
         
         logger.info("2. Fetching sentiment data...")
         sentiment_data = self.data_aggregator.fetch_sentiment(self.config.assets)

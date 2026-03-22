@@ -14,5 +14,29 @@
     "data_acquisto": "2026-03-22T10:27:29.085573",
     "api_usata": "",
     "strategy": "AutoTrader"
+  },
+  "SOLUSDT": {
+    "asset": "SOLUSDT",
+    "quantita": 35.25104719644224,
+    "prezzo_acquisto": 99.28783052871242,
+    "data_acquisto": "2026-03-22T18:04:26.220402",
+    "api_usata": "",
+    "strategy": "AutoTrader"
+  },
+  "BTCUSDT": {
+    "asset": "BTCUSDT",
+    "quantita": 33.83616018553544,
+    "prezzo_acquisto": 99.81924608111537,
+    "data_acquisto": "2026-03-22T18:04:26.236912",
+    "api_usata": "",
+    "strategy": "AutoTrader"
+  },
+  "ETHUSDT": {
+    "asset": "ETHUSDT",
+    "quantita": 32.76994736081688,
+    "prezzo_acquisto": 99.4597264412192,
+    "data_acquisto": "2026-03-22T18:04:26.261576",
+    "api_usata": "",
+    "strategy": "AutoTrader"
   }
 }

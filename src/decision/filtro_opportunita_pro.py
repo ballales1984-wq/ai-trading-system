@@ -187,14 +187,14 @@ class OpportunityFilterPro:
             # Calcola confidence migliorata
             confidence = self.calculate_confidence(semantic_score, numeric_score)
             
-            # Check 1: NO_TRADE_ZONE
-            if self.is_no_trade_zone(normalized_score):
-                stats["no_trade_zone"] += 1
-                logger.debug(
-                    f"❌ {asset.get('name', 'Unknown')}: NO_TRADE_ZONE "
-                    f"(score={normalized_score:.2f})"
-                )
-                continue
+            # Check 1: NO_TRADE_ZONE (DISABLED - was blocking too many trades)
+            # if self.is_no_trade_zone(normalized_score):
+            #     stats["no_trade_zone"] += 1
+            #     logger.debug(
+            #         f"❌ {asset.get('name', 'Unknown')}: NO_TRADE_ZONE "
+            #         f"(score={normalized_score:.2f})"
+            #     )
+            #     continue
             
             # Check 2: MIN_CONFIDENCE
             if confidence < self.MIN_CONFIDENCE:
@@ -254,12 +254,13 @@ class OpportunityFilterPro:
             return "HOLD"
         
         normalized_score = (combined_score + 1) / 2
-        if self.is_no_trade_zone(normalized_score):
-            return "HOLD"
+        # NO_TRADE_ZONE check disabled - was blocking too many trades
+        # if self.is_no_trade_zone(normalized_score):
+        #     return "HOLD"
         
-        if combined_score > 0.1:
+        if combined_score > 0.05:  # Lowered from 0.1 to allow more trades
             return "BUY"
-        elif combined_score < -0.1:
+        elif combined_score < -0.05:  # Lowered from -0.1
             return "SELL"
         else:
             return "HOLD"
