@@ -47,6 +47,7 @@ try:
     )
     from src.decision.filtro_opportunita_pro import OpportunityFilterPro as OpportunityFilter
     import src.trading_completo as trading_tracker
+    from src.core.state_manager import StateManager
     MODULES_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Some modules not available: {e}")
@@ -335,6 +336,9 @@ class AutoTrader:
             trading_tracker.inizializza_registro()
             trading_tracker.set_balance(100000)  # Initialize balance to 100000 USDT
         
+        # Initialize StateManager for database
+        self.state_manager = StateManager(db_path="data/trading_state.db")
+        
         # Auto Executor
         self.executor = AutoExecutor(safety_config=safety_config)
         
@@ -469,6 +473,7 @@ class AutoTrader:
                     current_price = current_prices.get(pos.get("asset", ""), entry_price)
                     quantity = amount_usdt / current_price if current_price > 0 else 0
                     commission = amount_usdt * 0.001
+                    pnl = (current_price - entry_price) * quantity - commission
                     
                     trading_tracker.registra_trade({
                         "asset": asset,
@@ -479,6 +484,20 @@ class AutoTrader:
                         "prezzo_acquisto": entry_price,
                         "strategy": "AutoTrader"
                     })
+                    
+                    # Save to database
+                    try:
+                        self.state_manager.save_trade({
+                            "order_id": f"{asset}_SL_{datetime.now().timestamp()}",
+                            "symbol": asset,
+                            "side": "SELL",
+                            "quantity": quantity,
+                            "price": current_price,
+                            "commission": commission,
+                            "pnl": pnl
+                        })
+                    except Exception as e:
+                        logger.error(f"Errore salvataggio SL trade in DB: {e}")
         
         # Check take-profit
         tp_closed = self.executor.check_take_profits(current_prices)
@@ -493,6 +512,7 @@ class AutoTrader:
                     current_price = current_prices.get(pos.get("asset", ""), entry_price)
                     quantity = amount_usdt / current_price if current_price > 0 else 0
                     commission = amount_usdt * 0.001
+                    pnl = (current_price - entry_price) * quantity - commission
                     
                     trading_tracker.registra_trade({
                         "asset": asset,
@@ -503,6 +523,20 @@ class AutoTrader:
                         "prezzo_acquisto": entry_price,
                         "strategy": "AutoTrader"
                     })
+                    
+                    # Save to database
+                    try:
+                        self.state_manager.save_trade({
+                            "order_id": f"{asset}_TP_{datetime.now().timestamp()}",
+                            "symbol": asset,
+                            "side": "SELL",
+                            "quantity": quantity,
+                            "price": current_price,
+                            "commission": commission,
+                            "pnl": pnl
+                        })
+                    except Exception as e:
+                        logger.error(f"Errore salvataggio TP trade in DB: {e}")
         
         logger.info("2. Fetching sentiment data...")
         sentiment_data = self.data_aggregator.fetch_sentiment(self.config.assets)
@@ -556,6 +590,20 @@ class AutoTrader:
                             "prezzo_acquisto": prezzo_acquisto,
                             "strategy": "AutoTrader"
                         })
+                        
+                        # Save to database
+                        try:
+                            self.state_manager.save_trade({
+                                "order_id": f"{o.asset}_{datetime.now().timestamp()}",
+                                "symbol": o.asset.replace("/USDT", ""),
+                                "side": o.action,
+                                "quantity": quantity,
+                                "price": current_price,
+                                "commission": commission,
+                                "pnl": 0  # Will be calculated on close
+                            })
+                        except Exception as e:
+                            logger.error(f"Errore salvataggio trade in DB: {e}")
                 except Exception as e:
                     logger.error(f"Errore registrazione trade in tracker: {e}")
         
