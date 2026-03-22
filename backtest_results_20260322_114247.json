@@ -1,0 +1,23 @@
+{
+  "message": "No trades executed",
+  "initial_balance": 100000,
+  "final_balance": 100000,
+  "total_return": 0.0,
+  "total_pnl": 0.0,
+  "total_trades": 0,
+  "winning_trades": 0,
+  "losing_trades": 0,
+  "win_rate": 0.0,
+  "profit_factor": 0.0,
+  "max_drawdown": 0.0,
+  "sharpe_ratio": 0.0,
+  "sortino_ratio": 0.0,
+  "total_commission": 0.0,
+  "total_slippage": 0.0,
+  "total_costs": 0.0,
+  "avg_holding_period": 0.0,
+  "cycles": 2151,
+  "symbol": "BTCUSDT",
+  "interval": "1h",
+  "periods": 3
+}
