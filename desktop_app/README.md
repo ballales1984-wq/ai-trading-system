@@ -12,7 +12,7 @@ Applicazione desktop completa per utenti paganti. Include tutto il sistema in un
 
 ## Requisiti
 
-Tkinter e gia incluso in Python. Per creare l'EXE:
+Tkinter è già incluso in Python. Per creare l'EXE:
 
 ```
 bash
@@ -21,7 +21,7 @@ pip install pyinstaller
 
 ## Come usare
 
-### 1. Avvio in modalita sviluppo
+### 1. Avvio in modalità sviluppo
 
 ```
 bash

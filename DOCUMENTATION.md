@@ -3,7 +3,7 @@
 <div align="center">
 
 ![Version](https://img.shields.io/badge/version-2.3.0-blue)
-![Python](https://img.shields.io/badge/python-3.14+-green)
+![Python](https://img.shields.io/badge/python-3.11+-green)
 ![React](https://img.shields.io/badge/react-18+-blue)
 
 </div>
