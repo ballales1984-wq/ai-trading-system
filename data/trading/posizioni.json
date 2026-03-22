@@ -33,9 +33,9 @@
   },
   "SOL/USDT": {
     "asset": "SOL/USDT",
-    "quantita": 9.754334171025725,
-    "prezzo_acquisto": 147.2494149591927,
-    "data_acquisto": "2026-03-22T21:18:13.998259",
+    "quantita": 8.566585914532828,
+    "prezzo_acquisto": 145.39631218627952,
+    "data_acquisto": "2026-03-22T21:22:19.402996",
     "api_usata": "",
     "strategy": "AutoTrader"
   },
