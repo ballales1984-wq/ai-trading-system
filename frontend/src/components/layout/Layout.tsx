@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
   import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Menu, X, Bot, FileText, Target, Shield, Settings, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Menu, X, Bot, FileText, Target, Shield, Settings, AlertTriangle, Brain, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { marketApi } from '../../services/api';
 
@@ -12,6 +12,10 @@ const navItems = [
   { to: '/news', icon: FileText, label: 'News' },
   { to: '/strategy', icon: Target, label: 'Strategy' },
   { to: '/risk', icon: Shield, label: 'Risk' },
+  // New unified pages (replacing 8050, 8051, 8502)
+  { to: '/ml-monitoring', icon: Brain, label: 'ML Monitoring' },
+  { to: '/investor-portal', icon: Users, label: 'Investor Portal' },
+  { to: '/ai-assistant', icon: Bot, label: 'AI Assistant' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 

@@ -11,6 +11,9 @@ import Login from './pages/Login';
 import Strategy from './pages/Strategy';
 import Risk from './pages/Risk';
 import Settings from './pages/Settings';
+import MLMonitoring from './pages/MLMonitoring';
+import InvestorPortal from './pages/InvestorPortal';
+import AIAssistant from './pages/AIAssistant';
 
 // Lazy load payment page only
 const PaymentTest = lazy(() => import('./pages/PaymentTest'));
@@ -35,6 +38,11 @@ function App() {
           <Route path="strategy" element={<Strategy />} />
           <Route path="risk" element={<Risk />} />
           <Route path="settings" element={<Settings />} />
+          
+          {/* New unified pages - replacing 8050, 8051, 8502 */}
+          <Route path="ml-monitoring" element={<MLMonitoring />} />
+          <Route path="investor-portal" element={<InvestorPortal />} />
+          <Route path="ai-assistant" element={<AIAssistant />} />
         </Route>
       </Routes>
     </BrowserRouter>
