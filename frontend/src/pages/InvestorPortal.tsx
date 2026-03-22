@@ -206,7 +206,7 @@ export default function InvestorPortal() {
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
-                data={allocationData.length > 0 ? allocationData : [
+                data={[
                   { name: 'BTC', value: 45 },
                   { name: 'ETH', value: 30 },
                   { name: 'SOL', value: 15 },
@@ -218,6 +218,7 @@ export default function InvestorPortal() {
                 outerRadius={100}
                 paddingAngle={2}
                 dataKey="value"
+                nameKey="name"
                 label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
               >
                 {[
@@ -226,7 +227,7 @@ export default function InvestorPortal() {
                   { name: 'SOL', value: 15 },
                   { name: 'Other', value: 10 },
                 ].map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                  <Cell key={`cell-${index}`} fill={CHART_COLORS[index]} />
                 ))}
               </Pie>
               <Tooltip 
@@ -234,16 +235,17 @@ export default function InvestorPortal() {
               />
             </PieChart>
           </ResponsiveContainer>
-          <div className="flex flex-wrap justify-center gap-2 mt-2">
-            {(allocationData.length > 0 ? allocationData : [
+          <div className="flex flex-wrap justify-center gap-4 mt-2">
+            {[
               { name: 'BTC', value: 45 },
               { name: 'ETH', value: 30 },
               { name: 'SOL', value: 15 },
               { name: 'Other', value: 10 },
-            ]).map((item, index) => (
-              <div key={item.name} className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
-                <span className="text-xs text-text-muted">{item.name}: {item.value}%</span>
+            ].map((item, index) => (
+              <div key={item.name} className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: CHART_COLORS[index] }} />
+                <span className="text-sm text-text">{item.name}</span>
+                <span className="text-sm text-text-muted">({item.value}%)</span>
               </div>
             ))}
           </div>
