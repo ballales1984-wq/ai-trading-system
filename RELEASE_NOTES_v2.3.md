@@ -1,6 +1,8 @@
 # 🤖 AI Trading System - Release Notes v2.3 Professional
 
-> **📅 Data di Release:** 22 Marzo 2026  
+> **🚀 Deploy**: Triggered via Git Push
+
+> ** Data di Release:** 22 Marzo 2026  
 > **🔖 Versione:** v2.3.0 "Professional Release"  
 > **📊 Stato:** ✅ STABILE - Production Ready  
 > **🏷️ License:** MIT License

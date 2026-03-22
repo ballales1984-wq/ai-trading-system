@@ -99,5 +99,7 @@ ChatGPT Image*
 **/__pycache__/
 **/node_modules/
 **/dist/
+# Allow desktop app EXE for distribution (must come AFTER **/dist/)
+!**/desktop_app/dist/*.exe
 **/logs/
 **/.history/
