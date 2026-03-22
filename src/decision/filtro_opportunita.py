@@ -16,7 +16,18 @@ class OpportunityFilter:
     """
     Filtro opportunità che combina analisi semantica e numerica
     per selezionare solo gli asset potenzialmente profittevoli.
+    
+    RISK ENGINE PRO CONSTANTS:
+    - NO_TRADE_ZONE: score tra 0.45 e 0.55 → HOLD (neutral zone)
+    - MIN_CONFIDENCE: confidence < 0.6 → HOLD (low confidence)
+    - MAX_VAR: VaR > 5% → HOLD (risk too high)
     """
+    
+    # RISK ENGINE PRO - Costanti di sicurezza
+    NO_TRADE_LOW = 0.45
+    NO_TRADE_HIGH = 0.55
+    MIN_CONFIDENCE = 0.6
+    MAX_VAR = 0.05  # 5%
     
     def __init__(
         self,
@@ -140,11 +151,31 @@ class OpportunityFilter:
             numeric_score = self.analyze_numeric(asset)
             combined_score = self.combine_scores(semantic_score, numeric_score)
             
+            # Normalizza score a 0-1 per controllo no-trade zone
+            normalized_score = (combined_score + 1) / 2
+            confidence = abs(combined_score)
+            
+            # RISK ENGINE: Check no-trade zone FIRST
+            if self.is_no_trade_zone(normalized_score):
+                logger.info(
+                    f"Asset {asset.get('name', 'Unknown')} FILTERED: "
+                    f"score={normalized_score:.2f} in NO-TRADE ZONE ({self.NO_TRADE_LOW}-{self.NO_TRADE_HIGH})"
+                )
+                continue
+            
+            # RISK ENGINE: Check confidence threshold
+            if confidence < self.MIN_CONFIDENCE:
+                logger.info(
+                    f"Asset {asset.get('name', 'Unknown')} FILTERED: "
+                    f"confidence={confidence:.2f} < MIN_CONFIDENCE={self.MIN_CONFIDENCE}"
+                )
+                continue
+            
             # Aggiungi punteggi al dizionario asset
             asset['semantic_score'] = semantic_score
             asset['numeric_score'] = numeric_score
             asset['combined_score'] = combined_score
-            asset['confidence'] = abs(combined_score)
+            asset['confidence'] = confidence
             
             # Seleziona solo se punteggio assoluto sopra soglia
             if abs(combined_score) >= self.threshold:
@@ -152,7 +183,7 @@ class OpportunityFilter:
                 logger.info(
                     f"Asset {asset.get('name', 'Unknown')} selected: "
                     f"semantic={semantic_score:.2f}, numeric={numeric_score:.2f}, "
-                    f"combined={combined_score:.2f}"
+                    f"combined={combined_score:.2f}, confidence={confidence:.2f}"
                 )
             else:
                 logger.debug(
@@ -165,16 +196,46 @@ class OpportunityFilter:
         
         return selected_assets
 
-    def get_signal_direction(self, combined_score: float) -> str:
+    def is_no_trade_zone(self, combined_score: float) -> bool:
+        """
+        Check if score is in neutral zone (no-trade zone).
+        
+        Args:
+            combined_score: Punteggio combinato (0-1 normalized)
+            
+        Returns:
+            True if in no-trade zone, False otherwise
+        """
+        return self.NO_TRADE_LOW < combined_score < self.NO_TRADE_HIGH
+    
+    def get_signal_direction(self, combined_score: float, confidence: float = None) -> str:
         """
         Determina la direzione del segnale basata sul punteggio combinato.
         
+        RISK ENGINE PRO:
+        - NO_TRADE_ZONE: score tra 0.45 e 0.55 → HOLD
+        - MIN_CONFIDENCE: confidence < 0.6 → HOLD
+        
         Args:
             combined_score: Punteggio combinato
+            confidence: Livello di confidenza (opzionale)
             
         Returns:
             "BUY", "SELL", o "HOLD"
         """
+        # RISK ENGINE: Check confidence first
+        if confidence is not None and confidence < self.MIN_CONFIDENCE:
+            logger.info(f"HOLD: Low confidence {confidence:.2f} < {self.MIN_CONFIDENCE}")
+            return "HOLD"
+        
+        # RISK ENGINE: Check no-trade zone
+        # Normalize score to 0-1 range for zone check
+        normalized_score = (combined_score + 1) / 2  # Convert -1 to 1 → 0 to 1
+        if self.is_no_trade_zone(normalized_score):
+            logger.info(f"HOLD: Neutral zone score={normalized_score:.2f} (0.45-0.55)")
+            return "HOLD"
+        
+        # Original logic
         if combined_score > 0.1:
             return "BUY"
         elif combined_score < -0.1:

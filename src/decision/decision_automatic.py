@@ -176,7 +176,7 @@ class DecisionEngine:
     def __init__(
         self,
         portfolio_balance: float = 100000,
-        threshold_confidence: float = 0.6,
+        threshold_confidence: float = 0.3,
         max_risk_per_trade: float = 0.02,
         semantic_weight: float = 0.5,
         numeric_weight: float = 0.5,
@@ -219,31 +219,51 @@ class DecisionEngine:
     def calculate_position_size(
         self,
         asset_data: Dict,
-        combined_score: float
+        combined_score: float,
+        var_95: float = None
     ) -> float:
         """
-        Calcola la dimensione della posizione basata su confidenza e rischio.
+        RISK ENGINE PRO: Calcola la dimensione della posizione basata su VOLATILITÀ e VaR.
+        
+        NOTA: La posizione è DECOUPLED dalla confidence!
+        - Prima: position = max_position * confidence
+        - Ora: position = base * volatility_adjustment * var_adjustment
         
         Args:
             asset_data: Dati dell'asset
-            combined_score: Punteggio combinato
+            combined_score: Punteggio combinato (non usato per size!)
+            var_95: Value at Risk 95% (opzionale)
             
         Returns:
             Dimensione posizione in USDT
         """
-        # Base: percentuale del portafoglio proporzionale alla confidenza
-        base_size = self.portfolio["cash"] * abs(combined_score) * 0.1
+        # Base: 5% del portafoglio (fisso, non usa confidence!)
+        base_size = self.portfolio["cash"] * 0.05
+        
+        # RISK ENGINE: Volatility adjustment
+        # Alta volatilità → posizione più piccola
+        volatility = asset_data.get("volatility_score", 0.5)
+        
+        if volatility > 0.05:
+            volatility_multiplier = 0.3  # Molto conservativo
+        elif volatility > 0.02:
+            volatility_multiplier = 0.5  # Conservativo
+        else:
+            volatility_multiplier = 0.7  # Normale
+        
+        # RISK ENGINE: VaR adjustment
+        # Alto VaR → posizione più piccola
+        var_multiplier = 1.0
+        if var_95 is not None and abs(var_95) > 0.03:
+            var_multiplier = 0.5  # Riduci a metà se VaR > 3%
+        
+        # Combina i fattori di rischio
+        final_size = base_size * volatility_multiplier * var_multiplier
         
         # Limita al rischio massimo per trade
         max_risk_amount = self.portfolio["cash"] * self.max_risk_per_trade
         
-        # Considera volatilità per aggiustare size
-        volatility = asset_data.get("volatility_score", 0.5)
-        volatility_adjustment = max(0.5, 1 - volatility)
-        
-        final_size = min(base_size * volatility_adjustment, max_risk_amount * 5)
-        
-        return max(0, min(final_size, self.portfolio["cash"]))
+        return max(0, min(final_size, max_risk_amount * 5))
 
     def generate_orders(self, assets: List[Dict]) -> List[Dict]:
         """
@@ -275,6 +295,17 @@ class DecisionEngine:
             
             # Valuta rischio con Monte Carlo
             risk_assessment = self.monte_carlo.assess_trade_risk(asset, position_size)
+            
+            # RISK ENGINE PRO: Check VaR threshold
+            var_95 = risk_assessment.get('var', 0)
+            max_var = 0.05  # 5% max VaR
+            
+            if abs(var_95) > max_var:
+                logger.warning(
+                    f"Trade BLOCKED for {asset.get('name')}: "
+                    f"VaR={var_95:.2%} > MAX_VAR={max_var:.2%}"
+                )
+                continue
             
             # Verifica se il rischio è accettabile
             max_acceptable_loss = self.portfolio["cash"] * self.max_risk_per_trade
@@ -458,7 +489,7 @@ if __name__ == "__main__":
     # Crea engine
     engine = DecisionEngine(
         portfolio_balance=100000,
-        threshold_confidence=0.6,
+        threshold_confidence=0.1,
         max_risk_per_trade=0.02,
         monte_carlo_sims=1000
     )

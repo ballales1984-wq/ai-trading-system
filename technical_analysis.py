@@ -75,18 +75,42 @@ class TechnicalAnalysis:
     
     def to_dict(self) -> Dict:
         """Convert to dictionary"""
+        # Convert RSI (0-100) to rsi_score (-1 to 1)
+        rsi_score = 0.0
+        if self.rsi is not None and self.rsi > 0:
+            rsi_score = (self.rsi - 50) / 50  # Normalize 0-100 to -1 to 1
+        
+        # Convert MACD histogram to macd_score (-1 to 1)
+        macd_score = 0.0
+        if self.macd_histogram is not None:
+            macd_score = np.clip(self.macd_histogram / 10, -1, 1)  # Normalize
+        
+        # Convert bb_position (0-100) to volatility_score (0-1)
+        volatility_score = 0.5
+        if self.bb_position is not None:
+            volatility_score = self.bb_position / 100
+        
+        # Volume score based on technical score
+        volume_score = 0.0
+        if self.technical_score is not None:
+            volume_score = np.clip(self.technical_score / 10, -1, 1)
+        
         return {
             'symbol': self.symbol,
             'timestamp': self.timestamp.isoformat(),
             'current_price': self.current_price,
             'trend': self.trend,
             'rsi': self.rsi,
+            'rsi_score': rsi_score,
             'rsi_signal': self.rsi_signal,
             'macd': self.macd,
+            'macd_score': macd_score,
             'macd_histogram': self.macd_histogram,
             'bb_position': self.bb_position,
+            'volatility_score': volatility_score,
             'technical_score': self.technical_score,
-            'momentum_score': self.momentum_score,
+            'momentum_score': self.momentum_score if self.momentum_score is not None else 0.0,
+            'volume_score': volume_score,
         }
 
 

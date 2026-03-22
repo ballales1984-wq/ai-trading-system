@@ -431,13 +431,65 @@ class ImprovedPricePredictor:
             signal = 1 if proba > 0.6 else -1 if proba < 0.4 else 0
             probability = proba
         
-        # Confidence based on max probability
-        confidence = float(np.max(probs)) if len(probs) > 1 else abs(probability - 0.5) * 2
+        # ==============================================
+        # RISK ENGINE PRO: REAL CONFIDENCE CALCULATION
+        # ==============================================
+        
+        # Prima: confidence = max(prob) - FAKE!
+        # Ora: confidence basata su:
+        # 1. Margine di certezza (differenza tra classi)
+        # 2. Calibrazione delle probabilità
+        
+        if len(probs) > 1:
+            # Calcola margine di certezza
+            probs_sorted = np.sort(probs)[::-1]  # Ordina decrescente
+            margin = probs_sorted[0] - probs_sorted[1]  # Differenza tra 1° e 2° classe
+            
+            # Calcola entropia (incertezza)
+            entropy = -np.sum(probs * np.log(probs + 1e-10))
+            max_entropy = np.log(len(probs))  # Massima entropia possibile
+            normalized_entropy = entropy / max_entropy if max_entropy > 0 else 1
+            
+            # Confidence reale: alta se margine alto E entropia bassa
+            # Combina margine (0-1) con 1-entropia (0-1)
+            confidence = (margin * 0.7) + ((1 - normalized_entropy) * 0.3)
+            confidence = float(np.clip(confidence, 0, 1))
+            
+            # ==============================================
+            # RISK ENGINE: UNCERTAINTY FILTER
+            # ==============================================
+            # Se il margine è troppo piccolo (< 0.1), il modello è incerto
+            if margin < 0.1:
+                logger.warning(f"UNCERTAINTY: margin={margin:.3f} < 0.1 - returning HOLD")
+                return {
+                    'signal': 0,
+                    'probability': probability,
+                    'confidence': confidence,
+                    'reason': 'uncertain_prediction',
+                    'model_ready': True
+                }
+        else:
+            # Binary classification
+            confidence = abs(probability - 0.5) * 2
+        
+        # ==============================================
+        # RISK ENGINE: LOW CONFIDENCE FILTER
+        # ==============================================
+        if confidence < 0.6:
+            logger.info(f"LOW CONFIDENCE: {confidence:.2f} < 0.6 - returning HOLD")
+            return {
+                'signal': 0,
+                'probability': probability,
+                'confidence': confidence,
+                'reason': 'low_confidence',
+                'model_ready': True
+            }
         
         return {
             'signal': signal,
             'probability': probability,
             'confidence': confidence,
+            'reason': 'valid_signal',
             'model_ready': True
         }
     

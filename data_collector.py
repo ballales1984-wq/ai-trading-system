@@ -277,6 +277,18 @@ class DataCollector:
             except Exception as e:
                 logger.debug(f"CMC enrichment failed for {symbol}: {e}")
         
+        # Fetch OHLCV candles for technical analysis
+        candles_df = self.fetch_ohlcv(symbol, timeframe='1h', limit=100)
+        
+        # Extract timestamps, prices, volumes from candles if available
+        timestamps = []
+        prices = []
+        volumes = []
+        if candles_df is not None and not candles_df.empty:
+            timestamps = list(candles_df.index)
+            prices = list(candles_df['close'])
+            volumes = list(candles_df['volume'])
+        
         return MarketData(
             symbol=symbol,
             name=name or symbol,
@@ -286,7 +298,11 @@ class DataCollector:
             volume_24h=volume,
             high_24h=high_24h,
             low_24h=low_24h,
-            market_cap=market_cap
+            market_cap=market_cap,
+            timestamps=timestamps,
+            prices=prices,
+            volumes=volumes,
+            candles=candles_df if candles_df is not None else pd.DataFrame()
         )
     
     def fetch_multiple_markets(self, symbols: List[str]) -> Dict[str, MarketData]:
@@ -578,9 +594,9 @@ if __name__ == "__main__":
         print(f"  Latest: {df['close'].iloc[-1]:,.2f}")
     
     # Test correlation
-    print("\n🔗 Calculating correlation...")
+    print("\n[LINK] Calculating correlation...")
     corr = collector.calculate_correlation('BTC/USDT', 'ETH/USDT', 24)
     print(f"  BTC/ETH correlation: {corr.correlation:.4f}")
     
-    print("\n✅ Test complete!")
+    print("\n[OK] Test complete!")
 

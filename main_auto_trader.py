@@ -89,7 +89,7 @@ class TradingConfig:
     max_risk_per_trade: float = 0.02  # 2%
     
     # Parametri decisionali
-    threshold_confidence: float = 0.6
+    threshold_confidence: float = 0.1
     semantic_weight: float = 0.5
     numeric_weight: float = 0.5
     monte_carlo_sims: int = 1000
@@ -99,6 +99,10 @@ class TradingConfig:
     max_order_value: float = 10000.0
     max_orders_per_minute: int = 10
     dry_run: bool = True  # Se True, simula senza inviare ordini reali
+    
+    # KILL SWITCH PARAMETERS
+    max_drawdown: float = -0.15  # -15% drawdown massimo
+    min_portfolio_value: float = 0.80  # 80% del balance iniziale
     
     # Exchange
     exchange: str = "binance"
@@ -412,8 +416,37 @@ class AutoTrader:
         self.cycle_count += 1
         cycle_start = datetime.now()
         
+        # ==============================================
+        # KILL SWITCH CHECK
+        # ==============================================
+        portfolio = self.decision_engine.get_portfolio_summary()
+        current_value = portfolio.get('total_value', self.config.initial_balance)
+        initial_value = self.config.initial_balance
+        
+        # Calcola drawdown
+        drawdown = (current_value - initial_value) / initial_value
+        min_value_threshold = initial_value * self.config.min_portfolio_value
+        
+        # Check kill switch conditions
+        if current_value <= min_value_threshold:
+            logger.critical("=" * 60)
+            logger.critical("🚨 KILL SWITCH ACTIVATED!")
+            logger.critical(f"Portfolio value {current_value:.2f} <= min threshold {min_value_threshold:.2f}")
+            logger.critical("=" * 60)
+            self.running = False
+            return {"error": "KILL_SWITCH_ACTIVATED", "portfolio_value": current_value}
+        
+        if drawdown <= self.config.max_drawdown:
+            logger.critical("=" * 60)
+            logger.critical("🚨 KILL SWITCH ACTIVATED!")
+            logger.critical(f"Drawdown {drawdown:.2%} >= max allowed {self.config.max_drawdown:.2%}")
+            logger.critical("=" * 60)
+            self.running = False
+            return {"error": "KILL_SWITCH_ACTIVATED_DRAWDOWN", "drawdown": drawdown}
+        
         logger.info("=" * 60)
         logger.info(f"CYCLE {self.cycle_count} STARTED")
+        logger.info(f"Portfolio: {current_value:.2f} USDT (Drawdown: {drawdown:.2%})")
         logger.info("=" * 60)
         
         # 1️⃣ Raccolta dati
