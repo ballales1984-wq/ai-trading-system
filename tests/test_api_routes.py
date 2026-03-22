@@ -66,7 +66,7 @@ class TestWaitlistRoutes:
     def test_join_waitlist(self):
         """Test joining the waitlist."""
         response = self.client.post(
-            "/api/v1/waitlist",
+            "/api/v1/waitlist/waitlist",
             json={
                 "email": "test@example.com",
                 "source": "landing_page"
@@ -79,7 +79,7 @@ class TestWaitlistRoutes:
     def test_join_waitlist_invalid_email(self):
         """Test joining waitlist with invalid email."""
         response = self.client.post(
-            "/api/v1/waitlist",
+            "/api/v1/waitlist/waitlist",
             json={
                 "email": "invalid-email"
             }
@@ -91,7 +91,7 @@ class TestWaitlistRoutes:
     def test_join_waitlist_missing_email(self):
         """Test joining waitlist without email."""
         response = self.client.post(
-            "/api/v1/waitlist",
+            "/api/v1/waitlist/waitlist",
             json={
                 "source": "landing_page"
             }
