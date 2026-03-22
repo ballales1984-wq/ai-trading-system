@@ -11,7 +11,10 @@
       "rialzo",
       "rialzista"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "short_position",
+      "leverage"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.603605",
     "last_updated": "2026-03-17T11:53:42.604375",
@@ -30,7 +33,10 @@
       "ribassista",
       "shortare"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "long_position",
+      "leverage"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604416",
     "last_updated": "2026-03-17T11:53:42.604423",
@@ -48,7 +54,10 @@
       "protezione",
       "limite"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "take_profit",
+      "liquidation"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604436",
     "last_updated": "2026-03-17T11:53:42.604440",
@@ -66,7 +75,9 @@
       "obiettivo",
       "chiusura"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "stop_loss"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604449",
     "last_updated": "2026-03-17T11:53:42.604453",
@@ -85,7 +96,11 @@
       "x10",
       "x100"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "long_position",
+      "short_position",
+      "liquidation"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604460",
     "last_updated": "2026-03-17T11:53:42.604464",
@@ -103,7 +118,10 @@
       "rischio",
       "confidenza"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "cvar",
+      "max_drawdown"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604473",
     "last_updated": "2026-03-17T11:53:42.604476",
@@ -120,7 +138,9 @@
       "expected shortfall",
       "tail risk"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "var"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604484",
     "last_updated": "2026-03-17T11:53:42.604488",
@@ -138,7 +158,9 @@
       "calo",
       "ribasso"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "max_drawdown"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604494",
     "last_updated": "2026-03-17T11:53:42.604498",
@@ -156,7 +178,11 @@
       "performance",
       "risk adjusted"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "sortino_ratio",
+      "calmar_ratio",
+      "beta"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604505",
     "last_updated": "2026-03-17T11:53:42.604509",
@@ -172,7 +198,9 @@
       "sortino",
       "downside risk"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "sharpe_ratio"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604515",
     "last_updated": "2026-03-17T11:53:42.604519",
@@ -244,7 +272,9 @@
       "trading volume",
       "scambi"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "whale_activity"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604559",
     "last_updated": "2026-03-17T11:53:42.604562",
@@ -262,7 +292,10 @@
       "overbought",
       "oversold"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "macd",
+      "divergence"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604568",
     "last_updated": "2026-03-17T11:53:42.604572",
@@ -280,7 +313,10 @@
       "moving average",
       "convergence"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "rsi",
+      "divergence"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604579",
     "last_updated": "2026-03-17T11:53:42.604582",
@@ -299,7 +335,10 @@
       "ema",
       "media mobile"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "support",
+      "resistance"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604588",
     "last_updated": "2026-03-17T11:53:42.604591",
@@ -317,7 +356,9 @@
       "bottom",
       "floor"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "moving_average"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604598",
     "last_updated": "2026-03-17T11:53:42.604601",
@@ -335,7 +376,9 @@
       "ceiling",
       "tetto"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "moving_average"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604608",
     "last_updated": "2026-03-17T11:53:42.604611",
@@ -353,7 +396,10 @@
       "reward",
       "validator"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "yield_farming",
+      "apr_apy"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604617",
     "last_updated": "2026-03-17T11:53:42.604621",
@@ -371,7 +417,10 @@
       "dex",
       "swap"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "impermanent_loss",
+      "slippage"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604627",
     "last_updated": "2026-03-17T11:53:42.604630",
@@ -388,7 +437,9 @@
       "il",
       "divergence"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "liquidity_pool"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604636",
     "last_updated": "2026-03-17T11:53:42.604640",
@@ -406,7 +457,9 @@
       "apy",
       "apr"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "staking"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604649",
     "last_updated": "2026-03-17T11:53:42.604653",
@@ -460,7 +513,9 @@
       "cpi",
       "ppi"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "interest_rate"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604679",
     "last_updated": "2026-03-17T11:53:42.604683",
@@ -479,7 +534,10 @@
       "ecb",
       "policy"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "inflation",
+      "tapering"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604689",
     "last_updated": "2026-03-17T11:53:42.604693",
@@ -532,7 +590,9 @@
       "buy",
       "accumulation"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "fear_greed"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604721",
     "last_updated": "2026-03-17T11:53:42.604724",
@@ -550,7 +610,9 @@
       "sell",
       "distribution"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "fear_greed"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604730",
     "last_updated": "2026-03-17T11:53:42.604760",
@@ -568,7 +630,10 @@
       "sentiment",
       "emotion"
     ],
-    "related_concepts": [],
+    "related_concepts": [
+      "bullish",
+      "bearish"
+    ],
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604770",
     "last_updated": "2026-03-17T11:53:42.604774",
@@ -675,6 +740,998 @@
     "examples": [],
     "first_seen": "2026-03-17T11:53:42.604829",
     "last_updated": "2026-03-17T11:53:42.604832",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "on_chain_volume",
+    "term": "On-Chain Volume",
+    "definition": "Total value transferred on blockchain",
+    "category": "onchain",
+    "keywords": [
+      "on-chain",
+      "volume",
+      "transfers",
+      "transactions",
+      "活性"
+    ],
+    "related_concepts": [
+      "volume",
+      "liquidity",
+      "active_addresses",
+      "nvt_ratio"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.619769",
+    "last_updated": "2026-03-22T06:57:36.619866",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "active_addresses",
+    "term": "Active Addresses",
+    "definition": "Unique addresses participating in transactions",
+    "category": "onchain",
+    "keywords": [
+      "active addresses",
+      "unique wallets",
+      "users",
+      "participants"
+    ],
+    "related_concepts": [
+      "volume",
+      "network_activity",
+      "on_chain_volume"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.619926",
+    "last_updated": "2026-03-22T06:57:36.619932",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "network_hashrate",
+    "term": "Network Hash Rate",
+    "definition": "Total computational power securing the network",
+    "category": "onchain",
+    "keywords": [
+      "hashrate",
+      "hash rate",
+      "mining difficulty",
+      "computational power"
+    ],
+    "related_concepts": [
+      "security",
+      "network_activity"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.619946",
+    "last_updated": "2026-03-22T06:57:36.619950",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "exchange_reserves",
+    "term": "Exchange Reserves",
+    "definition": "Amount of crypto held on exchanges",
+    "category": "onchain",
+    "keywords": [
+      "exchange reserves",
+      "exchange balance",
+      "exchange flows",
+      "器"
+    ],
+    "related_concepts": [
+      "liquidity",
+      "supply"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.619961",
+    "last_updated": "2026-03-22T06:57:36.619965",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "nvt_ratio",
+    "term": "NVT Ratio",
+    "definition": "Network Value to Transactions ratio - crypto PE ratio",
+    "category": "onchain",
+    "keywords": [
+      "nvt",
+      "network value",
+      "pe ratio",
+      "valuation"
+    ],
+    "related_concepts": [
+      "market_cap",
+      "valuation",
+      "on_chain_volume"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.619975",
+    "last_updated": "2026-03-22T06:57:36.619979",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "miner_revenue",
+    "term": "Miner Revenue",
+    "definition": "Total revenue earned by miners/validators",
+    "category": "onchain",
+    "keywords": [
+      "miner revenue",
+      "validator rewards",
+      "block rewards",
+      "fees"
+    ],
+    "related_concepts": [
+      "staking",
+      "security"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620011",
+    "last_updated": "2026-03-22T06:57:36.620015",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "flash_loan",
+    "term": "Flash Loan",
+    "definition": "Uncollateralized loan within single transaction",
+    "category": "defi",
+    "keywords": [
+      "flash loan",
+      "flash",
+      "uncollateralized",
+      "atomic"
+    ],
+    "related_concepts": [
+      "liquidity_pool",
+      "arbitrage",
+      "mev"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620024",
+    "last_updated": "2026-03-22T06:57:36.620027",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "mev",
+    "term": "MEV",
+    "definition": "Maximal Extractable Value - value extracted from transaction ordering",
+    "category": "defi",
+    "keywords": [
+      "mev",
+      "maximal extractable",
+      "miner extractable",
+      "sandwich",
+      "arbitrage"
+    ],
+    "related_concepts": [
+      "flash_loan",
+      "gas",
+      "priority_fee"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620035",
+    "last_updated": "2026-03-22T06:57:36.620037",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "slippage",
+    "term": "Slippage",
+    "definition": "Difference between expected and actual execution price",
+    "category": "defi",
+    "keywords": [
+      "slippage",
+      "price impact",
+      "execution",
+      "fill"
+    ],
+    "related_concepts": [
+      "spread",
+      "liquidity",
+      "volume",
+      "liquidity_pool"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620057",
+    "last_updated": "2026-03-22T06:57:36.620061",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "impermanent_loss_v2",
+    "term": "Impermanent Loss (Pool)",
+    "definition": "Value loss when providing liquidity vs holding",
+    "category": "defi",
+    "keywords": [
+      "il",
+      "impermanent loss",
+      "divergence loss",
+      "loss",
+      "pool"
+    ],
+    "related_concepts": [
+      "liquidity_pool",
+      "yield_farming"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620069",
+    "last_updated": "2026-03-22T06:57:36.620071",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "apr_apy",
+    "term": "APR vs APY",
+    "definition": "Annual Percentage Rate vs Annual Percentage Yield",
+    "category": "defi",
+    "keywords": [
+      "apr",
+      "apy",
+      "annual percentage",
+      "yield",
+      "compound",
+      "compounding"
+    ],
+    "related_concepts": [
+      "yield_farming",
+      "staking"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620078",
+    "last_updated": "2026-03-22T06:57:36.620081",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "governance_token",
+    "term": "Governance Token",
+    "definition": "Token giving voting rights in protocol",
+    "category": "defi",
+    "keywords": [
+      "governance",
+      "dao",
+      "voting",
+      "proposal",
+      "vote"
+    ],
+    "related_concepts": [
+      "token",
+      "utility"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620088",
+    "last_updated": "2026-03-22T06:57:36.620091",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "token_swap",
+    "term": "Token Swap",
+    "definition": "Exchange one token for another",
+    "category": "defi",
+    "keywords": [
+      "swap",
+      "exchange",
+      "trade",
+      "convert",
+      "scambiare"
+    ],
+    "related_concepts": [
+      "liquidity_pool",
+      "dex"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620110",
+    "last_updated": "2026-03-22T06:57:36.620114",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "oracle_manipulation",
+    "term": "Oracle Manipulation",
+    "definition": "Artificially manipulating price feed data",
+    "category": "defi",
+    "keywords": [
+      "oracle",
+      "manipulation",
+      "price feed",
+      "data",
+      "attack"
+    ],
+    "related_concepts": [
+      "security",
+      "smart_contract"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620125",
+    "last_updated": "2026-03-22T06:57:36.620128",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "order_book",
+    "term": "Order Book",
+    "definition": "List of pending buy and sell orders",
+    "category": "trading",
+    "keywords": [
+      "order book",
+      "bid",
+      "ask",
+      "depth",
+      "ladder"
+    ],
+    "related_concepts": [
+      "spread",
+      "liquidity",
+      "market_maker"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620135",
+    "last_updated": "2026-03-22T06:57:36.620138",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "market_maker",
+    "term": "Market Maker",
+    "definition": "Provides liquidity by placing bid/ask orders",
+    "category": "trading",
+    "keywords": [
+      "market maker",
+      "mm",
+      "liquidity provider",
+      "lp"
+    ],
+    "related_concepts": [
+      "spread",
+      "order_book",
+      "bid_ask"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620159",
+    "last_updated": "2026-03-22T06:57:36.620164",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "bid_ask_spread",
+    "term": "Bid-Ask Spread",
+    "definition": "Difference between highest bid and lowest ask",
+    "category": "trading",
+    "keywords": [
+      "spread",
+      "bid ask",
+      "tight spread",
+      "wide spread"
+    ],
+    "related_concepts": [
+      "liquidity",
+      "market_maker"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620183",
+    "last_updated": "2026-03-22T06:57:36.620187",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "liquidation",
+    "term": "Liquidation",
+    "definition": "Forced closure of position due to margin call",
+    "category": "trading",
+    "keywords": [
+      "liquidation",
+      "liquidated",
+      "margin call",
+      "forced close"
+    ],
+    "related_concepts": [
+      "leverage",
+      "margin",
+      "stop_loss"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620194",
+    "last_updated": "2026-03-22T06:57:36.620197",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "funding_rate",
+    "term": "Funding Rate",
+    "definition": "Periodic payment between long and short traders",
+    "category": "trading",
+    "keywords": [
+      "funding",
+      "funding rate",
+      "funding fee",
+      "periodic"
+    ],
+    "related_concepts": [
+      "futures",
+      "perpetual",
+      "leverage"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620205",
+    "last_updated": "2026-03-22T06:57:36.620208",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "open_interest",
+    "term": "Open Interest",
+    "definition": "Total number of open derivative contracts",
+    "category": "trading",
+    "keywords": [
+      "open interest",
+      "oi",
+      "positions",
+      "contracts"
+    ],
+    "related_concepts": [
+      "futures",
+      "volume",
+      "market_sentiment"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620216",
+    "last_updated": "2026-03-22T06:57:36.620219",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "delta_neutral",
+    "term": "Delta Neutral",
+    "definition": "Strategy with no directional exposure",
+    "category": "trading",
+    "keywords": [
+      "delta neutral",
+      "market neutral",
+      "hedge",
+      "hedged"
+    ],
+    "related_concepts": [
+      "hedge",
+      "arbitrage",
+      "risk_management"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620227",
+    "last_updated": "2026-03-22T06:57:36.620230",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "grid_trading",
+    "term": "Grid Trading",
+    "definition": "Placing buy/sell orders at regular intervals",
+    "category": "trading",
+    "keywords": [
+      "grid",
+      "range",
+      "buy grid",
+      "sell grid",
+      "bot"
+    ],
+    "related_concepts": [
+      "automated_trading",
+      " DCA"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620237",
+    "last_updated": "2026-03-22T06:57:36.620241",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "arbitrage",
+    "term": "Arbitrage",
+    "definition": "Profiting from price differences across markets",
+    "category": "trading",
+    "keywords": [
+      "arbitrage",
+      "arb",
+      "price difference",
+      "cross-exchange"
+    ],
+    "related_concepts": [
+      "mev",
+      "exchange",
+      "spread",
+      "flash_loan"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620248",
+    "last_updated": "2026-03-22T06:57:36.620251",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "max_drawdown",
+    "term": "Maximum Drawdown",
+    "definition": "Largest peak-to-trough decline",
+    "category": "risk",
+    "keywords": [
+      "max drawdown",
+      "mdd",
+      "peak to trough",
+      "worst decline"
+    ],
+    "related_concepts": [
+      "drawdown",
+      "volatility",
+      "risk",
+      "var"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620258",
+    "last_updated": "2026-03-22T06:57:36.620261",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "calmar_ratio",
+    "term": "Calmar Ratio",
+    "definition": "Return divided by maximum drawdown",
+    "category": "risk",
+    "keywords": [
+      "calmar",
+      "return over dd",
+      "risk adjusted"
+    ],
+    "related_concepts": [
+      "sharpe_ratio",
+      "max_drawdown"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620269",
+    "last_updated": "2026-03-22T06:57:36.620271",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "beta",
+    "term": "Beta",
+    "definition": "Measure of volatility relative to market",
+    "category": "risk",
+    "keywords": [
+      "beta",
+      "market beta",
+      "sensitivity",
+      "correlation"
+    ],
+    "related_concepts": [
+      "correlation",
+      "volatility",
+      "sharpe_ratio"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620292",
+    "last_updated": "2026-03-22T06:57:36.620296",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "alpha",
+    "term": "Alpha",
+    "definition": "Excess return above benchmark",
+    "category": "risk",
+    "keywords": [
+      "alpha",
+      "excess return",
+      "outperformance",
+      "skill"
+    ],
+    "related_concepts": [
+      "beta",
+      "sharpe_ratio"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620305",
+    "last_updated": "2026-03-22T06:57:36.620308",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "volatility_clustering",
+    "term": "Volatility Clustering",
+    "definition": "High volatility tends to follow high volatility",
+    "category": "risk",
+    "keywords": [
+      "volatility clustering",
+      "heteroskedasticity",
+      "garch"
+    ],
+    "related_concepts": [
+      "volatility",
+      "garch",
+      "risk"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620342",
+    "last_updated": "2026-03-22T06:57:36.620345",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "correlation_breakdown",
+    "term": "Correlation Breakdown",
+    "definition": "Normally correlated assets move independently",
+    "category": "risk",
+    "keywords": [
+      "correlation breakdown",
+      "correlation break",
+      "decorrelation"
+    ],
+    "related_concepts": [
+      "correlation",
+      "diversification",
+      "risk"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620352",
+    "last_updated": "2026-03-22T06:57:36.620355",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": " QE",
+    "term": "Quantitative Easing",
+    "definition": "Central bank asset purchase program",
+    "category": "macro",
+    "keywords": [
+      "qe",
+      "quantitative easing",
+      "money printing",
+      "asset purchase"
+    ],
+    "related_concepts": [
+      "inflation",
+      "interest_rate",
+      "liquidity"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620375",
+    "last_updated": "2026-03-22T06:57:36.620380",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "tapering",
+    "term": "Tapering",
+    "definition": "Gradual reduction of monetary stimulus",
+    "category": "macro",
+    "keywords": [
+      "tapering",
+      "taper",
+      "wind down",
+      "reduce stimulus"
+    ],
+    "related_concepts": [
+      "QE",
+      "interest_rate"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620390",
+    "last_updated": "2026-03-22T06:57:36.620393",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "usd_index",
+    "term": "US Dollar Index",
+    "definition": "Value of USD against major currencies",
+    "category": "macro",
+    "keywords": [
+      "dxy",
+      "usd index",
+      "dollar index",
+      "usd"
+    ],
+    "related_concepts": [
+      "forex",
+      "currency",
+      "inflation"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620402",
+    "last_updated": "2026-03-22T06:57:36.620405",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "vix",
+    "term": "VIX",
+    "definition": "CBOE Volatility Index - fear index",
+    "category": "macro",
+    "keywords": [
+      "vix",
+      "volatility index",
+      "fear index",
+      "market fear"
+    ],
+    "related_concepts": [
+      "volatility",
+      "fear_greed",
+      "market_sentiment"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620413",
+    "last_updated": "2026-03-22T06:57:36.620415",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "yield_curve",
+    "term": "Yield Curve",
+    "definition": "Interest rates across different maturities",
+    "category": "macro",
+    "keywords": [
+      "yield curve",
+      "inversion",
+      "steepening",
+      "flattening"
+    ],
+    "related_concepts": [
+      "interest_rate",
+      "bonds",
+      "recession"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620422",
+    "last_updated": "2026-03-22T06:57:36.620425",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "whale_activity",
+    "term": "Whale Activity",
+    "definition": "Large transactions from big holders",
+    "category": "sentiment",
+    "keywords": [
+      "whale",
+      "whales",
+      "large transaction",
+      "big money",
+      "巨鲸"
+    ],
+    "related_concepts": [
+      "volume",
+      "on_chain_volume"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620433",
+    "last_updated": "2026-03-22T06:57:36.620436",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "social_sentiment",
+    "term": "Social Sentiment",
+    "definition": "Overall mood from social media and news",
+    "category": "sentiment",
+    "keywords": [
+      "social sentiment",
+      "twitter",
+      "reddit",
+      "social media",
+      "讨论"
+    ],
+    "related_concepts": [
+      "fear_greed",
+      "bullish",
+      "bearish"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620464",
+    "last_updated": "2026-03-22T06:57:36.620471",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "coin_rain",
+    "term": "Accumulation/Distribution",
+    "definition": "Buying/selling pressure based on price and volume",
+    "category": "sentiment",
+    "keywords": [
+      "accumulation",
+      "distribution",
+      "a/d",
+      "accumulate",
+      "distribute"
+    ],
+    "related_concepts": [
+      "volume",
+      "obv",
+      "sentiment"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620486",
+    "last_updated": "2026-03-22T06:57:36.620491",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "divergence",
+    "term": "Divergence",
+    "definition": "Price and indicator moving in opposite directions",
+    "category": "technical",
+    "keywords": [
+      "divergence",
+      "bullish div",
+      "bearish div",
+      "hidden"
+    ],
+    "related_concepts": [
+      "rsi",
+      "macd",
+      "momentum"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620505",
+    "last_updated": "2026-03-22T06:57:36.620509",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "harmonic_patterns",
+    "term": "Harmonic Patterns",
+    "definition": "Recurring price patterns using Fibonacci ratios",
+    "category": "technical",
+    "keywords": [
+      "harmonic",
+      "gartley",
+      "butterfly",
+      "crab",
+      "fibonacci"
+    ],
+    "related_concepts": [
+      "support",
+      "resistance",
+      "pattern"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620519",
+    "last_updated": "2026-03-22T06:57:36.620523",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "ichimoku",
+    "term": "Ichimoku Cloud",
+    "definition": "Multi-component technical indicator",
+    "category": "technical",
+    "keywords": [
+      "ichimoku",
+      "cloud",
+      "tenkan",
+      "kijun",
+      "senkou"
+    ],
+    "related_concepts": [
+      "support",
+      "resistance",
+      "trend"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620569",
+    "last_updated": "2026-03-22T06:57:36.620574",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "smart_contract",
+    "term": "Smart Contract",
+    "definition": "Self-executing code on blockchain",
+    "category": "crypto",
+    "keywords": [
+      "smart contract",
+      "contract",
+      "code",
+      "protocol",
+      "合约"
+    ],
+    "related_concepts": [
+      "defi",
+      "token",
+      "blockchain"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620584",
+    "last_updated": "2026-03-22T06:57:36.620588",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "gas_fee",
+    "term": "Gas Fee",
+    "definition": "Transaction fee on blockchain networks",
+    "category": "crypto",
+    "keywords": [
+      "gas",
+      "fee",
+      "gas fee",
+      "network fee",
+      "gwei"
+    ],
+    "related_concepts": [
+      "network",
+      "transaction",
+      "priority_fee"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620597",
+    "last_updated": "2026-03-22T06:57:36.620601",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "bridge",
+    "term": "Cross-Chain Bridge",
+    "definition": "Protocol for transferring assets between blockchains",
+    "category": "crypto",
+    "keywords": [
+      "bridge",
+      "cross-chain",
+      "bridge",
+      "interoperability"
+    ],
+    "related_concepts": [
+      "layer2",
+      "token_swap"
+    ],
+    "language": "en",
+    "examples": [],
+    "first_seen": "2026-03-22T06:57:36.620635",
+    "last_updated": "2026-03-22T06:57:36.620640",
     "occurrence_count": 1,
     "confidence": 1.0
   }
