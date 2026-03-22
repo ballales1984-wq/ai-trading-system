@@ -460,11 +460,49 @@ class AutoTrader:
         closed_positions = self.executor.check_stop_losses(current_prices)
         if closed_positions:
             logger.info(f"   Closed {len(closed_positions)} positions due to stop-loss")
+            # Register SELL trades for closed positions
+            if MODULES_AVAILABLE:
+                for pos in closed_positions:
+                    asset = pos.get("asset", "").replace("/USDT", "")
+                    amount_usdt = pos.get("amount", 0)
+                    entry_price = pos.get("entry_price", 0)
+                    current_price = current_prices.get(pos.get("asset", ""), entry_price)
+                    quantity = amount_usdt / current_price if current_price > 0 else 0
+                    commission = amount_usdt * 0.001
+                    
+                    trading_tracker.registra_trade({
+                        "asset": asset,
+                        "tipo": "SELL",
+                        "quantita": quantity,
+                        "prezzo": current_price,
+                        "commissione": commission,
+                        "prezzo_acquisto": entry_price,
+                        "strategy": "AutoTrader"
+                    })
         
         # Check take-profit
         tp_closed = self.executor.check_take_profits(current_prices)
         if tp_closed:
             logger.info(f"   Closed {len(tp_closed)} positions due to take-profit")
+            # Register SELL trades for closed positions
+            if MODULES_AVAILABLE:
+                for pos in tp_closed:
+                    asset = pos.get("asset", "").replace("/USDT", "")
+                    amount_usdt = pos.get("amount", 0)
+                    entry_price = pos.get("entry_price", 0)
+                    current_price = current_prices.get(pos.get("asset", ""), entry_price)
+                    quantity = amount_usdt / current_price if current_price > 0 else 0
+                    commission = amount_usdt * 0.001
+                    
+                    trading_tracker.registra_trade({
+                        "asset": asset,
+                        "tipo": "SELL",
+                        "quantita": quantity,
+                        "prezzo": current_price,
+                        "commissione": commission,
+                        "prezzo_acquisto": entry_price,
+                        "strategy": "AutoTrader"
+                    })
         
         logger.info("2. Fetching sentiment data...")
         sentiment_data = self.data_aggregator.fetch_sentiment(self.config.assets)
