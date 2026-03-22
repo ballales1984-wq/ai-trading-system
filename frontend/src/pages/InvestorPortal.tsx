@@ -11,6 +11,8 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
+
+const CHART_COLORS = ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#a371f7', '#f0883e'];
 import { 
   Wallet, TrendingUp, TrendingDown, Shield, 
   PieChart as PieChartIcon, Calendar, Download, FileText 
@@ -218,16 +220,15 @@ export default function InvestorPortal() {
                 outerRadius={100}
                 paddingAngle={2}
                 dataKey="value"
+                label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
               >
-                {allocationData.length > 0 ? allocationData.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                )) : [
+                {[
                   { name: 'BTC', value: 45 },
                   { name: 'ETH', value: 30 },
                   { name: 'SOL', value: 15 },
                   { name: 'Other', value: 10 },
                 ].map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip 
@@ -243,7 +244,7 @@ export default function InvestorPortal() {
               { name: 'Other', value: 10 },
             ]).map((item, index) => (
               <div key={item.name} className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
                 <span className="text-xs text-text-muted">{item.name}: {item.value}%</span>
               </div>
             ))}
