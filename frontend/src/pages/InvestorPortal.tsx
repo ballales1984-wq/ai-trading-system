@@ -255,6 +255,8 @@ export default function InvestorPortal() {
       <div className="flex items-center gap-2 mb-4">
         <Calendar className="w-5 h-5 text-text-muted" />
         <select 
+          id="report-period"
+          name="reportPeriod"
           value={reportPeriod}
           onChange={(e) => setReportPeriod(e.target.value)}
           className="bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-text"
