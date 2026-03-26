@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD012 MD013 MD022 MD024 MD025 MD034 -->
+
 # Piano 100 Giorni - AI Trading System
 The GitHub repository at https://github.com/ballales1984-wq/ai-trading-system exists and appears to be an actively developed, ambitious open-source project (last commit on March 13, 2026, with 513 commits total).
 
