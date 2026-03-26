@@ -509,82 +509,18 @@ class AutoTrader:
         # 1.5️⃣ Check stop-losses e take-profit per posizioni esistenti
         logger.info("1b. Checking stop-losses and take-profit...")
         current_prices = {asset: data.get('current_price', 0) for asset, data in market_data.items()}
-        closed_positions = self.executor.check_stop_losses(current_prices)
-        if closed_positions:
-            logger.info(f"   Closed {len(closed_positions)} positions due to stop-loss")
-            # Register SELL trades for closed positions
-            if MODULES_AVAILABLE:
-                for pos in closed_positions:
-                    asset = pos.get("asset", "").replace("/USDT", "")
-                    amount_usdt = pos.get("amount", 0)
-                    entry_price = pos.get("entry_price", 0)
-                    current_price = current_prices.get(pos.get("asset", ""), entry_price)
-                    quantity = amount_usdt / current_price if current_price > 0 else 0
-                    commission = amount_usdt * 0.001
-                    pnl = (current_price - entry_price) * quantity - commission
-                    
-                    trading_tracker.registra_trade({
-                        "asset": asset,
-                        "tipo": "SELL",
-                        "quantita": quantity,
-                        "prezzo": current_price,
-                        "commissione": commission,
-                        "prezzo_acquisto": entry_price,
-                        "strategy": "AutoTrader"
-                    })
-                    
-                    # Save to database
-                    try:
-                        self.state_manager.save_trade({
-                            "order_id": f"{asset}_SL_{datetime.now().timestamp()}",
-                            "symbol": asset,
-                            "side": "SELL",
-                            "quantity": quantity,
-                            "price": current_price,
-                            "commission": commission,
-                            "pnl": pnl
-                        })
-                    except Exception as e:
-                        logger.error(f"Errore salvataggio SL trade in DB: {e}")
-        
-        # Check take-profit
-        tp_closed = self.executor.check_take_profits(current_prices)
-        if tp_closed:
-            logger.info(f"   Closed {len(tp_closed)} positions due to take-profit")
-            # Register SELL trades for closed positions
-            if MODULES_AVAILABLE:
-                for pos in tp_closed:
-                    asset = pos.get("asset", "").replace("/USDT", "")
-                    amount_usdt = pos.get("amount", 0)
-                    entry_price = pos.get("entry_price", 0)
-                    current_price = current_prices.get(pos.get("asset", ""), entry_price)
-                    quantity = amount_usdt / current_price if current_price > 0 else 0
-                    commission = amount_usdt * 0.001
-                    pnl = (current_price - entry_price) * quantity - commission
-                    
-                    trading_tracker.registra_trade({
-                        "asset": asset,
-                        "tipo": "SELL",
-                        "quantita": quantity,
-                        "prezzo": current_price,
-                        "commissione": commission,
-                        "prezzo_acquisto": entry_price,
-                        "strategy": "AutoTrader"
-                    })
-                    
-                    # Save to database
-                    try:
-                        self.state_manager.save_trade({
-                            "order_id": f"{asset}_TP_{datetime.now().timestamp()}",
-                            "symbol": asset,
-                            "side": "SELL",
-                            "quantity": quantity,
-                            "price": current_price,
-                            "commission": commission,
-                            "pnl": pnl
-                        })
-                    except Exception as e:
-                        logger.error(f"Errore salvataggio TP trade in DB: {e}")
+        protective_orders = []
+        protective_orders.extend(self.executor.check_stop_losses(current_prices))
+        protective_orders.extend(self.executor.check_take_profits(current_prices))
+
+        protective_executed = []
+        if protective_orders:
+            logger.info(f"   Protective exits triggered: {len(protective_orders)}")
+            protective_executed = self.executor.execute_orders(protective_orders)
+            protective_closed = sum(
+                1 for o in protective_executed if o.status == OrderStatus.EXECUTED and o.action == "SELL"
+            )
+            logger.info(f"   Closed {protective_closed} positions via protective exits")
         
         logger.info("2. Fetching sentiment data...")
         sentiment_data = self.data_aggregator.fetch_sentiment(self.config.assets)
