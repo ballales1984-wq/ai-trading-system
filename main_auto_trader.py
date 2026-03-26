@@ -334,7 +334,12 @@ class AutoTrader:
         # Inizializza registro trading
         if MODULES_AVAILABLE:
             trading_tracker.inizializza_registro()
-            trading_tracker.set_balance(100000)  # Initialize balance to 100000 USDT
+            # In dry-run partiamo da stato pulito per evitare posizioni stale
+            # che falsano P/L e portfolio value tra una sessione e l'altra.
+            if config.dry_run:
+                trading_tracker.reset_registro()
+                trading_tracker.inizializza_registro()
+            trading_tracker.set_balance(config.initial_balance)
         
         # Initialize StateManager for database
         self.state_manager = StateManager(db_path="data/trading_state.db")
