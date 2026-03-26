@@ -98,7 +98,7 @@ async def get_risk_metrics() -> RiskMetrics:
         volatility=0.25,
         beta=1.15,
         correlation_to_btc=0.85,
-        max_drawdown=-8500.0,
+        max_drawdown=-8.5,
         sharpe_ratio=1.85,
         leverage=1.2,
         margin_utilization=0.45,
