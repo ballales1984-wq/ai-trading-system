@@ -392,32 +392,33 @@ class AutoTrader:
 
     def _get_runtime_portfolio_value(self, current_prices: Optional[Dict[str, float]] = None) -> float:
         """
-        Compute a runtime portfolio value based on trading tracker balance + open positions.
-        Falls back to DecisionEngine summary when tracker is unavailable.
+        Compute a runtime portfolio value based on DecisionEngine cash and
+        executor open positions marked-to-market.
         """
-        if MODULES_AVAILABLE:
-            try:
-                cash = trading_tracker.get_balance()
-                positions = trading_tracker.get_all_posizioni()
-                positions_value = 0.0
-
-                for asset, pos in positions.items():
-                    qty = pos.quantita if hasattr(pos, "quantita") else pos.get("quantita", 0.0)
-                    entry = (
-                        pos.prezzo_acquisto
-                        if hasattr(pos, "prezzo_acquisto")
-                        else pos.get("prezzo_acquisto", 0.0)
-                    )
-                    px = self._resolve_price_for_asset(asset, current_prices or {}) if current_prices else None
-                    px = px if px else entry
-                    positions_value += qty * px
-
-                return cash + positions_value
-            except Exception as e:
-                logger.error(f"Runtime portfolio computation failed, fallback to DecisionEngine: {e}")
-
         portfolio = self.decision_engine.get_portfolio_summary()
-        return float(portfolio.get("total_value", self.config.initial_balance))
+        cash = float(portfolio.get("cash", self.config.initial_balance))
+
+        positions_value = 0.0
+        try:
+            for asset, pos in self.executor.open_positions.items():
+                entry_price = pos.get("entry_price") or 0.0
+                base_qty = pos.get("base_quantity")
+                amount = pos.get("amount", 0.0)
+
+                mark_price = self._resolve_price_for_asset(asset, current_prices or {}) if current_prices else None
+                mark_price = mark_price or entry_price
+
+                if base_qty:
+                    positions_value += base_qty * mark_price
+                elif entry_price:
+                    positions_value += amount * (mark_price / entry_price)
+                else:
+                    positions_value += amount
+        except Exception as e:
+            logger.error(f"Runtime portfolio MTM failed, fallback to DecisionEngine summary: {e}")
+            return float(portfolio.get("total_value", self.config.initial_balance))
+
+        return cash + positions_value
     
     def prepare_asset_analysis(
         self,
