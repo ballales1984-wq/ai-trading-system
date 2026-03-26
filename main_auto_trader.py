@@ -359,6 +359,7 @@ class AutoTrader:
         
         # Storico
         self.history: List[Dict] = []
+        self._last_prices: Dict[str, float] = {}
         
         # Setup signal handlers
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -479,7 +480,7 @@ class AutoTrader:
         # ==============================================
         # KILL SWITCH CHECK
         # ==============================================
-        current_value = self._get_runtime_portfolio_value()
+        current_value = self._get_runtime_portfolio_value(self._last_prices)
         initial_value = self.config.initial_balance
         
         # Calcola drawdown
@@ -515,6 +516,7 @@ class AutoTrader:
         # 1.5️⃣ Check stop-losses e take-profit per posizioni esistenti
         logger.info("1b. Checking stop-losses and take-profit...")
         current_prices = {asset: data.get('current_price', 0) for asset, data in market_data.items()}
+        self._last_prices = dict(current_prices)
         protective_orders = []
         protective_orders.extend(self.executor.check_stop_losses(current_prices))
         protective_orders.extend(self.executor.check_take_profits(current_prices))
