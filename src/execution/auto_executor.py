@@ -399,17 +399,50 @@ class AutoExecutor:
                 # Usa VaR per determinare stop-loss più preciso
                 var = order["monte_carlo"].get("var", -stop_loss_pct)
                 stop_loss_pct = min(abs(var) * 0.8, stop_loss_pct * 2)  # Conservative
-            
-            self.open_positions[asset] = {
-                "entry_price": executed.price,
-                "amount": executed.amount,
-                "base_quantity": (executed.amount / executed.price) if executed.price else None,
-                "stop_loss_pct": stop_loss_pct,
-                "stop_loss_price": executed.price * (1 - stop_loss_pct) if executed.price else None,
-                "take_profit_pct": self.safety.default_take_profit_pct,
-                "timestamp": executed.timestamp,
-                "order_id": executed.order_id
-            }
+
+            new_entry_price = executed.price or 0.0
+            new_base_qty = (executed.amount / new_entry_price) if new_entry_price else 0.0
+
+            if asset in self.open_positions:
+                # Accumula posizione esistente (pyramiding) con prezzo medio.
+                existing = self.open_positions[asset]
+                existing_entry = existing.get("entry_price") or 0.0
+                existing_qty = existing.get("base_quantity")
+                if not existing_qty and existing_entry:
+                    existing_qty = (existing.get("amount", 0.0) / existing_entry)
+                existing_qty = existing_qty or 0.0
+
+                total_qty = existing_qty + new_base_qty
+                avg_entry = (
+                    ((existing_qty * existing_entry) + (new_base_qty * new_entry_price)) / total_qty
+                    if total_qty > 0
+                    else new_entry_price
+                )
+                total_notional = total_qty * avg_entry
+                tp_pct = existing.get("take_profit_pct", self.safety.default_take_profit_pct)
+                sl_pct = max(existing.get("stop_loss_pct", stop_loss_pct), stop_loss_pct)
+
+                self.open_positions[asset] = {
+                    "entry_price": avg_entry,
+                    "amount": total_notional,
+                    "base_quantity": total_qty,
+                    "stop_loss_pct": sl_pct,
+                    "stop_loss_price": avg_entry * (1 - sl_pct) if avg_entry else None,
+                    "take_profit_pct": tp_pct,
+                    "timestamp": executed.timestamp,
+                    "order_id": executed.order_id
+                }
+            else:
+                self.open_positions[asset] = {
+                    "entry_price": new_entry_price,
+                    "amount": executed.amount,
+                    "base_quantity": new_base_qty,
+                    "stop_loss_pct": stop_loss_pct,
+                    "stop_loss_price": new_entry_price * (1 - stop_loss_pct) if new_entry_price else None,
+                    "take_profit_pct": self.safety.default_take_profit_pct,
+                    "timestamp": executed.timestamp,
+                    "order_id": executed.order_id
+                }
             
             logger.info(
                 f"Position registered: {asset} with stop-loss at {stop_loss_pct:.2%}"
