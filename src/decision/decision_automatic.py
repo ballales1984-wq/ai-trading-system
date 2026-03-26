@@ -266,7 +266,7 @@ class DecisionEngine:
         
         return max(0, min(final_size, max_risk_amount * 5))
 
-    def generate_orders(self, assets: List[Dict]) -> List[Dict]:
+    def generate_orders(self, assets: List[Dict], update_portfolio: bool = True) -> List[Dict]:
         """
         Genera ordini BUY/SELL/HOLD basati su analisi completa.
         
@@ -320,6 +320,7 @@ class DecisionEngine:
                 "asset": asset.get("name", "Unknown"),
                 "action": direction,
                 "amount": round(position_size, 2),
+                "price": asset.get("price"),
                 "confidence": abs(score),
                 "semantic_score": asset.get("semantic_score", 0),
                 "numeric_score": asset.get("numeric_score", 0),
@@ -327,8 +328,10 @@ class DecisionEngine:
                 "timestamp": datetime.now().isoformat()
             }
             
-            # Aggiorna portafoglio (simulato)
-            self._update_portfolio(order)
+            # Aggiorna portafoglio solo se richiesto dal caller
+            # (in auto-trader reale aggiorniamo dopo conferma esecuzione).
+            if update_portfolio:
+                self._update_portfolio(order)
             
             orders.append(order)
             
@@ -417,7 +420,7 @@ class DecisionEngine:
         logger.info("=" * 60)
         
         # Genera ordini
-        orders = self.generate_orders(assets)
+        orders = self.generate_orders(assets, update_portfolio=execute)
         
         # Riepilogo
         summary = self.get_portfolio_summary()

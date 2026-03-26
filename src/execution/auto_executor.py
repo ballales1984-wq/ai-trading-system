@@ -296,7 +296,8 @@ class AutoExecutor:
                 result = self.client.send_order(
                     symbol=order["asset"],
                     side=order["action"],
-                    quantity=order["amount"]
+                    quantity=order["amount"],
+                    price=order.get("price")
                 )
             else:
                 # Modalità reale - usa ExchangeClient
@@ -402,6 +403,7 @@ class AutoExecutor:
             self.open_positions[asset] = {
                 "entry_price": executed.price,
                 "amount": executed.amount,
+                "base_quantity": (executed.amount / executed.price) if executed.price else None,
                 "stop_loss_pct": stop_loss_pct,
                 "stop_loss_price": executed.price * (1 - stop_loss_pct) if executed.price else None,
                 "take_profit_pct": self.safety.default_take_profit_pct,
@@ -437,6 +439,8 @@ class AutoExecutor:
             
             stop_loss_price = position.get("stop_loss_price")
             if stop_loss_price and current_price <= stop_loss_price:
+                base_qty = position.get("base_quantity")
+                notional_to_close = (base_qty * current_price) if base_qty else position["amount"]
                 # Trigger stop-loss
                 logger.warning(
                     f"🛑 Stop-loss triggered for {asset} at {current_price} "
@@ -445,7 +449,8 @@ class AutoExecutor:
                 stop_orders.append({
                     "asset": asset,
                     "action": "SELL",
-                    "amount": position["amount"],
+                    "amount": notional_to_close,
+                    "price": current_price,
                     "reason": "stop_loss",
                     "entry_price": position["entry_price"]
                 })
@@ -475,6 +480,8 @@ class AutoExecutor:
             if entry_price:
                 take_profit_price = entry_price * (1 + take_profit_pct)
                 if current_price >= take_profit_price:
+                    base_qty = position.get("base_quantity")
+                    notional_to_close = (base_qty * current_price) if base_qty else position["amount"]
                     # Trigger take-profit
                     logger.warning(
                         f"🎯 Take-profit triggered for {asset} at {current_price} "
@@ -482,7 +489,8 @@ class AutoExecutor:
                     tp_orders.append({
                         "asset": asset,
                         "action": "SELL",
-                        "amount": position["amount"],
+                        "amount": notional_to_close,
+                        "price": current_price,
                         "reason": "take_profit",
                         "entry_price": entry_price
                     })

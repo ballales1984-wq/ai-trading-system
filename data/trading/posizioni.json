@@ -1,9 +1,9 @@
 {
   "ETH/USDT": {
     "asset": "ETH/USDT",
-    "quantita": 0.40672744130956867,
-    "prezzo_acquisto": 3531.4066721816957,
-    "data_acquisto": "2026-03-26T10:31:28.677258",
+    "quantita": 0.37666681602674507,
+    "prezzo_acquisto": 3550.989742364319,
+    "data_acquisto": "2026-03-26T10:33:32.203973",
     "api_usata": "",
     "strategy": "AutoTrader"
   },

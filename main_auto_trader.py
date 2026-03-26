@@ -364,6 +364,55 @@ class AutoTrader:
         logger.info(f"Received signal {signum}, shutting down...")
         self.stop()
         sys.exit(0)
+
+    def _resolve_price_for_asset(self, asset: str, current_prices: Dict[str, float]) -> Optional[float]:
+        """Resolve price handling symbols with and without slash."""
+        if not current_prices:
+            return None
+        if asset in current_prices:
+            return current_prices[asset]
+
+        compact = asset.replace("/", "")
+        if compact in current_prices:
+            return current_prices[compact]
+
+        # Try reverse mapping (BTCUSDT <-> BTC/USDT)
+        if "/" in asset:
+            alt = asset.replace("/", "")
+            return current_prices.get(alt)
+        if asset.endswith("USDT") and len(asset) > 4:
+            alt = f"{asset[:-4]}/USDT"
+            return current_prices.get(alt)
+        return None
+
+    def _get_runtime_portfolio_value(self, current_prices: Optional[Dict[str, float]] = None) -> float:
+        """
+        Compute a runtime portfolio value based on trading tracker balance + open positions.
+        Falls back to DecisionEngine summary when tracker is unavailable.
+        """
+        if MODULES_AVAILABLE:
+            try:
+                cash = trading_tracker.get_balance()
+                positions = trading_tracker.get_all_posizioni()
+                positions_value = 0.0
+
+                for asset, pos in positions.items():
+                    qty = pos.quantita if hasattr(pos, "quantita") else pos.get("quantita", 0.0)
+                    entry = (
+                        pos.prezzo_acquisto
+                        if hasattr(pos, "prezzo_acquisto")
+                        else pos.get("prezzo_acquisto", 0.0)
+                    )
+                    px = self._resolve_price_for_asset(asset, current_prices or {}) if current_prices else None
+                    px = px if px else entry
+                    positions_value += qty * px
+
+                return cash + positions_value
+            except Exception as e:
+                logger.error(f"Runtime portfolio computation failed, fallback to DecisionEngine: {e}")
+
+        portfolio = self.decision_engine.get_portfolio_summary()
+        return float(portfolio.get("total_value", self.config.initial_balance))
     
     def prepare_asset_analysis(
         self,
@@ -424,8 +473,7 @@ class AutoTrader:
         # ==============================================
         # KILL SWITCH CHECK
         # ==============================================
-        portfolio = self.decision_engine.get_portfolio_summary()
-        current_value = portfolio.get('total_value', self.config.initial_balance)
+        current_value = self._get_runtime_portfolio_value()
         initial_value = self.config.initial_balance
         
         # Calcola drawdown
