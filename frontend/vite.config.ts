@@ -13,6 +13,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-charts': ['echarts', 'echarts-for-react', 'recharts'],
+          'vendor-ui': ['@tanstack/react-query', 'lucide-react'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 600,
   },
   server: {
     port: 5173,
