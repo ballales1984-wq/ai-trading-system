@@ -1,49 +1,49 @@
 {
   "ETH/USDT": {
     "asset": "ETH/USDT",
-    "quantita": 1.0113209467870068,
-    "prezzo_acquisto": 3460.8202382434497,
-    "data_acquisto": "2026-03-23T00:40:04.833727",
+    "quantita": 0.0046452170463494,
+    "prezzo_acquisto": 3459.4723647260253,
+    "data_acquisto": "2026-03-23T19:20:37.489957",
     "api_usata": "",
     "strategy": "AutoTrader"
   },
   "SOLUSDT": {
     "asset": "SOLUSDT",
-    "quantita": 35.25104719644224,
-    "prezzo_acquisto": 99.28783052871242,
-    "data_acquisto": "2026-03-22T18:04:26.220402",
+    "quantita": 33.44839045438798,
+    "prezzo_acquisto": 97.44235688842913,
+    "data_acquisto": "2026-03-23T14:59:32.428070",
     "api_usata": "",
     "strategy": "AutoTrader"
   },
   "BTCUSDT": {
     "asset": "BTCUSDT",
-    "quantita": 33.83616018553544,
-    "prezzo_acquisto": 99.81924608111537,
-    "data_acquisto": "2026-03-22T18:04:26.236912",
+    "quantita": 31.38982856340604,
+    "prezzo_acquisto": 100.19838093880689,
+    "data_acquisto": "2026-03-23T14:59:32.480116",
     "api_usata": "",
     "strategy": "AutoTrader"
   },
   "ETHUSDT": {
     "asset": "ETHUSDT",
-    "quantita": 32.76994736081688,
-    "prezzo_acquisto": 99.4597264412192,
-    "data_acquisto": "2026-03-22T18:04:26.261576",
+    "quantita": 33.00317752331359,
+    "prezzo_acquisto": 102.33863080650703,
+    "data_acquisto": "2026-03-23T14:59:32.382823",
     "api_usata": "",
     "strategy": "AutoTrader"
   },
   "SOL/USDT": {
     "asset": "SOL/USDT",
-    "quantita": 0.07233320951968607,
-    "prezzo_acquisto": 149.30901133400826,
-    "data_acquisto": "2026-03-22T23:54:03.434872",
+    "quantita": 0.09591821448537564,
+    "prezzo_acquisto": 145.33214650409687,
+    "data_acquisto": "2026-03-23T19:23:10.494344",
     "api_usata": "",
     "strategy": "AutoTrader"
   },
   "BTC/USDT": {
     "asset": "BTC/USDT",
-    "quantita": 0.00014410853458061333,
-    "prezzo_acquisto": 69739.10344205255,
-    "data_acquisto": "2026-03-22T23:55:04.877590",
+    "quantita": 0.00023249092791280718,
+    "prezzo_acquisto": 66712.28051451896,
+    "data_acquisto": "2026-03-23T19:20:37.537840",
     "api_usata": "",
     "strategy": "AutoTrader"
   }

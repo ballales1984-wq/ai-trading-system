@@ -1,37 +1,126 @@
-# AI Trading System Improvements - Implementation Steps\n\n
+# TODO Steps — Execution Plan (Pragmatic, Test-Driven)
 
+Ultimo aggiornamento: 2026-03-26 (UTC)
+Scopo: trasformare il progetto in "production-ready" con passi piccoli, verificabili e con evidenze.
 
-Generated from approved plan. Track progress here. Update on completion.
+---
 
-## Phase 1: Status Updates & Docs [TODO: 3/3]
-- [ ] Update TODO.md: Mark completed items (rate-stats, /metrics, security testing), progress 15/25.
-- [ ] Update docs/API_DOCS.md: Full endpoints/examples (monitoring, audit, rate-stats + routes).
-- [ ] Update README.md: Add security/perf/validation sections.
+## 0) Stato reale verificato
 
-## Phase 2: Testing Enhancements [TODO: 3/5 ✓]
-- [x] Create tests/test_performance.py: pytest-benchmark for backtest, risk, strategies. **DONE**
-- [x] Create tests/test_security.py: Rate limit tests (429 responses), header validation. **DONE**
-- [x] Create tests/test_integration.py: Order→risk→portfolio flow. **DONE**
-- [ ] Install dev deps: pip install -e .[dev]
-- [ ] Run & validate: pytest --cov=app --cov-report=term-missing (target 90%+)
+### Test eseguiti
+- `pytest --maxfail=1 -q` ➜ **FAIL** su `tests/test_bybit.py` per chiamata rete esterna (Bybit non raggiungibile nell'ambiente).
+- `pytest -q tests/test_app_core_modules.py` ➜ **PASS** (34 passed, warning presenti).
 
-## Phase 3: Perf & Monitoring [TODO: 2/3]
-- [x] Locust load tests: locustfile.py created **DONE**
-- [ ] Expand health checks in app/main.py or app/api/routes/health.py (DB/Redis).
-- [ ] Add DB indexes if needed (read app/database/ first).
+### Problemi osservati (da risolvere prima di allargare la suite)
+1. Test che dipendono da rete esterna non isolati.
+2. Warning pytest config (`asyncio_mode`, `asyncio_default_fixture_loop_scope`).
+3. Deprecazioni Pydantic (`Field(..., env=...)`) e `datetime.utcnow()`.
 
-- [ ] Add DB indexes if needed (read app/database/ first).
-- [ ] Locust load tests: Create locustfile.py, test scalability.
+---
 
-## Phase 4: Validation & Deploy [TODO: 4/4]
-- [ ] Security scan: bandit -r app/
-- [ ] Perf benchmarks: pytest --benchmark-autosave
-- [ ] Docker rebuild: docker-compose up --build
-- [ ] Final validation: Coverage 90%+, bandit clean, benchmarks pass.
+## 1) Piano operativo per priorità
 
-**Progress: 0/15** | **Target: Production Ready 9.5/10**
-- Run `pytest --cov` → ?
-- Bandit score: ?
-- Coverage: ?
+## P0 — Stabilizzare pipeline test (subito)
 
-**Next Command**: After each step, update this file + run validations.
+### P0.1 Isolare test esterni (Bybit/network)
+- [ ] Marcare i test che richiedono rete/API esterne con marker `integration` o `external`.
+- [ ] Escluderli di default nella suite CI locale (`-m "not external"`).
+- [ ] Aggiungere mock/fake client per i casi principali di Bybit.
+
+**Definition of Done**
+- [ ] `pytest --maxfail=1 -q -m "not external"` passa.
+- [ ] Nessun test unitario dipende da internet.
+
+### P0.2 Ridurre warning framework
+- [ ] Allineare `pytest.ini` ai plugin installati oppure installare plugin mancanti.
+- [ ] Migrare config Pydantic da `env=` al pattern compatibile v2.
+- [ ] Sostituire `datetime.utcnow()` con datetime timezone-aware.
+
+**Definition of Done**
+- [ ] Warning pytest config azzerati.
+- [ ] Warning deprecazione principali ridotti/azzerati nella suite core.
+
+### P0.3 Definire baseline CI-safe
+- [ ] Creare comando standard locale/CI: `pytest -q -m "not external"`.
+- [ ] Aggiungere comando coverage minimo: `pytest -q -m "not external" --cov=app --cov-report=term-missing`.
+
+**Definition of Done**
+- [ ] Pipeline base ripetibile in ambiente senza rete esterna.
+
+---
+
+## P1 — Data & Risk integrity (dopo stabilizzazione test)
+
+### P1.1 Demo vs Live esplicito
+- [ ] Introdurre `data_mode = demo|live` esplicito nelle route.
+- [ ] In `live`, vietare fallback mock silenziosi: ritornare errore typed + `data_quality`.
+
+### P1.2 Risk metrics affidabili
+- [ ] Evitare fallback sintetico non dichiarato per metriche live.
+- [ ] Se storico insufficiente: stato `insufficient_data` (non numero artificiale).
+
+### P1.3 Coerenza documentazione
+- [ ] Allineare README/TODO/ROADMAP con comportamento runtime reale.
+
+**Definition of Done P1**
+- [ ] Nessun dato mock nascosto in endpoint live.
+- [ ] Risk API esplicita sulla qualità/sorgente dati.
+
+---
+
+## P2 — Execution reliability & operability
+
+### P2.1 Broker hardening
+- [ ] Completare gestione errori/retry/timeouts/idempotenza connettori.
+- [ ] Aggiungere reconciliation ordini/posizioni.
+
+### P2.2 Osservabilità
+- [ ] Metriche minime: order failure rate, data freshness, reconciliation mismatch.
+- [ ] Alerting su soglie critiche.
+
+**Definition of Done P2**
+- [ ] Flusso ordini monitorabile end-to-end con alert utili.
+
+---
+
+## 2) Sequenza di esecuzione consigliata (settimana corrente)
+
+### Giorno 1
+- [ ] Marcare test esterni + aggiornare selezione pytest.
+- [ ] Introdurre target `test-ci-safe` nel Makefile (se assente).
+
+### Giorno 2
+- [ ] Fix warning pytest/plugin.
+- [ ] Fix `datetime.utcnow()` e deprecazioni più rumorose.
+
+### Giorno 3
+- [ ] Eseguire baseline completa CI-safe + coverage.
+- [ ] Pubblicare report con numeri (pass/fail/warnings/coverage).
+
+---
+
+## 3) Comandi standard
+
+### Suite CI-safe (senza rete esterna)
+```bash
+pytest -q -m "not external"
+```
+
+### Coverage CI-safe
+```bash
+pytest -q -m "not external" --cov=app --cov-report=term-missing
+```
+
+### Full suite (solo in ambiente con accesso rete/credenziali)
+```bash
+pytest --maxfail=1 -q
+```
+
+---
+
+## 4) Evidenze da allegare a ogni PR
+- [ ] Comando eseguito
+- [ ] Output sintetico (pass/fail)
+- [ ] Warning nuovi/risolti
+- [ ] File toccati
+- [ ] Rischio regressione + rollback plan
