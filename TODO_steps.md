@@ -34,7 +34,7 @@ verificabili e con evidenze.
 - [ ] Escluderli di default nella suite CI locale (`-m "not external"`).
 - [ ] Aggiungere mock/fake client per i casi principali di Bybit.
 
-#### Definition of Done P0.2
+#### Definition of Done P0.1
 
 - [ ] `pytest --maxfail=1 -q -m "not external"` passa.
 - [ ] Nessun test unitario dipende da internet.
@@ -46,7 +46,7 @@ verificabili e con evidenze.
 - [ ] Migrare config Pydantic da `env=` al pattern compatibile v2.
 - [ ] Sostituire `datetime.utcnow()` con datetime timezone-aware.
 
-#### Definition of Done P0.3
+#### Definition of Done P0.2
 
 - [ ] Warning pytest config azzerati.
 - [ ] Warning deprecazione principali ridotti/azzerati nella suite core.
@@ -57,7 +57,7 @@ verificabili e con evidenze.
 - [ ] Aggiungere comando coverage minimo:
   `pytest -q -m "not external" --cov=app --cov-report=term-missing`.
 
-#### Definition of Done
+#### Definition of Done P0.3
 
 - [ ] Pipeline base ripetibile in ambiente senza rete esterna.
 
