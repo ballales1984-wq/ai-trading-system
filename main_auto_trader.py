@@ -535,7 +535,7 @@ class AutoTrader:
         
         # 4️⃣ Generazione ordini
         logger.info("5. Generating orders with DecisionEngine...")
-        orders = self.decision_engine.generate_orders(asset_analysis)
+        orders = self.decision_engine.generate_orders(asset_analysis, update_portfolio=False)
         self.stats["orders_generated"] += len(orders)
         
         logger.info(f"   Generated {len(orders)} orders")
@@ -543,18 +543,33 @@ class AutoTrader:
         # 5️⃣ Esecuzione automatica
         logger.info("6. Executing orders...")
         executed_orders = self.executor.execute_orders(orders)
-        
-        executed_count = sum(1 for o in executed_orders if o.status == OrderStatus.EXECUTED)
+
+        # Unifica ordini eseguiti: protective exits + nuovi ordini generati
+        all_executed_orders = protective_executed + executed_orders
+
+        # Sincronizza portfolio interno DecisionEngine solo con ordini effettivamente eseguiti
+        for o in all_executed_orders:
+            if o.status == OrderStatus.EXECUTED:
+                self.decision_engine._update_portfolio({
+                    "asset": o.asset,
+                    "action": o.action,
+                    "amount": o.amount,
+                    "timestamp": o.timestamp
+                })
+
+        executed_count = sum(1 for o in all_executed_orders if o.status == OrderStatus.EXECUTED)
         self.stats["orders_executed"] += executed_count
-        self.stats["total_volume"] += sum(o.amount for o in executed_orders if o.status == OrderStatus.EXECUTED)
-        
+        self.stats["total_volume"] += sum(
+            o.amount for o in all_executed_orders if o.status == OrderStatus.EXECUTED
+        )
+
         # Registra i trade nel tracker per P&L e Awards
-        for o in executed_orders:
+        for o in all_executed_orders:
             if o.status == OrderStatus.EXECUTED:
                 try:
                     if MODULES_AVAILABLE:
                         # Get commission (0.1% by default)
-                        current_price = market_data.get(o.asset, {}).get('current_price', 0)
+                        current_price = self._resolve_price_for_asset(o.asset, current_prices) or 0
                         quantity = o.amount / current_price if current_price > 0 else 0
                         commission = o.amount * 0.001  # 0.1% commission
                         
@@ -563,7 +578,12 @@ class AutoTrader:
                         if o.action == "SELL":
                             posizioni = trading_tracker.get_all_posizioni()
                             if o.asset in posizioni:
-                                prezzo_acquisto = posizioni[o.asset].get("prezzo_acquisto")
+                                posizione = posizioni[o.asset]
+                                prezzo_acquisto = (
+                                    posizione.prezzo_acquisto
+                                    if hasattr(posizione, "prezzo_acquisto")
+                                    else posizione.get("prezzo_acquisto")
+                                )
                         
                         trading_tracker.registra_trade({
                             "asset": o.asset,
@@ -591,7 +611,7 @@ class AutoTrader:
                 except Exception as e:
                     logger.error(f"Errore registrazione trade in tracker: {e}")
         
-        logger.info(f"   Executed {executed_count}/{len(orders)} orders")
+        logger.info(f"   Executed {executed_count}/{len(all_executed_orders)} orders")
         
         # 6️⃣ Aggiorna statistiche
         cycle_end = datetime.now()
@@ -602,6 +622,7 @@ class AutoTrader:
         
         # Riepilogo portafoglio
         portfolio = self.decision_engine.get_portfolio_summary()
+        runtime_portfolio_value = self._get_runtime_portfolio_value(current_prices)
         
         result = {
             "cycle": self.cycle_count,
@@ -610,6 +631,7 @@ class AutoTrader:
             "orders_generated": len(orders),
             "orders_executed": executed_count,
             "portfolio": portfolio,
+            "portfolio_runtime_value": round(runtime_portfolio_value, 2),
             "executed_orders": [
                 {
                     "asset": o.asset,
@@ -617,7 +639,7 @@ class AutoTrader:
                     "amount": o.amount,
                     "status": o.status.value
                 }
-                for o in executed_orders
+                for o in all_executed_orders
             ]
         }
         
@@ -625,7 +647,7 @@ class AutoTrader:
         self.history.append(result)
         
         logger.info(f"Cycle completed in {cycle_duration:.2f}s")
-        logger.info(f"Portfolio value: {portfolio['total_value']:,.2f} USDT")
+        logger.info(f"Portfolio value: {runtime_portfolio_value:,.2f} USDT")
         
         return result
     
@@ -686,7 +708,8 @@ class AutoTrader:
         
         # Portfolio finale
         portfolio = self.decision_engine.get_portfolio_summary()
-        print(f"\n  Final portfolio value: {portfolio['total_value']:,.2f} USDT")
+        runtime_value = self._get_runtime_portfolio_value()
+        print(f"\n  Final portfolio value: {runtime_value:,.2f} USDT")
         print(f"  Cash: {portfolio['cash']:,.2f} USDT")
         print(f"  Positions: {portfolio['n_positions']}")
         print("=" * 60)
