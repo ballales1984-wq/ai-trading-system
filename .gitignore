@@ -72,6 +72,10 @@ Thumbs.db
 *.tsbuildinfo
 .vercel
 
+# Next.js build output
+**/.next/
+nextjs-frontend/node_modules/
+
 # CLI submodule (not tracked)
 cli/
 node_modules/

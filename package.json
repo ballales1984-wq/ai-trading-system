@@ -6,9 +6,13 @@
     "node": "20.x"
   },
   "scripts": {
-    "install:frontend": "npm install --prefix frontend --include=dev",
-    "build:frontend": "npm run build --prefix frontend",
-    "build": "npm run install:frontend && npm run build:frontend"
+    "install:frontend": "npm install --prefix nextjs-frontend",
+    "build:frontend": "npm run build --prefix nextjs-frontend",
+    "build": "npm run install:frontend && npm run build:frontend",
+    "start": "npm run start --prefix nextjs-frontend",
+    "dev": "npm run dev --prefix nextjs-frontend",
+    "install:legacy": "npm install --prefix frontend --include=dev",
+    "build:legacy": "npm run build --prefix frontend"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.2.1",
