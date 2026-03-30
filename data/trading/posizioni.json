@@ -1,25 +1,17 @@
 {
   "ETH/USDT": {
     "asset": "ETH/USDT",
-    "quantita": 1.0258132785320186,
-    "prezzo_acquisto": 3411.926978571232,
-    "data_acquisto": "2026-03-26T10:49:01.506080",
+    "quantita": 0.8109566926537028,
+    "prezzo_acquisto": 3466.596953285732,
+    "data_acquisto": "2026-03-26T16:53:12.998503",
     "api_usata": "",
     "strategy": "AutoTrader"
   },
   "SOL/USDT": {
     "asset": "SOL/USDT",
-    "quantita": 25.716381199026994,
-    "prezzo_acquisto": 136.10002017439476,
-    "data_acquisto": "2026-03-26T10:49:01.534275",
-    "api_usata": "",
-    "strategy": "AutoTrader"
-  },
-  "BTC/USDT": {
-    "asset": "BTC/USDT",
-    "quantita": 0.052517993660192636,
-    "prezzo_acquisto": 66643.82540289072,
-    "data_acquisto": "2026-03-26T10:49:01.560952",
+    "quantita": 20.12774518384967,
+    "prezzo_acquisto": 145.85786799187287,
+    "data_acquisto": "2026-03-26T16:54:13.941360",
     "api_usata": "",
     "strategy": "AutoTrader"
   }
