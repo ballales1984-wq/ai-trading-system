@@ -4,7 +4,7 @@ services:
     env: docker
     plan: free
     branch: main
-    dockerfilePath: Dockerfile.render.optimized
+    dockerfilePath: Dockerfile
     dockerContext: .
     healthCheckPath: /api/v1/health
     healthCheckTimeout: 1000
@@ -13,6 +13,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.11"
+      - key: PORT
+        value: "10000"
       - key: WEB_CONCURRENCY
         value: "1"
       - key: DATABASE_URL
