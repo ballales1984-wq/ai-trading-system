@@ -55,6 +55,7 @@ RUN pip install --no-cache-dir -r requirements-vercel.txt
 COPY app/ ./app/
 COPY api/ ./api/
 COPY src/ ./src/
+COPY openclaw_skills/ ./openclaw_skills/
 
 # Copia frontend build dal frontend-builder - usa percorso assoluto
 COPY --from=frontend-builder /app/dist /app/frontend/dist
