@@ -57,6 +57,9 @@ COPY api/ ./api/
 COPY src/ ./src/
 COPY openclaw_skills/ ./openclaw_skills/
 
+# Installa openclaw_skills come pacchetto
+RUN pip install --no-cache-dir -e ./openclaw_skills/
+
 # Copia frontend build dal frontend-builder - usa percorso assoluto
 COPY --from=frontend-builder /app/dist /app/frontend/dist
 
