@@ -54,6 +54,7 @@ RUN pip install --no-cache-dir -r requirements-vercel.txt
 # Copia codice applicazione
 COPY app/ ./app/
 COPY api/ ./api/
+COPY src/ ./src/
 
 # Copia frontend build dal frontend-builder - usa percorso assoluto
 COPY --from=frontend-builder /app/dist /app/frontend/dist
