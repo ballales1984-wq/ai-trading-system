@@ -15,11 +15,12 @@ from typing import Generator
 def client() -> TestClient:
     """
     Fixture that provides a FastAPI test client.
-    
+
     Returns:
         TestClient: FastAPI test client instance
     """
     from app.main import app
+
     return TestClient(app)
 
 
@@ -27,19 +28,16 @@ def client() -> TestClient:
 def auth_token(client: TestClient) -> str:
     """
     Fixture that provides an authentication token.
-    
+
     Returns:
         str: JWT access token
     """
-    response = client.post(
-        "/api/v1/auth/login",
-        json={"username": "admin", "password": "admin123"}
-    )
-    
+    response = client.post("/api/v1/auth/login", json={"email": "admin", "password": "admin123"})
+
     if response.status_code == 200:
         data = response.json()
         return data.get("access_token", "")
-    
+
     return ""
 
 
@@ -47,10 +45,10 @@ def auth_token(client: TestClient) -> str:
 def auth_headers(auth_token: str) -> dict:
     """
     Fixture that provides authentication headers.
-    
+
     Args:
         auth_token: JWT token from auth_token fixture
-        
+
     Returns:
         dict: Headers with authorization
     """
@@ -63,7 +61,7 @@ def auth_headers(auth_token: str) -> dict:
 def mock_market_data():
     """
     Fixture that provides mock market data.
-    
+
     Returns:
         dict: Mock market data
     """
@@ -81,7 +79,7 @@ def mock_market_data():
             "change_24h": 1.8,
             "high_24h": 2600.00,
             "low_24h": 2400.00,
-        }
+        },
     }
 
 
@@ -89,7 +87,7 @@ def mock_market_data():
 def mock_portfolio():
     """
     Fixture that provides mock portfolio data.
-    
+
     Returns:
         dict: Mock portfolio data
     """
@@ -102,7 +100,7 @@ def mock_portfolio():
                 "avg_price": 42000.00,
                 "current_price": 45000.00,
                 "pnl": 3000.00,
-                "pnl_pct": 7.14
+                "pnl_pct": 7.14,
             },
             {
                 "symbol": "ETH/USDT",
@@ -110,10 +108,10 @@ def mock_portfolio():
                 "avg_price": 2400.00,
                 "current_price": 2500.00,
                 "pnl": 1000.00,
-                "pnl_pct": 4.17
-            }
+                "pnl_pct": 4.17,
+            },
         ],
-        "cash": 50000.00
+        "cash": 50000.00,
     }
 
 
@@ -121,7 +119,7 @@ def mock_portfolio():
 def mock_order():
     """
     Fixture that provides mock order data.
-    
+
     Returns:
         dict: Mock order data
     """
@@ -131,19 +129,13 @@ def mock_order():
         "order_type": "limit",
         "quantity": 0.1,
         "price": 45000.00,
-        "status": "pending"
+        "status": "pending",
     }
 
 
 # Configure pytest
 def pytest_configure(config):
     """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers", "security: mark test as security-related"
-    )
-    config.addinivalue_line(
-        "markers", "integration: mark test as integration test"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow running"
-    )
+    config.addinivalue_line("markers", "security: mark test as security-related")
+    config.addinivalue_line("markers", "integration: mark test as integration test")
+    config.addinivalue_line("markers", "slow: mark test as slow running")
