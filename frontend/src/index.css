@@ -16,6 +16,7 @@
     --text-primary: 210 20% 95%; /* #eff2f7 */
     --text-secondary: 215 15% 65%; /* #939dae */
     --text-muted: 215 10% 45%;
+    --text: 210 20% 95%; /* alias for text-primary */
 
     /* Brand / Accents */
     --primary: 215 90% 60%; /* #3b82f6 - Neon Blue */
