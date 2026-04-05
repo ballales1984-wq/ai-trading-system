@@ -9,7 +9,6 @@ httpx>=0.25.0
 python-multipart>=0.0.6
 email-validator>=2.1.0
 mangum>=0.17.0
-<<<<<<< Updated upstream
 redis>=5.0.0
 numpy>=1.24.0
 pandas>=2.0.0
@@ -19,5 +18,3 @@ python-jose>=3.3.0
 passlib>=1.7.4
 bcrypt>=4.0.0
 cryptography>=41.0.0
-=======
->>>>>>> Stashed changes
