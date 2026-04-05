@@ -4,8 +4,11 @@
 
 # Version control
 .git
-.gitignore
 .github
+
+# But keep requirements files
+!requirements*.txt
+!api/requirements.txt
 
 # Python cache
 __pycache__
