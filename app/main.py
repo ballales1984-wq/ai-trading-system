@@ -13,22 +13,31 @@ Security Features:
 
 from datetime import datetime
 from typing import Any
+
 # pyre-ignore[21]: Missing module attribute
 from fastapi import FastAPI
+
 # pyre-ignore[21]: Missing module attribute
 from fastapi import Request, Response
+
 # pyre-ignore[21]: Missing module attribute
 from fastapi.middleware.cors import CORSMiddleware
+
 # pyre-ignore[21]: Missing module attribute
 from fastapi.staticfiles import StaticFiles
+
 # pyre-ignore[21]: Missing module attribute
 from fastapi.responses import JSONResponse
+
 # pyre-ignore[21]: Missing module attribute
 from app.core.config import settings
+
 # pyre-ignore[21]: Missing module attribute
 from app.core.logging import setup_logging, get_logger
+
 # pyre-ignore[21]: Missing module attribute
 from app.core.rate_limiter import default_rate_limiter, RateLimitExceeded
+
 # pyre-ignore[21]: Missing module attribute
 from app.core.security_middleware import (
     setup_security_middleware,
@@ -74,19 +83,23 @@ app = FastAPI(
     description="Hedge Fund Trading System API",
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    openapi_url="/openapi.json",
 )
 
 # CORS middleware - Allow frontend to communicate with backend
 # Uses the cors_origins list from settings, with fallback to common dev origins
-cors_origins = getattr(settings, 'cors_origins', [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://localhost:8000",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:8000",
-])
+cors_origins = getattr(
+    settings,
+    "cors_origins",
+    [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:8000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:8000",
+    ],
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -96,6 +109,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 logger.info(f"CORS enabled for origins: {cors_origins}")
+
 
 # Security Response class for headers
 class SecurityResponse(JSONResponse):
@@ -109,12 +123,13 @@ class SecurityResponse(JSONResponse):
             "X-XSS-Protection": "1; mode=block",
             "Referrer-Policy": "strict-origin-when-cross-origin",
             "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-            "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none';",
+            "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none';",
             "Cross-Origin-Embedder-Policy": "require-corp",
             "Cross-Origin-Opener-Policy": "same-origin",
-            "Cross-Origin-Resource-Policy": "same-origin"
+            "Cross-Origin-Resource-Policy": "same-origin",
         }
         self.headers.update(security_headers)
+
 
 # Rate limiting middleware
 @app.middleware("http")
@@ -126,7 +141,7 @@ async def rate_limit_middleware(request: Request, call_next):
         return SecurityResponse(
             content={"error": "Rate limit exceeded", "retry_after": e.retry_after},
             status_code=429,
-            headers={"Retry-After": str(e.retry_after)}
+            headers={"Retry-After": str(e.retry_after)},
         )
     response = await call_next(request)
     # Add security headers to response
@@ -137,90 +152,46 @@ async def rate_limit_middleware(request: Request, call_next):
         "X-XSS-Protection": "1; mode=block",
         "Referrer-Policy": "strict-origin-when-cross-origin",
         "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none';",
+        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none';",
         "Cross-Origin-Embedder-Policy": "require-corp",
         "Cross-Origin-Opener-Policy": "same-origin",
-        "Cross-Origin-Resource-Policy": "same-origin"
+        "Cross-Origin-Resource-Policy": "same-origin",
     }
     for key, value in security_headers.items():
         response.headers[key] = value
     return response
 
+
 # Global audit logger
 audit_logger = AuditLogger()
 
 # Include routers
-app.include_router(
-    news,
-    prefix=f"{settings.api_prefix}/news",
-    tags=["News"]
-)
+app.include_router(news, prefix=f"{settings.api_prefix}/news", tags=["News"])
+
+app.include_router(market, prefix=f"{settings.api_prefix}/market", tags=["Market"])
+
+app.include_router(portfolio, prefix=f"{settings.api_prefix}/portfolio", tags=["Portfolio"])
+
+app.include_router(orders, prefix=f"{settings.api_prefix}/orders", tags=["Orders"])
+
+app.include_router(health, prefix=settings.api_prefix, tags=["Health"])
+
+app.include_router(strategy, prefix=f"{settings.api_prefix}/strategy", tags=["Strategy"])
+
+app.include_router(waitlist, prefix=f"{settings.api_prefix}/waitlist", tags=["Waitlist"])
+
+app.include_router(cache, prefix=f"{settings.api_prefix}/cache", tags=["Cache"])
+
+app.include_router(auth, prefix=f"{settings.api_prefix}/auth", tags=["Auth"])
+
+app.include_router(risk, prefix=f"{settings.api_prefix}/risk", tags=["Risk"])
+
+app.include_router(ws, prefix="/ws", tags=["WebSocket"])
 
 app.include_router(
-    market,
-    prefix=f"{settings.api_prefix}/market",
-    tags=["Market"]
+    agents, prefix=f"{settings.api_prefix}/agents/autonomous", tags=["Autonomous Agent"]
 )
 
-app.include_router(
-    portfolio,
-    prefix=f"{settings.api_prefix}/portfolio",
-    tags=["Portfolio"]
-)
-
-app.include_router(
-    orders,
-    prefix=f"{settings.api_prefix}/orders",
-    tags=["Orders"]
-)
-
-app.include_router(
-    health,
-    prefix=settings.api_prefix,
-    tags=["Health"]
-)
-
-app.include_router(
-    strategy,
-    prefix=f"{settings.api_prefix}/strategy",
-    tags=["Strategy"]
-)
-
-app.include_router(
-    waitlist,
-    prefix=f"{settings.api_prefix}/waitlist",
-    tags=["Waitlist"]
-)
-
-app.include_router(
-    cache,
-    prefix=f"{settings.api_prefix}/cache",
-    tags=["Cache"]
-)
-
-app.include_router(
-    auth,
-    prefix=f"{settings.api_prefix}/auth",
-    tags=["Auth"]
-)
-
-app.include_router(
-    risk,
-    prefix=f"{settings.api_prefix}/risk",
-    tags=["Risk"]
-)
-
-app.include_router(
-    ws,
-    prefix="/ws",
-    tags=["WebSocket"]
-)
-
-app.include_router(
-    agents,
-    prefix=f"{settings.api_prefix}/agents/autonomous",
-    tags=["Autonomous Agent"]
-)
 
 # Health check with audit
 @app.get("/health")
@@ -231,14 +202,13 @@ async def health_check(request: Request):
             event_type=AuditEventType.LOGIN,  # Reuse for health
             ip_address=request.client.host,
             action="Health check",
-            details={"status": "healthy"}
+            details={"status": "healthy"},
         )
     )
-    return SecurityResponse({
-        "status": "healthy",
-        "version": settings.app_version,
-        "environment": settings.environment
-    })
+    return SecurityResponse(
+        {"status": "healthy", "version": settings.app_version, "environment": settings.environment}
+    )
+
 
 # Rate limit stats endpoint
 @app.get("/api/v1/rate-limit/stats")
@@ -249,21 +219,20 @@ async def rate_limit_stats(request: Request):
         stats = default_rate_limiter.get_stats(client_id)
         audit_logger.log_event(
             AuditEvent(
-                ip_address=client_id,
-                action="Rate limit stats query",
-                details={"stats": stats}
+                ip_address=client_id, action="Rate limit stats query", details={"stats": stats}
             )
         )
         return SecurityResponse(stats)
     except Exception as e:
         return SecurityResponse({"error": str(e)}, status_code=500)
 
+
 # Comprehensive Monitoring Endpoints
 @app.get("/api/monitoring/metrics")
 async def get_metrics():
     """
     Get application monitoring metrics.
-    
+
     Returns:
         - requests: Request counts by endpoint, status, user
         - performance: Response time percentiles (p50, p95, p99)
@@ -272,68 +241,65 @@ async def get_metrics():
     """
     monitoring = get_monitoring_middleware()
     if monitoring is None:
-        return JSONResponse(
-            status_code=503,
-            content={"error": "Monitoring not enabled"}
-        )
+        return JSONResponse(status_code=503, content={"error": "Monitoring not enabled"})
     return monitoring.get_metrics()
+
 
 @app.get("/api/monitoring/health")
 async def detailed_health():
     """
     Get detailed health status with metrics.
-    
+
     Returns:
         - status: healthy | degraded | unhealthy
         - monitoring: enabled status
         - metrics: current performance metrics
     """
     monitoring = get_monitoring_middleware()
-    
+
     if monitoring is None:
         return {
             "status": "healthy",
             "monitoring": "disabled",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
-    
+
     metrics = monitoring.get_metrics()
-    
+
     # Determine health status
     error_rate = metrics.get("errors", {}).get("rate", 0)
     avg_response = metrics.get("performance", {}).get("avg_response_time_ms", 0)
-    
+
     if error_rate > 10 or avg_response > 1000:
         status = "unhealthy"
     elif error_rate > 5 or avg_response > 500:
         status = "degraded"
     else:
         status = "healthy"
-    
+
     return {
         "status": status,
         "monitoring": "enabled",
         "metrics": metrics,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
+
 
 @app.post("/api/monitoring/reset")
 async def reset_metrics():
     """Reset monitoring metrics."""
     monitoring = get_monitoring_middleware()
     if monitoring is None:
-        return JSONResponse(
-            status_code=503,
-            content={"error": "Monitoring not enabled"}
-        )
+        return JSONResponse(status_code=503, content={"error": "Monitoring not enabled"})
     monitoring.reset_metrics()
     return {"message": "Metrics reset successfully"}
+
 
 @app.get("/api/security/headers")
 async def security_headers_info():
     """
     Get security headers configuration.
-    
+
     Returns current security headers and rate limiting settings.
     """
     return {
@@ -348,28 +314,26 @@ async def security_headers_info():
             "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval';",
             "Cross-Origin-Embedder-Policy": "require-corp",
             "Cross-Origin-Opener-Policy": "same-origin",
-            "Cross-Origin-Resource-Policy": "same-origin"
+            "Cross-Origin-Resource-Policy": "same-origin",
         },
         "rate_limiting": {
             "enabled": True,
             "requests_per_minute": 60,
             "requests_per_hour": 1000,
             "requests_per_day": 10000,
-            "burst_size": 10
-        }
+            "burst_size": 10,
+        },
     }
+
 
 # Audit log query endpoint
 @app.get("/api/audit/events")
 async def get_audit_events(
-    request: Request,
-    event_type: str | None = None,
-    user_id: str | None = None,
-    limit: int = 100
+    request: Request, event_type: str | None = None, user_id: str | None = None, limit: int = 100
 ):
     """
     Query audit events.
-    
+
     Args:
         event_type: Filter by event type
         user_id: Filter by user ID
@@ -377,21 +341,20 @@ async def get_audit_events(
     """
     # In production, this would require admin authentication
     events = audit_logger.events[-limit:]
-    
+
     if event_type:
         events = [e for e in events if e.event_type.value == event_type]
     if user_id:
         events = [e for e in events if e.user_id == user_id]
-    
-    return {
-        "events": [e.to_dict() for e in events],
-        "total": len(events)
-    }
+
+    return {"events": [e.to_dict() for e in events], "total": len(events)}
+
 
 @app.get("/api/audit/stats")
 async def get_audit_stats():
     """Get audit statistics."""
     return audit_logger.get_stats()
+
 
 # Serve frontend static files (for Render deployment)
 try:
@@ -399,7 +362,7 @@ try:
     logger.info("Frontend static files mounted at / from frontend/dist/")
 except Exception as e:
     logger.warning(f"Could not mount frontend static files: {e}")
-    
+
 if get_metrics_app:
     app.mount("/metrics", get_metrics_app())
     logger.info("Prometheus metrics available at /metrics")
@@ -409,9 +372,5 @@ else:
 if __name__ == "__main__":
     # pyre-ignore[21]: Missing module attribute
     import uvicorn
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=settings.debug
-    )
+
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=settings.debug)

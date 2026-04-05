@@ -94,7 +94,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background text-text-primary-primary font-sans relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-background text-text-primary font-sans relative overflow-hidden">
       {/* Sfondo radiale ambientale profondo */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] bg-primary/10 rounded-full blur-[150px] pointer-events-none" />
 
@@ -110,7 +110,7 @@ export default function Login() {
           <h1 className="text-3xl font-extrabold text-text-primary tracking-tight mb-2" id="login-heading">
             Terminal Access
           </h1>
-          <p className="text-text-primary-muted">Enter credentials to proceed</p>
+          <p className="text-text-muted">Enter credentials to proceed</p>
         </div>
 
         <form
@@ -128,12 +128,13 @@ export default function Login() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-bold text-text-primary-muted uppercase tracking-wider mb-2">
+            <label htmlFor="email" className="block text-sm font-bold text-text-muted uppercase tracking-wider mb-2">
               Email Address
             </label>
             <input
               id="email"
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -161,12 +162,13 @@ export default function Login() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-bold text-text-primary-muted uppercase tracking-wider mb-2">
+            <label htmlFor="password" className="block text-sm font-bold text-text-muted uppercase tracking-wider mb-2">
               Passphrase
             </label>
             <input
               id="password"
               type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
@@ -212,24 +214,24 @@ export default function Login() {
           </button>
 
           <div className="text-center pt-2">
-            <a href="#" className="text-xs font-semibold text-text-primary-muted hover:text-primary transition-colors uppercase tracking-wider">
+            <a href="#" className="text-xs font-semibold text-text-muted hover:text-primary transition-colors uppercase tracking-wider">
               Recover Access
             </a>
           </div>
         </form>
 
         <div className="mt-8 pt-6 border-t border-white/5">
-          <p className="text-center text-xs font-bold text-text-primary-muted mb-4 uppercase tracking-wider">
+          <p className="text-center text-xs font-bold text-text-muted mb-4 uppercase tracking-wider">
             Demo Environment Active
           </p>
-          <div className="text-center text-xs text-text-primary-muted/70 font-mono bg-black/30 py-3 rounded-lg border border-white/5 mx-4">
+          <div className="text-center text-xs text-text-muted/70 font-mono bg-black/30 py-3 rounded-lg border border-white/5 mx-4">
             <p>ID: demo@terminal.ai</p>
             <p className="mt-1">KEY: random_hash</p>
           </div>
         </div>
 
         <div className="mt-6 text-center">
-          <p className="text-[10px] text-text-primary-muted/50 uppercase tracking-widest">
+          <p className="text-[10px] text-text-muted/50 uppercase tracking-widest">
             Secured via Quantum Encryption
           </p>
         </div>
