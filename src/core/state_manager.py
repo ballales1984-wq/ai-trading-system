@@ -211,10 +211,13 @@ class StateManager:
     
     @contextmanager
     def _get_connection(self):
-        """Get database connection."""
-        conn = sqlite3.connect(self.db_path)
+        """Get database connection with WAL mode."""
+        # 15s timeout per prevenire locks veloci
+        conn = sqlite3.connect(self.db_path, timeout=15.0)
         conn.row_factory = sqlite3.Row
         try:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
             yield conn
         finally:
             conn.close()

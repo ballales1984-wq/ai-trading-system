@@ -50,6 +50,7 @@ import csv
 import os
 import json
 import logging
+import threading
 from datetime import datetime, date
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field, asdict
@@ -117,6 +118,7 @@ class Position:
 _premi: Dict[str, float] = {}
 _posizioni: Dict[str, Position] = {}
 _data_dir = DEFAULT_DATA_DIR
+_lock = threading.RLock()
 
 
 # =============================================================================
@@ -239,8 +241,9 @@ def apri_posizione(asset: str, quantita: float, prezzo: float,
         strategy=strategy
     )
     
-    _posizioni[asset] = posizione
-    _save_posizioni()
+    with _lock:
+        _posizioni[asset] = posizione
+        _save_posizioni()
     
     logger.info(f"Opened position: {quantita} {asset} at {prezzo}")
     return posizione
@@ -256,11 +259,12 @@ def chiudi_posizione(asset: str) -> Optional[Position]:
     Returns:
         Closed position or None
     """
-    if asset in _posizioni:
-        posizione = _posizioni.pop(asset)
-        _save_posizioni()
-        logger.info(f"Closed position: {posizione.quantita} {asset}")
-        return posizione
+    with _lock:
+        if asset in _posizioni:
+            posizione = _posizioni.pop(asset)
+            _save_posizioni()
+            logger.info(f"Closed position: {posizione.quantita} {asset}")
+            return posizione
     return None
 
 
@@ -311,8 +315,9 @@ def get_total_awards() -> float:
 def reset_awards() -> None:
     """Reset all awards."""
     global _premi
-    _premi = {}
-    _save_premi()
+    with _lock:
+        _premi = {}
+        _save_premi()
 
 
 def _save_premi() -> None:
@@ -373,18 +378,19 @@ def assegna_premio(trade: Dict[str, Any]) -> float:
     
     # Update global awards
     chiave = api_usata if api_usata else "logica_base"
-    if chiave not in _premi:
-        _premi[chiave] = 0
-    _premi[chiave] += punteggio
-    
-    # Also track by strategy
-    if strategy and strategy != "unknown":
-        strategy_key = f"strategy_{strategy}"
-        if strategy_key not in _premi:
-            _premi[strategy_key] = 0
-        _premi[strategy_key] += punteggio
-    
-    _save_premi()
+    with _lock:
+        if chiave not in _premi:
+            _premi[chiave] = 0
+        _premi[chiave] += punteggio
+        
+        # Also track by strategy
+        if strategy and strategy != "unknown":
+            strategy_key = f"strategy_{strategy}"
+            if strategy_key not in _premi:
+                _premi[strategy_key] = 0
+            _premi[strategy_key] += punteggio
+        
+        _save_premi()
     
     logger.info(f"🏆 Award assigned: {punteggio:.2f} points to {chiave}")
     return punteggio
@@ -483,13 +489,14 @@ def registra_trade(trade: Dict[str, Any]) -> Trade:
     
     # Write to CSV
     registro_path = _get_registro_path()
-    with open(registro_path, "a", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow([
-            timestamp, asset, tipo, quantita, prezzo,
-            commissione, profit_loss, saldo, api_usata,
-            trade["punteggio"], strategy, prezzo_acquisto
-        ])
+    with _lock:
+        with open(registro_path, "a", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow([
+                timestamp, asset, tipo, quantita, prezzo,
+                commissione, profit_loss, saldo, api_usata,
+                trade["punteggio"], strategy, prezzo_acquisto
+            ])
     
     logger.info(f"✅ Trade registered: {tipo} {quantita} {asset} @ {prezzo}. "
                 f"P/L: {profit_loss:.2f}, Award: {trade['punteggio']:.2f}, Balance: {saldo:.2f}")
@@ -501,18 +508,19 @@ def reset_registro() -> None:
     """Reset all trading data."""
     global _premi, _posizioni
     
-    # Reset files
-    set_balance(0.0)
-    _premi = {}
-    _posizioni = {}
-    
-    # Delete files
-    for path in [_get_registro_path(), _get_posizioni_path(), _get_premi_path()]:
-        if os.path.exists(path):
-            os.remove(path)
-    
-    # Re-initialize
-    inizializza_registro()
+    with _lock:
+        # Reset files
+        set_balance(0.0)
+        _premi = {}
+        _posizioni = {}
+        
+        # Delete files
+        for path in [_get_registro_path(), _get_posizioni_path(), _get_premi_path()]:
+            if os.path.exists(path):
+                os.remove(path)
+                
+        # Re-initialize
+        inizializza_registro()
     
     logger.warning("Trading registry reset")
 

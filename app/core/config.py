@@ -15,28 +15,29 @@ from pydantic.config import ConfigDict
 
 class Settings(BaseSettings):
     """Application settings with environment variable support."""
-    
+
     # Allow extra fields from .env file
-    model_config = ConfigDict(extra='ignore')
-    
+    model_config = ConfigDict(extra="ignore")
+
     # App Info
     app_name: str = "Hedge Fund Trading System"
     app_version: str = "2.1.0"
     environment: str = Field(default="development", env="ENVIRONMENT")
-    
+
     # Server
     host: str = "0.0.0.0"
     port: int = 8000
-    debug: bool = True
-    
-    @field_validator('debug', mode='before')
+    debug: bool = Field(default=False, env="DEBUG")
+
+    @field_validator("debug", mode="before")
     @classmethod
     def parse_debug(cls, v):
         if isinstance(v, str):
-            return v.lower() in ('true', '1', 'yes', 'on')
+            return v.lower() in ("true", "1", "yes", "on")
         return bool(v)
+
     api_prefix: str = "/api/v1"
-    
+
     # CORS - Allow Vercel frontend, ngrok and local development
     cors_origins: List[str] = [
         "https://*.vercel.app",  # Vercel deployments
@@ -46,100 +47,89 @@ class Settings(BaseSettings):
         "http://localhost:5173",  # Local Vite dev server
     ]
 
-    
     # Logging
     log_level: str = "INFO"
     log_file: Optional[str] = "logs/trading_system.log"
-    
+
     # Database
     database_url: str = Field(
-        default="postgresql://user:password@localhost:5432/hedge_fund",
-        env="DATABASE_URL"
+        default="postgresql://user:password@localhost:5432/hedge_fund", env="DATABASE_URL"
     )
-    
+
     # TimescaleDB (Time-series database)
-    timescaledb_url: Optional[str] = Field(
-        default=None,
-        env="TIMESCALEDB_URL"
-    )
-    timescaledb_enabled: bool = Field(
-        default=False,
-        env="TIMESCALEDB_ENABLED"
-    )
-    
+    timescaledb_url: Optional[str] = Field(default=None, env="TIMESCALEDB_URL")
+    timescaledb_enabled: bool = Field(default=False, env="TIMESCALEDB_ENABLED")
+
     # Database pool settings (aumentati per maggiore throughput)
     db_pool_size: int = 100
     db_max_overflow: int = 200
     db_pool_recycle: int = 3600
-    
-    redis_url: str = Field(
-        default="redis://localhost:6379/0",
-        env="REDIS_URL"
-    )
-    
+
+    redis_url: str = Field(default="redis://localhost:6379/0", env="REDIS_URL")
+
     # Trading Configuration
     max_leverage: float = 10.0
     max_position_size: float = 100000.0  # USD
     default_risk_per_trade: float = 0.02  # 2%
     max_daily_loss: float = 0.05  # 5%
-    
+
     # Risk Limits
     max_var_percent: float = 0.02  # 2% VaR limit
     max_cvar_percent: float = 0.05  # 5% CVaR limit
     max_correlation: float = 0.7
     max_sector_exposure: float = 0.3  # 30% per sector
-    
+
     # Order Execution
     max_slippage_pct: float = 0.001  # 0.1%
     max_slippage_abs: float = 0.01  # $0.01 for crypto
     order_timeout: int = 30  # seconds
     max_retries: int = 3
-    
+
     # Broker Configuration
     binance_api_key: str = Field(default="", env="BINANCE_API_KEY")
     binance_secret_key: str = Field(default="", env="BINANCE_API_SECRET")
     binance_testnet: bool = Field(default=True, env="USE_BINANCE_TESTNET")
-    
+
     ib_host: str = "127.0.0.1"
     ib_port: int = 7497
     ib_client_id: int = 1
-    
+
     bybit_api_key: str = Field(default="", env="BYBIT_API_KEY")
     bybit_secret_key: str = Field(default="", env="BYBIT_SECRET_KEY")
     bybit_testnet: bool = True
-    
+
     # CoinMarketCap API
     coinmarketcap_api_key: str = Field(default="", env="COINMARKETCAP_API_KEY")
-    
+
     # Paper Trading
     paper_trading: bool = True
     paper_initial_balance: float = 1000000.0
-    
+
     # Security
     secret_key: str = Field(default="", env="SECRET_KEY")
     jwt_algorithm: str = "HS256"
     jwt_expiration_minutes: int = 60
-    
+
     # Market Data
     data_feed_interval: int = 1  # seconds
     price_cache_ttl: int = 60  # seconds
     history_lookback_days: int = 365
-    
+
     # Strategy Configuration
     momentum_lookback: int = 20
     mean_reversion_lookback: int = 50
     ml_model_path: str = "models/"
-    
+
     # Performance
     workers: int = 4
     worker_timeout: int = 300
-    
-    @field_validator('secret_key')
+
+    @field_validator("secret_key")
     @classmethod
     def validate_secret_key(cls, v: str) -> str:
         """Validate secret key is set in production."""
-        environment = os.getenv('ENVIRONMENT', 'development')
-        if environment == 'production' and not v:
+        environment = os.getenv("ENVIRONMENT", "development")
+        if environment == "production" and not v:
             raise ValueError("SECRET_KEY must be set in production environment")
         if v and len(v) < 32:
             raise ValueError("SECRET_KEY must be at least 32 characters")

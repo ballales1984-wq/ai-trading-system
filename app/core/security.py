@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class SubscriptionPlan(Enum):
     """Subscription plans."""
+
     TRIAL = "trial"
     FREE = "free"
     LIFETIME = "lifetime"  # One-time purchase
@@ -26,6 +27,7 @@ class SubscriptionPlan(Enum):
 
 class SubscriptionStatus(Enum):
     """Subscription status."""
+
     ACTIVE = "active"
     TRIALING = "trialing"
     PAST_DUE = "past_due"
@@ -38,6 +40,7 @@ class SubscriptionStatus(Enum):
 @dataclass
 class Subscription:
     """Subscription information."""
+
     plan: SubscriptionPlan = SubscriptionPlan.FREE
     status: SubscriptionStatus = SubscriptionStatus.ACTIVE
     stripe_customer_id: Optional[str] = None
@@ -67,6 +70,7 @@ class Subscription:
 
 class UserRole(Enum):
     """User roles for RBAC."""
+
     ADMIN = "admin"
     TRADER = "trader"
     VIEWER = "viewer"
@@ -76,12 +80,13 @@ class UserRole(Enum):
 @dataclass
 class TokenPayload:
     """JWT token payload."""
+
     sub: str  # user_id
     username: str
     role: str
     exp: datetime
     iat: datetime = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -89,13 +94,14 @@ class TokenPayload:
             "username": self.username,
             "role": self.role,
             "exp": self.exp.timestamp(),
-            "iat": self.iat.timestamp() if self.iat else datetime.now().timestamp()
+            "iat": self.iat.timestamp() if self.iat else datetime.now().timestamp(),
         }
 
 
-@dataclass 
+@dataclass
 class User:
     """User entity."""
+
     user_id: str
     username: str
     hashed_password: str
@@ -122,17 +128,21 @@ class User:
             "subscription": {
                 "plan": self.subscription.plan.value,
                 "status": self.subscription.status.value,
-                "trial_end_date": self.subscription.trial_end_date.isoformat() if self.subscription.trial_end_date else None,
+                "trial_end_date": self.subscription.trial_end_date.isoformat()
+                if self.subscription.trial_end_date
+                else None,
                 "is_trial_active": self.subscription.is_trial_active(),
                 "days_remaining": self.subscription.get_days_remaining(),
-                "current_period_end": self.subscription.current_period_end.isoformat() if self.subscription.current_period_end else None,
+                "current_period_end": self.subscription.current_period_end.isoformat()
+                if self.subscription.current_period_end
+                else None,
             },
         }
 
 
 class SecurityConfig:
     """Security configuration."""
-    
+
     def __init__(
         self,
         secret_key: str = "your-secret-key-change-in-production",
@@ -144,11 +154,12 @@ class SecurityConfig:
         self.algorithm = algorithm
         self.access_token_expire_minutes = access_token_expire_minutes
         self.refresh_token_expire_days = refresh_token_expire_days
-    
+
     @classmethod
     def from_env(cls) -> "SecurityConfig":
         """Create from environment variables."""
         import os
+
         return cls(
             secret_key=os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production"),
             algorithm="HS256",
@@ -163,25 +174,22 @@ class JWTManager:
     =================
     Handles token generation, validation, and refresh.
     """
-    
+
     def __init__(self, config: Optional[SecurityConfig] = None):
         """Initialize JWT manager."""
         self.config = config or SecurityConfig.from_env()
         # In production, load users from database
         self._users: Dict[str, User] = {}
-    
+
     def hash_password(self, password: str) -> str:
         """Hash a password."""
         salt = bcrypt.gensalt()
         return bcrypt.hashpw(password.encode(), salt).decode()
-    
+
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """Verify a password against its hash."""
-        return bcrypt.checkpw(
-            plain_password.encode(),
-            hashed_password.encode()
-        )
-    
+        return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
+
     def create_user(
         self,
         username: str,
@@ -193,14 +201,14 @@ class JWTManager:
         """Create a new user with optional trial."""
         user_id = f"user_{len(self._users) + 1}"
         hashed_password = self.hash_password(password)
-        
+
         # Setup subscription
         subscription = Subscription()
         if trial_days > 0:
             subscription.plan = SubscriptionPlan.TRIAL
             subscription.status = SubscriptionStatus.TRIALING
             subscription.trial_end_date = datetime.now() + timedelta(days=trial_days)
-        
+
         user = User(
             user_id=user_id,
             username=username,
@@ -211,37 +219,35 @@ class JWTManager:
             email=email,
             subscription=subscription,
         )
-        
+
         self._users[username] = user
         logger.info(f"Created user: {username} with role: {role.value}, trial_days: {trial_days}")
-        
+
         return user
-    
+
     def authenticate(self, username: str, password: str) -> Optional[User]:
         """Authenticate a user."""
         user = self._users.get(username)
-        
+
         if not user:
             return None
-        
+
         if not user.is_active:
             return None
-        
+
         if not self.verify_password(password, user.hashed_password):
             return None
-        
+
         # Update last login
         user.last_login = datetime.now()
-        
+
         return user
-    
+
     def create_access_token(self, user: User) -> str:
         """Create an access token."""
         now = datetime.utcnow()
-        expire = now + timedelta(
-            minutes=self.config.access_token_expire_minutes
-        )
-        
+        expire = now + timedelta(minutes=self.config.access_token_expire_minutes)
+
         payload = {
             "sub": user.user_id,
             "username": user.username,
@@ -249,38 +255,28 @@ class JWTManager:
             "exp": expire,
             "iat": now,
         }
-        
-        token = jwt.encode(
-            payload,
-            self.config.secret_key,
-            algorithm=self.config.algorithm
-        )
-        
+
+        token = jwt.encode(payload, self.config.secret_key, algorithm=self.config.algorithm)
+
         logger.info(f"Created access token for user: {user.username}")
-        
+
         return token
-    
+
     def create_refresh_token(self, user: User) -> str:
         """Create a refresh token."""
-        expire = datetime.now() + timedelta(
-            days=self.config.refresh_token_expire_days
-        )
-        
+        expire = datetime.now() + timedelta(days=self.config.refresh_token_expire_days)
+
         payload = {
             "sub": user.user_id,
             "type": "refresh",
             "exp": expire,
             "iat": datetime.now(),
         }
-        
-        token = jwt.encode(
-            payload,
-            self.config.secret_key,
-            algorithm=self.config.algorithm
-        )
-        
+
+        token = jwt.encode(payload, self.config.secret_key, algorithm=self.config.algorithm)
+
         return token
-    
+
     def verify_token(self, token: str) -> Optional[TokenPayload]:
         """Verify and decode a token."""
         try:
@@ -288,44 +284,44 @@ class JWTManager:
                 token,
                 self.config.secret_key,
                 algorithms=[self.config.algorithm],
-                options={"verify_iat": False}  # Disable iat verification to handle clock skew
+                options={"verify_iat": False},  # Disable iat verification to handle clock skew
             )
-            
+
             return TokenPayload(
                 sub=payload.get("sub"),
                 username=payload.get("username"),
                 role=payload.get("role"),
                 exp=datetime.utcfromtimestamp(payload.get("exp")),
-                iat=datetime.utcfromtimestamp(payload.get("iat")) if payload.get("iat") else None
+                iat=datetime.utcfromtimestamp(payload.get("iat")) if payload.get("iat") else None,
             )
-            
+
         except jwt.ExpiredSignatureError:
             logger.warning("Token has expired")
             return None
         except jwt.InvalidTokenError as e:
             logger.warning(f"Invalid token: {e}")
             return None
-    
+
     def refresh_access_token(self, refresh_token: str) -> Optional[str]:
         """Refresh an access token using a refresh token."""
         payload = self.verify_token(refresh_token)
-        
+
         if not payload:
             return None
-        
+
         # Get user
         user = self._users.get(payload.username)
-        
+
         if not user or not user.is_active:
             return None
-        
+
         # Create new access token
         return self.create_access_token(user)
-    
+
     def check_subscription(self, user: User) -> Dict[str, Any]:
         """Check user's subscription status."""
         sub = user.subscription
-        
+
         # Check if trial has expired
         if sub.status == SubscriptionStatus.TRIALING and sub.trial_end_date:
             if datetime.now() >= sub.trial_end_date:
@@ -333,17 +329,19 @@ class JWTManager:
                 sub.status = SubscriptionStatus.CANCELED
                 sub.plan = SubscriptionPlan.FREE
                 logger.warning(f"Trial expired for user: {user.username}")
-        
+
         return {
             "plan": sub.plan.value,
             "status": sub.status.value,
             "is_active": sub.is_active(),
             "is_trial": sub.is_trial_active(),
             "trial_days_remaining": sub.get_days_remaining() if sub.is_trial_active() else 0,
-            "current_period_end": sub.current_period_end.isoformat() if sub.current_period_end else None,
+            "current_period_end": sub.current_period_end.isoformat()
+            if sub.current_period_end
+            else None,
             "cancel_at_period_end": sub.cancel_at_period_end,
         }
-    
+
     def activate_subscription(
         self,
         user: User,
@@ -357,7 +355,7 @@ class JWTManager:
         subscription.plan = plan
         subscription.stripe_customer_id = stripe_customer_id
         subscription.stripe_subscription_id = stripe_subscription_id
-        
+
         if trial_days > 0:
             subscription.status = SubscriptionStatus.TRIALING
             subscription.trial_end_date = datetime.now() + timedelta(days=trial_days)
@@ -365,29 +363,31 @@ class JWTManager:
             subscription.status = SubscriptionStatus.ACTIVE
             subscription.current_period_start = datetime.now()
             subscription.current_period_end = datetime.now() + timedelta(days=30)
-        
-        logger.info(f"Activated subscription for {user.username}: plan={plan.value}, trial_days={trial_days}")
+
+        logger.info(
+            f"Activated subscription for {user.username}: plan={plan.value}, trial_days={trial_days}"
+        )
         return subscription
-    
+
     def cancel_subscription(self, user: User, at_period_end: bool = True) -> bool:
         """Cancel user subscription."""
         subscription = user.subscription
         subscription.cancel_at_period_end = at_period_end
-        
+
         if not at_period_end:
             subscription.status = SubscriptionStatus.CANCELED
             subscription.plan = SubscriptionPlan.FREE
-        
+
         logger.info(f"Subscription canceled for {user.username}, at_period_end={at_period_end}")
         return True
-    
+
     def get_user_from_token(self, token: str) -> Optional[User]:
         """Get user from token."""
         payload = self.verify_token(token)
-        
+
         if not payload:
             return None
-        
+
         return self._users.get(payload.username)
 
 
@@ -395,13 +395,14 @@ class TokenRequired:
     """
     Decorator for requiring valid JWT token.
     """
-    
+
     def __init__(self, required_role: Optional[UserRole] = None):
         """Initialize decorator."""
         self.required_role = required_role
-    
+
     def __call__(self, func):
         """Decorate function."""
+
         def wrapper(*args, **kwargs):
             # In FastAPI, this would use Depends()
             # For now, return the function as-is
@@ -419,6 +420,7 @@ class TokenRequired:
             #             raise HTTPException(status_code=403)
             #     return payload
             return func(*args, **kwargs)
+
         return wrapper
 
 
@@ -427,32 +429,46 @@ import os
 # Default instance
 jwt_manager = JWTManager()
 
-# Get users from environment variables (for production)
-admin_user = os.getenv("ADMIN_USER", "admin")
-admin_pass = os.getenv("ADMIN_PASSWORD", "admin123")
-trader_user = os.getenv("TRADER_USER", "trader")
-trader_pass = os.getenv("TRADER_PASSWORD", "trader123")
+# Get users from environment variables - REQUIRED in production
+# In development, default credentials are allowed but NOT in production
+_environment = os.getenv("ENVIRONMENT", "development")
+_is_production = _environment.lower() == "production"
 
-# Create default admin user
-jwt_manager.create_user(
-    username=admin_user,
-    password=admin_pass,
-    role=UserRole.ADMIN
-)
 
-# Create default trader user
-jwt_manager.create_user(
-    username=trader_user,
-    password=trader_pass,
-    role=UserRole.TRADER
-)
+def _get_required_env(var_name: str, default: str = None) -> str:
+    """Get required environment variable."""
+    value = os.getenv(var_name, default)
+    if _is_production and not value:
+        raise ValueError(f"{var_name} must be set in production environment")
+    return value
 
-# Create default viewer user
-jwt_manager.create_user(
-    username="viewer",
-    password="viewer123",
-    role=UserRole.VIEWER
-)
+
+# Get users from environment variables
+admin_user = os.getenv("ADMIN_USER", "admin" if not _is_production else "")
+admin_pass = os.getenv("ADMIN_PASSWORD", "admin123" if not _is_production else "")
+trader_user = os.getenv("TRADER_USER", "trader" if not _is_production else "")
+trader_pass = os.getenv("TRADER_PASSWORD", "trader123" if not _is_production else "")
+
+# Only create default users in development mode for easy testing
+if not _is_production:
+    # Create default admin user
+    jwt_manager.create_user(username=admin_user, password=admin_pass, role=UserRole.ADMIN)
+
+    # Create default trader user
+    jwt_manager.create_user(username=trader_user, password=trader_pass, role=UserRole.TRADER)
+
+    # Create default viewer user
+    jwt_manager.create_user(username="viewer", password="viewer123", role=UserRole.VIEWER)
+
+    print(f"[DEV] Running in DEVELOPMENT mode with default users")
+    print(f"   Admin: {admin_user} / {admin_pass}")
+    print(f"   Trader: {trader_user} / {trader_pass}")
+else:
+    # In production, require users to be created via registration or env vars
+    if admin_user and admin_pass:
+        jwt_manager.create_user(username=admin_user, password=admin_pass, role=UserRole.ADMIN)
+    if trader_user and trader_pass:
+        jwt_manager.create_user(username=trader_user, password=trader_pass, role=UserRole.TRADER)
 
 
 # Standalone functions for password hashing (for backward compatibility)
@@ -468,7 +484,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 __all__ = [
     "SubscriptionPlan",
-    "SubscriptionStatus", 
+    "SubscriptionStatus",
     "Subscription",
     "UserRole",
     "TokenPayload",
@@ -521,4 +537,3 @@ def protected(credentials: HTTPAuthorizationCredentials = Depends(security)):
     
     return {"username": payload.username, "role": payload.role}
 """
-

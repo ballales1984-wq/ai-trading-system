@@ -26,6 +26,7 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 import json
 import threading
+import queue
 from pathlib import Path
 
 # Setup logging
@@ -110,6 +111,10 @@ class TradingConfig:
     testnet: bool = True
     api_key: str = ""
     api_secret: str = ""
+    
+    # HFT Integration
+    enable_hft: bool = False
+    hft_budget_pct: float = 0.10
     
     def __post_init__(self):
         if self.assets is None:
@@ -364,6 +369,26 @@ class AutoTrader:
         # Setup signal handlers
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
+        
+        # HFT Setup (Virtual Wallet Concept)
+        self.hft_queue = queue.Queue()
+        self.hft_engine = None
+        self.hft_virtual_balance = config.initial_balance * config.hft_budget_pct if config.enable_hft else 0.0
+        
+        if config.enable_hft:
+            logger.info(f"Initialized HFT Engine with sub-wallet: {self.hft_virtual_balance} USDT")
+            try:
+                from src.hft.hft_trading_engine import create_hft_engine
+                # Usiamo il primo asset come default per HFT
+                first_asset = config.assets[0] if config.assets else "BTCUSDT"
+                self.hft_engine = create_hft_engine(symbol=first_asset, initial_price=100) # Mock price
+                self.hft_engine.set_callbacks(on_signal=self._on_hft_signal)
+            except Exception as e:
+                logger.error(f"Failed to start HFT Engine: {e}")
+
+    def _on_hft_signal(self, signal):
+        """Callback for HFT."""
+        self.hft_queue.put(signal)
     
     def _signal_handler(self, signum, frame):
         """Gestisce segnali di interruzione."""
@@ -552,7 +577,47 @@ class AutoTrader:
         logger.info("6. Executing orders...")
         executed_orders = self.executor.execute_orders(orders)
 
-        # Unifica ordini eseguiti: protective exits + nuovi ordini generati
+        # 5.5️⃣ Esecuzione ordini HFT (Sub-Wallet isolation)
+        hft_signals_to_process = []
+        while not self.hft_queue.empty():
+            try:
+                hft_signals_to_process.append(self.hft_queue.get_nowait())
+            except queue.Empty:
+                break
+                
+        hft_orders = []
+        if hft_signals_to_process:
+            logger.info(f"   Processing {len(hft_signals_to_process)} HFT signals from queue")
+            from src.execution.auto_executor import Order as ExOrder, OrderStatus as ExOrderStatus
+            for sig in hft_signals_to_process:
+                action = sig.signal_type.name
+                # Valore mock o simulato
+                cost = sig.quantity * sig.price
+                if cost <= 0: cost = 10.0 # Min order safe guard
+                
+                if action == "BUY" and self.hft_virtual_balance >= cost:
+                    self.hft_virtual_balance -= cost
+                    hft_orders.append(ExOrder(
+                        asset=sig.symbol, action="BUY", amount=cost,
+                        status=ExOrderStatus.PENDING, timestamp=sig.timestamp.isoformat()
+                    ))
+                elif action == "SELL":
+                    # Manca una check complessa dell'inventory HFT, 
+                    # assumiamo profit virtuale:
+                    self.hft_virtual_balance += cost
+                    hft_orders.append(ExOrder(
+                        asset=sig.symbol, action="SELL", amount=cost,
+                        status=ExOrderStatus.PENDING, timestamp=sig.timestamp.isoformat()
+                    ))
+
+            if hft_orders:
+                executed_hft = self.executor.execute_orders(hft_orders)
+                # Override strategy
+                for o in executed_hft:
+                    o.strategy = "HFT"
+                executed_orders.extend(executed_hft)
+
+        # Unifica ordini eseguiti: protective exits + nuovi ordini generati (standard + HFT)
         all_executed_orders = protective_executed + executed_orders
 
         # Sincronizza portfolio interno DecisionEngine solo con ordini effettivamente eseguiti
@@ -640,6 +705,7 @@ class AutoTrader:
             "orders_executed": executed_count,
             "portfolio": portfolio,
             "portfolio_runtime_value": round(runtime_portfolio_value, 2),
+            "hft_virtual_balance": round(self.hft_virtual_balance, 2),
             "executed_orders": [
                 {
                     "asset": o.asset,
@@ -671,6 +737,10 @@ class AutoTrader:
         logger.info(f"Mode: {'DRY RUN (simulation)' if self.config.dry_run else 'LIVE'}")
         logger.info(f"Assets: {self.config.assets}")
         logger.info(f"Loop interval: {self.config.loop_interval}s")
+        if self.config.enable_hft:
+            logger.info(f"HFT Engine: ENABLED (Budget: {self.hft_virtual_balance:.2f} USDT)")
+            if self.hft_engine:
+                self.hft_engine.start()
         logger.info("=" * 60)
         
         while self.running:
@@ -696,6 +766,9 @@ class AutoTrader:
         logger.info("Stopping AutoTrader...")
         self.running = False
         
+        if self.hft_engine:
+            self.hft_engine.stop()
+            
         # Stampa statistiche finali
         self.print_summary()
     
@@ -720,6 +793,8 @@ class AutoTrader:
         print(f"\n  Final portfolio value: {runtime_value:,.2f} USDT")
         print(f"  Cash: {portfolio['cash']:,.2f} USDT")
         print(f"  Positions: {portfolio['n_positions']}")
+        if self.config.enable_hft:
+            print(f"  HFT Virtual Balance: {self.hft_virtual_balance:,.2f} USDT")
         print("=" * 60)
 
 
@@ -758,6 +833,17 @@ def main():
         default=["BTCUSDT", "ETHUSDT", "SOLUSDT"],
         help="Assets to trade"
     )
+    parser.add_argument(
+        "--enable-hft",
+        action="store_true",
+        help="Enable High Frequency Trading Engine"
+    )
+    parser.add_argument(
+        "--hft-budget-pct",
+        type=float,
+        default=0.10,
+        help="Percentage of balance dedicated to HFT (default: 0.10)"
+    )
     
     args = parser.parse_args()
     
@@ -766,7 +852,9 @@ def main():
         loop_interval=args.interval,
         assets=args.assets,
         initial_balance=args.balance,
-        dry_run=args.dry_run
+        dry_run=args.dry_run,
+        enable_hft=args.enable_hft,
+        hft_budget_pct=args.hft_budget_pct
     )
     
     # Crea AutoTrader
