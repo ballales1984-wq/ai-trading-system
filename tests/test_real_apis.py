@@ -13,15 +13,16 @@ import requests
 import json
 from datetime import datetime
 
-# Fix encoding per Windows
-if sys.platform == 'win32':
-    import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+def run_tests():
+    # Fix encoding per Windows
+    if sys.platform == 'win32':
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-print("=" * 60)
-print("TEST API REALI - AI TRADING SYSTEM")
-print(f"Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-print("=" * 60)
+    print("=" * 60)
+    print("TEST API REALI - AI TRADING SYSTEM")
+    print(f"Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("=" * 60)
 
 results = []
 
