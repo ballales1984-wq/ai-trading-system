@@ -256,11 +256,12 @@ export default function Marketing() {
           <div className="text-xl font-bold text-white tracking-widest uppercase">
             🤖 AI Trading
           </div>
-          <div className="flex gap-8">
-            <a href="#" className="text-text-muted hover:text-primary transition-colors text-sm font-medium">Privacy Policy</a>
-            <a href="#" className="text-text-muted hover:text-primary transition-colors text-sm font-medium">Terms of Service</a>
-            <a href="#" className="text-text-muted hover:text-primary transition-colors text-sm font-medium">Contact</a>
-          </div>
+<div className="flex gap-8">
+              <Link to="/privacy" className="text-text-muted hover:text-primary transition-colors text-sm font-medium">Privacy Policy</Link>
+              <Link to="/terms" className="text-text-muted hover:text-primary transition-colors text-sm font-medium">Terms of Service</Link>
+              <Link to="/cookies" className="text-text-muted hover:text-primary transition-colors text-sm font-medium">Cookie Policy</Link>
+              <a href="mailto:support@ai-trading-system.com" className="text-text-muted hover:text-primary transition-colors text-sm font-medium">Contact</a>
+            </div>
           <p className="text-text-muted/50 text-xs">© 2026 AI Trading System v2.0. All rights reserved.</p>
         </div>
       </footer>

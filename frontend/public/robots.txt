@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ai-trading-system-1reg.onrender.com/sitemap.xml

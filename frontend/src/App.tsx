@@ -14,6 +14,9 @@ import Settings from './pages/Settings';
 import MLMonitoring from './pages/MLMonitoring';
 import InvestorPortal from './pages/InvestorPortal';
 import AIAssistant from './pages/AIAssistant';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
+import Cookies from './pages/Cookies';
 
 // Lazy load payment page only
 const PaymentTest = lazy(() => import('./pages/PaymentTest'));
@@ -26,6 +29,9 @@ function App() {
         <Route path="/" element={<Marketing />} />
         <Route path="/marketing" element={<Marketing />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/cookies" element={<Cookies />} />
         <Route path="/payment" element={<Suspense fallback={<div>Loading...</div>}><PaymentTest /></Suspense>} />
         
         {/* Protected routes - Layout already handles nested Outlets */}
