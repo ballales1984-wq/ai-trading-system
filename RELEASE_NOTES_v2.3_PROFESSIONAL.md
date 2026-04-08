@@ -2,16 +2,16 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-2.3.0-blue)
+![Version](https://img.shields.io/badge/version-2.3.2-blue)
 ![Python](https://img.shields.io/badge/python-3.11+-green)
 ![React](https://img.shields.io/badge/react-18+-blue)
 ![License](https://img.shields.io/badge/license-MIT-yellow)
-![Status](https://img.shields.io/badge/status-Professional%20Audit%20Complete-green)
+![Status](https://img.shields.io/badge/status-Security%20Audit%20Complete-green)
 
 **Advanced Algorithmic Trading Platform with Institutional-Grade AI/ML Technology**
 
 *Release Date: March 2026*
-*Audit Version: 2.3.1 "Stability Path"*
+*Audit Version: 2.3.2 "Security Hardened"*
 *Codename: Enterprise*
 
 </div>
@@ -315,6 +315,32 @@ Recentemente è stato completato un audit architetturale profondo per garantire 
 ### Breaking Changes
 - Aggiornamento struttura API `/api/v1/orders`
 - Nuovo formato per response risk metrics
+
+---
+
+## 🔐 Security Audit v2.3.2 (Aprile 2026)
+
+### Fix Implementate
+
+| # | Fix | Severity |
+|---|-----|----------|
+| 1 | Default users creati solo in dev mode | Medium |
+| 2 | Debug=False di default in produzione | Low |
+| 3 | Health check semplificato (no audit spam) | Low |
+| 4 | Validazione input LoginRequest/RegisterRequest | Medium |
+| 5 | Validazione input OrderCreate (pattern, limiti) | Medium |
+| 6 | Validazione RefreshTokenRequest, EmergencyStopRequest | Medium |
+| 7 | Validazione OrderRiskCheckRequest, ExecuteRequest | Medium |
+| 8 | Token blacklist per logout | Medium |
+
+### Security Checks
+
+- No XSS vulnerabilities
+- Rate limiting attivo (60 req/min)
+- SQL injection protection (parameterized queries)
+- Input validation su tutti i modelli Pydantic
+- CORS configurato
+- Security headers (HSTS, CSP, X-Frame-Options)
 
 ---
 
