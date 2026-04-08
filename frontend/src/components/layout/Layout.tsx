@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-  import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, PieChart, TrendingUp, ClipboardList, Menu, X, Bot, FileText, Target, Shield, Settings, AlertTriangle, Brain, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { marketApi } from '../../services/api';
@@ -12,7 +12,6 @@ const navItems = [
   { to: '/news', icon: FileText, label: 'News' },
   { to: '/strategy', icon: Target, label: 'Strategy' },
   { to: '/risk', icon: Shield, label: 'Risk' },
-  // New unified pages (replacing 8050, 8051, 8502)
   { to: '/ml-monitoring', icon: Brain, label: 'ML Monitoring' },
   { to: '/investor-portal', icon: Users, label: 'Investor Portal' },
   { to: '/ai-assistant', icon: Bot, label: 'AI Assistant' },
@@ -22,10 +21,8 @@ const navItems = [
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [touchStartX, setTouchStartX] = useState(0);
-  const [touchEndX, setTouchEndX] = useState(0);
+  const location = useLocation();
 
-  // Global check for backend connectivity to show "Demo Mode" banner
   const { data: prices } = useQuery({
     queryKey: ['market-prices'],
     queryFn: marketApi.getAllPrices,
@@ -35,107 +32,66 @@ export default function Layout() {
 
   const isUsingFallback = !prices?.markets || prices.markets.length === 0;
 
-  // Detect mobile device
+  // Detect mobile on mount and resize
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Auto-close sidebar when switching to desktop
       if (!mobile) setSidebarOpen(false);
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    
-    // Add touch event listeners for swipe gestures on mobile
-    if (isMobile) {
-      const handleTouchStart = (e: TouchEvent) => {
-        setTouchStartX(e.touches[0].clientX);
-      };
-      
-      const handleTouchEnd = (e: TouchEvent) => {
-        setTouchEndX(e.changedTouches[0].clientX);
-        handleSwipeGesture();
-      };
-      
-      const handleSwipeGesture = () => {
-        const swipeThreshold = 50;
-        const diff = touchStartX - touchEndX;
-        
-        // Swipe right to open sidebar
-        if (diff < -swipeThreshold) {
-          setSidebarOpen(true);
-        }
-        // Swipe left to close sidebar
-        if (diff > swipeThreshold) {
-          setSidebarOpen(false);
-        }
-      };
-      
-      window.addEventListener('touchstart', handleTouchStart);
-      window.addEventListener('touchend', handleTouchEnd);
-      
-      return () => {
-        window.removeEventListener('resize', checkMobile);
-        window.removeEventListener('touchstart', handleTouchStart);
-        window.removeEventListener('touchend', handleTouchEnd);
-      };
-    }
-    
     return () => window.removeEventListener('resize', checkMobile);
-  }, [isMobile, touchStartX, touchEndX]);
+  }, []);
 
-  // Close sidebar on route change (mobile)
+  // Close sidebar on route change
   useEffect(() => {
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
-  }, [isMobile]);
+    setSidebarOpen(false);
+  }, [location.pathname]);
 
-  // Handle escape key to close sidebar on mobile
+  // Close on escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isMobile && sidebarOpen) {
-        setSidebarOpen(false);
-      }
+      if (e.key === 'Escape' && sidebarOpen) setSidebarOpen(false);
     };
-    
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isMobile, sidebarOpen]);
+  }, [sidebarOpen]);
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Mobile Menu Button */}
+      {/* Mobile hamburger button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className={`fixed top-4 left-4 z-50 flex h-10 w-10 items-center justify-center rounded-md 
-                   bg-surface border border-border hover:bg-surface-hover 
-                   ${isMobile ? 'block' : 'hidden'}`}
+        className={`fixed top-4 left-4 z-50 p-2 rounded-md bg-surface border border-border hover:bg-surface-hover ${isMobile ? 'block' : 'hidden'}`}
         aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
       >
-        {sidebarOpen ? <X size={20} color="#c9d1d9" /> : <Menu size={20} color="#c9d1d9" />}
+        {sidebarOpen ? <X size={24} color="#c9d1d9" /> : <Menu size={24} color="#c9d1d9" />}
       </button>
 
-      {/* Sidebar */}
-      <aside className={`fixed left-0 top-0 bottom-0 w-64 
-                         ${isMobile ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
-                         transition-transform duration-300 ease-in-out z-40 flex flex-col`}
-        >
-        {/* Close Button for Mobile */}
+      {/* Sidebar - always hidden on mobile, shown with transform */}
+      <aside className={`
+        fixed left-0 top-0 h-full w-64 z-40 flex flex-col
+        bg-bg-primary border-r border-border
+        transition-transform duration-300 ease-in-out
+        ${isMobile 
+          ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') 
+          : 'translate-x-0'}
+      `}>
+        {/* Mobile close button inside sidebar */}
         {isMobile && (
           <button
             onClick={() => setSidebarOpen(false)}
-            className="absolute top-4 right-4 z-50 p-1 rounded-md hover:bg-surface-hover"
-            aria-label="Close menu"
+            className="absolute top-4 right-4 p-1 rounded hover:bg-surface-hover"
           >
             <X size={24} color="#c9d1d9" />
           </button>
         )}
-        
+
         {/* Logo */}
-        <div className="glass p-4 mb-4">
+        <div className="p-4 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-primary to-purple">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-primary to-purple flex items-center justify-center">
               <Bot size={20} color="#fff" />
             </div>
             <div>
@@ -146,16 +102,17 @@ export default function Layout() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4">
+        <nav className="flex-1 p-4 overflow-y-auto">
           <ul className="flex flex-col gap-2">
             {navItems.map((item) => (
               <li key={item.to}>
                 <NavLink
                   to={item.to}
-                  onClick={() => setSidebarOpen(false)}
                   className={({ isActive }) => `
                     flex items-center gap-3 px-4 py-3 rounded-lg 
-                    ${isActive ? 'bg-primary/20 text-primary border-l-4 border-primary' : 'text-text-muted hover:text-text'}
+                    ${isActive 
+                      ? 'bg-primary/20 text-primary border-l-4 border-primary' 
+                      : 'text-text-muted hover:text-text hover:bg-surface-hover'}
                     transition-all duration-200
                   `}
                 >
@@ -168,7 +125,7 @@ export default function Layout() {
         </nav>
 
         {/* Status */}
-        <div className="glass p-4 mt-auto">
+        <div className="p-4 border-t border-border">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 bg-success rounded-full animate-pulse"></span>
             <span className="text-xs text-text-muted">Live Trading Active</span>
@@ -176,28 +133,30 @@ export default function Layout() {
         </div>
       </aside>
 
-      {/* Overlay for mobile */}
-      {sidebarOpen && isMobile && (
-        <div
+      {/* Mobile overlay */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-30"
           onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-black/50 z-30"
         />
       )}
 
-      {/* Main Content */}
-      <main className={`flex-1 min-h-0 relative
-                        ${isMobile ? 'ml-0 mt-16 px-4' : 'ml-64'} 
-                        ${isMobile && sidebarOpen ? 'opacity-50 blur-sm pointer-events-none' : ''}
-                        transition-opacity duration-300
-                        overflow-y-auto`}
-      >
-        {/* Global Fallback Data Warning */}
+      {/* Main content */}
+      <main className={`
+        flex-1 min-h-0 overflow-y-auto
+        ${isMobile 
+          ? 'pt-16 px-4'  // Mobile: padding top for hamburger, no left margin
+          : 'ml-64'}     // Desktop: left margin for sidebar
+        ${isMobile && sidebarOpen ? 'opacity-50 pointer-events-none' : ''}
+        transition-opacity duration-200
+      `}>
+        {/* Demo mode banner */}
         {isUsingFallback && (
           <div className="mt-4 mb-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0" />
             <div>
               <p className="text-yellow-500 font-bold text-sm uppercase tracking-wide">Demo Mode Active</p>
-              <p className="text-text-muted text-xs">System is operating with simulated data because the live terminal is unreachable.</p>
+              <p className="text-text-muted text-xs">System is operating with simulated data.</p>
             </div>
           </div>
         )}
@@ -206,4 +165,3 @@ export default function Layout() {
     </div>
   );
 }
-
