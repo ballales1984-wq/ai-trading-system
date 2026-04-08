@@ -432,7 +432,7 @@ class OptimizePortfolioResponse(BaseModel):
 
 # Endpoint to get current DEMO_MODE status
 @router.get("/mode")
-async def get_demo_mode_status():
+def get_demo_mode_status():
     """Get current demo mode status."""
     return {
         "demo_mode": get_demo_mode(),
@@ -442,7 +442,7 @@ async def get_demo_mode_status():
 
 # Endpoint to toggle DEMO_MODE
 @router.post("/mode")
-async def set_demo_mode_status(enabled: bool = Query(..., description="Enable or disable demo mode")):
+def set_demo_mode_status(enabled: bool = Query(..., description="Enable or disable demo mode")):
     """
     Set demo mode at runtime.
     - true: Use simulated portfolio with fake data ($500k)
@@ -458,7 +458,7 @@ async def set_demo_mode_status(enabled: bool = Query(..., description="Enable or
 
 # Endpoint to update paper trading balance
 @router.post("/balance", status_code=200)
-async def update_balance(new_balance: float = Query(..., ge=1000, le=100000000, description="New initial balance for paper trading")):
+def update_balance(new_balance: float = Query(..., ge=1000, le=100000000, description="New initial balance for paper trading")):
     """
     Update the paper trading initial balance.
     This allows changing the portfolio value without restarting the server.
@@ -480,7 +480,7 @@ async def update_balance(new_balance: float = Query(..., ge=1000, le=100000000, 
 
 
 @router.get("/balance")
-async def get_balance():
+def get_balance():
     """Get current paper trading balance."""
     return {
         "initial_balance": portfolio_data.get("initial_balance", PAPER_INITIAL_BALANCE),
@@ -490,7 +490,7 @@ async def get_balance():
 
 
 @router.get("/summary", response_model=PortfolioSummary)
-async def get_portfolio_summary() -> PortfolioSummary:
+def get_portfolio_summary() -> PortfolioSummary:
     """
     Get portfolio summary.
     
@@ -594,7 +594,7 @@ async def get_portfolio_summary() -> PortfolioSummary:
 
 # New endpoint: Get both real and simulated portfolio summaries
 @router.get("/summary/dual", response_model=DualPortfolioSummary)
-async def get_dual_portfolio_summary() -> DualPortfolioSummary:
+def get_dual_portfolio_summary() -> DualPortfolioSummary:
     """
     Get both real and simulated portfolio summaries.
     
@@ -709,7 +709,7 @@ def _compute_performance_from_history(
 
 
 @router.get("/positions", response_model=List[Position])
-async def list_positions(
+def list_positions(
     symbol: Optional[str] = Query(None, description="Filter by symbol"),
     side: Optional[str] = Query(None, description="Filter by side: LONG, SHORT"),
 ) -> List[Position]:
@@ -926,6 +926,7 @@ async def get_performance_metrics() -> PerformanceMetrics:
         
         if len(daily_returns) > 5:
             from src.risk import value_at_risk
+            import pandas as pd
             returns_series = pd.Series(daily_returns)
             var_pct_val = value_at_risk(returns_series, confidence=0.95)
             var_pct = var_pct_val * 100

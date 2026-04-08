@@ -193,21 +193,15 @@ app.include_router(
 )
 
 
-# Health check with audit
+# Health check endpoint (no audit logging to avoid log spam)
 @app.get("/health")
-async def health_check(request: Request):
-    """Health check endpoint."""
-    audit_logger.log_event(
-        AuditEvent(
-            event_type=AuditEventType.LOGIN,  # Reuse for health
-            ip_address=request.client.host,
-            action="Health check",
-            details={"status": "healthy"},
-        )
-    )
-    return SecurityResponse(
-        {"status": "healthy", "version": settings.app_version, "environment": settings.environment}
-    )
+async def health_check():
+    """Health check endpoint - no rate limiting or audit for fast monitoring."""
+    return {
+        "status": "healthy",
+        "version": settings.app_version,
+        "environment": settings.environment,
+    }
 
 
 # Rate limit stats endpoint

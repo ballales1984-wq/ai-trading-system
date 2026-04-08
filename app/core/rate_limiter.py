@@ -152,6 +152,34 @@ class RateLimiter:
         
         # In-memory store for distributed systems (use Redis in production)
         self._store: Dict[str, Dict] = defaultdict(dict)
+
+        # Counter for probabilistic pruning
+        self._pruning_counter: int = 0
+    
+    def _prune_expired(self):
+        """Clean up expired rate limit entries to prevent memory leaks."""
+        now = datetime.now()
+        
+        # Prune client limits
+        expired_clients = []
+        for client_id, entry in self._client_limits.items():
+            # If not blocked and window expired, or if block expired long ago
+            is_blocked = entry.blocked_until and entry.blocked_until > now
+            if not is_blocked and (now - entry.window_start > timedelta(minutes=10)):
+                expired_clients.append(client_id)
+                
+        for client_id in expired_clients:
+            del self._client_limits[client_id]
+            
+        # Prune token buckets
+        current_time = time.time()
+        expired_buckets = []
+        for key, bucket in self._token_buckets.items():
+            if current_time - bucket.last_refill > 600: # 10 minutes inactive
+                expired_buckets.append(key)
+                
+        for key in expired_buckets:
+            del self._token_buckets[key]
     
     def _get_client_id(self, identifier: str) -> str:
         """Get client identifier (can be IP, API key, user ID, etc.)."""
@@ -199,6 +227,11 @@ class RateLimiter:
             True if allowed, raises exception if rate limited
         """
         client_id = self._get_client_id(identifier)
+        
+        # Probabilistic pruning: ~1% chance to trigger cleanup to save memory
+        self._pruning_counter = (self._pruning_counter + 1) % 100
+        if self._pruning_counter == 0:
+            self._prune_expired()
         
         # Check if blocked
         if self._is_blocked(client_id):

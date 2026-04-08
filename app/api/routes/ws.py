@@ -109,12 +109,12 @@ async def websocket_endpoint(websocket: WebSocket):
             
             if get_demo_mode():
                 # Send price updates every 5 seconds
-                await manager.broadcast({
+                await websocket.send_json({
                     "type": "price_update",
                     "data": get_market_prices()
                 })
                 # Send portfolio updates every 10 seconds
-                await manager.broadcast({
+                await websocket.send_json({
                     "type": "portfolio_update",
                     "data": get_portfolio_summary()
                 })
