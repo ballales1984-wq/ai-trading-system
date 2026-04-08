@@ -770,6 +770,7 @@ class AutoTrader:
         """
         self.running = True
         self.stats["start_time"] = datetime.now().isoformat()
+        self._last_db_prune: datetime = datetime.now()  # traccia ultimo pruning DB
         
         logger.info("=" * 60)
         logger.info("AUTO TRADER STARTED")
@@ -799,6 +800,17 @@ class AutoTrader:
                 logger.exception(f"Error in trading cycle: {e}")
                 logger.info(f"Retrying in {self.config.loop_interval}s...")
                 time.sleep(self.config.loop_interval)
+
+            # ---- Daily DB Pruning (ogni 24h) ----
+            # Mantiene il database compatto in sistemi long-running
+            # impedendo la crescita illimitata di portfolio/signals/event_log.
+            try:
+                if (datetime.now() - self._last_db_prune).total_seconds() >= 86400:
+                    logger.info("Running daily DB pruning...")
+                    self.state_manager.prune_old_data()
+                    self._last_db_prune = datetime.now()
+            except Exception as e:
+                logger.warning(f"DB pruning failed (non-critical): {e}")
     
     def stop(self):
         """Ferma il trading bot."""

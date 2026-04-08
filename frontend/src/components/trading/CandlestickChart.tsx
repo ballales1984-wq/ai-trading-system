@@ -97,7 +97,7 @@ const CustomTooltip = ({ active, payload }: any) => {
     return null;
 };
 
-export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, symbol, height = 400 }) => {
+const CandlestickChartComponent: React.FC<CandlestickChartProps> = ({ data, symbol, height = 400 }) => {
     const [isMounted, setIsMounted] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -122,9 +122,19 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, symbol
         }));
     }, [data]);
 
-    const minLow = Math.min(...data.map(d => d.low));
-    const maxHigh = Math.max(...data.map(d => d.high));
-    const padding = (maxHigh - minLow) * 0.1;
+    // Calcoli di dominio memoizzati per efficienza
+    const { minLow, maxHigh, padding } = useMemo(() => {
+        if (!data || data.length === 0) return { minLow: 0, maxHigh: 100, padding: 10 };
+        const lows = data.map(d => d.low);
+        const highs = data.map(d => d.high);
+        const min = Math.min(...lows);
+        const max = Math.max(...highs);
+        return {
+            minLow: min,
+            maxHigh: max,
+            padding: (max - min) * 0.1
+        };
+    }, [data]);
 
     if (!data || data.length === 0) {
         return (
@@ -205,3 +215,5 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({ data, symbol
         </div>
     );
 };
+
+export const CandlestickChart = React.memo(CandlestickChartComponent);

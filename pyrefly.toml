@@ -1,0 +1,4 @@
+# Pyrefly standalone config (fallback se [tool.pyrefly] in pyproject.toml non viene letto)
+# Risolve i falsi positivi "Cannot find module" per un progetto multi-root.
+search_path = [".", "src", "app"]
+python_version = "3.11"

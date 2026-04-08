@@ -389,7 +389,18 @@ class StateManager:
                     updated_at TEXT NOT NULL
                 )
             """)
-            
+
+            # ---- Indici aggiuntivi per evitare full-table scan in produzione ----
+            # orders.status: get_open_orders() filtra su questo campo ad ogni ciclo
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)")
+            # orders.symbol: per query filtrate per simbolo
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_orders_symbol ON orders(symbol)")
+            # trades.symbol + timestamp: get_trades() filtra su entrambi
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_trades_symbol ON trades(symbol)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_trades_timestamp ON trades(timestamp)")
+            # portfolio.timestamp: get_portfolio_history() usa ORDER BY timestamp
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_portfolio_timestamp ON portfolio(timestamp)")
+
             conn.commit()
     
     # Key-Value Store Methods
@@ -876,24 +887,25 @@ class StateManager:
             conn.commit()
     
     def save_price_history_batch(self, prices: List[PriceHistoryState]):
-        """Save multiple price history entries."""
+        """Save multiple price history entries using executemany() for performance."""
+        if not prices:
+            return
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            for price in prices:
-                cursor.execute("""
-                    INSERT OR REPLACE INTO price_history 
-                    (symbol, timestamp, open, high, low, close, volume)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    price.symbol,
-                    price.timestamp.isoformat(),
-                    price.open,
-                    price.high,
-                    price.low,
-                    price.close,
-                    price.volume
-                ))
+            cursor.executemany("""
+                INSERT OR REPLACE INTO price_history
+                (symbol, timestamp, open, high, low, close, volume)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, [
+                (
+                    p.symbol,
+                    p.timestamp.isoformat(),
+                    p.open, p.high, p.low, p.close, p.volume
+                )
+                for p in prices
+            ])
             conn.commit()
+        logger.debug(f"Saved {len(prices)} price history entries (batch)")
     
     def get_price_history(self, symbol: str, limit: int = 500) -> List[PriceHistoryState]:
         """Get price history for a symbol."""
@@ -1050,22 +1062,59 @@ class StateManager:
         return None
     
     # ========================================
+    # DATA PRUNING (long-running system maintenance)
+    # ========================================
+    def prune_old_data(
+        self,
+        portfolio_days: int = 90,
+        signals_days: int = 30,
+        event_log_days: int = 30,
+        price_history_days: int = 365,
+        model_performance_days: int = 180,
+    ) -> Dict[str, int]:
+        """
+        Elimina dati storici precedenti alla soglia configurata.
+        Da chiamare periodicamente (es. ogni 24h) per prevenire la crescita
+        incontrollata del database in sistemi long-running.
+
+        Returns:
+            Dizionario con il numero di righe eliminate per ogni tabella.
+        """
+        cutoffs = {
+            "portfolio":         datetime.now() - timedelta(days=portfolio_days),
+            "signals":           datetime.now() - timedelta(days=signals_days),
+            "event_log":         datetime.now() - timedelta(days=event_log_days),
+            "price_history":     datetime.now() - timedelta(days=price_history_days),
+            "model_performance": datetime.now() - timedelta(days=model_performance_days),
+        }
+        deleted = {}
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            for table, cutoff in cutoffs.items():
+                cursor.execute(
+                    f"DELETE FROM {table} WHERE timestamp < ?",  # noqa: S608
+                    (cutoff.isoformat(),)
+                )
+                deleted[table] = cursor.rowcount
+            # Recupera spazio fisico su disco dopo le eliminazioni
+            cursor.execute("VACUUM")
+            conn.commit()
+
+        total = sum(deleted.values())
+        logger.info(
+            f"prune_old_data: rimossi {total} record totali — "
+            + ", ".join(f"{t}={n}" for t, n in deleted.items())
+        )
+        return deleted
+
+    # ========================================
     # BACKWARD COMPATIBILITY ADAPTERS
     # Simple key-value store for test compatibility
     # ========================================
-    
+
     def _ensure_kv_table(self):
-        """Ensure key-value store table exists."""
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS kv_store (
-                    key TEXT PRIMARY KEY,
-                    value TEXT,
-                    updated_at TEXT
-                )
-            """)
-            conn.commit()
+        """No-op: la tabella kv_store è già creata in _init_database()."""
+        pass  # Mantenuto per compatibilità con chiamate legacy
     
     def _set_state(self, key: str, value: Any):
         """Internal method to set state value."""

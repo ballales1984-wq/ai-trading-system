@@ -45,14 +45,16 @@ def get_agent() -> AutonomousQuantAgent:
 # Request/Response Models
 class ExecuteRequest(BaseModel):
     """Request to execute an action."""
-    symbol: str = Field(..., description="Trading symbol")
-    action: str = Field(..., description="Action: buy, sell, hold")
-    size: float = Field(..., ge=0, description="Position size")
-    reason: str = Field(default="", description="Reason for action")
+
+    symbol: str = Field(..., min_length=1, max_length=20, description="Trading symbol")
+    action: str = Field(..., pattern="^(buy|sell|hold)$", description="Action: buy, sell, hold")
+    size: float = Field(..., ge=0, le=1e9, description="Position size")
+    reason: str = Field(default="", max_length=1000, description="Reason for action")
 
 
 class AgentReportResponse(BaseModel):
     """Response containing agent report."""
+
     timestamp: str
     trading_mode: str
     regime: dict
@@ -64,12 +66,14 @@ class AgentReportResponse(BaseModel):
 
 class ProposalsResponse(BaseModel):
     """Response containing action proposals."""
+
     proposals: List[dict]
     timestamp: str
 
 
 class PortfolioResponse(BaseModel):
     """Response containing portfolio status."""
+
     positions: List[dict]
     equity: float
     pnl: float
@@ -80,6 +84,7 @@ class PortfolioResponse(BaseModel):
 
 class ExecuteResponse(BaseModel):
     """Response from action execution."""
+
     success: bool
     message: str
     order_id: Optional[str] = None
@@ -92,7 +97,7 @@ async def get_agent_report(
 ) -> AgentReportResponse:
     """
     Get the daily report for a symbol.
-    
+
     Returns comprehensive analysis including:
     - Market regime (HMM)
     - Monte Carlo simulation
@@ -103,7 +108,7 @@ async def get_agent_report(
     try:
         agent = get_agent()
         report = agent.daily_report(symbol)
-        
+
         return AgentReportResponse(
             timestamp=report.get("timestamp", datetime.now().isoformat()),
             trading_mode=report.get("trading_mode", "active"),
@@ -124,7 +129,7 @@ async def get_action_proposals(
 ) -> ProposalsResponse:
     """
     Get action proposals for a symbol.
-    
+
     Returns a list of recommended actions based on:
     - Market regime analysis
     - Volatility forecasts
@@ -134,7 +139,7 @@ async def get_action_proposals(
     try:
         agent = get_agent()
         proposals = agent.propose_actions(symbol)
-        
+
         return ProposalsResponse(
             proposals=proposals,
             timestamp=datetime.now().isoformat(),
@@ -148,7 +153,7 @@ async def get_action_proposals(
 async def get_portfolio_status() -> PortfolioResponse:
     """
     Get current portfolio status.
-    
+
     Returns:
     - Current positions
     - Equity and P&L
@@ -157,7 +162,7 @@ async def get_portfolio_status() -> PortfolioResponse:
     try:
         agent = get_agent()
         status = agent.get_portfolio_status()
-        
+
         return PortfolioResponse(
             positions=status.get("positions", []),
             equity=status.get("equity", 0),
@@ -175,22 +180,22 @@ async def get_portfolio_status() -> PortfolioResponse:
 async def execute_action(request: ExecuteRequest) -> ExecuteResponse:
     """
     Execute an approved action.
-    
+
     Note: This is a mock execution for demonstration.
     In production, this would connect to the execution engine.
     """
     try:
         agent = get_agent()
-        
+
         # Validate action
         if request.action not in ["buy", "sell", "hold"]:
             raise HTTPException(status_code=400, detail="Invalid action")
-        
+
         # Mock execution - in production, connect to execution engine
         order_id = f"ORD-{datetime.now().strftime('%Y%m%d%H%M%S')}"
-        
+
         logger.info(f"Executing: {request.action} {request.size} {request.symbol}")
-        
+
         # Update position in risk book
         if request.action in ["buy", "sell"]:
             agent.update_position(
@@ -199,7 +204,7 @@ async def execute_action(request: ExecuteRequest) -> ExecuteResponse:
                 quantity=request.size,
                 avg_price=0,  # Would get from market data
             )
-        
+
         return ExecuteResponse(
             success=True,
             message=f"{request.action.upper()} order placed for {request.symbol}",

@@ -89,7 +89,7 @@ class OrderUpdate(BaseModel):
 class EmergencyStopRequest(BaseModel):
     """Request model for emergency stop."""
 
-    reason: Optional[str] = Field(None, description="Reason for emergency stop")
+    reason: Optional[str] = Field(None, max_length=500, description="Reason for emergency stop")
     cancel_all_orders: bool = Field(default=True, description="Cancel all pending orders")
     close_all_positions: bool = Field(default=False, description="Close all open positions")
 

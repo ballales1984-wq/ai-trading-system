@@ -19,8 +19,10 @@ router = APIRouter()
 # DATA MODELS
 # ============================================================================
 
+
 class RiskMetrics(BaseModel):
     """Portfolio risk metrics."""
+
     var_1d: float = Field(description="Value at Risk (1-day, 95%)")
     var_5d: float = Field(description="Value at Risk (5-day, 95%)")
     cvar_1d: float = Field(description="Conditional VaR (1-day, 95%)")
@@ -36,6 +38,7 @@ class RiskMetrics(BaseModel):
 
 class PositionRisk(BaseModel):
     """Risk metrics for a single position."""
+
     symbol: str
     position_size: float
     market_value: float
@@ -47,6 +50,7 @@ class PositionRisk(BaseModel):
 
 class RiskLimit(BaseModel):
     """Risk limit configuration."""
+
     limit_id: str
     limit_type: str
     limit_value: float
@@ -58,14 +62,16 @@ class RiskLimit(BaseModel):
 
 class OrderRiskCheckRequest(BaseModel):
     """Request model for order risk check."""
-    symbol: str = Field(..., description="Trading symbol (e.g., BTCUSDT)")
-    side: str = Field(..., description="Order side: BUY or SELL")
-    quantity: float = Field(..., gt=0, description="Order quantity")
-    price: float = Field(..., gt=0, description="Order price")
+
+    symbol: str = Field(..., min_length=1, max_length=20, description="Trading symbol")
+    side: str = Field(..., pattern="^(BUY|SELL)$", description="Order side")
+    quantity: float = Field(..., gt=0, le=1e9, description="Order quantity")
+    price: float = Field(..., gt=0, le=1e9, description="Order price")
 
 
 class OrderRiskCheck(BaseModel):
     """Risk check result for an order."""
+
     order_id: str
     symbol: str
     side: str
@@ -82,11 +88,12 @@ class OrderRiskCheck(BaseModel):
 # ROUTES
 # ============================================================================
 
+
 @router.get("/metrics", response_model=RiskMetrics)
 async def get_risk_metrics() -> RiskMetrics:
     """
     Get current portfolio risk metrics.
-    
+
     Returns VaR, CVaR, volatility, and other risk measures.
     """
     # Simulated risk metrics - in production, calculate from actual data
@@ -181,36 +188,36 @@ async def get_position_risks() -> List[PositionRisk]:
 async def check_order_risk(request: OrderRiskCheckRequest) -> OrderRiskCheck:
     """
     Check if an order passes risk limits before execution.
-    
+
     This is the heart of the risk engine - every order must be validated.
     """
     order_id = str(uuid4())
     market_value = request.quantity * request.price
-    
+
     # Calculate risk metrics
     risk_score = min(100, (market_value / 100000) * 50)
     estimated_impact = market_value * 0.001
-    
+
     # Check limits
     rejection_reasons = []
     warnings = []
     approved = True
-    
+
     # Check VaR limit
     if market_value > 50000:
         risk_score += 20
         warnings.append("Large order - may impact VaR")
-    
+
     # Check concentration
     if market_value > 100000:
         approved = False
         rejection_reasons.append("Concentration limit exceeded")
-    
+
     # Check leverage
     if risk_score > 80:
         approved = False
         rejection_reasons.append("Risk score exceeds threshold")
-    
+
     return OrderRiskCheck(
         order_id=order_id,
         symbol=request.symbol,
@@ -232,21 +239,21 @@ async def run_monte_carlo(
 ) -> Dict[str, Any]:
     """
     Run Monte Carlo simulation for VaR calculation.
-    
+
     Uses historical returns to simulate potential portfolio outcomes.
     """
     # Generate sample returns
     np.random.seed(42)
     daily_returns = np.random.normal(0.001, 0.02, simulations)
-    
+
     # Calculate portfolio value changes
     portfolio_value = 1000000.0
     portfolio_changes = portfolio_value * daily_returns
-    
+
     # Calculate VaR
     var = -np.percentile(portfolio_changes, (1 - confidence) * 100)
     cvar = -portfolio_changes[portfolio_changes <= -var].mean()
-    
+
     return {
         "simulations": simulations,
         "confidence": confidence,
@@ -264,7 +271,7 @@ async def run_monte_carlo(
 async def run_stress_test() -> Dict[str, Any]:
     """
     Run stress test scenarios.
-    
+
     Tests portfolio under adverse market conditions.
     """
     scenarios = [
@@ -293,19 +300,21 @@ async def run_stress_test() -> Dict[str, Any]:
             "volatility_multiplier": 4.0,
         },
     ]
-    
+
     results = []
     portfolio_value = 1000000.0
-    
+
     for scenario in scenarios:
         loss = portfolio_value * (scenario["btc_change"] / 100)
-        results.append({
-            "scenario": scenario["name"],
-            "projected_loss": loss,
-            "projected_loss_pct": scenario["btc_change"],
-            "remaining_value": portfolio_value - loss,
-        })
-    
+        results.append(
+            {
+                "scenario": scenario["name"],
+                "projected_loss": loss,
+                "projected_loss_pct": scenario["btc_change"],
+                "remaining_value": portfolio_value - loss,
+            }
+        )
+
     return {"scenarios": results}
 
 
@@ -331,26 +340,23 @@ async def get_rolling_sharpe(window: int = Query(30, ge=7, le=180)) -> List[Dict
     Get rolling Sharpe ratio over time.
     """
     import random
-    
+
     # Generate sample rolling sharpe data
     np.random.seed(42)
     dates = []
     base_date = "2024-01-01"
-    
+
     for i in range(90):
         dates.append(f"2024-{((i // 30) + 1):02d}-{((i % 30) + 1):02d}")
-    
+
     rolling_sharpe = []
     current = 1.5
     for _ in range(90):
         current += np.random.normal(0, 0.3)
         current = max(-2, min(4, current))
         rolling_sharpe.append(round(current, 2))
-    
-    return [
-        {"date": date, "rolling_sharpe": sharpe}
-        for date, sharpe in zip(dates, rolling_sharpe)
-    ]
+
+    return [{"date": date, "rolling_sharpe": sharpe} for date, sharpe in zip(dates, rolling_sharpe)]
 
 
 @router.get("/drawdown")
@@ -359,68 +365,61 @@ async def get_drawdown() -> List[Dict[str, Any]]:
     Get drawdown data over time with equity curve.
     """
     np.random.seed(42)
-    
+
     dates = []
     base_value = 100000
     equity = base_value
     max_equity = base_value
-    
+
     data = []
-    
+
     for i in range(90):
         date = f"2024-{((i // 30) + 1):02d}-{((i % 30) + 1):02d}"
         dates.append(date)
-        
+
         # Random walk
         change = np.random.normal(0.002, 0.03)
         equity = equity * (1 + change)
-        
+
         # Track max equity
         if equity > max_equity:
             max_equity = equity
-        
+
         # Calculate drawdown
         drawdown = ((equity - max_equity) / max_equity) * 100
-        
-        data.append({
-            "date": date,
-            "drawdown": round(drawdown, 2),
-            "equity": round(equity, 2)
-        })
-    
+
+        data.append({"date": date, "drawdown": round(drawdown, 2), "equity": round(equity, 2)})
+
     return data
 
 
 @router.get("/monte-carlo")
 async def get_monte_carlo_distribution(
-    simulations: int = Query(1000, ge=100, le=10000)
+    simulations: int = Query(1000, ge=100, le=10000),
 ) -> List[Dict[str, Any]]:
     """
     Get Monte Carlo simulation distribution percentiles.
     """
     np.random.seed(42)
-    
+
     # Simulate final portfolio values
     daily_return = 0.001  # Mean daily return
-    daily_vol = 0.02     # Daily volatility
-    
+    daily_vol = 0.02  # Daily volatility
+
     final_values = []
     for _ in range(simulations):
         # Simulate 30 days of trading
         portfolio_value = 100000
         for _ in range(30):
-            portfolio_value *= (1 + np.random.normal(daily_return, daily_vol))
+            portfolio_value *= 1 + np.random.normal(daily_return, daily_vol)
         final_values.append(portfolio_value)
-    
+
     final_values.sort()
-    
+
     percentiles = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95]
-    
+
     return [
-        {
-            "percentile": f"P{p}",
-            "value": round(final_values[int(len(final_values) * p / 100)], 2)
-        }
+        {"percentile": f"P{p}", "value": round(final_values[int(len(final_values) * p / 100)], 2)}
         for p in percentiles
     ]
 

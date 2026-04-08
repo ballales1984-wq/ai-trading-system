@@ -1,11 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { portfolioApi, marketApi, ordersApi } from '../services/api';
-import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, Wallet, Wifi, WifiOff } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { DashboardSkeleton } from '@/components/ui/Skeleton';
 import { useMarketData } from '@/hooks/useMarketData';
+
+// ─── Format helpers: definite a livello modulo per evitare ricreazione ad ogni render ─
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(value);
+const formatPercent = (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -62,7 +67,9 @@ export default function Dashboard() {
   const { data: orders } = useQuery({
     queryKey: ['orders'],
     queryFn: () => ordersApi.list(),
-    refetchInterval: 10000,
+    // 30s: ridotto da 10s — il WS già notifica aggiornamenti in real-time;
+    // il polling è solo un fallback quando il WS è chiuso.
+    refetchInterval: 30000,
   });
 
   const { data: positions } = useQuery({
@@ -87,12 +94,7 @@ export default function Dashboard() {
   const ordersList = (Array.isArray(orders) ? orders : []).slice(0, 8);
   const positionsList = Array.isArray(positions) ? positions : [];
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(value);
-  };
-
-  const formatPercent = (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
-
+  // formatCurrency e formatPercent sono ora costanti module-level (no recreation per render)
   // Show skeleton loader while data is loading
   if (summaryLoading || !history || !markets || !performance || !orders || !positions) {
     return <DashboardSkeleton />;
@@ -136,113 +138,7 @@ export default function Dashboard() {
         <MetricCard title="Unrealized P&L" value={formatCurrency(summary?.unrealized_pnl || 0)} icon={summary?.unrealized_pnl >= 0 ? TrendingUp : TrendingDown} color={summary?.unrealized_pnl >= 0 ? 'success' : 'danger'} />
         <MetricCard title="Open Positions" value={String(summary?.num_positions || 0)} icon={Wallet} />
       </div>
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 premium-glass-panel overflow-hidden" ref={containerRef} style={{ minHeight: 300 }}>
-          <div className="p-6 border-b border-white/[0.05]">
-            <h3 className="text-lg font-semibold text-text tracking-wide">Portfolio Equity</h3>
-          </div>
-          <div className="h-72 w-full p-4 relative" style={{ minHeight: '288px' }}>
-            {isMounted && !summaryLoading && historyData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <AreaChart
-                  data={historyData}
-                  margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
-                >
-                  <defs>
-                    <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3fb950" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#3fb950" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  {/* Cartesian grid with dashed lines */}
-                  <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
-                  {/* X-axis with date formatting */}
-                  <XAxis
-                    dataKey="date"
-                    stroke="#8b949e"
-                    fontSize={11}
-                    tickFormatter={(date) => {
-                      // Format date for better readability
-                      const d = new Date(date);
-                      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    }}
-                  />
-                  {/* Y-axis with currency formatting */}
-                  <YAxis
-                    stroke="#8b949e"
-                    fontSize={11}
-                    tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
-                  />
-                  {/* Enhanced tooltip with cursor and label */}
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#161b22',
-                      border: '1px solid #30363d',
-                      borderRadius: '8px',
-                      padding: '8px',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
-                    }}
-                    labelStyle={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      fill: '#c9d1d9'
-                    }}
-                    separator={':'}
-                    cursor={{ strokeDasharray: '3 3' }}
-                  />
-                  {/* Legend for better interactivity */}
-                  <Legend
-                    verticalAlign="top"
-                    height={36}
-                    formatter={(_) => `Portfolio Value ($)`}
-                  />
-                  {/* Area chart with smooth gradient */}
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#3fb950"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#equityGradient)"
-                    isAnimationActive={true}
-                    animationBegin={400}
-                    animationDuration={800}
-                  />
-                  {/* Optional: Add dot points for better interaction */}
-                  {/* 
-                    <Dot 
-                      type="monotone" 
-                      dataKey="value" 
-                      strokeWidth={2} 
-                      stroke="#3fb950" 
-                      dot={{ 
-                        strokeWidth: 5, 
-                        stroke: '#fff', 
-                        fill: '#3fb950', 
-                        radius: 4 
-                      }} 
-                    /> 
-                    */}
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-text-muted">No data</div>
-            )}
-          </div>
-        </div>
-        <div className="glass rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-text mb-4">Performance</h3>
-          <div className="space-y-3">
-            <PerfRow label="Total Return" value={formatPercent(performance?.total_return_pct || 0)} positive={(performance?.total_return_pct || 0) >= 0} />
-            <PerfRow label="Sharpe Ratio" value={String(performance?.sharpe_ratio?.toFixed(2) || '0.00')} />
-            <PerfRow label="Win Rate" value={`${((performance?.win_rate || 0) * 100).toFixed(1)}%`} positive={(performance?.win_rate || 0) > 0.5} />
-            <PerfRow label="Max Drawdown" value={formatPercent(performance?.max_drawdown_pct || 0)} inverted />
-            <PerfRow label="Profit Factor" value={String(performance?.profit_factor?.toFixed(2) || '0.00')} />
-          </div>
-        </div>
-      </div>
+      {/* Metric Cards remain fixed at the top */}
 
       <div className="border-b border-border bg-bg-secondary px-6">
         <div className="flex gap-1">

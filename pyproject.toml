@@ -143,6 +143,12 @@ ignore_missing_imports = true
 include = ["src", "app", "."]
 extraPaths = ["src", "app", "."]
 
+[tool.pyrefly]
+# Configura i percorsi di ricerca moduli per progetto multi-root (src + app + root).
+# Risolve i falsi positivi "Cannot find module" per src.*, app.* e moduli root-level.
+search_path = [".", "src", "app"]
+python_version = "3.11"
+
 [[tool.mypy.overrides]]
 module = "dash.*"
 ignore_missing_imports = true

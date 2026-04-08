@@ -175,7 +175,15 @@ export default function AIAssistant() {
         timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages(prev => {
+        const next = [...prev, assistantMessage];
+        // Mantieni massimo 50 messaggi per performance
+        if (next.length > 50) {
+          // Mantieni il primo messaggio di benvenuto (index 0) e prendi gli ultimi 49
+          return [next[0], ...next.slice(-49)];
+        }
+        return next;
+      });
     } catch (error) {
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),

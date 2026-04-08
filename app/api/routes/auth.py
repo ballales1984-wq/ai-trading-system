@@ -46,7 +46,7 @@ class LoginResponse(BaseModel):
 class RefreshTokenRequest(BaseModel):
     """Refresh token request."""
 
-    refresh_token: str
+    refresh_token: str = Field(..., min_length=10, max_length=2048)
 
 
 class RegisterRequest(BaseModel):
