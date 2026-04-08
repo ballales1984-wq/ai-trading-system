@@ -1,0 +1,14 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.0, pytest-9.0.3, pluggy-1.6.0 -- C:\ai-trading-system\venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\ai-trading-system
+configfile: pyproject.toml
+plugins: anyio-4.12.1, dash-4.0.0, asyncio-1.3.0, cov-7.1.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+object address  : 00000172AFC999C0
+object refcount : 5
+object type     : 00007FFC1656CA80
+object type name: ValueError
+object repr     : ValueError('I/O operation on closed file.')
+lost sys.stderr
+collecting ... 
