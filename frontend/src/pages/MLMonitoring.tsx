@@ -207,7 +207,8 @@ export default function MLMonitoring() {
             <div className="bg-black/20 rounded-lg p-4">
               <div className="text-sm text-text-muted">Max Drawdown</div>
               <div className="text-xl font-bold text-danger">
-                {((riskMetrics?.max_drawdown ?? 0) * 100)?.toFixed(1) || '0.0'}%
+                {/* max_drawdown from API is already in percentage or dollars - display as-is */}
+                {riskMetrics?.max_drawdown ? `${riskMetrics.max_drawdown.toFixed(1)}%` : '0.0%'}
               </div>
             </div>
           </div>
