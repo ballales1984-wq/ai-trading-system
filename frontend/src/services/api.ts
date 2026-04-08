@@ -202,6 +202,15 @@ export interface RiskLimit {
   limit_percentage: number;
   is_breached: boolean;
   severity: string;
+  used_percentage: number;
+}
+
+export interface RiskControl {
+  id: string;
+  name: str;
+  description: string;
+  status: string;
+  action_type: string;
 }
 
 export interface PositionRisk {
@@ -225,6 +234,10 @@ export const riskApi = {
   },
   getPositionRisks: async (): Promise<PositionRisk[]> => {
     const { data } = await api.get<PositionRisk[]>('/risk/positions');
+    return data;
+  },
+  getControls: async (): Promise<RiskControl[]> => {
+    const { data } = await api.get<RiskControl[]>('/risk/controls');
     return data;
   },
   getCorrelationMatrix: async () => {

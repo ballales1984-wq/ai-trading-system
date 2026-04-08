@@ -34,6 +34,8 @@ class RiskMetrics(BaseModel):
     sharpe_ratio: float = Field(description="Sharpe ratio")
     leverage: float = Field(description="Current leverage")
     margin_utilization: float = Field(description="Margin utilization %")
+    daily_pnl_nominal: float = Field(description="Daily P&L in nominal terms")
+    is_live_trading: bool = Field(default=True, description="Whether live trading is active")
 
 
 class PositionRisk(BaseModel):
@@ -58,6 +60,16 @@ class RiskLimit(BaseModel):
     limit_percentage: float
     is_breached: bool
     severity: str
+    used_percentage: float = Field(description="Percentage of limit used")
+
+
+class RiskControl(BaseModel):
+    """Institutional risk control status."""
+    id: str
+    name: str
+    description: str
+    status: str = Field(description="ACTIVE | INACTIVE | TRIGGERED")
+    action_type: str
 
 
 class OrderRiskCheckRequest(BaseModel):
@@ -108,7 +120,9 @@ async def get_risk_metrics() -> RiskMetrics:
         max_drawdown=-8.5,
         sharpe_ratio=1.85,
         leverage=1.2,
-        margin_utilization=0.45,
+        margin_utilization=0.005,  # 0.5%
+        daily_pnl_nominal=12500.0,
+        is_live_trading=True
     )
 
 
@@ -126,6 +140,7 @@ async def get_risk_limits() -> List[RiskLimit]:
             limit_percentage=62.5,
             is_breached=False,
             severity="green",
+            used_percentage=62.5
         ),
         RiskLimit(
             limit_id="cvar_limit",
@@ -135,6 +150,7 @@ async def get_risk_limits() -> List[RiskLimit]:
             limit_percentage=62.5,
             is_breached=False,
             severity="green",
+            used_percentage=62.5
         ),
         RiskLimit(
             limit_id="drawdown_limit",
@@ -144,6 +160,7 @@ async def get_risk_limits() -> List[RiskLimit]:
             limit_percentage=8.5,
             is_breached=False,
             severity="green",
+            used_percentage=8.5
         ),
         RiskLimit(
             limit_id="exposure_limit",
@@ -153,6 +170,37 @@ async def get_risk_limits() -> List[RiskLimit]:
             limit_percentage=83.3,
             is_breached=False,
             severity="yellow",
+            used_percentage=83.3
+        ),
+    ]
+
+
+@router.get("/controls", response_model=List[RiskControl])
+async def get_risk_controls() -> List[RiskControl]:
+    """
+    Get status of institutional risk controls.
+    """
+    return [
+        RiskControl(
+            id="emergency_liquidation",
+            name="Emergency Liquidation",
+            description="Instantly close all positions if drawdown exceeds limits",
+            status="ACTIVE",
+            action_type="LIQUIDATE"
+        ),
+        RiskControl(
+            id="correlated_guard",
+            name="Correlated Exposure Guard",
+            description="Prevents opening highly correlated positions automatically",
+            status="ACTIVE",
+            action_type="PREVENT_BLOCK"
+        ),
+        RiskControl(
+            id="circuit_breaker",
+            name="Volatility Circuit Breaker",
+            description="Halts trading during extreme market volatility",
+            status="ACTIVE",
+            action_type="HALT_TRADING"
         ),
     ]
 
@@ -305,7 +353,7 @@ async def run_stress_test() -> Dict[str, Any]:
     portfolio_value = 1000000.0
 
     for scenario in scenarios:
-        loss = portfolio_value * (scenario["btc_change"] / 100)
+        loss = portfolio_value * (float(scenario["btc_change"]) / 100.0)
         results.append(
             {
                 "scenario": scenario["name"],
@@ -419,7 +467,7 @@ async def get_monte_carlo_distribution(
     percentiles = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95]
 
     return [
-        {"percentile": f"P{p}", "value": round(final_values[int(len(final_values) * p / 100)], 2)}
+        {"percentile": f"P{p}", "value": round(final_values[int(len(final_values) * p / 100.0)], 2)}
         for p in percentiles
     ]
 

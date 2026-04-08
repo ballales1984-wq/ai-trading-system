@@ -140,22 +140,30 @@ class FinancialAIAssistant:
             c = self.learned_concepts[query]
             return {"term": c.term, "def": c.definition, "cat": c.category, "source": "learned"}
         
-        # Check built-in concepts
+        # 1. Exact matches / Key matches (Highest Priority)
         for key, val in self.concepts.items():
-            # 1. Exact key match or key-in-query
             clean_key = key.replace("_", " ")
-            if query == key or query == clean_key or clean_key in query:
+            if query == key or query == clean_key:
+                return val
+
+        # 2. Key-in-query matches (Medium Priority)
+        for key, val in self.concepts.items():
+            clean_key = key.replace("_", " ")
+            if clean_key in query and len(clean_key) > 3:
                 return val
                 
-            # 2. Keyword match
+        # 3. Keyword match (Lowest Priority)
+        for key, val in self.concepts.items():
             keywords = [k.lower() for k in val.get("keywords", [])]
-            # If any keyword is in the query words
-            if any(kw in query for kw in keywords) or any(kw in query_words for kw in keywords):
+            # Exact keyword match in query_words is better than substring
+            if any(kw in query_words for kw in keywords):
+                return val
+            if any(kw in query for kw in keywords if len(kw) > 4):
                 return val
         
-        # 3. Fuzzy match fallback for common crypto terms
+        # 4. Fuzzy match fallback
         if "btc" in query or "bitcoin" in query:
-            return self.concepts.get("market_cap") # Fallback to something relevant
+            return self.concepts.get("market_cap") 
             
         return None
 
@@ -399,21 +407,6 @@ class FinancialAIAssistant:
             
             return response
         
-        # Risk questions
-        elif any(w in question_lower for w in ["rischio", "risk", "pericolo"]):
-            sentiment = self.get_sentiment_analysis()
-            portfolio = self.get_portfolio_analysis()
-            
-            risk = "basso" if portfolio.get("pnl_percent", 0) > 10 else "medio" if portfolio.get("pnl_percent", 0) > 0 else "alto"
-            
-            response = f"## Analisi Rischio\n\n"
-            response += f"- **Livello rischio:** {risk}\n"
-            response += f"- **Sentiment mercato:** {sentiment.get('sentiment', 'unknown')}\n"
-            response += f"- **Notizie positive:** {sentiment.get('positive', 0)}\n"
-            response += f"- **Notizie negative:** {sentiment.get('negative', 0)}\n"
-            
-            return response
-        
         # News questions
         elif any(w in question_lower for w in ["notizia", "news", "sentiment", "mercato"]):
             sentiment = self.get_sentiment_analysis()
@@ -424,6 +417,34 @@ class FinancialAIAssistant:
             response += f"- **Notizie:** {sentiment.get('positive', 0)} positive, {sentiment.get('negative', 0)} negative\n"
             
             return response
+
+        # Risk questions (Institutional Upgrade)
+        elif any(w in question_lower for w in ["rischio", "rischi", "risk", "pericolo", "liquidation", "circuit", "breaker"]):
+            try:
+                # Get metrics
+                metrics_resp = requests.get(f"{API_BASE_URL}/risk/metrics", timeout=5)
+                controls_resp = requests.get(f"{API_BASE_URL}/risk/controls", timeout=5)
+                
+                response = f"## 🛡️ Analisi Rischio - Hedge Fund Edition\n\n"
+                
+                if metrics_resp.status_code == 200:
+                    m = metrics_resp.json()
+                    response += f"### Parametri Correnti\n"
+                    response += f"- **Leva:** `{m.get('leverage', 0)}x` (Stato: SAFE)\n"
+                    response += f"- **VaR (1d, 95%):** `${m.get('var_1d', 0):,.0f}`\n"
+                    response += f"- **Volatilità Ann.:** `{m.get('volatility', 0)*100:.1f}%`\n"
+                
+                if controls_resp.status_code == 200:
+                    controls = controls_resp.json()
+                    response += f"\n### ⚙️ Institutional Controls\n"
+                    for c in controls:
+                        status_icon = "🟢" if c['status'] == "ACTIVE" else "🔴"
+                        response += f"- {status_icon} **{c['name']}:** {c['status']}\n"
+                
+                return response
+            except Exception as e:
+                logger.error(f"Errore analisi rischio estesa: {e}")
+                return "Mi dispiace, non riesco a recuperare i parametri di rischio avanzati al momento."
         
         # Explain term
         else:

@@ -18,7 +18,12 @@ export default function Risk() {
     queryFn: () => riskApi.getPositionRisks(),
   });
 
-  if (metricsLoading || limitsLoading || positionsLoading) {
+  const { data: controls, isLoading: controlsLoading } = useQuery({
+    queryKey: ['risk-controls'],
+    queryFn: () => riskApi.getControls(),
+  });
+
+  if (metricsLoading || limitsLoading || positionsLoading || controlsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -36,7 +41,7 @@ export default function Risk() {
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <RiskMetric title="Current Leverage" value={`${metrics?.leverage.toFixed(1)}x`} status={metrics && metrics.leverage > 2 ? 'Warning' : 'Safe'} />
-        <RiskMetric title="Margin Utilization" value={`${(metrics?.margin_utilization || 0 * 100).toFixed(1)}%`} status={metrics && metrics.margin_utilization > 0.7 ? 'Danger' : 'Safe'} />
+        <RiskMetric title="Margin Utilization" value={`${((metrics?.margin_utilization || 0) * 100).toFixed(1)}%`} status={metrics && metrics.margin_utilization > 0.05 ? 'Danger' : 'Safe'} />
         <RiskMetric title="VaR (1d, 95%)" value={`$${metrics?.var_1d.toLocaleString()}`} status="Safe" />
         <RiskMetric title="Volatility (Ann)" value={`${((metrics?.volatility || 0) * 100).toFixed(1)}%`} status="Safe" />
       </div>
@@ -55,13 +60,13 @@ export default function Risk() {
                   <span className="text-sm font-bold text-text uppercase">{limit.limit_type.replace('_', ' ')}</span>
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${limit.severity === 'green' ? 'text-success border-success/30' : 'text-yellow-500 border-yellow-500/30'
                     }`}>
-                    {limit.limit_percentage}% USED
+                    {limit.used_percentage}% USED
                   </span>
                 </div>
                 <div className="h-2 bg-black/40 rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all duration-500 ${limit.is_breached ? 'bg-danger' : limit.severity === 'yellow' ? 'bg-yellow-500' : 'bg-primary'}`}
-                    style={{ width: `${limit.limit_percentage}%` }}
+                    style={{ width: `${limit.used_percentage}%` }}
                   />
                 </div>
               </div>
@@ -76,9 +81,14 @@ export default function Risk() {
             <h2 className="text-lg font-bold text-text">Risk Controls</h2>
           </div>
           <div className="space-y-4">
-            <ControlSwitch label="Emergency Liquidation" active={false} description="Instantly close all positions if drawdown exceeds limits" />
-            <ControlSwitch label="Correlated Exposure Guard" active={true} description="Prevents opening highly correlated positions automatically" />
-            <ControlSwitch label="Volatility Circuit Breaker" active={true} description="Halts trading during extreme market volatility" />
+            {controls?.map((control) => (
+              <ControlSwitch
+                key={control.id}
+                label={control.name}
+                active={control.status === 'ACTIVE'}
+                description={control.description}
+              />
+            ))}
           </div>
         </div>
       </div>

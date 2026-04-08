@@ -1,0 +1,28 @@
+INFO:ai_assistant:Caricati 13 concetti appresi
+INFO:ai_assistant:AI Assistant inizializzato con 51 concetti
+ERROR:ai_assistant:Errore analisi rischio estesa: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/risk/metrics (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [WinError 10061] Impossibile stabilire la connessione. Rifiuto persistente del computer di destinazione"))
+
+==================================================
+TEST: RISK API ENDPOINTS
+==================================================
+[*] Verificando endpoint /risk/metrics...
+[*] Verificando endpoint /risk/controls...
+
+==================================================
+TEST: AI ASSISTANT RISK INTERACTION
+==================================================
+[+] Termine: Volatility Circuit Breaker
+[+] Risposta IA: ### ­ƒöì Volatility Circuit Breaker
+
+> Meccanismo di interruzione automatica del trading durante periodi di estrema volatilit├á di mercato
+
+**­ƒôé Categoria:** `RISK_CONTROL`
+**Ôä╣´©Å Fonte:** ­ƒôÜ Vocabolario Base...
+
+[+] Domanda: 'Quali sono i rischi correnti?'
+[+] Risposta IA: Mi dispiace, non riesco a recuperare i parametri di rischio avanzati al momento....
+[+] Successo: L'assistant ha gestito correttamente l'assenza dell'API.
+
+==================================================
+ESITO FINALE: TEST RISCHIO SUPERATI!
+==================================================

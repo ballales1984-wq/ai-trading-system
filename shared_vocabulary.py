@@ -299,6 +299,38 @@ SHARED_FINANCIAL_CONCEPTS: Dict[str, Dict] = {
         "category": "strategy",
         "keywords": ["hedge", "coverage", "copertura"]
     },
+    
+    # Advanced Institutional Risk (Hedge Fund Edition)
+    "emergency_liquidation": {
+        "term": "Emergency Liquidation",
+        "definition": "Chiusura istantanea di tutte le posizioni in caso di superamento dei limiti critici di drawdown",
+        "category": "risk_control",
+        "keywords": ["emergency", "liquidation", "close all", "panic button", "liquidazione"]
+    },
+    "correlated_exposure_guard": {
+        "term": "Correlated Exposure Guard",
+        "definition": "Sistema preventivo che impedisce l'apertura automatica di posizioni correlate per evitare concentrazione di rischio",
+        "category": "risk_control",
+        "keywords": ["correlation", "correlated", "exposure", "guard", "protezione correlazione"]
+    },
+    "volatility_circuit_breaker": {
+        "term": "Volatility Circuit Breaker",
+        "definition": "Meccanismo di interruzione automatica del trading durante periodi di estrema volatilità di mercato",
+        "category": "risk_control",
+        "keywords": ["circuit breaker", "halt", "pause", "volatility", "stop trading", "interruzione"]
+    },
+    "concentration_risk": {
+        "term": "Concentration Risk",
+        "definition": "Rischio derivante dall'avere un'esposizione eccessiva su un singolo asset o settore",
+        "category": "risk",
+        "keywords": ["concentration", "diversification", "portfolio weight", "concentrazione"]
+    },
+    "beta_exposure": {
+        "term": "Beta Exposure",
+        "definition": "Misura della sensibilità del portafoglio o di un asset rispetto ai movimenti del mercato generale",
+        "category": "risk",
+        "keywords": ["beta", "exposure", "market risk", "sensitività"]
+    },
 }
 
 def get_concept(concept_id: str) -> Dict:
