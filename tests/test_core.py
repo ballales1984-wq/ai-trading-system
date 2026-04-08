@@ -5,13 +5,18 @@ Test script for the core trading system components.
 
 import asyncio
 import sys
+import os
+
+# Ensure src is in path if running from root
+sys.path.append(os.getcwd())
+
+from src.core import (
+    TradingEngine, PaperBroker, OrderManager, 
+    RiskEngine, PortfolioManager, create_broker
+)
 
 def test_core_imports():
     """Test core module imports."""
-    from src.core import (
-        TradingEngine, PaperBroker, OrderManager, 
-        RiskEngine, PortfolioManager, create_broker
-    )
     assert TradingEngine is not None
     assert PaperBroker is not None
     assert OrderManager is not None

@@ -115,8 +115,7 @@ export default function Layout() {
 
       {/* Sidebar */}
       <aside className={`fixed left-0 top-0 bottom-0 w-64 
-                         ${isMobile ? 'translate-x-0' : 'translate-x-0'}
-                         ${isMobile && sidebarOpen ? 'translate-x-0' : isMobile ? '-translate-x-full' : 'translate-x-0'}
+                         ${isMobile ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
                          transition-transform duration-300 ease-in-out z-40 flex flex-col`}
         >
         {/* Logo */}
@@ -173,12 +172,12 @@ export default function Layout() {
 
       {/* Main Content */}
       <main className={`flex-1 min-h-0 
-                       ${isMobile ? 'ml-0 mt-16' : 'ml-64'} 
-                       overflow-y-auto`}
+                        ${isMobile ? 'ml-0 mt-16 px-4' : 'ml-64'} 
+                        overflow-y-auto`}
       >
         {/* Global Fallback Data Warning */}
         {isUsingFallback && (
-          <div className="m-6 mb-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 flex items-center gap-3">
+          <div className="mt-4 mb-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0" />
             <div>
               <p className="text-yellow-500 font-bold text-sm uppercase tracking-wide">Demo Mode Active</p>
