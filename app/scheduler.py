@@ -15,18 +15,29 @@ Performance:
 - Memory usage tracking
 """
 
+from pathlib import Path
+
 import asyncio
 import logging
 import cProfile
 import pstats
 import io
 import functools
-
+import json
+import inspect
 from datetime import datetime, timedelta, timezone
 from typing import Callable, Dict, List, Optional, Any
 from enum import Enum
-import json
 from pathlib import Path
+
+# AI Integration
+try:
+    from sentiment_concept_bridge import create_bridge
+    from advanced_ai_assistant import FinancialAIAssistant
+    from sentiment_news import SentimentAnalyzer
+    BRIDGE_AVAILABLE = True
+except ImportError:
+    BRIDGE_AVAILABLE = False
 
 
 logger = logging.getLogger(__name__)
@@ -171,7 +182,7 @@ class ScheduledTask:
         else:
             self.next_run = now + timedelta(minutes=5)
             
-        return self.next_run
+        return self.next_run or now  # Guarantee return type
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert task to dictionary"""
@@ -278,7 +289,7 @@ class TaskScheduler:
         async def run_with_error_handling():
             task.status = TaskStatus.RUNNING
             try:
-                if asyncio.iscoroutinefunction(task.func):
+                if inspect.iscoroutinefunction(task.func):
                     await task.func(**task.kwargs)
                 else:
                     task.func(**task.kwargs)
@@ -445,6 +456,61 @@ async def cleanup_old_logs(days_to_keep: int = 30):
     # Cleanup logic would go here
 
 
+async def update_news_and_learning():
+    """
+    Fetch latest news, update sentiment, and trigger AI learning.
+    This bridges the gap between raw news and the linguistic system.
+    """
+    if not BRIDGE_AVAILABLE:
+        logger.warning("Linguistic system dependencies not available. Skipping news update.")
+        return
+
+    try:
+        logger.info("Starting automated news and linguistic update...")
+        
+        # 1. Initialize bridge and assistant
+        bridge = create_bridge()
+        assistant = FinancialAIAssistant()
+        
+        if not bridge:
+            logger.error("Failed to create sentiment-concept bridge")
+            return
+            
+        # 2. Fetch news across major assets
+        assets = ["BTC", "ETH", "SOL", "MARKET"]
+        logger.info(f"Fetching news for: {assets}")
+        
+        analyzer = SentimentAnalyzer()
+        news_items = analyzer.fetch_news(assets=assets)
+        
+        if not news_items:
+            logger.info("No new news found to process.")
+            return
+            
+        # 3. Trigger AI Assistant learning
+        # Convert NewsItem to dict format expected by assistant
+        news_dicts = []
+        for item in news_items:
+            news_dicts.append({
+                "title": item.title,
+                "summary": item.description,
+                "source": item.source,
+                "sentiment": "positive" if item.sentiment > 0.2 else "negative" if item.sentiment < -0.2 else "neutral",
+                "sentiment_score": item.sentiment
+            })
+            
+        logger.info(f"AI Assistant learning from {len(news_dicts)} news items...")
+        assistant.learn_from_news(news_dicts)
+        
+        # 4. Update Bridge/Concept Engine (Optional enrichment)
+        # The bridge already uses news_items for sentiment-concept mapping
+        
+        logger.info("Automated news and linguistic update completed successfully.")
+        
+    except Exception as e:
+        logger.error(f"Error during news/learning update task: {e}")
+
+
 # =============================================================================
 # Scheduler Singleton
 # =============================================================================
@@ -488,7 +554,15 @@ def init_scheduler() -> TaskScheduler:
         func=generate_performance_report,
         schedule_type=ScheduleType.WEEKLY,
         run_time=datetime.now(timezone.utc).replace(hour=9, minute=0, second=0, microsecond=0)
-        # weekday is NOT a valid argument for datetime.replace(); use calculate_next_run() logic instead
+    )
+    
+    # News & Linguistic Learning automation
+    scheduler.add_task(
+        task_id="news_linguistic_learning",
+        name="News & AI Linguistic Learning",
+        func=update_news_and_learning,
+        schedule_type=ScheduleType.INTERVAL,
+        interval_seconds=900  # Every 15 minutes
     )
     
     return scheduler

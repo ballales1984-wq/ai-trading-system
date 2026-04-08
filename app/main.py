@@ -62,6 +62,8 @@ from app.api.routes import (
     agents,
 )
 
+from app.scheduler import init_scheduler, get_scheduler
+
 # Import audit classes
 from app.compliance.audit import AuditLogger, AuditEvent, AuditEventType
 
@@ -85,6 +87,28 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
+
+@app.on_event("startup")
+async def startup_event():
+    """Startup lifecycle event."""
+    # Initialize and start scheduler
+    try:
+        scheduler = init_scheduler()
+        await scheduler.start()
+        logger.info("Global Task Scheduler started")
+    except Exception as e:
+        logger.error(f"Failed to start Task Scheduler: {e}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Shutdown lifecycle event."""
+    # Stop scheduler
+    try:
+        scheduler = get_scheduler()
+        await scheduler.stop()
+        logger.info("Global Task Scheduler stopped")
+    except Exception as e:
+        logger.error(f"Error stopping Task Scheduler: {e}")
 
 # CORS middleware - Allow frontend to communicate with backend
 # Uses the cors_origins list from settings, with fallback to common dev origins

@@ -21,7 +21,12 @@ from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 import threading
 import time
-# import schedule  # Opzionale, per scheduling
+
+# Import shared vocabulary
+try:
+    from shared_vocabulary import SHARED_FINANCIAL_CONCEPTS
+except ImportError:
+    SHARED_FINANCIAL_CONCEPTS = {}
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -35,126 +40,16 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 # ==================== ENHANCED VOCABULARY ====================
 
+# ADVANCED_CONCEPTS is now backed by SHARED_FINANCIAL_CONCEPTS
+# for consistency across the entire system.
 ADVANCED_CONCEPTS = {
-    # Trading Basics
-    "long_position": {"term": "Long", "def": "Posizione rialzista", "cat": "trading", "keywords": ["buy", "long", "acquisto"]},
-    "short_position": {"term": "Short", "def": "Posizione ribassista", "cat": "trading", "keywords": ["sell", "short", "ribasso"]},
-    "stop_loss": {"term": "Stop Loss", "def": "Ordine di protezione", "cat": "risk", "keywords": ["stop", "protezione"]},
-    "take_profit": {"term": "Take Profit", "def": "Ordine di chiusura in profitto", "cat": "risk", "keywords": ["target", "profit"]},
-    "leverage": {"term": "Leva", "def": "Moltiplicatore di esposizione", "cat": "trading", "keywords": ["leverage", "x10", "x100"]},
-    "margin": {"term": "Margine", "def": "Capitale richiesto per posizione", "cat": "trading", "keywords": ["margin", "collateral"]},
-    
-    # Risk Metrics
-    "var": {"term": "VaR", "def": "Value at Risk - perdita massima attesa", "cat": "risk", "keywords": ["var", "risk"]},
-    "cvar": {"term": "CVaR", "def": "Conditional VaR - expected shortfall", "cat": "risk", "keywords": ["cvar", "tail"]},
-    "drawdown": {"term": "Drawdown", "def": "Calo dal picco", "cat": "risk", "keywords": ["drawdown", "dd"]},
-    "sharpe_ratio": {"term": "Sharpe Ratio", "def": "Ritorno ajusted per rischio", "cat": "metrics", "keywords": ["sharpe", "risk-adjusted"]},
-    "sortino_ratio": {"term": "Sortino Ratio", "def": "Sharpe con volatilità negativa", "cat": "metrics", "keywords": ["sortino", "downside"]},
-    "max_dd": {"term": "Max Drawdown", "def": "Drawdown massimo storico", "cat": "risk", "keywords": ["maxdd", "peak"]},
-    
-    # Technical Analysis
-    "rsi": {"term": "RSI", "def": "Relative Strength Index", "cat": "technical", "keywords": ["rsi", "overbought", "oversold"]},
-    "macd": {"term": "MACD", "def": "Moving Average Convergence Divergence", "cat": "technical", "keywords": ["macd", "trend"]},
-    "ema": {"term": "EMA", "def": "Exponential Moving Average", "cat": "technical", "keywords": ["ema", "ma"]},
-    "sma": {"term": "SMA", "def": "Simple Moving Average", "cat": "technical", "keywords": ["sma", "ma"]},
-    "bollinger": {"term": "Bollinger Bands", "def": "Bande di volatilità", "cat": "technical", "keywords": ["bollinger", "bands"]},
-    "volume_profile": {"term": "Volume Profile", "def": "Profilo volume", "cat": "technical", "keywords": ["volume", "profile"]},
-    "support": {"term": "Supporto", "def": "Livello di supporto", "cat": "technical", "keywords": ["support", "floor"]},
-    "resistance": {"term": "Resistenza", "def": "Livello di resistenza", "cat": "technical", "keywords": ["resistance", "ceiling"]},
-    "breakout": {"term": "Breakout", "def": "Rottura di livello", "cat": "technical", "keywords": ["breakout", "rupture"]},
-    "pullback": {"term": "Pullback", "def": "Ritorno al livello", "cat": "technical", "keywords": ["pullback", "retrace"]},
-    
-    # Market Structure
-    "volatility": {"term": "Volatilità", "def": "Misura delle oscillazioni", "cat": "market", "keywords": ["volatility", "volatile"]},
-    "liquidity": {"term": "Liquidità", "def": "Facilità di scambio", "cat": "market", "keywords": ["liquidity", "depth"]},
-    "spread": {"term": "Spread", "def": "Differenza bid-ask", "cat": "market", "keywords": ["spread", "bid", "ask"]},
-    "volume": {"term": "Volume", "def": "Quantità scambiata", "cat": "market", "keywords": ["volume", "traded"]},
-    "market_cap": {"term": "Market Cap", "def": "Capitalizzazione di mercato", "cat": "market", "keywords": ["market cap", "cap"]},
-    "tvl": {"term": "TVL", "def": "Total Value Locked", "cat": "defi", "keywords": ["tvl", "locked"]},
-    
-    # DeFi
-    "staking": {"term": "Staking", "def": "Blocco token per rewards", "cat": "defi", "keywords": ["staking", "stake"]},
-    "liquidity_pool": {"term": "Liquidity Pool", "def": "Pool di liquidità", "cat": "defi", "keywords": ["lp", "pool"]},
-    "impermanent_loss": {"term": "Impermanent Loss", "def": "Perdita temporanea", "cat": "defi", "keywords": ["il", "impermanent"]},
-    "yield_farming": {"term": "Yield Farming", "def": "Agricoltura di rendimenti", "cat": "defi", "keywords": ["yield", "farming"]},
-    "flash_loan": {"term": "Flash Loan", "def": "Prestito flash", "cat": "defi", "keywords": ["flash", "loan"]},
-    "amms": {"term": "AMM", "def": "Automated Market Maker", "cat": "defi", "keywords": ["amm", "dex"]},
-    "governance_token": {"term": "Governance Token", "def": "Token di governance", "cat": "defi", "keywords": ["governance", "vote"]},
-    "bridge": {"term": "Bridge", "def": "Ponte cross-chain", "cat": "defi", "keywords": ["bridge", "cross-chain"]},
-    
-    # Crypto Specific
-    "spot_etf": {"term": "Spot ETF", "def": "ETF su asset reale", "cat": "crypto", "keywords": ["spot", "etf"]},
-    "layer2": {"term": "Layer 2", "def": "Soluzione di scalabilità", "cat": "crypto", "keywords": ["l2", "arbitrum", "optimism"]},
-    "smart_contract": {"term": "Smart Contract", "def": "Contratto intelligente", "cat": "crypto", "keywords": ["smart", "contract"]},
-    "wallet": {"term": "Wallet", "def": "Portafoglio crypto", "cat": "crypto", "keywords": ["wallet", "address"]},
-    "private_key": {"term": "Private Key", "def": "Chiave privata", "cat": "crypto", "keywords": ["private", "key"]},
-    "public_key": {"term": "Public Key", "def": "Chiave pubblica", "cat": "crypto", "keywords": ["public", "key"]},
-    "nft": {"term": "NFT", "def": "Non-Fungible Token", "cat": "crypto", "keywords": ["nft", "token"]},
-    "tokenomics": {"term": "Tokenomics", "def": "Economia del token", "cat": "crypto", "keywords": ["tokenomics", "supply"]},
-    "circulating_supply": {"term": "Circulating Supply", "def": "Offerta in circolazione", "cat": "crypto", "keywords": ["circulating", "supply"]},
-    "max_supply": {"term": "Max Supply", "def": "Offerta massima", "cat": "crypto", "keywords": ["max", "supply"]},
-    
-    # Economic
-    "inflation": {"term": "Inflazione", "def": "Aumento prezzi", "cat": "economic", "keywords": ["inflation", "cpi"]},
-    "interest_rate": {"term": "Tasso Interesse", "def": "Costo del denaro", "cat": "economic", "keywords": ["interest", "fed", "rate"]},
-    "gdp": {"term": "GDP", "def": "Prodotto Interno Lordo", "cat": "economic", "keywords": ["gdp", "growth"]},
-    "recession": {"term": "Recessione", "def": "Contrazione economica", "cat": "economic", "keywords": ["recession", "downturn"]},
-    "unemployment": {"term": "Disoccupazione", "def": "Tasso disoccupazione", "cat": "economic", "keywords": ["unemployment", "jobs"]},
-    "quantitative_easing": {"term": "Quantitative Easing", "def": "Allentamento quantitativo", "cat": "economic", "keywords": ["qe", "printing"]},
-    
-    # Sentiment
-    "bullish": {"term": "Bullish", "def": "Outlook rialzista", "cat": "sentiment", "keywords": ["bullish", "buy"]},
-    "bearish": {"term": "Bearish", "def": "Outlook ribassista", "cat": "sentiment", "keywords": ["bearish", "sell"]},
-    "fear_greed": {"term": "Fear & Greed", "def": "Indice sentiment", "cat": "sentiment", "keywords": ["fear", "greed"]},
-    "fomo": {"term": "FOMO", "def": "Fear Of Missing Out", "cat": "sentiment", "keywords": ["fomo", "miss"]},
-    "fud": {"term": "FUD", "def": "Fear Uncertainty Doubt", "cat": "sentiment", "keywords": ["fud", "fear"]},
-    "hodl": {"term": "HODL", "def": "Hold On for Dear Life", "cat": "sentiment", "keywords": ["hodl", "hold"]},
-    
-    # Portfolio
-    "diversification": {"term": "Diversificazione", "def": "Distribuzione rischi", "cat": "portfolio", "keywords": ["diversify", "allocation"]},
-    "rebalancing": {"term": "Ribilanciamento", "def": "Aggiustamento portafoglio", "cat": "portfolio", "keywords": ["rebalance", "adjust"]},
-    "asset_allocation": {"term": "Asset Allocation", "def": "Allocazione asset", "cat": "portfolio", "keywords": ["allocation", "mix"]},
-    "position_sizing": {"term": "Position Sizing", "def": "Dimensione posizione", "cat": "portfolio", "keywords": ["size", "sizing"]},
-    "risk_management": {"term": "Risk Management", "def": "Gestione rischio", "cat": "portfolio", "keywords": ["risk", "management"]},
-    
-    # Analysis Types
-    "fundamental_analysis": {"term": "Analisi Fondamentale", "def": "Analisi base economica", "cat": "analysis", "keywords": ["fundamental", "fa"]},
-    "technical_analysis": {"term": "Analisi Tecnica", "def": "Analisi grafici", "cat": "analysis", "keywords": ["technical", "ta"]},
-    "on_chain": {"term": "On-Chain", "def": "Analisi dati blockchain", "cat": "analysis", "keywords": ["on-chain", "chain"]},
-    "sentiment_analysis": {"term": "Analisi Sentiment", "def": "Analisi umore mercato", "cat": "analysis", "keywords": ["sentiment", "emotion"]},
-    
-    # Order Types
-    "market_order": {"term": "Market Order", "def": "Ordine al mercato", "cat": "orders", "keywords": ["market", "instant"]},
-    "limit_order": {"term": "Limit Order", "def": "Ordine limite", "cat": "orders", "keywords": ["limit", "price"]},
-    "stop_order": {"term": "Stop Order", "def": "Ordine stop", "cat": "orders", "keywords": ["stop", "trigger"]},
-    "oco_order": {"term": "OCO", "def": "One Cancels Other", "cat": "orders", "keywords": ["oco", "conditional"]},
-    
-    # Advanced
-    "algorithmic_trading": {"term": "Trading Algoritmico", "def": "Trading automatico", "cat": "advanced", "keywords": ["algo", "automated"]},
-    "arbitrage": {"term": "Arbitraggio", "def": "Sfruttamento differenze prezzo", "cat": "advanced", "keywords": ["arbitrage", "spread"]},
-    "backtesting": {"term": "Backtesting", "def": "Test su dati storici", "cat": "advanced", "keywords": ["backtest", "historical"]},
-    "forward_testing": {"term": "Forward Testing", "def": "Test su dati futuri", "cat": "advanced", "keywords": ["forward", "live"]},
-    "machine_learning": {"term": "Machine Learning", "def": "Apprendimento automatico", "cat": "advanced", "keywords": ["ml", "ai"]},
-    "natural_language_processing": {"term": "NLP", "def": "Elaborazione linguaggio naturale", "cat": "advanced", "keywords": ["nlp", "text"]},
-    "reinforcement_learning": {"term": "Reinforcement Learning", "def": "Apprendimento rinforzato", "cat": "advanced", "keywords": ["rl", "agent"]},
-    
-    # New Terms (auto-learned)
-    "liquidity_crunch": {"term": "Liquidity Crunch", "def": "Carenza liquidità", "cat": "risk", "keywords": ["crunch", "shortage"]},
-    "tail_risk": {"term": "Tail Risk", "def": "Rischio coda", "cat": "risk", "keywords": ["tail", "extreme"]},
-    "correlation": {"term": "Correlazione", "def": "Relazione tra asset", "cat": "metrics", "keywords": ["correlation", "corr"]},
-    "beta": {"term": "Beta", "def": "Sensibilità al mercato", "cat": "metrics", "keywords": ["beta", "market"]},
-    "alpha": {"term": "Alpha", "def": "Ritorno eccedente", "cat": "metrics", "keywords": ["alpha", "excess"]},
-    "sigma": {"term": "Sigma", "def": "Deviazione standard", "cat": "metrics", "keywords": ["sigma", "std"]},
-    "volatility_clustering": {"term": "Volatility Clustering", "def": "集群 volatilità", "cat": "metrics", "keywords": ["clustering", "groups"]},
-    "mean_reversion": {"term": "Mean Reversion", "def": "Ritorno alla media", "cat": "strategy", "keywords": ["mean", "reversion"]},
-    "momentum": {"term": "Momentum", "def": "Forza del trend", "cat": "strategy", "keywords": ["momentum", "trend"]},
-    "trend_following": {"term": "Trend Following", "def": "Seguire il trend", "cat": "strategy", "keywords": ["trend", "following"]},
-    "contrarian": {"term": "Contrarian", "def": "Contro il mercato", "cat": "strategy", "keywords": ["contrarian", "opposite"]},
-    "scalping": {"term": "Scalping", "def": "Trading veloce", "cat": "strategy", "keywords": ["scalping", "fast"]},
-    "swing_trading": {"term": "Swing Trading", "def": "Trading intermedio", "cat": "strategy", "keywords": ["swing", "medium-term"]},
-    "position_trading": {"term": "Position Trading", "def": "Trading lungo termine", "cat": "strategy", "keywords": ["position", "long-term"]},
-    "grid_trading": {"term": "Grid Trading", "def": "Trading a griglia", "cat": "strategy", "keywords": ["grid", "levels"]},
-    "dollar_cost_averaging": {"term": "DCA", "def": "Costo medio", "cat": "strategy", "keywords": ["dca", "average"]},
+    k: {
+        "term": v["term"],
+        "def": v["definition"],
+        "cat": v["category"],
+        "keywords": v["keywords"]
+    }
+    for k, v in SHARED_FINANCIAL_CONCEPTS.items()
 }
 
 # ==================== DATA STRUCTURES ====================
@@ -236,36 +131,53 @@ class FinancialAIAssistant:
     # ==================== CORE FUNCTIONS ====================
     
     def search_concept(self, query: str) -> Optional[Dict]:
-        """Search for a concept"""
-        query = query.lower()
+        """Search for a concept using keys, keywords, and partial matches"""
+        query = query.lower().strip()
+        query_words = set(query.split())
         
         # Check learned first
         if query in self.learned_concepts:
             c = self.learned_concepts[query]
             return {"term": c.term, "def": c.definition, "cat": c.category, "source": "learned"}
         
-        # Check built-in
+        # Check built-in concepts
         for key, val in self.concepts.items():
-            if query in key or query in val["keywords"]:
+            # 1. Exact key match or key-in-query
+            clean_key = key.replace("_", " ")
+            if query == key or query == clean_key or clean_key in query:
+                return val
+                
+            # 2. Keyword match
+            keywords = [k.lower() for k in val.get("keywords", [])]
+            # If any keyword is in the query words
+            if any(kw in query for kw in keywords) or any(kw in query_words for kw in keywords):
                 return val
         
+        # 3. Fuzzy match fallback for common crypto terms
+        if "btc" in query or "bitcoin" in query:
+            return self.concepts.get("market_cap") # Fallback to something relevant
+            
         return None
-    
+
     def explain_term(self, term: str) -> str:
-        """Explain a financial term"""
+        """Explain a financial term with premium formatting"""
         concept = self.search_concept(term)
         
         if concept:
-            return f"""
-## {concept['term']}
-
-**Categoria:** {concept['cat']}
-**Definizione:** {concept['def']}
-**Fonte:** {'Vocabolario base' if concept.get('source') != 'learned' else 'Appreso da notizie'}
-"""
+            source_label = "📚 Vocabolario Base" if concept.get('source') != 'learned' else "🧠 Appreso dall'AI"
+            
+            response = f"### 🔍 {concept['term']}\n\n"
+            response += f"> {concept['def']}\n\n"
+            response += f"**📂 Categoria:** `{concept['cat'].upper()}`\n"
+            response += f"**ℹ️ Fonte:** {source_label}\n"
+            
+            # Add related concepts if available
+            if "keywords" in concept and len(concept["keywords"]) > 0:
+                response += f"\n**🔗 Correlati:** {', '.join(concept['keywords'][:3])}\n"
+                
+            return response
         
-        # Try to extract from recent news
-        return f"Termine '{term}' non trovato nel vocabolario. Vuoi che lo cerchi nelle notizie?"
+        return f"🤔 Mi dispiace, ma il termine **'{term}'** non è ancora nel mio database economico. Vuoi che provi a scansionare le ultime notizie per cercarlo?"
     
     def get_concepts_by_category(self, category: str) -> List[Dict]:
         """Get all concepts in a category"""
@@ -517,9 +429,15 @@ class FinancialAIAssistant:
         else:
             concept = self.search_concept(question)
             if concept:
-                return self.explain_term(question)
+                # If it's a very short query, just explain it
+                if len(question_lower.split()) <= 3:
+                    return self.explain_term(question)
+                else:
+                    # For longer questions, try to be more conversational
+                    explanation = concept['def']
+                    return f"Certamente! In base alla tua domanda, ecco una spiegazione di **{concept['term']}**:\n\n{explanation}\n\nTi serve sapere altro su questo argomento?"
             
-            return f"Non ho informazioni su '{question}'. Vuoi che cerchi nelle notizie?"
+            return f"❌ Non ho trovato informazioni specifiche su **'{question}'**. Prova a chiedermi del portafoglio, dei rischi o spiegazioni su termini tecnici come 'RSI' o 'Drawdown'."
     
     def get_statistics(self) -> Dict:
         """Get system statistics"""
