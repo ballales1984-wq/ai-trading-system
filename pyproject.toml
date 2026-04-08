@@ -139,6 +139,10 @@ ignore_missing_imports = true
 module = "ccxt.*"
 ignore_missing_imports = true
 
+[tool.pyright]
+include = ["src", "app", "."]
+extraPaths = ["src", "app", "."]
+
 [[tool.mypy.overrides]]
 module = "dash.*"
 ignore_missing_imports = true

@@ -18,6 +18,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import joblib
 import os
+import threading
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -78,6 +82,10 @@ class MLSignalModel:
         
         self.is_trained = False
         self.feature_names = []
+        # RLock per proteggere load() e predict() in accesso concorrente
+        # (es. thread di re-training chiama load() mentre il thread di inferenza
+        # chiama predict() sullo stesso oggetto modello).
+        self._model_lock = threading.RLock()
     
     def prepare_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -287,20 +295,21 @@ class MLSignalModel:
         """
         if not self.is_trained:
             raise ValueError("Model not trained. Call train() first.")
-        
-        # Prepare features
-        X = self.prepare_features(df)
-        
-        # Scale
-        X_scaled = self.scaler.transform(X.values)
-        
-        # Predict
-        prediction = self.model.predict(X_scaled)
-        probability = self.model.predict_proba(X_scaled)[:, 1]
-        
-        # Feature importance
-        importance = dict(zip(self.feature_names, self.model.feature_importances_))
-        
+
+        with self._model_lock:
+            # Prepare features
+            X = self.prepare_features(df)
+
+            # Scale
+            X_scaled = self.scaler.transform(X.values)
+
+            # Predict
+            prediction = self.model.predict(X_scaled)
+            probability = self.model.predict_proba(X_scaled)[:, 1]
+
+            # Feature importance
+            importance = dict(zip(self.feature_names, self.model.feature_importances_))
+
         return ModelResult(
             prediction=prediction,
             probability=probability,
@@ -370,20 +379,27 @@ class MLSignalModel:
         for train_idx, test_idx in tscv.split(X):
             X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
             y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
-            
-            # Scale
-            X_train_scaled = self.scaler.fit_transform(X_train)
-            X_test_scaled = self.scaler.transform(X_test)
-            
+
+            # Usa scaler LOCALE per ogni fold per non contaminare self.scaler
+            # (bug: in precedenza self.scaler veniva sovrascritto ad ogni fold
+            # rendendo invalidi tutti i predict() successivi)
+            fold_scaler = StandardScaler()
+            X_train_scaled = fold_scaler.fit_transform(X_train)
+            X_test_scaled = fold_scaler.transform(X_test)
+
             # Train and predict
             self.model.fit(X_train_scaled, y_train)
             y_pred = self.model.predict(X_test_scaled)
-            
+
             scores['accuracy'].append(accuracy_score(y_test, y_pred))
             scores['precision'].append(precision_score(y_test, y_pred, zero_division=0))
             scores['recall'].append(recall_score(y_test, y_pred, zero_division=0))
             scores['f1'].append(f1_score(y_test, y_pred, zero_division=0))
-        
+
+        # Re-train finale sul set completo per ripristinare lo stato del modello
+        X_full_scaled = self.scaler.fit_transform(X)
+        self.model.fit(X_full_scaled, y)
+        logger.info(f"cross_validate: {n_splits} folds completati, modello riaddestrato sul dataset completo")
         return scores
     
     def save(self, filepath: str) -> None:
@@ -397,13 +413,15 @@ class MLSignalModel:
         }, filepath)
     
     def load(self, filepath: str) -> None:
-        """Load model from disk."""
-        data = joblib.load(filepath)
-        self.model = data['model']
-        self.scaler = data['scaler']
-        self.feature_names = data['feature_names']
-        self.model_type = data['model_type']
-        self.is_trained = data['is_trained']
+        """Load model from disk. Thread-safe via _model_lock."""
+        with self._model_lock:
+            data = joblib.load(filepath)
+            self.model = data['model']
+            self.scaler = data['scaler']
+            self.feature_names = data['feature_names']
+            self.model_type = data['model_type']
+            self.is_trained = data['is_trained']
+        logger.info(f"Modello caricato da {filepath} (type={self.model_type})")
 
 
 class EnsembleMLModel:

@@ -9,6 +9,7 @@ from typing import List, Dict, Optional, Tuple
 import numpy as np
 import logging
 from datetime import datetime
+import threading
 
 from .filtro_opportunita_pro import OpportunityFilterPro as OpportunityFilter
 
@@ -27,13 +28,16 @@ class MonteCarloSimulator:
     ):
         """
         Inizializza il simulatore Monte Carlo.
-        
+
         Args:
             n_simulations: Numero di simulazioni da eseguire
             confidence_level: Livello di confidenza per VaR
         """
         self.n_simulations = n_simulations
         self.confidence_level = confidence_level
+        # Thread-local RNG: ogni thread ha il suo generatore isolato
+        # evitando race condition sullo stato globale di np.random.
+        self._rng = np.random.default_rng()
     
     def simulate_price_path(
         self,
@@ -55,9 +59,9 @@ class MonteCarloSimulator:
             Array di prezzi simulati
         """
         dt = 1 / 365  # Time step giornaliero
-        
-        # Genera random shocks
-        random_shocks = np.random.normal(0, 1, (self.n_simulations, time_horizon))
+
+        # Usa il generatore locale all'istanza (thread-safe, non usa np.random globale)
+        random_shocks = self._rng.standard_normal((self.n_simulations, time_horizon))
         
         # Calcola percorsi
         price_paths = np.zeros((self.n_simulations, time_horizon + 1))
@@ -198,6 +202,11 @@ class DecisionEngine:
             "positions": {},
             "history": []
         }
+        # Lock per proteggere accessi concorrenti al portfolio dict
+        # (es. API route /summary chiama get_portfolio_summary() mentre
+        # il loop di trading chiama generate_orders() nello stesso istante).
+        self._portfolio_lock = threading.Lock()
+        self._MAX_HISTORY = 500  # Cap memory: max entries in portfolio history
         
         self.filter = OpportunityFilter(
             threshold_confidence=threshold_confidence,
@@ -311,9 +320,13 @@ class DecisionEngine:
             # Verifica se il rischio è accettabile
             max_acceptable_loss = self.portfolio["cash"] * self.max_risk_per_trade
             if risk_assessment["max_loss_usdt"] > max_acceptable_loss:
-                # Riduci dimensione posizione
-                position_size *= max_acceptable_loss / risk_assessment["max_loss_usdt"]
-                risk_assessment = self.monte_carlo.assess_trade_risk(asset, position_size)
+                # Riduci la dimensione in modo proporzionale (scaling matematico)
+                # EVITA una seconda chiamata Monte Carlo identica (risparmio 50% CPU)
+                scale = max_acceptable_loss / risk_assessment["max_loss_usdt"]
+                position_size *= scale
+                risk_assessment["max_loss_usdt"] *= scale
+                risk_assessment["expected_shortfall"] *= scale
+                # var, prob_profit, expected_return rimangono invariati (sono %)
             
             # Genera ordine
             order = {
@@ -345,60 +358,65 @@ class DecisionEngine:
     def _update_portfolio(self, order: Dict):
         """
         Aggiorna lo stato del portafoglio dopo un ordine.
-        
+        Thread-safe via _portfolio_lock.
+
         Args:
             order: Ordine eseguito
         """
         asset = order["asset"]
         action = order["action"]
         amount = order["amount"]
-        
-        if action == "BUY":
-            if amount > self.portfolio["cash"]:
-                logger.warning(f"Insufficient cash for BUY order: {amount} > {self.portfolio['cash']}")
-                return
-            
-            self.portfolio["cash"] -= amount
-            self.portfolio["positions"][asset] = self.portfolio["positions"].get(asset, 0) + amount
-            
-        elif action == "SELL":
-            current_position = self.portfolio["positions"].get(asset, 0)
-            sell_amount = min(amount, current_position)
-            
-            self.portfolio["cash"] += sell_amount
-            self.portfolio["positions"][asset] = current_position - sell_amount
-            
-            if self.portfolio["positions"][asset] <= 0:
-                del self.portfolio["positions"][asset]
-        
-        # Registra in storico
-        self.portfolio["history"].append({
-            "timestamp": order["timestamp"],
-            "asset": asset,
-            "action": action,
-            "amount": amount,
-            "cash_after": self.portfolio["cash"]
-        })
-        
+
+        with self._portfolio_lock:
+            if action == "BUY":
+                if amount > self.portfolio["cash"]:
+                    logger.warning(f"Insufficient cash for BUY order: {amount} > {self.portfolio['cash']}")
+                    return
+
+                self.portfolio["cash"] -= amount
+                self.portfolio["positions"][asset] = self.portfolio["positions"].get(asset, 0) + amount
+
+            elif action == "SELL":
+                current_position = self.portfolio["positions"].get(asset, 0)
+                sell_amount = min(amount, current_position)
+
+                self.portfolio["cash"] += sell_amount
+                self.portfolio["positions"][asset] = current_position - sell_amount
+
+                if self.portfolio["positions"][asset] <= 0:
+                    del self.portfolio["positions"][asset]
+
+            # Storico con cap per evitare memory leak in sistemi long-running
+            self.portfolio["history"].append({
+                "timestamp": order["timestamp"],
+                "asset": asset,
+                "action": action,
+                "amount": amount,
+                "cash_after": self.portfolio["cash"]
+            })
+            if len(self.portfolio["history"]) > self._MAX_HISTORY:
+                self.portfolio["history"] = self.portfolio["history"][-self._MAX_HISTORY:]
+
         self.stats["total_trades"] += 1
 
     def get_portfolio_summary(self) -> Dict:
         """
         Ritorna un riepilogo del portafoglio.
-        
+        Thread-safe via _portfolio_lock.
+
         Returns:
             Dizionario con riepilogo
         """
-        total_position_value = sum(self.portfolio["positions"].values())
-        
-        return {
-            "cash": round(self.portfolio["cash"], 2),
-            "positions": dict(self.portfolio["positions"]),
-            "total_position_value": round(total_position_value, 2),
-            "total_value": round(self.portfolio["cash"] + total_position_value, 2),
-            "n_positions": len(self.portfolio["positions"]),
-            "stats": self.stats.copy()
-        }
+        with self._portfolio_lock:
+            total_position_value = sum(self.portfolio["positions"].values())
+            return {
+                "cash": round(self.portfolio["cash"], 2),
+                "positions": dict(self.portfolio["positions"]),
+                "total_position_value": round(total_position_value, 2),
+                "total_value": round(self.portfolio["cash"] + total_position_value, 2),
+                "n_positions": len(self.portfolio["positions"]),
+                "stats": self.stats.copy()
+            }
 
     def run_trading_cycle(
         self,

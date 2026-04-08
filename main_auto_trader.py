@@ -365,6 +365,9 @@ class AutoTrader:
         # Storico
         self.history: List[Dict] = []
         self._last_prices: Dict[str, float] = {}
+
+        # Sincronizza posizioni orfane da DB
+        self._sync_open_positions()
         
         # Setup signal handlers
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -389,6 +392,42 @@ class AutoTrader:
     def _on_hft_signal(self, signal):
         """Callback for HFT."""
         self.hft_queue.put(signal)
+    
+    def _sync_open_positions(self):
+        """Sincronizza posizioni orfane dallo StateManager verso AutoExecutor."""
+        try:
+            positions = self.state_manager.get_all_positions()
+            recovered_count = 0
+            for pos in positions:
+                if abs(pos.quantity) > 0:
+                    asset = pos.symbol
+                    entry_price = pos.entry_price or self._last_prices.get(asset, 1.0)
+                    notional = abs(pos.quantity * entry_price)
+                    
+                    # Recupera parametri di rischio originali o usa default
+                    sl_pct = self.config.max_risk_per_trade * 2  # Approssimazione std
+                    if hasattr(self.executor, 'safety'):
+                        sl_pct = self.executor.safety.default_stop_loss_pct
+                        
+                    tp_pct = sl_pct * 2.5 # standard R:R = 1:2.5
+                    if hasattr(self.executor, 'safety'):
+                        tp_pct = self.executor.safety.default_take_profit_pct
+                    
+                    self.executor.open_positions[asset] = {
+                        "entry_price": entry_price,
+                        "amount": notional,
+                        "base_quantity": pos.quantity,
+                        "stop_loss_pct": sl_pct,
+                        "stop_loss_price": entry_price * (1 - sl_pct),
+                        "take_profit_pct": tp_pct,
+                        "timestamp": pos.updated_at.isoformat(),
+                        "order_id": f"RECOVERED_{asset}"
+                    }
+                    recovered_count += 1
+            if recovered_count > 0:
+                logger.info(f"🔄 Recovered {recovered_count} orphaned open positions into AutoExecutor")
+        except Exception as e:
+            logger.error(f"Failed to recover open positions: {e}")
     
     def _signal_handler(self, signum, frame):
         """Gestisce segnali di interruzione."""

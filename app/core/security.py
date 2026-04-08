@@ -180,6 +180,10 @@ class JWTManager:
         self.config = config or SecurityConfig.from_env()
         # In production, load users from database
         self._users: Dict[str, User] = {}
+        # Token blacklist for logout (jti -> expiration timestamp)
+        self._token_blacklist: Dict[str, datetime] = {}
+        # Cleanup task counter
+        self._cleanup_counter = 0
 
     def hash_password(self, password: str) -> str:
         """Hash a password."""
@@ -245,8 +249,11 @@ class JWTManager:
 
     def create_access_token(self, user: User) -> str:
         """Create an access token."""
+        import uuid
+
         now = datetime.utcnow()
         expire = now + timedelta(minutes=self.config.access_token_expire_minutes)
+        jti = uuid.uuid4().hex  # Unique token ID for blacklist
 
         payload = {
             "sub": user.user_id,
@@ -254,6 +261,7 @@ class JWTManager:
             "role": user.role.value,
             "exp": expire,
             "iat": now,
+            "jti": jti,  # JWT ID for blacklist tracking
         }
 
         token = jwt.encode(payload, self.config.secret_key, algorithm=self.config.algorithm)
@@ -284,8 +292,26 @@ class JWTManager:
                 token,
                 self.config.secret_key,
                 algorithms=[self.config.algorithm],
-                options={"verify_iat": False},  # Disable iat verification to handle clock skew
+                options={"verify_iat": False},
             )
+
+            # Check if token is blacklisted
+            jti = payload.get("jti")
+            if jti and self._token_blacklist:
+                # Cleanup old entries periodically (every 10 checks)
+                self._cleanup_counter += 1
+                if self._cleanup_counter >= 10:
+                    self._cleanup_blacklist()
+                    self._cleanup_counter = 0
+
+                if jti in self._token_blacklist:
+                    exp_time = self._token_blacklist[jti]
+                    if datetime.now() < exp_time:
+                        logger.warning(f"Token {jti} is blacklisted")
+                        return None
+                    else:
+                        # Token expired, remove from blacklist
+                        del self._token_blacklist[jti]
 
             return TokenPayload(
                 sub=payload.get("sub"),
@@ -301,6 +327,59 @@ class JWTManager:
         except jwt.InvalidTokenError as e:
             logger.warning(f"Invalid token: {e}")
             return None
+
+    def _cleanup_blacklist(self) -> None:
+        """Remove expired entries from blacklist."""
+        now = datetime.now()
+        expired = [jti for jti, exp in self._token_blacklist.items() if now >= exp]
+        for jti in expired:
+            del self._token_blacklist[jti]
+        if expired:
+            logger.info(f"Cleaned up {len(expired)} expired blacklist entries")
+
+    def add_to_blacklist(self, token: str, expiry_seconds: int = 3600) -> bool:
+        """Add a token to the blacklist."""
+        try:
+            payload = jwt.decode(
+                token,
+                self.config.secret_key,
+                algorithms=[self.config.algorithm],
+                options={"verify_signature": False},
+            )
+            jti = payload.get("jti")
+            if jti:
+                # Get expiration from token or use default
+                exp_ts = payload.get("exp", datetime.now().timestamp() + expiry_seconds)
+                exp_time = datetime.fromtimestamp(exp_ts)
+
+                # Only add if token not already expired
+                if exp_time > datetime.now():
+                    self._token_blacklist[jti] = exp_time
+                    logger.info(f"Added token {jti} to blacklist until {exp_time}")
+                    return True
+            return False
+        except jwt.InvalidTokenError:
+            return False
+
+    def is_blacklisted(self, token: str) -> bool:
+        """Check if a token is blacklisted."""
+        try:
+            payload = jwt.decode(
+                token,
+                self.config.secret_key,
+                algorithms=[self.config.algorithm],
+                options={"verify_signature": False},
+            )
+            jti = payload.get("jti")
+            if jti and jti in self._token_blacklist:
+                exp_time = self._token_blacklist[jti]
+                if datetime.now() < exp_time:
+                    return True
+                else:
+                    del self._token_blacklist[jti]
+            return False
+        except jwt.InvalidTokenError:
+            return False
 
     def refresh_access_token(self, refresh_token: str) -> Optional[str]:
         """Refresh an access token using a refresh token."""

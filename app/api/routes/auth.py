@@ -10,7 +10,7 @@ This module provides:
 - Protected route testing
 """
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
@@ -267,14 +267,25 @@ async def verify_token(current_user: User = Depends(get_current_user)):
     }
 
 
-# Logout endpoint (client-side token removal, server-side can add to blacklist)
+# Logout endpoint with token blacklist
 @router.post("/logout")
-async def logout(current_user: User = Depends(get_current_user)):
+async def logout(current_user: User = Depends(get_current_user), request: Request = None):
     """
-    Logout current user.
+    Logout current user and invalidate token.
 
-    In a production system, you would add the token to a blacklist.
+    Adds the token to a blacklist to prevent further use.
     """
+    # Get token from Authorization header
+    auth_header = request.headers.get("Authorization") if request else None
+    token = None
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:]  # Remove "Bearer " prefix
+
+    # Add to blacklist if token provided
+    if token:
+        jwt_manager.add_to_blacklist(token)
+        logger.info(f"Token blacklisted for user: {current_user.username}")
+
     logger.info(f"User logged out: {current_user.username}")
 
     return {"message": "Successfully logged out", "username": current_user.username}
