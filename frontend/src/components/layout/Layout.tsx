@@ -38,7 +38,10 @@ export default function Layout() {
   // Detect mobile device
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      // Auto-close sidebar when switching to desktop
+      if (!mobile) setSidebarOpen(false);
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -118,6 +121,17 @@ export default function Layout() {
                          ${isMobile ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
                          transition-transform duration-300 ease-in-out z-40 flex flex-col`}
         >
+        {/* Close Button for Mobile */}
+        {isMobile && (
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="absolute top-4 right-4 z-50 p-1 rounded-md hover:bg-surface-hover"
+            aria-label="Close menu"
+          >
+            <X size={24} color="#c9d1d9" />
+          </button>
+        )}
+        
         {/* Logo */}
         <div className="glass p-4 mb-4">
           <div className="flex items-center gap-3">
