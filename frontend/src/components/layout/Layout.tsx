@@ -171,8 +171,10 @@ export default function Layout() {
       )}
 
       {/* Main Content */}
-      <main className={`flex-1 min-h-0 
+      <main className={`flex-1 min-h-0 relative
                         ${isMobile ? 'ml-0 mt-16 px-4' : 'ml-64'} 
+                        ${isMobile && sidebarOpen ? 'opacity-50 blur-sm pointer-events-none' : ''}
+                        transition-opacity duration-300
                         overflow-y-auto`}
       >
         {/* Global Fallback Data Warning */}
