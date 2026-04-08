@@ -1,0 +1,42 @@
+INFO:sentiment_news:SentimentAnalyzer initialized
+INFO:ai_assistant:Caricati 8 concetti appresi
+INFO:ai_assistant:AI Assistant inizializzato con 46 concetti
+ERROR:ai_assistant:Errore sentiment: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/news (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [WinError 10061] Impossibile stabilire la connessione. Rifiuto persistente del computer di destinazione"))
+INFO:ai_assistant:Caricati 8 concetti appresi
+INFO:ai_assistant:AI Assistant inizializzato con 46 concetti
+
+==================================================
+TEST: FLUSSO NOTIZIE E SENTIMENT
+==================================================
+[+] Trovate 5 notizie.
+[+] Esempio Sentiment: 1.00 (Market sentiment shifts for MARKET...)
+
+==================================================
+TEST: AI ASSISTANT E VOCABOLARIO ITALIANO
+==================================================
+[+] Termine: sharpe_ratio
+[+] Risposta IA: ### ­ƒöì Sharpe Ratio
+
+> Ritorno aggiustato per il rischio (extra-rendimento / deviazione standard)
+
+**­ƒôé Categoria:** `METRICS`
+**Ôä╣´©Å Fonte:** ­ƒôÜ Vocabolar...
+
+[+] Domanda: 'Come va il mercato?'
+[+] Risposta IA: ## Sentiment Notizie
+
+- **Sentiment:** UNKNOWN
+- **Score:** 0.00
+- **Notizie:** 0 positive, 0 negative
+...
+
+==================================================
+TEST: CICLO DI APPRENDIMENTO
+==================================================
+[+] Concetti appresi iniziali: 8
+[+] Concetti appresi finali: 13
+[+] Successo: L'assistente ha appreso nuovi termini.
+
+==================================================
+ESITO FINALE: TUTTI I TEST SUPERATI!
+==================================================

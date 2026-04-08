@@ -1,0 +1,119 @@
+{
+  "nuovo": {
+    "term": "Nuovo",
+    "definition": "Termine appreso da: TestDetector",
+    "category": "learned",
+    "source": "TestDetector",
+    "confidence": 0.5,
+    "first_seen": "2026-04-08T15:48:37.466693",
+    "occurrences": 1
+  },
+  "protocollo": {
+    "term": "Protocollo",
+    "definition": "Termine appreso da: TestDetector",
+    "category": "learned",
+    "source": "TestDetector",
+    "confidence": 0.5,
+    "first_seen": "2026-04-08T15:48:37.466760",
+    "occurrences": 1
+  },
+  "zk-hyperdrive": {
+    "term": "Zk-Hyperdrive",
+    "definition": "Termine appreso da: TestDetector",
+    "category": "learned",
+    "source": "TestDetector",
+    "confidence": 0.5,
+    "first_seen": "2026-04-08T15:48:37.466888",
+    "occurrences": 1
+  },
+  "lancia": {
+    "term": "Lancia",
+    "definition": "Termine appreso da: TestDetector",
+    "category": "learned",
+    "source": "TestDetector",
+    "confidence": 0.5,
+    "first_seen": "2026-04-08T15:48:37.466921",
+    "occurrences": 1
+  },
+  "mainnet": {
+    "term": "Mainnet",
+    "definition": "Termine appreso da: TestDetector",
+    "category": "learned",
+    "source": "TestDetector",
+    "confidence": 0.5,
+    "first_seen": "2026-04-08T15:48:37.466948",
+    "occurrences": 1
+  },
+  "promette": {
+    "term": "Promette",
+    "definition": "Termine appreso da: TestDetector",
+    "category": "learned",
+    "source": "TestDetector",
+    "confidence": 0.5,
+    "first_seen": "2026-04-08T15:48:37.466987",
+    "occurrences": 1
+  },
+  "transazioni": {
+    "term": "Transazioni",
+    "definition": "Termine appreso da: TestDetector",
+    "category": "learned",
+    "source": "TestDetector",
+    "confidence": 0.5,
+    "first_seen": "2026-04-08T15:48:37.467014",
+    "occurrences": 1
+  },
+  "istantanee.": {
+    "term": "Istantanee.",
+    "definition": "Termine appreso da: TestDetector",
+    "category": "learned",
+    "source": "TestDetector",
+    "confidence": 0.5,
+    "first_seen": "2026-04-08T15:48:37.467040",
+    "occurrences": 1
+  },
+  "quantum-ledger-nova": {
+    "term": "Quantum-Ledger-Nova",
+    "definition": "Termine appreso da: TestDetector",
+    "category": "learned",
+    "source": "TestDetector",
+    "confidence": 0.5,
+    "first_seen": "2026-04-08T15:52:14.788611",
+    "occurrences": 1
+  },
+  "oggi": {
+    "term": "Oggi",
+    "definition": "Termine appreso da: TestDetector",
+    "category": "learned",
+    "source": "TestDetector",
+    "confidence": 0.5,
+    "first_seen": "2026-04-08T15:52:14.788941",
+    "occurrences": 1
+  },
+  "nuova": {
+    "term": "Nuova",
+    "definition": "Termine appreso da: TestDetector",
+    "category": "learned",
+    "source": "TestDetector",
+    "confidence": 0.5,
+    "first_seen": "2026-04-08T15:52:14.789232",
+    "occurrences": 1
+  },
+  "tecnologia": {
+    "term": "Tecnologia",
+    "definition": "Termine appreso da: TestDetector",
+    "category": "learned",
+    "source": "TestDetector",
+    "confidence": 0.5,
+    "first_seen": "2026-04-08T15:52:14.789514",
+    "occurrences": 1
+  },
+  "blockchain.": {
+    "term": "Blockchain.",
+    "definition": "Termine appreso da: TestDetector",
+    "category": "learned",
+    "source": "TestDetector",
+    "confidence": 0.5,
+    "first_seen": "2026-04-08T15:52:14.789858",
+    "occurrences": 1
+  }
+}
