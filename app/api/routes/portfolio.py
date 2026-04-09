@@ -1100,9 +1100,8 @@ async def get_allocation() -> dict:
 @router.get("/history", response_model=PortfolioHistory)
 async def get_portfolio_history(
     days: int = Query(default=30, ge=1, le=365),
-) -> PortfolioHistory:
-    """Get portfolio value history."""
-    # Return hardcoded data
+) -> dict:
+    """Get portfolio value history - returns dict to avoid model issues."""
     history = []
     for i in range(days):
         history.append(
@@ -1112,7 +1111,7 @@ async def get_portfolio_history(
                 daily_return=2.5,
             )
         )
-    return PortfolioHistory(history=history)
+    return {"history": history}
 
 
 @router.post("/optimize", response_model=OptimizePortfolioResponse)
