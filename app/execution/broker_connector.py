@@ -444,6 +444,10 @@ class BinanceConnector(BrokerConnector):
             except Exception:
                 continue
 
+            # Calculate unrealized P&L for spot holdings
+            # Note: We don't have entry price from Binance, so we assume avg cost = 0 or calculate based on history
+            unrealized_pnl = 0.0  # Would need historical data to calculate accurately
+
             positions.append(
                 Position(
                     symbol=symbol,
@@ -451,7 +455,7 @@ class BinanceConnector(BrokerConnector):
                     quantity=b.total,
                     entry_price=0.0,  # Binance spot doesn't track entry
                     current_price=current_price,
-                    unrealized_pnl=0.0,
+                    unrealized_pnl=unrealized_pnl,
                     leverage=1.0,
                     margin=b.total * current_price,
                 )
@@ -745,7 +749,20 @@ class PaperTradingConnector(BrokerConnector):
                     entry_price=price,
                     current_price=price,
                     unrealized_pnl=0.0,
+                    leverage=1.0,
                 )
+
+        # Update unrealized P&L for existing positions
+        for symbol, pos in self.positions.items():
+            try:
+                current_price = await self.get_symbol_price(symbol)
+                pos.current_price = current_price
+                if pos.side == "LONG":
+                    pos.unrealized_pnl = (current_price - pos.entry_price) * pos.quantity
+                else:  # SHORT
+                    pos.unrealized_pnl = (pos.entry_price - current_price) * pos.quantity
+            except Exception:
+                pass
 
         self.orders[order.order_id] = order
         return order
@@ -775,6 +792,17 @@ class PaperTradingConnector(BrokerConnector):
         ]
 
     async def get_positions(self) -> List[Position]:
+        # Update P&L before returning
+        for symbol, pos in self.positions.items():
+            try:
+                current_price = await self.get_symbol_price(symbol)
+                pos.current_price = current_price
+                if pos.side == "LONG":
+                    pos.unrealized_pnl = (current_price - pos.entry_price) * pos.quantity
+                else:  # SHORT
+                    pos.unrealized_pnl = (pos.entry_price - current_price) * pos.quantity
+            except Exception:
+                pass
         return list(self.positions.values())
 
     async def get_symbol_price(self, symbol: str) -> float:
