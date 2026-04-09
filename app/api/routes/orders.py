@@ -8,6 +8,9 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import uuid4
 import logging
+import os
+import json
+import threading
 
 from fastapi import APIRouter, HTTPException, status, Query, Request  # pyre-ignore
 
@@ -116,6 +119,48 @@ demo_orders_db: dict = {}
 # Emergency stop state
 emergency_stop_active: bool = False
 
+# File-based persistence for orders
+ORDERS_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "orders.json"
+)
+_order_lock = threading.Lock()
+
+
+def _load_orders_from_file() -> dict:
+    """Load orders from file for persistence."""
+    if not os.path.exists(ORDERS_FILE):
+        return {}
+    try:
+        with open(ORDERS_FILE, "r") as f:
+            data = json.load(f)
+            return data.get("orders", {})
+    except Exception as e:
+        logger.warning(f"Failed to load orders from file: {e}")
+        return {}
+
+
+def _save_orders_to_file(orders: dict) -> None:
+    """Save orders to file for persistence."""
+    try:
+        os.makedirs(os.path.dirname(ORDERS_FILE), exist_ok=True)
+        with open(ORDERS_FILE, "w") as f:
+            json.dump({"orders": orders}, f, default=str)
+    except Exception as e:
+        logger.warning(f"Failed to save orders to file: {e}")
+
+
+def _init_persistent_orders() -> None:
+    """Initialize orders from file on startup."""
+    global orders_db
+    persistent_orders = _load_orders_from_file()
+    if persistent_orders:
+        logger.info(f"Loaded {len(persistent_orders)} orders from persistence file")
+        orders_db = persistent_orders
+
+
+# Initialize on module load
+_init_persistent_orders()
+
 
 # ============================================================================
 # ROUTES
@@ -216,6 +261,10 @@ async def create_order(order: OrderCreate, request: Request) -> OrderResponse:
 
     # Store order
     orders_db[order_id] = order_response
+
+    # Persist to file
+    with _order_lock:
+        _save_orders_to_file(orders_db)
 
     # Submit to execution engine
     try:
@@ -560,13 +609,13 @@ async def get_trade_history(
 async def get_order(order_id: str) -> OrderResponse:
     """
     Get order by ID.
+    Checks in-memory store first, then database.
     """
     # Demo mode: Check demo orders first
     if get_demo_mode():
         if order_id in demo_orders_db:
             return demo_orders_db[order_id]
 
-        # Check mock orders
         mock_data = mock_orders()
         for o in mock_data:
             if o["id"] == order_id:
@@ -592,17 +641,11 @@ async def get_order(order_id: str) -> OrderResponse:
                     }
                 )  # pyre-ignore
 
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Order {order_id} not found"
-        )
+    # Check in-memory store (loads from file on startup)
+    if order_id in orders_db:
+        return orders_db[order_id]
 
-    # Production mode
-    if order_id not in orders_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Order {order_id} not found"
-        )
-
-    return orders_db[order_id]
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Order {order_id} not found")
 
 
 @router.patch("/{order_id}", response_model=OrderResponse)

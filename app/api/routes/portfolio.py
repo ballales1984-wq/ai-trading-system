@@ -1107,11 +1107,15 @@ async def get_portfolio_history(
     Returns historical portfolio values for the specified number of days.
     Default is 30 days if not specified.
     """
+    logger = logging.getLogger(__name__)
+    logger.info(f"Portfolio history endpoint called with days={days}")
+
     # Always generate dynamic simulated data based on current portfolio value
     # This ensures the dashboard shows real-time data from Binance prices
 
     # Get current portfolio value
     positions = portfolio_data.get("positions", [])
+    logger.info(f"Portfolio positions: {positions}")
     if positions:
         portfolio_symbols = [p.get("symbol", "").upper() for p in positions if p.get("symbol")]
         realtime_prices = get_binance_prices(portfolio_symbols)

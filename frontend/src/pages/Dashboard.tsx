@@ -46,11 +46,16 @@ export default function Dashboard() {
     refetchInterval: 30000,
   });
 
-  const { data: history } = useQuery({
+  const { data: history, error: historyError } = useQuery({
     queryKey: ['portfolio-history'],
     queryFn: () => portfolioApi.getHistory(30),
     refetchInterval: 60000,
   });
+  
+  // Debug: log API errors
+  if (historyError) {
+    console.error('History API error:', historyError);
+  }
 
   const { data: markets } = useQuery({
     queryKey: ['market-prices'],
@@ -80,10 +85,24 @@ export default function Dashboard() {
 
   // Prefer WS live data for portfolio summary, fallback to REST
   const summary = livePortfolio ?? (dualSummary?.simulated || { total_value: 0, daily_pnl: 0, unrealized_pnl: 0, num_positions: 0, daily_return_pct: 0 });
-  const historyData = history?.history?.map((h: any) => ({
-    date: new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    value: h.value,
-  })) || [];
+  
+  // Handle history data - ensure it's always an array
+  let historyData: Array<{date: string; value: number}> = [];
+  if (history && history.history) {
+    historyData = history.history.map((h: any) => ({
+      date: new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      value: h.value,
+    }));
+  } else if (history && Array.isArray(history)) {
+    // Handle case where API returns array directly
+    historyData = history.map((h: any) => ({
+      date: new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      value: h.value,
+    }));
+  }
+  
+  console.log('History raw:', history);
+  console.log('History data:', historyData);
 
   // Merge REST prices with live WS overrides
   const baseMarkets = markets?.markets?.slice(0, 6) || [];
@@ -95,8 +114,11 @@ export default function Dashboard() {
   const positionsList = Array.isArray(positions) ? positions : [];
 
   // formatCurrency e formatPercent sono ora costanti module-level (no recreation per render)
-  // Show skeleton loader while data is loading
-  if (summaryLoading || !history || !markets || !performance || !orders || !positions) {
+  // Show skeleton loader while data is loading (but not if history exists but is empty)
+  const historyExists = history && (history.history || Array.isArray(history));
+  const hasHistoryData = historyExists && (history.history?.length > 0 || (Array.isArray(history) && history.length > 0));
+  
+  if (summaryLoading || !historyExists || !markets || !performance || !orders || !positions) {
     return <DashboardSkeleton />;
   }
 
