@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 import random
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict
 from uuid import uuid4
 
@@ -1102,35 +1102,16 @@ async def get_portfolio_history(
     days: int = Query(default=30, ge=1, le=365, description="Number of days to retrieve history"),
 ) -> PortfolioHistory:
     """Get portfolio value history."""
+    import logging
+
+    logger = logging.getLogger(__name__)
+
     try:
-        from datetime import timedelta
-        import logging
-
-        logger = logging.getLogger(__name__)
-
-        positions = portfolio_data.get("positions", [])
-        current_value = PAPER_INITIAL_BALANCE
-
-        if positions:
-            try:
-                portfolio_symbols = [
-                    p.get("symbol", "").upper() for p in positions if p.get("symbol")
-                ]
-                if portfolio_symbols:
-                    realtime_prices = get_binance_prices(portfolio_symbols)
-                    cash = float(portfolio_data.get("cash_balance", 0.0))
-                    total_market_value = 0.0
-                    for p in positions:
-                        symbol = p.get("symbol", "")
-                        quantity = float(p.get("quantity", 0))
-                        current_price = float(
-                            realtime_prices.get(symbol, p.get("current_price", 0))
-                        )
-                        if current_price > 0 and quantity > 0:
-                            total_market_value += current_price * quantity
-                    current_value = cash + total_market_value
-            except Exception as e:
-                logger.warning(f"Failed to get realtime prices: {e}")
+        try:
+            summary = portfolio_data.get("summary", {})
+            current_value = float(summary.get("total_value", PAPER_INITIAL_BALANCE))
+        except:
+            current_value = PAPER_INITIAL_BALANCE
 
         history = []
         base_value = current_value * 0.85
@@ -1153,9 +1134,7 @@ async def get_portfolio_history(
 
         return PortfolioHistory(history=history)
     except Exception as e:
-        import logging
-
-        logging.getLogger(__name__).error(f"Portfolio history error: {e}")
+        logger.error(f"Portfolio history error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
