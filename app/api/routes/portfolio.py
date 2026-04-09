@@ -1101,26 +1101,39 @@ async def get_allocation() -> dict:
 async def get_portfolio_history(
     days: int = Query(default=30, ge=1, le=365, description="Number of days to retrieve history"),
 ) -> PortfolioHistory:
-    """
-    Get portfolio value history.
-
-    Returns historical portfolio values for the specified number of days.
-    Default is 30 days if not specified.
-    """
+    """Get portfolio value history."""
     try:
-        # Generate dynamic simulated data based on current portfolio value
+        from datetime import timedelta
+        import logging
+
+        logger = logging.getLogger(__name__)
+
         positions = portfolio_data.get("positions", [])
         current_value = PAPER_INITIAL_BALANCE
 
         if positions:
-            current_value = 350000  # Default for demo
-
-        # Generate dynamic history based on current portfolio value
-        from datetime import timedelta
+            try:
+                portfolio_symbols = [
+                    p.get("symbol", "").upper() for p in positions if p.get("symbol")
+                ]
+                if portfolio_symbols:
+                    realtime_prices = get_binance_prices(portfolio_symbols)
+                    cash = float(portfolio_data.get("cash_balance", 0.0))
+                    total_market_value = 0.0
+                    for p in positions:
+                        symbol = p.get("symbol", "")
+                        quantity = float(p.get("quantity", 0))
+                        current_price = float(
+                            realtime_prices.get(symbol, p.get("current_price", 0))
+                        )
+                        if current_price > 0 and quantity > 0:
+                            total_market_value += current_price * quantity
+                    current_value = cash + total_market_value
+            except Exception as e:
+                logger.warning(f"Failed to get realtime prices: {e}")
 
         history = []
         base_value = current_value * 0.85
-
         current_date = datetime.now()
         random.seed(int(current_date.timestamp()) // 60)
 
@@ -1142,8 +1155,8 @@ async def get_portfolio_history(
     except Exception as e:
         import logging
 
-        logging.getLogger(__name__).error(f"Error in get_portfolio_history: {e}")
-        return PortfolioHistory(history=[])
+        logging.getLogger(__name__).error(f"Portfolio history error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/optimize", response_model=OptimizePortfolioResponse)
