@@ -123,12 +123,13 @@ class AccountBalance(BaseModel):
 class Position(BaseModel):
     """Position model."""
 
+    position_id: str = ""
     symbol: str
     side: str  # LONG, SHORT
     quantity: float
     entry_price: float
-    current_price: float
-    unrealized_pnl: float
+    current_price: float = 0.0
+    unrealized_pnl: float = 0.0
     leverage: float = 1.0
     margin: float = 0.0
 
