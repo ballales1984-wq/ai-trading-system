@@ -1097,7 +1097,7 @@ async def get_allocation() -> dict:
     }
 
 
-@router.get("/history", response_model=PortfolioHistory)
+@router.get("/history", response_model=PortfolioHistory, include_in_schema=True)
 async def get_portfolio_history(
     days: int = Query(default=30, ge=1, le=365, description="Number of days to retrieve history"),
 ) -> PortfolioHistory:
