@@ -1102,50 +1102,26 @@ async def get_portfolio_history(
     days: int = Query(default=30, ge=1, le=365, description="Number of days to retrieve history"),
 ) -> PortfolioHistory:
     """Get portfolio value history."""
-    import logging
+    history = []
+    base_value = 350000.0
+    current_date = datetime.now()
+    random.seed(42)  # Fixed seed for consistency
 
-    logger = logging.getLogger(__name__)
+    for i in range(days):
+        date_offset = current_date - timedelta(days=days - i - 1)
+        date_str = date_offset.strftime("%Y-%m-%d")
+        daily_return = random.uniform(-0.03, 0.04)
+        base_value *= 1 + daily_return
 
-    try:
-        current_value = PAPER_INITIAL_BALANCE
-
-        try:
-            pos_data = portfolio_data["positions"]
-            if pos_data:
-                cash = float(portfolio_data.get("cash_balance", PAPER_INITIAL_BALANCE))
-                total_mv = 0.0
-                for p in pos_data:
-                    qty = float(p.get("quantity", 0))
-                    price = float(p.get("current_price", 0))
-                    if qty > 0 and price > 0:
-                        total_mv += qty * price
-                current_value = cash + total_mv
-        except Exception as e:
-            logger.warning(f"Could not get positions: {e}")
-
-        history = []
-        base_value = current_value * 0.85
-        current_date = datetime.now()
-        random.seed(int(current_date.timestamp()) // 60)
-
-        for i in range(days):
-            date_offset = current_date - timedelta(days=days - i - 1)
-            date_str = date_offset.strftime("%Y-%m-%d")
-            daily_return = random.uniform(-0.03, 0.04)
-            base_value *= 1 + daily_return
-
-            history.append(
-                HistoryEntry(
-                    date=date_str,
-                    value=round(base_value, 2),
-                    daily_return=round(daily_return * 100, 2),
-                )
+        history.append(
+            HistoryEntry(
+                date=date_str,
+                value=round(base_value, 2),
+                daily_return=round(daily_return * 100, 2),
             )
+        )
 
-        return PortfolioHistory(history=history)
-    except Exception as e:
-        logger.error(f"Portfolio history error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return PortfolioHistory(history=history)
 
 
 @router.post("/optimize", response_model=OptimizePortfolioResponse)
