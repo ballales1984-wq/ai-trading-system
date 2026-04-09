@@ -1102,13 +1102,20 @@ async def get_portfolio_history(
     days: int = Query(default=30, ge=1, le=365, description="Number of days to retrieve history"),
 ) -> PortfolioHistory:
     """Get portfolio value history."""
+    import logging
+    from datetime import timedelta as td
+
+    logger = logging.getLogger(__name__)
+    logger.info("=== HISTORY ENDPOINT CALLED ===")
+
     history = []
     base_value = 350000.0
     current_date = datetime.now()
-    random.seed(42)  # Fixed seed for consistency
+    random.seed(42)
+    logger.info(f"Current date: {current_date}")
 
     for i in range(days):
-        date_offset = current_date - timedelta(days=days - i - 1)
+        date_offset = current_date - td(days=days - i - 1)
         date_str = date_offset.strftime("%Y-%m-%d")
         daily_return = random.uniform(-0.03, 0.04)
         base_value *= 1 + daily_return
@@ -1121,6 +1128,7 @@ async def get_portfolio_history(
             )
         )
 
+    logger.info(f"Returning {len(history)} history entries")
     return PortfolioHistory(history=history)
 
 
