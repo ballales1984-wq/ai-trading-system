@@ -1,6 +1,6 @@
 """
 Pytest Configuration and Fixtures
-===================================
+==================================
 Test fixtures and configuration for AI Trading System tests.
 
 Author: AI Trading System
@@ -11,17 +11,24 @@ from fastapi.testclient import TestClient
 from typing import Generator
 
 
-@pytest.fixture
-def client() -> TestClient:
+@pytest.fixture(scope="session")
+def test_client() -> TestClient:
     """
-    Fixture that provides a FastAPI test client.
-
-    Returns:
-        TestClient: FastAPI test client instance
+    Session-scoped fixture that provides a FastAPI test client.
+    This is shared across all tests to avoid reloading ML models.
     """
     from app.main import app
 
     return TestClient(app)
+
+
+@pytest.fixture
+def client(test_client: TestClient) -> TestClient:
+    """
+    Fixture that provides a FastAPI test client.
+    Uses the session-scoped client to avoid reloading ML models.
+    """
+    return test_client
 
 
 @pytest.fixture
