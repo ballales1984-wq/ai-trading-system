@@ -3,9 +3,9 @@
 ## Project Roadmap
 
 ### High Priority
-- [ ] Integrate Concept Engine with sentiment_news.py
-- [ ] Add more financial concepts (100+)
-- [ ] Implement real trading connectors
+- [x] Integrate Concept Engine with sentiment_news.py
+- [x] Add more financial concepts (100+)
+- [x] Implement real trading connectors
 
 ### Medium Priority
 - [ ] Add more technical indicators
