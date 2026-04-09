@@ -35,6 +35,22 @@ class Broker(str, Enum):
     PAPER = "paper"
 
 
+class BrokerErrorCode(str, Enum):
+    """Structured broker error codes."""
+
+    CONNECTION_FAILED = "CONNECTION_FAILED"
+    TIMEOUT = "TIMEOUT"
+    INVALID_API_KEY = "INVALID_API_KEY"
+    INSUFFICIENT_BALANCE = "INSUFFICIENT_BALANCE"
+    INVALID_QUANTITY = "INVALID_QUANTITY"
+    INVALID_PRICE = "INVALID_PRICE"
+    ORDER_NOT_FOUND = "ORDER_NOT_FOUND"
+    RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED"
+    MARKET_CLOSED = "MARKET_CLOSED"
+    TRADING_DISABLED = "TRADING_DISABLED"
+    UNKNOWN = "UNKNOWN"
+
+
 class OrderStatus(str, Enum):
     """Broker order status."""
 

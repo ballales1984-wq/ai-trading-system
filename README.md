@@ -10,6 +10,14 @@
 
 **Advanced algorithmic trading platform with AI-powered market analysis**
 
+## v2.0 Hedge Fund Edition
+
+Enterprise-grade institutional trading features:
+- Phase 1: Execution Engine Pro (TWAP/VWAP, SOR)
+- Phase 2: Quantitative Risk (GARCH, Monte Carlo, VaR)
+- Phase 3: AI Strategy Orchestrator
+- Phase 4: Monitoring Enterprise (Prometheus)
+
 [English](#english) | [Italiano](#italiano)
 
 </div>
@@ -41,6 +49,7 @@ AI Trading System is a comprehensive algorithmic trading platform that combines 
 | **Auto Trading** | Fully automated trading with stop-loss and take-profit |
 | **Backtesting** | Historical strategy testing with walk-forward analysis |
 | **Broker Integration** | Binance, Bybit, Interactive Brokers, Paper Trading |
+| **v2.0 Hedge Fund** | TWAP/VWAP, Smart Order Routing, GARCH, Autonomous Agent |
 
 ### Quick Start
 
@@ -52,6 +61,11 @@ cd ai-trading-system
 # Install dependencies
 pip install -r requirements.txt
 cd frontend && npm install
+
+# Run tests (v2.0 Hedge Fund Edition)
+python tests/test_execution_v2.py    # Phase 1: Execution Engine
+python tests/test_phase2_risk.py      # Phase 2: Risk Management
+python tests/test_phase3_ai.py        # Phase 3: AI Orchestrator
 
 # Start backend (Terminal 1)
 python -m uvicorn app.main:app --reload --port 8000

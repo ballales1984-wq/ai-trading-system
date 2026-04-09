@@ -60,9 +60,9 @@ class Settings(BaseSettings):
     timescaledb_url: Optional[str] = Field(default=None, env="TIMESCALEDB_URL")
     timescaledb_enabled: bool = Field(default=False, env="TIMESCALEDB_ENABLED")
 
-    # Database pool settings (aumentati per maggiore throughput)
-    db_pool_size: int = 100
-    db_max_overflow: int = 200
+    # Database pool settings (validati: max 50 per limit)
+    db_pool_size: int = Field(default=20, ge=1, le=50)
+    db_max_overflow: int = Field(default=10, ge=0, le=20)
     db_pool_recycle: int = 3600
 
     redis_url: str = Field(default="redis://localhost:6379/0", env="REDIS_URL")

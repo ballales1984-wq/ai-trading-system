@@ -88,6 +88,7 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
+
 @app.on_event("startup")
 async def startup_event():
     """Startup lifecycle event."""
@@ -99,6 +100,7 @@ async def startup_event():
     except Exception as e:
         logger.error(f"Failed to start Task Scheduler: {e}")
 
+
 @app.on_event("shutdown")
 async def shutdown_event():
     """Shutdown lifecycle event."""
@@ -109,6 +111,7 @@ async def shutdown_event():
         logger.info("Global Task Scheduler stopped")
     except Exception as e:
         logger.error(f"Error stopping Task Scheduler: {e}")
+
 
 # CORS middleware - Allow frontend to communicate with backend
 # Uses the cors_origins list from settings, with fallback to common dev origins
@@ -158,6 +161,11 @@ class SecurityResponse(JSONResponse):
 # Rate limiting middleware
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
+    # Health check paths bypass rate limiting
+    health_paths = {"/health", "/ready", "/live", "/docs", "/openapi.json"}
+    if request.url.path in health_paths:
+        return await call_next(request)
+
     client_id = request.client.host
     try:
         default_rate_limiter.check_rate_limit(client_id)
@@ -168,7 +176,12 @@ async def rate_limit_middleware(request: Request, call_next):
             headers={"Retry-After": str(e.retry_after)},
         )
     response = await call_next(request)
-    # Add security headers to response
+
+    # Add X-Request-ID for tracing
+    request_id = request.headers.get("X-Request-ID", datetime.utcnow().isoformat())
+    response.headers["X-Request-ID"] = request_id
+
+    # Add deduplicated security headers
     security_headers = {
         "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
         "X-Frame-Options": "DENY",
@@ -182,7 +195,8 @@ async def rate_limit_middleware(request: Request, call_next):
         "Cross-Origin-Resource-Policy": "same-origin",
     }
     for key, value in security_headers.items():
-        response.headers[key] = value
+        if key not in response.headers:
+            response.headers[key] = value
     return response
 
 
