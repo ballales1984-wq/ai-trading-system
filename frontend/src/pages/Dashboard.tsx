@@ -186,8 +186,8 @@ export default function Dashboard() {
                   <h3 className="text-lg font-semibold text-text tracking-wide">Portfolio Equity</h3>
                 </div>
                 <div className="h-72 w-full p-4 relative" style={{ minHeight: '288px' }}>
-                  {isMounted && historyData.length > 0 ? (
-                          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                  {historyData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                       <AreaChart data={historyData}>
                         <defs>
                           <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
