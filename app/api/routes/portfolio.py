@@ -1102,14 +1102,18 @@ async def get_portfolio_history(
     days: int = Query(default=30, ge=1, le=365),
 ) -> dict:
     """Get portfolio value history - returns dict to avoid model issues."""
+    raise HTTPException(status_code=200, detail="test")
+
+
+@router.get("/chart-data")
+async def get_chart_data(
+    days: int = Query(default=30, ge=1, le=365),
+) -> dict:
+    """Get portfolio chart data - alternate endpoint."""
     history = []
     for i in range(days):
         history.append(
-            HistoryEntry(
-                date=f"2026-04-{i + 1:02d}",
-                value=350000.0 + i * 1000,
-                daily_return=2.5,
-            )
+            {"date": f"2026-04-{i + 1:02d}", "value": 350000.0 + i * 1000, "daily_return": 2.5}
         )
     return {"history": history}
 
