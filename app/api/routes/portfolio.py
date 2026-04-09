@@ -1097,39 +1097,21 @@ async def get_allocation() -> dict:
     }
 
 
-@router.get("/history", response_model=PortfolioHistory, include_in_schema=True)
+@router.get("/history", response_model=PortfolioHistory)
 async def get_portfolio_history(
-    days: int = Query(default=30, ge=1, le=365, description="Number of days to retrieve history"),
+    days: int = Query(default=30, ge=1, le=365),
 ) -> PortfolioHistory:
     """Get portfolio value history."""
-    import logging
-    from datetime import timedelta
-    import random
-
-    logger = logging.getLogger(__name__)
-    logger.info("=== HISTORY ENDPOINT CALLED ===")
-
+    # Return hardcoded data
     history = []
-    base_value = 350000.0
-    current_date = datetime.now()
-    random.seed(42)
-    logger.info(f"Current date: {current_date}")
-
     for i in range(days):
-        date_offset = current_date - timedelta(days=days - i - 1)
-        date_str = date_offset.strftime("%Y-%m-%d")
-        daily_return = random.uniform(-0.03, 0.04)
-        base_value *= 1 + daily_return
-
         history.append(
             HistoryEntry(
-                date=date_str,
-                value=round(base_value, 2),
-                daily_return=round(daily_return * 100, 2),
+                date=f"2026-04-{i + 1:02d}",
+                value=350000.0 + i * 1000,
+                daily_return=2.5,
             )
         )
-
-    logger.info(f"Returning {len(history)} history entries")
     return PortfolioHistory(history=history)
 
 
