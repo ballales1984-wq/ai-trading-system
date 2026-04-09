@@ -62,7 +62,7 @@ class ExecutionEngine:
     def __init__(
         self,
         broker: BrokerConnector,
-        additional_brokers: List[BrokerConnector] = None,
+        additional_brokers: Optional[List[BrokerConnector]] = None,
         risk_engine=None,
         retry_config: Optional[RetryConfig] = None,
     ):
@@ -141,7 +141,7 @@ class ExecutionEngine:
                 {
                     "symbol": symbol,
                     "quantity": quantity,
-                    "price": price or await self.broker.get_market_price(symbol),
+                    "price": price or await self.broker.get_symbol_price(symbol),
                     "side": side,
                 }
             )
@@ -167,19 +167,17 @@ class ExecutionEngine:
         # Route via SOR if requested
         if use_sor:
             try:
-                # We reuse _execute_single logic but with the SOR routing
                 self.state = ExecutionState.EXECUTING
                 routed_order = await self.sor.route_order(order)
                 return ExecutionResult(
                     success=routed_order.status == OrderStatus.FILLED,
                     order_id=routed_order.order_id,
                     filled_quantity=routed_order.filled_quantity,
-                    avg_price=routed_order.average_price,
+                    avg_price=routed_order.average_price or 0.0,
                     message=f"Routed via SOR to {routed_order.broker}",
                 )
             except Exception as e:
                 logger.error(f"SOR routing failed: {e}")
-                # Fallback to single broker execution below
 
         # Execute with retries
         last_error = None
@@ -222,7 +220,7 @@ class ExecutionEngine:
                     break
 
         # Failed
-        self._record_failure(last_error, start_time)
+        self._record_failure(last_error or "unknown_error", start_time)
 
         result = ExecutionResult(
             success=False,
@@ -251,8 +249,8 @@ class ExecutionEngine:
                     order_id=filled_order.order_id,
                     message="Order filled",
                     filled_quantity=filled_order.filled_quantity,
-                    avg_price=filled_order.avg_fill_price,
-                    commission=filled_order.commission,
+                    avg_price=filled_order.average_price or 0.0,
+                    commission=0.0,
                     attempts=attempt,
                 )
             elif filled_order.status == OrderStatus.PARTIALLY_FILLED:
@@ -261,16 +259,16 @@ class ExecutionEngine:
                     order_id=filled_order.order_id,
                     message="Order partially filled",
                     filled_quantity=filled_order.filled_quantity,
-                    avg_price=filled_order.avg_fill_price,
-                    commission=filled_order.commission,
+                    avg_price=filled_order.average_price or 0.0,
+                    commission=0.0,
                     attempts=attempt,
                 )
             else:
                 return ExecutionResult(
                     success=False,
                     order_id=filled_order.order_id,
-                    message=f"Order status: {filled_order.status.value}",
-                    error=filled_order.status.value,
+                    message=f"Order status: {filled_order.status}",
+                    error=filled_order.status,
                     attempts=attempt,
                 )
 
@@ -332,10 +330,10 @@ class ExecutionEngine:
             }
         )
 
-    async def cancel_order(self, order_id: str) -> bool:
+    async def cancel_order(self, order_id: str, symbol: str) -> bool:
         """Cancel pending order."""
         try:
-            return await self.broker.cancel_order(order_id)
+            return await self.broker.cancel_order(order_id, symbol)
         except Exception as e:
             logger.error(f"Failed to cancel order: {e}")
             return False
@@ -348,7 +346,7 @@ class ExecutionEngine:
 
             for order in orders:
                 if symbol is None or order.symbol == symbol:
-                    if await self.cancel_order(order.order_id):
+                    if await self.cancel_order(order.order_id, order.symbol):
                         cancelled += 1
 
             return cancelled

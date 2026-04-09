@@ -20,12 +20,8 @@ class MonteCarloSimulator:
     """
     Simulatore Monte Carlo per analisi di scenario.
     """
-    
-    def __init__(
-        self,
-        n_simulations: int = 1000,
-        confidence_level: float = 0.95
-    ):
+
+    def __init__(self, n_simulations: int = 1000, confidence_level: float = 0.95):
         """
         Inizializza il simulatore Monte Carlo.
 
@@ -38,23 +34,19 @@ class MonteCarloSimulator:
         # Thread-local RNG: ogni thread ha il suo generatore isolato
         # evitando race condition sullo stato globale di np.random.
         self._rng = np.random.default_rng()
-    
+
     def simulate_price_path(
-        self,
-        current_price: float,
-        volatility: float,
-        drift: float = 0.0,
-        time_horizon: int = 30
+        self, current_price: float, volatility: float, drift: float = 0.0, time_horizon: int = 30
     ) -> np.ndarray:
         """
         Simula percorsi di prezzo usando moto browniano geometrico.
-        
+
         Args:
             current_price: Prezzo corrente
             volatility: Volatilità annualizzata
             drift: Tasso di drift (rendimento atteso)
             time_horizon: Orizzonte temporale in giorni
-            
+
         Returns:
             Array di prezzi simulati
         """
@@ -62,110 +54,99 @@ class MonteCarloSimulator:
 
         # Usa il generatore locale all'istanza (thread-safe, non usa np.random globale)
         random_shocks = self._rng.standard_normal((self.n_simulations, time_horizon))
-        
+
         # Calcola percorsi
         price_paths = np.zeros((self.n_simulations, time_horizon + 1))
         price_paths[:, 0] = current_price
-        
+
         for t in range(time_horizon):
             price_paths[:, t + 1] = price_paths[:, t] * np.exp(
-                (drift - 0.5 * volatility ** 2) * dt +
-                volatility * np.sqrt(dt) * random_shocks[:, t]
+                (drift - 0.5 * volatility**2) * dt + volatility * np.sqrt(dt) * random_shocks[:, t]
             )
-        
+
         return price_paths
-    
-    def calculate_var(
-        self,
-        returns: np.ndarray,
-        confidence_level: Optional[float] = None
-    ) -> float:
+
+    def calculate_var(self, returns: np.ndarray, confidence_level: Optional[float] = None) -> float:
         """
         Calcola il Value at Risk.
-        
+
         Args:
             returns: Array di rendimenti simulati
             confidence_level: Livello di confidenza (opzionale)
-            
+
         Returns:
             VaR come percentuale
         """
         if confidence_level is None:
             confidence_level = self.confidence_level
-        
+
         return np.percentile(returns, (1 - confidence_level) * 100)
-    
+
     def calculate_expected_shortfall(
-        self,
-        returns: np.ndarray,
-        confidence_level: Optional[float] = None
+        self, returns: np.ndarray, confidence_level: Optional[float] = None
     ) -> float:
         """
         Calcola l'Expected Shortfall (CVaR).
-        
+
         Args:
             returns: Array di rendimenti simulati
             confidence_level: Livello di confidenza (opzionale)
-            
+
         Returns:
             ES come percentuale
         """
         if confidence_level is None:
             confidence_level = self.confidence_level
-        
+
         var = self.calculate_var(returns, confidence_level)
         return np.mean(returns[returns <= var])
-    
-    def assess_trade_risk(
-        self,
-        asset_data: Dict,
-        position_size: float
-    ) -> Dict:
+
+    def assess_trade_risk(self, asset_data: Dict, position_size: float) -> Dict:
         """
         Valuta il rischio di un trade usando Monte Carlo.
-        
+
         Args:
             asset_data: Dati dell'asset
             position_size: Dimensione della posizione in USDT
-            
+
         Returns:
             Dizionario con metriche di rischio
         """
         current_price = asset_data.get("price", 100)
         volatility = asset_data.get("volatility_annual", 0.5)  # Default 50% annual
-        
+
         # Simula percorsi di prezzo
         price_paths = self.simulate_price_path(
             current_price=current_price,
             volatility=volatility,
             drift=asset_data.get("expected_return", 0.0),
-            time_horizon=30
+            time_horizon=30,
         )
-        
+
         # Calcola rendimenti finali
         final_prices = price_paths[:, -1]
         returns = (final_prices - current_price) / current_price
-        
+
         # Calcola metriche di rischio
         var = self.calculate_var(returns)
         es = self.calculate_expected_shortfall(returns)
-        
+
         # Probabilità di profitto
         prob_profit = np.mean(returns > 0)
-        
+
         # Rendimento atteso
         expected_return = np.mean(returns)
-        
+
         # Perdita massima attesa (in USDT)
         max_loss_usdt = position_size * abs(es)
-        
+
         return {
             "var": var,
             "expected_shortfall": es,
             "prob_profit": prob_profit,
             "expected_return": expected_return,
             "max_loss_usdt": max_loss_usdt,
-            "n_simulations": self.n_simulations
+            "n_simulations": self.n_simulations,
         }
 
 
@@ -176,7 +157,7 @@ class DecisionEngine:
     - Simulazione Monte Carlo per risk assessment
     - Generazione automatica di ordini
     """
-    
+
     def __init__(
         self,
         portfolio_balance: float = 100000,
@@ -184,11 +165,11 @@ class DecisionEngine:
         max_risk_per_trade: float = 0.02,
         semantic_weight: float = 0.5,
         numeric_weight: float = 0.5,
-        monte_carlo_sims: int = 1000
+        monte_carlo_sims: int = 1000,
     ):
         """
         Inizializza il Decision Engine.
-        
+
         Args:
             portfolio_balance: Bilancio iniziale del portafoglio
             threshold_confidence: Soglia minima di confidenza
@@ -197,126 +178,114 @@ class DecisionEngine:
             numeric_weight: Peso analisi numerica
             monte_carlo_sims: Numero simulazioni Monte Carlo
         """
-        self.portfolio = {
-            "cash": portfolio_balance,
-            "positions": {},
-            "history": []
-        }
+        self.portfolio = {"cash": portfolio_balance, "positions": {}, "history": []}
         # Lock per proteggere accessi concorrenti al portfolio dict
         # (es. API route /summary chiama get_portfolio_summary() mentre
         # il loop di trading chiama generate_orders() nello stesso istante).
         self._portfolio_lock = threading.Lock()
         self._MAX_HISTORY = 500  # Cap memory: max entries in portfolio history
-        
+
         self.filter = OpportunityFilter(
             threshold_confidence=threshold_confidence,
             semantic_weight=semantic_weight,
             numeric_weight=numeric_weight,
-            mode="aggressive"
+            mode="aggressive",
         )
-        
+
         self.monte_carlo = MonteCarloSimulator(n_simulations=monte_carlo_sims)
         self.max_risk_per_trade = max_risk_per_trade
-        
+
         # Statistiche
-        self.stats = {
-            "total_trades": 0,
-            "winning_trades": 0,
-            "losing_trades": 0,
-            "total_pnl": 0.0
-        }
+        self.stats = {"total_trades": 0, "winning_trades": 0, "losing_trades": 0, "total_pnl": 0.0}
 
     def calculate_position_size(
-        self,
-        asset_data: Dict,
-        combined_score: float,
-        var_95: float = None
+        self, asset_data: Dict, combined_score: float, var_95: Optional[float] = None
     ) -> float:
         """
         RISK ENGINE PRO: Calcola la dimensione della posizione basata su VOLATILITÀ e VaR.
-        
+
         NOTA: La posizione è DECOUPLED dalla confidence!
         - Prima: position = max_position * confidence
         - Ora: position = base * volatility_adjustment * var_adjustment
-        
+
         Args:
             asset_data: Dati dell'asset
             combined_score: Punteggio combinato (non usato per size!)
             var_95: Value at Risk 95% (opzionale)
-            
+
         Returns:
             Dimensione posizione in USDT
         """
         # Base: 5% del portafoglio (fisso, non usa confidence!)
         base_size = self.portfolio["cash"] * 0.05
-        
+
         # RISK ENGINE: Volatility adjustment
         # Alta volatilità → posizione più piccola
         volatility = asset_data.get("volatility_score", 0.5)
-        
+
         if volatility > 0.05:
             volatility_multiplier = 0.3  # Molto conservativo
         elif volatility > 0.02:
             volatility_multiplier = 0.5  # Conservativo
         else:
             volatility_multiplier = 0.7  # Normale
-        
+
         # RISK ENGINE: VaR adjustment
         # Alto VaR → posizione più piccola
         var_multiplier = 1.0
         if var_95 is not None and abs(var_95) > 0.03:
             var_multiplier = 0.5  # Riduci a metà se VaR > 3%
-        
+
         # Combina i fattori di rischio
         final_size = base_size * volatility_multiplier * var_multiplier
-        
+
         # Limita al rischio massimo per trade
         max_risk_amount = self.portfolio["cash"] * self.max_risk_per_trade
-        
+
         return max(0, min(final_size, max_risk_amount * 5))
 
     def generate_orders(self, assets: List[Dict], update_portfolio: bool = True) -> List[Dict]:
         """
         Genera ordini BUY/SELL/HOLD basati su analisi completa.
-        
+
         Args:
             assets: Lista di asset con dati semantici e numerici
-            
+
         Returns:
             Lista di ordini generati
         """
         orders = []
-        
+
         # Filtra asset con potenziale
         filtered_assets = self.filter.filter_assets(assets)
-        
+
         for asset in filtered_assets:
-            score = asset['combined_score']
+            score = asset["combined_score"]
             direction = self.filter.get_signal_direction(score)
-            
+
             if direction == "HOLD":
                 continue
-            
+
             # Calcola dimensione posizione
             position_size = self.calculate_position_size(asset, score)
-            
+
             if position_size <= 0:
                 continue
-            
+
             # Valuta rischio con Monte Carlo
             risk_assessment = self.monte_carlo.assess_trade_risk(asset, position_size)
-            
+
             # RISK ENGINE PRO: Check VaR threshold
-            var_95 = risk_assessment.get('var', 0)
+            var_95 = risk_assessment.get("var", 0)
             max_var = 0.30  # 30% max VaR (increased to allow trades with high volatility)
-            
+
             if abs(var_95) > max_var:
                 logger.warning(
                     f"Trade BLOCKED for {asset.get('name')}: "
                     f"VaR={var_95:.2%} > MAX_VAR={max_var:.2%}"
                 )
                 continue
-            
+
             # Verifica se il rischio è accettabile
             max_acceptable_loss = self.portfolio["cash"] * self.max_risk_per_trade
             if risk_assessment["max_loss_usdt"] > max_acceptable_loss:
@@ -327,7 +296,7 @@ class DecisionEngine:
                 risk_assessment["max_loss_usdt"] *= scale
                 risk_assessment["expected_shortfall"] *= scale
                 # var, prob_profit, expected_return rimangono invariati (sono %)
-            
+
             # Genera ordine
             order = {
                 "asset": asset.get("name", "Unknown"),
@@ -338,21 +307,21 @@ class DecisionEngine:
                 "semantic_score": asset.get("semantic_score", 0),
                 "numeric_score": asset.get("numeric_score", 0),
                 "monte_carlo": risk_assessment,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
+
             # Aggiorna portafoglio solo se richiesto dal caller
             # (in auto-trader reale aggiorniamo dopo conferma esecuzione).
             if update_portfolio:
                 self._update_portfolio(order)
-            
+
             orders.append(order)
-            
+
             logger.info(
                 f"Order generated: {direction} {position_size:.2f} USDT of {asset.get('name')} "
                 f"(confidence: {abs(score):.2f}, VaR: {risk_assessment['var']:.2%})"
             )
-        
+
         return orders
 
     def _update_portfolio(self, order: Dict):
@@ -370,11 +339,15 @@ class DecisionEngine:
         with self._portfolio_lock:
             if action == "BUY":
                 if amount > self.portfolio["cash"]:
-                    logger.warning(f"Insufficient cash for BUY order: {amount} > {self.portfolio['cash']}")
+                    logger.warning(
+                        f"Insufficient cash for BUY order: {amount} > {self.portfolio['cash']}"
+                    )
                     return
 
                 self.portfolio["cash"] -= amount
-                self.portfolio["positions"][asset] = self.portfolio["positions"].get(asset, 0) + amount
+                self.portfolio["positions"][asset] = (
+                    self.portfolio["positions"].get(asset, 0) + amount
+                )
 
             elif action == "SELL":
                 current_position = self.portfolio["positions"].get(asset, 0)
@@ -387,15 +360,17 @@ class DecisionEngine:
                     del self.portfolio["positions"][asset]
 
             # Storico con cap per evitare memory leak in sistemi long-running
-            self.portfolio["history"].append({
-                "timestamp": order["timestamp"],
-                "asset": asset,
-                "action": action,
-                "amount": amount,
-                "cash_after": self.portfolio["cash"]
-            })
+            self.portfolio["history"].append(
+                {
+                    "timestamp": order["timestamp"],
+                    "asset": asset,
+                    "action": action,
+                    "amount": amount,
+                    "cash_after": self.portfolio["cash"],
+                }
+            )
             if len(self.portfolio["history"]) > self._MAX_HISTORY:
-                self.portfolio["history"] = self.portfolio["history"][-self._MAX_HISTORY:]
+                self.portfolio["history"] = self.portfolio["history"][-self._MAX_HISTORY :]
 
         self.stats["total_trades"] += 1
 
@@ -415,50 +390,42 @@ class DecisionEngine:
                 "total_position_value": round(total_position_value, 2),
                 "total_value": round(self.portfolio["cash"] + total_position_value, 2),
                 "n_positions": len(self.portfolio["positions"]),
-                "stats": self.stats.copy()
+                "stats": self.stats.copy(),
             }
 
-    def run_trading_cycle(
-        self,
-        assets: List[Dict],
-        execute: bool = True
-    ) -> Dict:
+    def run_trading_cycle(self, assets: List[Dict], execute: bool = True) -> Dict:
         """
         Esegue un ciclo completo di trading.
-        
+
         Args:
             assets: Lista di asset da analizzare
             execute: Se True, aggiorna il portafoglio
-            
+
         Returns:
             Dizionario con risultati del ciclo
         """
         logger.info("=" * 60)
         logger.info("TRADING CYCLE STARTED")
         logger.info("=" * 60)
-        
+
         # Genera ordini
         orders = self.generate_orders(assets, update_portfolio=execute)
-        
+
         # Riepilogo
         summary = self.get_portfolio_summary()
-        
-        result = {
-            "orders": orders,
-            "portfolio": summary,
-            "timestamp": datetime.now().isoformat()
-        }
-        
+
+        result = {"orders": orders, "portfolio": summary, "timestamp": datetime.now().isoformat()}
+
         logger.info(f"Trading cycle completed: {len(orders)} orders generated")
         logger.info(f"Portfolio value: {summary['total_value']} USDT")
-        
+
         return result
 
 
 # === Esempio di utilizzo ===
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    
+
     # Dati di esempio
     assets = [
         {
@@ -474,7 +441,7 @@ if __name__ == "__main__":
             "volume_score": 0.4,
             "price": 2000,
             "volatility_annual": 0.15,
-            "expected_return": 0.08
+            "expected_return": 0.08,
         },
         {
             "name": "Rame",
@@ -489,7 +456,7 @@ if __name__ == "__main__":
             "volume_score": -0.2,
             "price": 4.5,
             "volatility_annual": 0.25,
-            "expected_return": -0.05
+            "expected_return": -0.05,
         },
         {
             "name": "BTC",
@@ -504,7 +471,7 @@ if __name__ == "__main__":
             "volume_score": 0.2,
             "price": 95000,
             "volatility_annual": 0.6,
-            "expected_return": 0.15
+            "expected_return": 0.15,
         },
     ]
 
@@ -513,12 +480,12 @@ if __name__ == "__main__":
         portfolio_balance=100000,
         threshold_confidence=0.1,
         max_risk_per_trade=0.02,
-        monte_carlo_sims=1000
+        monte_carlo_sims=1000,
     )
-    
+
     # Esegui ciclo di trading
     result = engine.run_trading_cycle(assets)
-    
+
     # Stampa risultati
     print("\n" + "=" * 60)
     print("ORDERS GENERATED")
@@ -530,7 +497,7 @@ if __name__ == "__main__":
         print(f"       VaR (95%): {mc['var']:.2%}")
         print(f"       Prob Profit: {mc['prob_profit']:.1%}")
         print()
-    
+
     print("=" * 60)
     print("PORTFOLIO SUMMARY")
     print("=" * 60)

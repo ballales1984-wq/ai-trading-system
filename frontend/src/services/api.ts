@@ -74,8 +74,8 @@ export const portfolioApi = {
 
   getHistory: async (days: number = 30): Promise<PortfolioHistory> => {
     // Use summary endpoint to get current value, then generate history from it
-    const summary = await api.get<any>('/portfolio/summary');
-    const currentValue = summary.total_value || 350000;
+    const { data: summary } = await api.get<any>('/portfolio/summary');
+    const currentValue = summary?.total_value || 350000;
     
     // Generate history from current value
     const history = [];
@@ -222,7 +222,7 @@ export interface RiskLimit {
 
 export interface RiskControl {
   id: string;
-  name: str;
+  name: string;
   description: string;
   status: string;
   action_type: string;

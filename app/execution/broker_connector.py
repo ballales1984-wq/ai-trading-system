@@ -10,11 +10,16 @@ import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, TYPE_CHECKING
 from uuid import uuid4
+from dataclasses import dataclass
+from enum import Enum
 
 from pydantic import BaseModel, Field
 from app.core.logging import TradingLogger
+
+if TYPE_CHECKING:
+    from app.execution.execution_engine import ExecutionResult
 
 
 logger = TradingLogger(__name__)
@@ -191,6 +196,27 @@ class BrokerConnector(ABC):
     async def get_symbol_price(self, symbol: str) -> float:
         """Get current symbol price."""
         pass
+
+    @abstractmethod
+    async def get_open_orders(self, symbol: Optional[str] = None) -> "List[BrokerOrder]":
+        """Get open orders."""
+        pass
+
+    @abstractmethod
+    async def close_position(
+        self, symbol: str, quantity: Optional[float] = None
+    ) -> "ExecutionResult":
+        """Close a position."""
+        pass
+
+    @abstractmethod
+    async def close_all_positions(self) -> "List[ExecutionResult]":
+        """Close all positions."""
+        pass
+
+    def get_market_price(self, symbol: str) -> float:
+        """Get market price (sync wrapper)."""
+        return 0.0
 
     # Common methods
     async def health_check(self) -> bool:

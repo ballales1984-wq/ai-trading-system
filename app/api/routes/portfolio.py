@@ -1102,7 +1102,28 @@ async def get_portfolio_history(
     days: int = Query(default=30, ge=1, le=365),
 ) -> dict:
     """Get portfolio value history."""
-    return {"history": [{"date": "2026-04-09", "value": 350000, "daily_return": 2.5}]}
+    if get_demo_mode():
+        data = mock_history(days)
+        return {
+            "history": [
+                {"date": h["date"], "value": h["value"], "daily_return": h.get("daily_return", 0)}
+                for h in data.get("history", [])
+            ]
+        }
+
+    adapter = get_data_adapter()
+    history = adapter.get_portfolio_history(days=days)
+
+    if history and len(history) > 0:
+        return {"history": history}
+
+    data = mock_history(days)
+    return {
+        "history": [
+            {"date": h["date"], "value": h["value"], "daily_return": h.get("daily_return", 0)}
+            for h in data.get("history", [])
+        ]
+    }
 
 
 @router.post("/optimize", response_model=OptimizePortfolioResponse)

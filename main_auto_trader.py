@@ -32,11 +32,8 @@ from pathlib import Path
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s | %(levelname)s | %(name)s | %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('auto_trader.log', encoding='utf-8')
-    ]
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    handlers=[logging.StreamHandler(), logging.FileHandler("auto_trader.log", encoding="utf-8")],
 )
 logger = logging.getLogger(__name__)
 
@@ -44,11 +41,15 @@ logger = logging.getLogger(__name__)
 try:
     from src.decision.decision_automatic import DecisionEngine, MonteCarloSimulator
     from src.execution.auto_executor import (
-        AutoExecutor, SafetyConfig, SimulatedExchangeClient, OrderStatus
+        AutoExecutor,
+        SafetyConfig,
+        SimulatedExchangeClient,
+        OrderStatus,
     )
     from src.decision.filtro_opportunita_pro import OpportunityFilterPro as OpportunityFilter
     import src.trading_completo as trading_tracker
     from src.core.state_manager import StateManager
+
     MODULES_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Some modules not available: {e}")
@@ -57,6 +58,7 @@ except ImportError as e:
 # Import moduli esistenti
 try:
     from data_collector import DataCollector
+
     DATA_COLLECTOR_AVAILABLE = True
 except ImportError:
     DATA_COLLECTOR_AVAILABLE = False
@@ -64,6 +66,7 @@ except ImportError:
 
 try:
     from technical_analysis import TechnicalAnalyzer
+
     TECHNICAL_ANALYSIS_AVAILABLE = True
 except ImportError:
     TECHNICAL_ANALYSIS_AVAILABLE = False
@@ -71,6 +74,7 @@ except ImportError:
 
 try:
     from sentiment_news import SentimentAnalyzer
+
     SENTIMENT_AVAILABLE = True
 except ImportError:
     SENTIMENT_AVAILABLE = False
@@ -79,43 +83,45 @@ except ImportError:
 
 # ==================== CONFIGURAZIONE ====================
 
+
 @dataclass
 class TradingConfig:
     """Configurazione del trading bot."""
+
     # Parametri generali
     loop_interval: int = 60  # secondi tra cicli
     assets: List[str] = None  # Lista asset da monitorare
-    
+
     # Parametri portafoglio
     initial_balance: float = 100000.0  # USDT
     max_risk_per_trade: float = 0.02  # 2%
-    
+
     # Parametri decisionali
     threshold_confidence: float = 0.1
     semantic_weight: float = 0.5
     numeric_weight: float = 0.5
     monte_carlo_sims: int = 1000
-    
+
     # Parametri sicurezza esecuzione
     min_order_value: float = 10.0
     max_order_value: float = 10000.0
     max_orders_per_minute: int = 10
     dry_run: bool = True  # Se True, simula senza inviare ordini reali
-    
+
     # KILL SWITCH PARAMETERS
     max_drawdown: float = -0.15  # -15% drawdown massimo
     min_portfolio_value: float = 0.80  # 80% del balance iniziale
-    
+
     # Exchange
     exchange: str = "binance"
     testnet: bool = True
     api_key: str = ""
     api_secret: str = ""
-    
+
     # HFT Integration
     enable_hft: bool = False
     hft_budget_pct: float = 0.10
-    
+
     def __post_init__(self):
         if self.assets is None:
             self.assets = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT"]
@@ -123,50 +129,53 @@ class TradingConfig:
 
 # ==================== DATA AGGREGATOR ====================
 
+
 class DataAggregator:
     """
     Aggrega dati da multiple fonti per il DecisionEngine.
     """
-    
+
     def __init__(self, config: TradingConfig):
         self.config = config
         self.data_collector = None
         self.technical_analyzer = None
         self.sentiment_analyzer = None
-        
+
         # Inizializza moduli se disponibili
         if DATA_COLLECTOR_AVAILABLE:
             self.data_collector = DataCollector(simulation=config.dry_run)
-        
+
         if TECHNICAL_ANALYSIS_AVAILABLE:
             self.technical_analyzer = TechnicalAnalyzer()
-        
+
         if SENTIMENT_AVAILABLE:
             self.sentiment_analyzer = SentimentAnalyzer()
-    
+
     def fetch_market_data(self, assets: List[str]) -> Dict[str, Dict]:
         """
         Recupera dati di mercato per gli asset.
-        
+
         Args:
             assets: Lista di simboli
-            
+
         Returns:
             Dizionario {symbol: market_data}
         """
         market_data = {}
-        
+
         for symbol in assets:
             try:
                 if self.data_collector:
                     # Usa DataCollector reale
                     data = self.data_collector.fetch_market_data(symbol)
                     # Convert to dict if it's a dataclass/object
-                    if hasattr(data, 'to_dict'):
+                    if hasattr(data, "to_dict"):
                         market_data[symbol] = data.to_dict()
-                    elif hasattr(data, '__dict__'):
+                    elif hasattr(data, "__dict__"):
                         # Basic object to dict conversion
-                        market_data[symbol] = {k: v for k, v in data.__dict__.items() if not k.startswith('_')}
+                        market_data[symbol] = {
+                            k: v for k, v in data.__dict__.items() if not k.startswith("_")
+                        }
                     else:
                         market_data[symbol] = data
                 else:
@@ -175,31 +184,33 @@ class DataAggregator:
             except Exception as e:
                 logger.error(f"Error fetching data for {symbol}: {e}")
                 market_data[symbol] = self._simulate_market_data(symbol)
-        
+
         return market_data
-    
+
     def fetch_sentiment(self, assets: List[str]) -> Dict[str, Dict]:
         """
         Recupera dati sentiment per gli asset.
-        
+
         Args:
             assets: Lista di simboli
-            
+
         Returns:
             Dizionario {symbol: sentiment_data}
         """
         sentiment_data = {}
-        
+
         for symbol in assets:
             try:
                 if self.sentiment_analyzer:
                     # Usa SentimentAnalyzer reale
                     data = self.sentiment_analyzer.analyze_asset_sentiment(symbol)
                     # Convert to dict if it's a dataclass/object
-                    if hasattr(data, 'to_dict'):
+                    if hasattr(data, "to_dict"):
                         sentiment_data[symbol] = data.to_dict()
-                    elif hasattr(data, '__dict__'):
-                        sentiment_data[symbol] = {k: v for k, v in data.__dict__.items() if not k.startswith('_')}
+                    elif hasattr(data, "__dict__"):
+                        sentiment_data[symbol] = {
+                            k: v for k, v in data.__dict__.items() if not k.startswith("_")
+                        }
                     else:
                         sentiment_data[symbol] = data
                 else:
@@ -208,75 +219,80 @@ class DataAggregator:
             except Exception as e:
                 logger.error(f"Error fetching sentiment for {symbol}: {e}")
                 sentiment_data[symbol] = self._simulate_sentiment(symbol)
-        
+
         return sentiment_data
-    
+
     def calculate_indicators(self, market_data: Dict[str, Dict]) -> Dict[str, Dict]:
         """
         Calcola indicatori tecnici per gli asset.
-        
+
         Args:
             market_data: Dati di mercato
-            
+
         Returns:
             Dizionario {symbol: indicators}
         """
         indicators = {}
-        
+
         for symbol, data in market_data.items():
             try:
-                if self.technical_analyzer and 'candles' in data:
+                if self.technical_analyzer and "candles" in data:
                     # Usa TechnicalAnalyzer reale
-                    analysis = self.technical_analyzer.analyze(data['candles'])
-                    indicators[symbol] = analysis.to_dict() if hasattr(analysis, 'to_dict') else analysis
+                    analysis = self.technical_analyzer.analyze(data["candles"])
+                    indicators[symbol] = (
+                        analysis.to_dict() if hasattr(analysis, "to_dict") else analysis
+                    )
                 else:
                     # Simula indicatori
                     indicators[symbol] = self._simulate_indicators(symbol)
             except Exception as e:
                 logger.error(f"Error calculating indicators for {symbol}: {e}")
                 indicators[symbol] = self._simulate_indicators(symbol)
-        
+
         return indicators
-    
+
     def _simulate_market_data(self, symbol: str) -> Dict:
         """Simula dati di mercato."""
         import random
+
         base_prices = {
             "BTCUSDT": 95000,
             "ETHUSDT": 3500,
             "SOLUSDT": 180,
             "XRPUSDT": 2.5,
             "BNBUSDT": 650,
-            "ADAUSDT": 0.8
+            "ADAUSDT": 0.8,
         }
         base_price = base_prices.get(symbol, 100)
-        
+
         return {
             "symbol": symbol,
             "current_price": base_price * (1 + random.uniform(-0.02, 0.02)),
             "price_change_24h": random.uniform(-5, 5),
             "volume_24h": random.uniform(1e6, 1e9),
             "volatility_annual": random.uniform(0.3, 0.8),
-            "expected_return": random.uniform(-0.1, 0.2)
+            "expected_return": random.uniform(-0.1, 0.2),
         }
-    
+
     def _simulate_sentiment(self, symbol: str) -> Dict:
         """Simula dati sentiment."""
         import random
+
         return {
             "symbol": symbol,
             "sentiment_score": random.uniform(-0.5, 0.5),
             "event_impact": random.uniform(-0.3, 0.3),
             "news_score": random.uniform(-0.3, 0.3),
-            "trend_signal": random.uniform(-0.3, 0.3)
+            "trend_signal": random.uniform(-0.3, 0.3),
         }
-    
+
     def _simulate_indicators(self, symbol: str) -> Dict:
         """Simula indicatori tecnici."""
         import random
+
         rsi = random.uniform(30, 70)
         macd_signal = random.uniform(-0.5, 0.5)
-        
+
         return {
             "symbol": symbol,
             "rsi": rsi,
@@ -285,16 +301,17 @@ class DataAggregator:
             "momentum_score": random.uniform(-0.5, 0.5),
             "volume_score": random.uniform(-0.3, 0.3),
             "volatility_score": random.uniform(0, 0.5),
-            "trend_signal": random.uniform(-0.5, 0.5)
+            "trend_signal": random.uniform(-0.5, 0.5),
         }
 
 
 # ==================== AUTO TRADER ====================
 
+
 class AutoTrader:
     """
     Trading bot completamente automatico.
-    
+
     Flusso:
     1. Raccolta dati (mercato + sentiment)
     2. Analisi tecnica
@@ -303,21 +320,21 @@ class AutoTrader:
     5. Aggiornamento portafoglio
     6. Feedback loop
     """
-    
+
     def __init__(self, config: TradingConfig):
         """
         Inizializza l'AutoTrader.
-        
+
         Args:
             config: Configurazione del trading bot
         """
         self.config = config
         self.running = False
         self.cycle_count = 0
-        
+
         # Componenti
         self.data_aggregator = DataAggregator(config)
-        
+
         # Decision Engine
         self.decision_engine = DecisionEngine(
             portfolio_balance=config.initial_balance,
@@ -325,17 +342,17 @@ class AutoTrader:
             max_risk_per_trade=config.max_risk_per_trade,
             semantic_weight=config.semantic_weight,
             numeric_weight=config.numeric_weight,
-            monte_carlo_sims=config.monte_carlo_sims
+            monte_carlo_sims=config.monte_carlo_sims,
         )
-        
+
         # Safety Config per Executor
         safety_config = SafetyConfig(
             min_order_value=config.min_order_value,
             max_order_value=config.max_order_value,
             max_orders_per_minute=config.max_orders_per_minute,
-            dry_run=config.dry_run
+            dry_run=config.dry_run,
         )
-        
+
         # Inizializza registro trading
         if MODULES_AVAILABLE:
             trading_tracker.inizializza_registro()
@@ -345,13 +362,13 @@ class AutoTrader:
                 trading_tracker.reset_registro()
                 trading_tracker.inizializza_registro()
             trading_tracker.set_balance(config.initial_balance)
-        
+
         # Initialize StateManager for database
         self.state_manager = StateManager(db_path="data/trading_state.db")
-        
+
         # Auto Executor
         self.executor = AutoExecutor(safety_config=safety_config)
-        
+
         # Statistiche
         self.stats = {
             "cycles_completed": 0,
@@ -359,32 +376,37 @@ class AutoTrader:
             "orders_executed": 0,
             "total_volume": 0.0,
             "start_time": None,
-            "last_cycle_time": None
+            "last_cycle_time": None,
         }
-        
+
         # Storico
         self.history: List[Dict] = []
         self._last_prices: Dict[str, float] = {}
 
         # Sincronizza posizioni orfane da DB
         self._sync_open_positions()
-        
+
         # Setup signal handlers
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
-        
+
         # HFT Setup (Virtual Wallet Concept)
         self.hft_queue = queue.Queue()
         self.hft_engine = None
-        self.hft_virtual_balance = config.initial_balance * config.hft_budget_pct if config.enable_hft else 0.0
-        
+        self.hft_virtual_balance = (
+            config.initial_balance * config.hft_budget_pct if config.enable_hft else 0.0
+        )
+
         if config.enable_hft:
             logger.info(f"Initialized HFT Engine with sub-wallet: {self.hft_virtual_balance} USDT")
             try:
                 from src.hft.hft_trading_engine import create_hft_engine
+
                 # Usiamo il primo asset come default per HFT
                 first_asset = config.assets[0] if config.assets else "BTCUSDT"
-                self.hft_engine = create_hft_engine(symbol=first_asset, initial_price=100) # Mock price
+                self.hft_engine = create_hft_engine(
+                    symbol=first_asset, initial_price=100
+                )  # Mock price
                 self.hft_engine.set_callbacks(on_signal=self._on_hft_signal)
             except Exception as e:
                 logger.error(f"Failed to start HFT Engine: {e}")
@@ -392,7 +414,7 @@ class AutoTrader:
     def _on_hft_signal(self, signal):
         """Callback for HFT."""
         self.hft_queue.put(signal)
-    
+
     def _sync_open_positions(self):
         """Sincronizza posizioni orfane dallo StateManager verso AutoExecutor."""
         try:
@@ -403,16 +425,16 @@ class AutoTrader:
                     asset = pos.symbol
                     entry_price = pos.entry_price or self._last_prices.get(asset, 1.0)
                     notional = abs(pos.quantity * entry_price)
-                    
+
                     # Recupera parametri di rischio originali o usa default
                     sl_pct = self.config.max_risk_per_trade * 2  # Approssimazione std
-                    if hasattr(self.executor, 'safety'):
+                    if hasattr(self.executor, "safety"):
                         sl_pct = self.executor.safety.default_stop_loss_pct
-                        
-                    tp_pct = sl_pct * 2.5 # standard R:R = 1:2.5
-                    if hasattr(self.executor, 'safety'):
+
+                    tp_pct = sl_pct * 2.5  # standard R:R = 1:2.5
+                    if hasattr(self.executor, "safety"):
                         tp_pct = self.executor.safety.default_take_profit_pct
-                    
+
                     self.executor.open_positions[asset] = {
                         "entry_price": entry_price,
                         "amount": notional,
@@ -421,21 +443,25 @@ class AutoTrader:
                         "stop_loss_price": entry_price * (1 - sl_pct),
                         "take_profit_pct": tp_pct,
                         "timestamp": pos.updated_at.isoformat(),
-                        "order_id": f"RECOVERED_{asset}"
+                        "order_id": f"RECOVERED_{asset}",
                     }
                     recovered_count += 1
             if recovered_count > 0:
-                logger.info(f"🔄 Recovered {recovered_count} orphaned open positions into AutoExecutor")
+                logger.info(
+                    f"🔄 Recovered {recovered_count} orphaned open positions into AutoExecutor"
+                )
         except Exception as e:
             logger.error(f"Failed to recover open positions: {e}")
-    
+
     def _signal_handler(self, signum, frame):
         """Gestisce segnali di interruzione."""
         logger.info(f"Received signal {signum}, shutting down...")
         self.stop()
         sys.exit(0)
 
-    def _resolve_price_for_asset(self, asset: str, current_prices: Dict[str, float]) -> Optional[float]:
+    def _resolve_price_for_asset(
+        self, asset: str, current_prices: Dict[str, float]
+    ) -> Optional[float]:
         """Resolve price handling symbols with and without slash."""
         if not current_prices:
             return None
@@ -455,7 +481,9 @@ class AutoTrader:
             return current_prices.get(alt)
         return None
 
-    def _get_runtime_portfolio_value(self, current_prices: Optional[Dict[str, float]] = None) -> float:
+    def _get_runtime_portfolio_value(
+        self, current_prices: Optional[Dict[str, float]] = None
+    ) -> float:
         """
         Compute a runtime portfolio value based on DecisionEngine cash and
         executor open positions marked-to-market.
@@ -470,7 +498,11 @@ class AutoTrader:
                 base_qty = pos.get("base_quantity")
                 amount = pos.get("amount", 0.0)
 
-                mark_price = self._resolve_price_for_asset(asset, current_prices or {}) if current_prices else None
+                mark_price = (
+                    self._resolve_price_for_asset(asset, current_prices or {})
+                    if current_prices
+                    else None
+                )
                 mark_price = mark_price or entry_price
 
                 if base_qty:
@@ -484,31 +516,31 @@ class AutoTrader:
             return float(portfolio.get("total_value", self.config.initial_balance))
 
         return cash + positions_value
-    
+
     def prepare_asset_analysis(
         self,
         market_data: Dict[str, Dict],
         sentiment_data: Dict[str, Dict],
-        indicators: Dict[str, Dict]
+        indicators: Dict[str, Dict],
     ) -> List[Dict]:
         """
         Prepara i dati degli asset per il DecisionEngine.
-        
+
         Args:
             market_data: Dati di mercato
             sentiment_data: Dati sentiment
             indicators: Indicatori tecnici
-            
+
         Returns:
             Lista di asset formattati per DecisionEngine
         """
         assets = []
-        
+
         for symbol in self.config.assets:
             market = market_data.get(symbol, {})
             sentiment = sentiment_data.get(symbol, {})
             tech = indicators.get(symbol, {})
-            
+
             asset = {
                 "name": symbol,
                 # Dati semantici
@@ -525,61 +557,67 @@ class AutoTrader:
                 # Dati di mercato
                 "price": market.get("current_price", 100),
                 "volatility_annual": market.get("volatility_annual", 0.5),
-                "expected_return": market.get("expected_return", 0)
+                "expected_return": market.get("expected_return", 0),
             }
             assets.append(asset)
-        
+
         return assets
-    
+
     def run_cycle(self) -> Dict:
         """
         Esegue un singolo ciclo di trading.
-        
+
         Returns:
             Dizionario con risultati del ciclo
         """
         self.cycle_count += 1
         cycle_start = datetime.now()
-        
+
         # ==============================================
         # KILL SWITCH CHECK
         # ==============================================
         current_value = self._get_runtime_portfolio_value(self._last_prices)
         initial_value = self.config.initial_balance
-        
+
         # Calcola drawdown
         drawdown = (current_value - initial_value) / initial_value
         min_value_threshold = initial_value * self.config.min_portfolio_value
-        
+
         # Check kill switch conditions
         if current_value <= min_value_threshold:
             logger.critical("=" * 60)
             logger.critical("🚨 KILL SWITCH ACTIVATED!")
-            logger.critical(f"Portfolio value {current_value:.2f} <= min threshold {min_value_threshold:.2f}")
+            logger.critical(
+                f"Portfolio value {current_value:.2f} <= min threshold {min_value_threshold:.2f}"
+            )
             logger.critical("=" * 60)
             self.running = False
             return {"error": "KILL_SWITCH_ACTIVATED", "portfolio_value": current_value}
-        
+
         if drawdown <= self.config.max_drawdown:
             logger.critical("=" * 60)
             logger.critical("🚨 KILL SWITCH ACTIVATED!")
-            logger.critical(f"Drawdown {drawdown:.2%} >= max allowed {self.config.max_drawdown:.2%}")
+            logger.critical(
+                f"Drawdown {drawdown:.2%} >= max allowed {self.config.max_drawdown:.2%}"
+            )
             logger.critical("=" * 60)
             self.running = False
             return {"error": "KILL_SWITCH_ACTIVATED_DRAWDOWN", "drawdown": drawdown}
-        
+
         logger.info("=" * 60)
         logger.info(f"CYCLE {self.cycle_count} STARTED")
         logger.info(f"Portfolio: {current_value:.2f} USDT (Drawdown: {drawdown:.2%})")
         logger.info("=" * 60)
-        
+
         # 1️⃣ Raccolta dati
         logger.info("1. Fetching market data...")
         market_data = self.data_aggregator.fetch_market_data(self.config.assets)
-        
+
         # 1.5️⃣ Check stop-losses e take-profit per posizioni esistenti
         logger.info("1b. Checking stop-losses and take-profit...")
-        current_prices = {asset: data.get('current_price', 0) for asset, data in market_data.items()}
+        current_prices = {
+            asset: data.get("current_price", 0) for asset, data in market_data.items()
+        }
         self._last_prices = dict(current_prices)
         protective_orders = []
         protective_orders.extend(self.executor.check_stop_losses(current_prices))
@@ -590,28 +628,30 @@ class AutoTrader:
             logger.info(f"   Protective exits triggered: {len(protective_orders)}")
             protective_executed = self.executor.execute_orders(protective_orders)
             protective_closed = sum(
-                1 for o in protective_executed if o.status == OrderStatus.EXECUTED and o.action == "SELL"
+                1
+                for o in protective_executed
+                if o.status == OrderStatus.EXECUTED and o.action == "SELL"
             )
             logger.info(f"   Closed {protective_closed} positions via protective exits")
-        
+
         logger.info("2. Fetching sentiment data...")
         sentiment_data = self.data_aggregator.fetch_sentiment(self.config.assets)
-        
+
         # 2️⃣ Analisi tecnica
         logger.info("3. Calculating technical indicators...")
         indicators = self.data_aggregator.calculate_indicators(market_data)
-        
+
         # 3️⃣ Prepara input per Decision Engine
         logger.info("4. Preparing asset analysis...")
         asset_analysis = self.prepare_asset_analysis(market_data, sentiment_data, indicators)
-        
+
         # 4️⃣ Generazione ordini
         logger.info("5. Generating orders with DecisionEngine...")
         orders = self.decision_engine.generate_orders(asset_analysis, update_portfolio=False)
         self.stats["orders_generated"] += len(orders)
-        
+
         logger.info(f"   Generated {len(orders)} orders")
-        
+
         # 5️⃣ Esecuzione automatica
         logger.info("6. Executing orders...")
         executed_orders = self.executor.execute_orders(orders)
@@ -623,31 +663,46 @@ class AutoTrader:
                 hft_signals_to_process.append(self.hft_queue.get_nowait())
             except queue.Empty:
                 break
-                
+
         hft_orders = []
         if hft_signals_to_process:
             logger.info(f"   Processing {len(hft_signals_to_process)} HFT signals from queue")
-            from src.execution.auto_executor import Order as ExOrder, OrderStatus as ExOrderStatus
+            from src.execution.auto_executor import (
+                ExecutedOrder as ExOrder,
+                OrderStatus as ExOrderStatus,
+            )
+
             for sig in hft_signals_to_process:
                 action = sig.signal_type.name
                 # Valore mock o simulato
                 cost = sig.quantity * sig.price
-                if cost <= 0: cost = 10.0 # Min order safe guard
-                
+                if cost <= 0:
+                    cost = 10.0  # Min order safe guard
+
                 if action == "BUY" and self.hft_virtual_balance >= cost:
                     self.hft_virtual_balance -= cost
-                    hft_orders.append(ExOrder(
-                        asset=sig.symbol, action="BUY", amount=cost,
-                        status=ExOrderStatus.PENDING, timestamp=sig.timestamp.isoformat()
-                    ))
+                    hft_orders.append(
+                        ExOrder(
+                            asset=sig.symbol,
+                            action="BUY",
+                            amount=cost,
+                            status=ExOrderStatus.PENDING,
+                            timestamp=sig.timestamp.isoformat(),
+                        )
+                    )
                 elif action == "SELL":
-                    # Manca una check complessa dell'inventory HFT, 
+                    # Manca una check complessa dell'inventory HFT,
                     # assumiamo profit virtuale:
                     self.hft_virtual_balance += cost
-                    hft_orders.append(ExOrder(
-                        asset=sig.symbol, action="SELL", amount=cost,
-                        status=ExOrderStatus.PENDING, timestamp=sig.timestamp.isoformat()
-                    ))
+                    hft_orders.append(
+                        ExOrder(
+                            asset=sig.symbol,
+                            action="SELL",
+                            amount=cost,
+                            status=ExOrderStatus.PENDING,
+                            timestamp=sig.timestamp.isoformat(),
+                        )
+                    )
 
             if hft_orders:
                 executed_hft = self.executor.execute_orders(hft_orders)
@@ -662,12 +717,14 @@ class AutoTrader:
         # Sincronizza portfolio interno DecisionEngine solo con ordini effettivamente eseguiti
         for o in all_executed_orders:
             if o.status == OrderStatus.EXECUTED:
-                self.decision_engine._update_portfolio({
-                    "asset": o.asset,
-                    "action": o.action,
-                    "amount": o.amount,
-                    "timestamp": o.timestamp
-                })
+                self.decision_engine._update_portfolio(
+                    {
+                        "asset": o.asset,
+                        "action": o.action,
+                        "amount": o.amount,
+                        "timestamp": o.timestamp,
+                    }
+                )
 
         executed_count = sum(1 for o in all_executed_orders if o.status == OrderStatus.EXECUTED)
         self.stats["orders_executed"] += executed_count
@@ -684,7 +741,7 @@ class AutoTrader:
                         current_price = self._resolve_price_for_asset(o.asset, current_prices) or 0
                         quantity = o.amount / current_price if current_price > 0 else 0
                         commission = o.amount * 0.001  # 0.1% commission
-                        
+
                         # Get entry price for SELL orders from positions
                         prezzo_acquisto = None
                         if o.action == "SELL":
@@ -696,46 +753,50 @@ class AutoTrader:
                                     if hasattr(posizione, "prezzo_acquisto")
                                     else posizione.get("prezzo_acquisto")
                                 )
-                        
-                        trading_tracker.registra_trade({
-                            "asset": o.asset,
-                            "tipo": o.action, # 'BUY' o 'SELL'
-                            "quantita": quantity,
-                            "prezzo": current_price,
-                            "commissione": commission,
-                            "prezzo_acquisto": prezzo_acquisto,
-                            "strategy": "AutoTrader"
-                        })
-                        
+
+                        trading_tracker.registra_trade(
+                            {
+                                "asset": o.asset,
+                                "tipo": o.action,  # 'BUY' o 'SELL'
+                                "quantita": quantity,
+                                "prezzo": current_price,
+                                "commissione": commission,
+                                "prezzo_acquisto": prezzo_acquisto,
+                                "strategy": "AutoTrader",
+                            }
+                        )
+
                         # Save to database
                         try:
-                            self.state_manager.save_trade({
-                                "order_id": f"{o.asset}_{datetime.now().timestamp()}",
-                                "symbol": o.asset.replace("/USDT", ""),
-                                "side": o.action,
-                                "quantity": quantity,
-                                "price": current_price,
-                                "commission": commission,
-                                "pnl": 0  # Will be calculated on close
-                            })
+                            self.state_manager.save_trade(
+                                {
+                                    "order_id": f"{o.asset}_{datetime.now().timestamp()}",
+                                    "symbol": o.asset.replace("/USDT", ""),
+                                    "side": o.action,
+                                    "quantity": quantity,
+                                    "price": current_price,
+                                    "commission": commission,
+                                    "pnl": 0,  # Will be calculated on close
+                                }
+                            )
                         except Exception as e:
                             logger.error(f"Errore salvataggio trade in DB: {e}")
                 except Exception as e:
                     logger.error(f"Errore registrazione trade in tracker: {e}")
-        
+
         logger.info(f"   Executed {executed_count}/{len(all_executed_orders)} orders")
-        
+
         # 6️⃣ Aggiorna statistiche
         cycle_end = datetime.now()
         cycle_duration = (cycle_end - cycle_start).total_seconds()
-        
+
         self.stats["cycles_completed"] += 1
         self.stats["last_cycle_time"] = cycle_end.isoformat()
-        
+
         # Riepilogo portafoglio
         portfolio = self.decision_engine.get_portfolio_summary()
         runtime_portfolio_value = self._get_runtime_portfolio_value(current_prices)
-        
+
         result = {
             "cycle": self.cycle_count,
             "timestamp": cycle_start.isoformat(),
@@ -746,24 +807,19 @@ class AutoTrader:
             "portfolio_runtime_value": round(runtime_portfolio_value, 2),
             "hft_virtual_balance": round(self.hft_virtual_balance, 2),
             "executed_orders": [
-                {
-                    "asset": o.asset,
-                    "action": o.action,
-                    "amount": o.amount,
-                    "status": o.status.value
-                }
+                {"asset": o.asset, "action": o.action, "amount": o.amount, "status": o.status.value}
                 for o in all_executed_orders
-            ]
+            ],
         }
-        
+
         # Salva in storico
         self.history.append(result)
-        
+
         logger.info(f"Cycle completed in {cycle_duration:.2f}s")
         logger.info(f"Portfolio value: {runtime_portfolio_value:,.2f} USDT")
-        
+
         return result
-    
+
     def run_continuous(self):
         """
         Esegue il loop continuo di trading.
@@ -771,7 +827,7 @@ class AutoTrader:
         self.running = True
         self.stats["start_time"] = datetime.now().isoformat()
         self._last_db_prune: datetime = datetime.now()  # traccia ultimo pruning DB
-        
+
         logger.info("=" * 60)
         logger.info("AUTO TRADER STARTED")
         logger.info(f"Mode: {'DRY RUN (simulation)' if self.config.dry_run else 'LIVE'}")
@@ -782,16 +838,16 @@ class AutoTrader:
             if self.hft_engine:
                 self.hft_engine.start()
         logger.info("=" * 60)
-        
+
         while self.running:
             try:
                 # Esegui ciclo
                 self.run_cycle()
-                
+
                 # Attendi prossimo ciclo
                 logger.info(f"\nWaiting {self.config.loop_interval}s until next cycle...")
                 time.sleep(self.config.loop_interval)
-                
+
             except KeyboardInterrupt:
                 logger.info("Keyboard interrupt received")
                 self.stop()
@@ -811,18 +867,18 @@ class AutoTrader:
                     self._last_db_prune = datetime.now()
             except Exception as e:
                 logger.warning(f"DB pruning failed (non-critical): {e}")
-    
+
     def stop(self):
         """Ferma il trading bot."""
         logger.info("Stopping AutoTrader...")
         self.running = False
-        
+
         if self.hft_engine:
             self.hft_engine.stop()
-            
+
         # Stampa statistiche finali
         self.print_summary()
-    
+
     def print_summary(self):
         """Stampa un riepilogo finale."""
         print("\n" + "=" * 60)
@@ -832,12 +888,12 @@ class AutoTrader:
         print(f"  Orders generated: {self.stats['orders_generated']}")
         print(f"  Orders executed: {self.stats['orders_executed']}")
         print(f"  Total volume: {self.stats['total_volume']:,.2f} USDT")
-        
+
         if self.stats["start_time"]:
             start = datetime.fromisoformat(self.stats["start_time"])
             duration = datetime.now() - start
             print(f"  Running time: {duration}")
-        
+
         # Portfolio finale
         portfolio = self.decision_engine.get_portfolio_summary()
         runtime_value = self._get_runtime_portfolio_value()
@@ -851,53 +907,33 @@ class AutoTrader:
 
 # ==================== MAIN ====================
 
+
 def main():
     """Entry point principale."""
     parser = argparse.ArgumentParser(description="AI Trading Bot - Automatic Execution")
     parser.add_argument(
-        "--mode",
-        choices=["live", "backtest", "single"],
-        default="live",
-        help="Trading mode"
+        "--mode", choices=["live", "backtest", "single"], default="live", help="Trading mode"
     )
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        default=True,
-        help="Simulate without real orders"
+        "--dry-run", action="store_true", default=True, help="Simulate without real orders"
+    )
+    parser.add_argument("--interval", type=int, default=60, help="Loop interval in seconds")
+    parser.add_argument("--balance", type=float, default=100000.0, help="Initial portfolio balance")
+    parser.add_argument(
+        "--assets", nargs="+", default=["BTCUSDT", "ETHUSDT", "SOLUSDT"], help="Assets to trade"
     )
     parser.add_argument(
-        "--interval",
-        type=int,
-        default=60,
-        help="Loop interval in seconds"
-    )
-    parser.add_argument(
-        "--balance",
-        type=float,
-        default=100000.0,
-        help="Initial portfolio balance"
-    )
-    parser.add_argument(
-        "--assets",
-        nargs="+",
-        default=["BTCUSDT", "ETHUSDT", "SOLUSDT"],
-        help="Assets to trade"
-    )
-    parser.add_argument(
-        "--enable-hft",
-        action="store_true",
-        help="Enable High Frequency Trading Engine"
+        "--enable-hft", action="store_true", help="Enable High Frequency Trading Engine"
     )
     parser.add_argument(
         "--hft-budget-pct",
         type=float,
         default=0.10,
-        help="Percentage of balance dedicated to HFT (default: 0.10)"
+        help="Percentage of balance dedicated to HFT (default: 0.10)",
     )
-    
+
     args = parser.parse_args()
-    
+
     # Crea configurazione
     config = TradingConfig(
         loop_interval=args.interval,
@@ -905,12 +941,12 @@ def main():
         initial_balance=args.balance,
         dry_run=args.dry_run,
         enable_hft=args.enable_hft,
-        hft_budget_pct=args.hft_budget_pct
+        hft_budget_pct=args.hft_budget_pct,
     )
-    
+
     # Crea AutoTrader
     trader = AutoTrader(config)
-    
+
     if args.mode == "single":
         # Singolo ciclo
         result = trader.run_cycle()
