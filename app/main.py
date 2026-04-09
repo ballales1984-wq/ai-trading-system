@@ -395,6 +395,20 @@ try:
 except Exception as e:
     logger.warning(f"Could not mount frontend static files: {e}")
 
+
+# Catch-all for SPA routing - serve index.html for any non-API path
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    """Serve index.html for all non-API routes to support SPA routing."""
+    from fastapi.responses import FileResponse
+    import os
+
+    index_path = os.path.join("frontend/dist", "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"detail": "Not Found"}
+
+
 if get_metrics_app:
     app.mount("/metrics", get_metrics_app())
     logger.info("Prometheus metrics available at /metrics")
