@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 import random
 import requests
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from typing import List, Optional, Dict
 from uuid import uuid4
 
@@ -1103,7 +1103,8 @@ async def get_portfolio_history(
 ) -> PortfolioHistory:
     """Get portfolio value history."""
     import logging
-    from datetime import timedelta as td
+    from datetime import timedelta
+    import random
 
     logger = logging.getLogger(__name__)
     logger.info("=== HISTORY ENDPOINT CALLED ===")
@@ -1115,7 +1116,7 @@ async def get_portfolio_history(
     logger.info(f"Current date: {current_date}")
 
     for i in range(days):
-        date_offset = current_date - td(days=days - i - 1)
+        date_offset = current_date - timedelta(days=days - i - 1)
         date_str = date_offset.strftime("%Y-%m-%d")
         daily_return = random.uniform(-0.03, 0.04)
         base_value *= 1 + daily_return
