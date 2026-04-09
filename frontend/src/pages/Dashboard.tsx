@@ -113,12 +113,11 @@ export default function Dashboard() {
   const ordersList = (Array.isArray(orders) ? orders : []).slice(0, 8);
   const positionsList = Array.isArray(positions) ? positions : [];
 
-  // formatCurrency e formatPercent sono ora costanti module-level (no recreation per render)
-  // Show skeleton loader while data is loading (but not if history exists but is empty)
-  const historyExists = history && (history.history || Array.isArray(history));
-  const hasHistoryData = historyExists && (history.history?.length > 0 || (Array.isArray(history) && history.length > 0));
+  // Show skeleton while loading (but allow render if we have data)
+  const isLoading = summaryLoading || !markets || !performance || !orders || !positions;
+  const hasHistory = history && (history.history || Array.isArray(history));
   
-  if (summaryLoading || !historyExists || !markets || !performance || !orders || !positions) {
+  if (isLoading && !hasHistory) {
     return <DashboardSkeleton />;
   }
 
