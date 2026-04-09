@@ -1107,11 +1107,21 @@ async def get_portfolio_history(
     logger = logging.getLogger(__name__)
 
     try:
+        current_value = PAPER_INITIAL_BALANCE
+
         try:
-            summary = portfolio_data.get("summary", {})
-            current_value = float(summary.get("total_value", PAPER_INITIAL_BALANCE))
-        except:
-            current_value = PAPER_INITIAL_BALANCE
+            pos_data = portfolio_data["positions"]
+            if pos_data:
+                cash = float(portfolio_data.get("cash_balance", PAPER_INITIAL_BALANCE))
+                total_mv = 0.0
+                for p in pos_data:
+                    qty = float(p.get("quantity", 0))
+                    price = float(p.get("current_price", 0))
+                    if qty > 0 and price > 0:
+                        total_mv += qty * price
+                current_value = cash + total_mv
+        except Exception as e:
+            logger.warning(f"Could not get positions: {e}")
 
         history = []
         base_value = current_value * 0.85
