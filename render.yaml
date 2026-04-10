@@ -23,3 +23,5 @@ services:
         value: ""
       - key: SECRET_KEY
         value: "change-me-in-production"
+      - key: DEMO_MODE
+        value: "false"

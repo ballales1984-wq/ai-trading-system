@@ -4,7 +4,7 @@ import os
 
 # Demo mode configuration - set to True for demo mode by default
 # Can be overridden by environment variable DEMO_MODE
-_demo_mode = os.getenv("DEMO_MODE", "true").lower() == "true"
+_demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
 
 
 def get_demo_mode() -> bool:
