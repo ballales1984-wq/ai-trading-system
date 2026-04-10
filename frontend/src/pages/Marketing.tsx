@@ -193,11 +193,9 @@ export default function Marketing() {
             <p className="text-text-muted text-lg">Institutional tools structured for every scale.</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-1 gap-8 max-w-2xl mx-auto">
             {[
-              { name: 'Pro', price: '€49', featured: true, features: ['Unlimited assets', 'Advanced Monte Carlo (5 levels)', 'Telegram Alerts', 'Real-time WebSockets', 'API access'] },
-              { name: 'Basic', price: '€19', features: ['5 assets monitoring', 'Basic Monte Carlo', 'Email alerts', 'End-of-day reports'] },
-              { name: 'Institutional', price: '€199', features: ['Everything in Pro', 'Custom strategies', 'Dedicated account mgr', 'White-label reports', 'SLA 99.9%'] }
+              { name: 'Pro', price: '€49', featured: true, features: ['Unlimited assets', 'Advanced Monte Carlo (5 levels)', 'Telegram Alerts', 'Real-time WebSockets', 'API access', 'Download desktop app included'] }
             ].map((plan, i) => (
               <div key={i} className={`premium-glass-panel p-8 relative ${plan.featured ? 'border-primary/50 shadow-[0_0_30px_rgba(59,130,246,0.15)] scale-105 z-10' : ''}`}>
                 {plan.featured && (
@@ -224,7 +222,7 @@ export default function Marketing() {
                       : 'bg-white/[0.03] border border-white/10 text-text hover:bg-white/[0.08]'
                     }`}
                 >
-                  {plan.name === 'Institutional' ? 'Contact Sales' : plan.name === 'Pro' ? 'Buy Now - €49/mo' : 'Start Free Trial'}
+                  {plan.name === 'Pro' ? 'Buy Now - €49/month' : 'Start Free Trial'}
                 </Link>
               </div>
             ))}
