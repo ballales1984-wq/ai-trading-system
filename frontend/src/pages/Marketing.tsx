@@ -218,13 +218,13 @@ export default function Marketing() {
                   ))}
                 </ul>
                 <Link
-                  to="/login"
+                  to="/payment"
                   className={`block w-full py-3.5 rounded-lg font-bold text-center transition-all duration-300 ${plan.featured
                       ? 'bg-primary text-white hover:bg-primary-hover glow-primary'
                       : 'bg-white/[0.03] border border-white/10 text-text hover:bg-white/[0.08]'
                     }`}
                 >
-                  {plan.name === 'Institutional' ? 'Contact Sales' : 'Start Free Trial'}
+                  {plan.name === 'Institutional' ? 'Contact Sales' : plan.name === 'Pro' ? 'Buy Now - €49/mo' : 'Start Free Trial'}
                 </Link>
               </div>
             ))}
