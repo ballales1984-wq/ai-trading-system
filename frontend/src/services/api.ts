@@ -321,7 +321,7 @@ export const newsApi = {
 // Payment API
 export const paymentApi = {
   isConfigured: () => {
-    return !!import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+    return !!import.meta.env.VITE_STRIPE_PAYMENT_LINK;
   },
   redirectToPaymentLink: () => {
     const paymentLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK;
