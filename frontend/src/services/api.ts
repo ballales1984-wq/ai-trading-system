@@ -319,12 +319,14 @@ export const newsApi = {
 };
 
 // Payment API
+const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/8x25kE2PzaL3gUX7zo3cc00';
+
 export const paymentApi = {
   isConfigured: () => {
-    return !!import.meta.env.VITE_STRIPE_PAYMENT_LINK;
+    return !!import.meta.env.VITE_STRIPE_PAYMENT_LINK || !!STRIPE_PAYMENT_LINK;
   },
   redirectToPaymentLink: () => {
-    const paymentLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK;
+    const paymentLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK || STRIPE_PAYMENT_LINK;
     if (paymentLink) {
       window.location.href = paymentLink;
     }
