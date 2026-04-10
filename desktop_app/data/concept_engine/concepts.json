@@ -1,0 +1,1559 @@
+[
+  {
+    "id": "long_position",
+    "term": "Long Position",
+    "definition": "Posizione rialzista che guadagna quando il prezzo sale (Acquisto)",
+    "category": "trading",
+    "keywords": [
+      "buy",
+      "long",
+      "acquisto",
+      "rialzo",
+      "rialzista",
+      "purchase"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534277",
+    "last_updated": "2026-04-10T08:57:03.534295",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "short_position",
+    "term": "Short Position",
+    "definition": "Posizione ribassista che guadagna quando il prezzo scende (Vendita)",
+    "category": "trading",
+    "keywords": [
+      "sell",
+      "short",
+      "ribasso",
+      "ribassista",
+      "shortare",
+      "shorting"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534313",
+    "last_updated": "2026-04-10T08:57:03.534318",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "stop_loss",
+    "term": "Stop Loss",
+    "definition": "Ordine automatico per limitare le perdite a un livello predefinito",
+    "category": "risk",
+    "keywords": [
+      "stop",
+      "stop loss",
+      "protezione",
+      "limite",
+      "exit"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534329",
+    "last_updated": "2026-04-10T08:57:03.534332",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "take_profit",
+    "term": "Take Profit",
+    "definition": "Ordine automatico per chiudere in profitto a un target specifico",
+    "category": "risk",
+    "keywords": [
+      "target",
+      "profit",
+      "take profit",
+      "obiettivo",
+      "chiusura"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534339",
+    "last_updated": "2026-04-10T08:57:03.534342",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "leverage",
+    "term": "Leva (Leverage)",
+    "definition": "Moltiplicatore che amplifica l'esposizione con meno capitale",
+    "category": "trading",
+    "keywords": [
+      "leverage",
+      "leva",
+      "margine",
+      "x10",
+      "x100",
+      "leveraged"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534349",
+    "last_updated": "2026-04-10T08:57:03.534352",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "margin",
+    "term": "Margine",
+    "definition": "Capitale richiesto come garanzia per mantenere una posizione aperta",
+    "category": "trading",
+    "keywords": [
+      "margin",
+      "collateral",
+      "collaterale"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534359",
+    "last_updated": "2026-04-10T08:57:03.534362",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "var",
+    "term": "VaR (Value at Risk)",
+    "definition": "Massima perdita attesa in un intervallo di confidenza (es. 95%)",
+    "category": "risk",
+    "keywords": [
+      "var",
+      "value at risk",
+      "rischio",
+      "confidenza",
+      "maximum loss"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534369",
+    "last_updated": "2026-04-10T08:57:03.534372",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "cvar",
+    "term": "CVaR (Conditional VaR)",
+    "definition": "Perdita attesa media quando si supera la soglia del VaR (Expected Shortfall)",
+    "category": "risk",
+    "keywords": [
+      "cvar",
+      "expected shortfall",
+      "tail risk",
+      "average loss",
+      "tail"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534378",
+    "last_updated": "2026-04-10T08:57:03.534381",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "drawdown",
+    "term": "Drawdown",
+    "definition": "Calo percentuale dal picco al minimo locale del portafoglio",
+    "category": "risk",
+    "keywords": [
+      "drawdown",
+      "dd",
+      "perdita",
+      "calo",
+      "peak to trough"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534387",
+    "last_updated": "2026-04-10T08:57:03.534390",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "max_dd",
+    "term": "Max Drawdown",
+    "definition": "Il massimo calo storico registrato dal portafoglio dal suo picco",
+    "category": "risk",
+    "keywords": [
+      "maxdd",
+      "max drawdown",
+      "peak",
+      "worst case"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534396",
+    "last_updated": "2026-04-10T08:57:03.534399",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "sharpe_ratio",
+    "term": "Sharpe Ratio",
+    "definition": "Misura del rendimento aggiustato per il rischio",
+    "category": "portfolio",
+    "keywords": [
+      "sharpe",
+      "risk adjusted",
+      "return",
+      "performance"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534405",
+    "last_updated": "2026-04-10T08:57:03.534408",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "sortino_ratio",
+    "term": "Sortino Ratio",
+    "definition": "Sharpe ratio che considera solo la volatilità negativa",
+    "category": "portfolio",
+    "keywords": [
+      "sortino",
+      "downside risk",
+      "return",
+      "performance"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534414",
+    "last_updated": "2026-04-10T08:57:03.534418",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "rsi",
+    "term": "RSI (Relative Strength Index)",
+    "definition": "Indicatore di momentum che misura la velocità e il cambiamento dei movimenti di prezzo (0-100)",
+    "category": "technical",
+    "keywords": [
+      "rsi",
+      "overbought",
+      "oversold",
+      "momentum",
+      "strength"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534424",
+    "last_updated": "2026-04-10T08:57:03.534427",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "macd",
+    "term": "MACD (Moving Average Convergence Divergence)",
+    "definition": "Indicatore di trend che mostra la relazione tra due medie mobili del prezzo",
+    "category": "technical",
+    "keywords": [
+      "macd",
+      "convergence",
+      "divergence",
+      "signal line",
+      "histogram"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534433",
+    "last_updated": "2026-04-10T08:57:03.534436",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "ema",
+    "term": "EMA (Media Mobile Esponenziale)",
+    "definition": "Media mobile che dà più peso ai prezzi più recenti",
+    "category": "technical",
+    "keywords": [
+      "ema",
+      "media mobile",
+      "exponential average"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534441",
+    "last_updated": "2026-04-10T08:57:03.534444",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "sma",
+    "term": "SMA (Media Mobile Semplice)",
+    "definition": "Media aritmetica dei prezzi su un periodo specifico",
+    "category": "technical",
+    "keywords": [
+      "sma",
+      "ma",
+      "media mobile",
+      "simple average"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534449",
+    "last_updated": "2026-04-10T08:57:03.534452",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "bollinger",
+    "term": "Bande di Bollinger",
+    "definition": "Bande di volatilità basate su media mobile e deviazione standard",
+    "category": "technical",
+    "keywords": [
+      "bollinger",
+      "bands",
+      "volatility",
+      "bands",
+      "volatilità"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534458",
+    "last_updated": "2026-04-10T08:57:03.534461",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "support",
+    "term": "Supporto",
+    "definition": "Livello di prezzo dove la domanda tende ad assorbire l'offerta",
+    "category": "technical",
+    "keywords": [
+      "support",
+      "floor",
+      "supporto",
+      "minimo",
+      "demand"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534466",
+    "last_updated": "2026-04-10T08:57:03.534469",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "resistance",
+    "term": "Resistenza",
+    "definition": "Livello di prezzo dove l'offerta tende a superare la domanda",
+    "category": "technical",
+    "keywords": [
+      "resistance",
+      "ceiling",
+      "resistenza",
+      "massimo",
+      "supply"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534474",
+    "last_updated": "2026-04-10T08:57:03.534477",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "breakout",
+    "term": "Breakout",
+    "definition": "Rottura decisa di un livello di supporto o resistenza",
+    "category": "technical",
+    "keywords": [
+      "breakout",
+      "rottura",
+      "rupture",
+      "volatilità"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534483",
+    "last_updated": "2026-04-10T08:57:03.534486",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "pullback",
+    "term": "Pullback",
+    "definition": "Ritorno temporaneo del prezzo verso un livello appena rotto",
+    "category": "technical",
+    "keywords": [
+      "pullback",
+      "retrace",
+      "ritracciamento"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534491",
+    "last_updated": "2026-04-10T08:57:03.534494",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "volatility",
+    "term": "Volatilità",
+    "definition": "Misura della dispersione dei rendimenti e delle oscillazioni dei prezzi",
+    "category": "market",
+    "keywords": [
+      "volatility",
+      "volatile",
+      "oscillazione",
+      "instabilita",
+      "variance"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534500",
+    "last_updated": "2026-04-10T08:57:03.534503",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "liquidity",
+    "term": "Liquidità",
+    "definition": "Facilità con cui un asset può essere scambiato senza impattare il prezzo",
+    "category": "market",
+    "keywords": [
+      "liquidity",
+      "liquidità",
+      "depth",
+      "volume",
+      "slippage"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534510",
+    "last_updated": "2026-04-10T08:57:03.534513",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "spread",
+    "term": "Spread",
+    "definition": "Differenza tra il prezzo di acquisto (bid) e di vendita (ask)",
+    "category": "market",
+    "keywords": [
+      "spread",
+      "bid",
+      "ask",
+      "denaro",
+      "lettera",
+      "differenziale"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534519",
+    "last_updated": "2026-04-10T08:57:03.534522",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "volume",
+    "term": "Volume",
+    "definition": "Quantità totale di un asset scambiata in un dato periodo",
+    "category": "market",
+    "keywords": [
+      "volume",
+      "traded",
+      "scambi",
+      "turnover"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534527",
+    "last_updated": "2026-04-10T08:57:03.534530",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "market_cap",
+    "term": "Market Cap",
+    "definition": "Valore totale di mercato (Prezzo * Circolante)",
+    "category": "market",
+    "keywords": [
+      "market cap",
+      "capitalizzazione",
+      "valuation"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534536",
+    "last_updated": "2026-04-10T08:57:03.534539",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "staking",
+    "term": "Staking",
+    "definition": "Blocco di token per partecipare alla validazione della rete e ricevere reward",
+    "category": "defi",
+    "keywords": [
+      "staking",
+      "lock",
+      "reward",
+      "validator",
+      "delegation"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534545",
+    "last_updated": "2026-04-10T08:57:03.534548",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "liquidity_pool",
+    "term": "Liquidity Pool",
+    "definition": "Pool di fondi bloccati in smart contract per facilitare scambi",
+    "category": "defi",
+    "keywords": [
+      "liquidity pool",
+      "lp",
+      "amm",
+      "swap",
+      "yield"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534554",
+    "last_updated": "2026-04-10T08:57:03.534557",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "impermanent_loss",
+    "term": "Impermanent Loss",
+    "definition": "Perdita temporanea che si verifica quando il prezzo degli asset in LP cambia",
+    "category": "defi",
+    "keywords": [
+      "impermanent loss",
+      "il",
+      "loss",
+      " lp",
+      "无常损失"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534562",
+    "last_updated": "2026-04-10T08:57:03.534565",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "yield_farming",
+    "term": "Yield Farming",
+    "definition": "Strategia di massimizzazione del rendimento spostando capitale tra protocolli",
+    "category": "defi",
+    "keywords": [
+      "yield farming",
+      "farm",
+      "apy",
+      "reward",
+      "harvest"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534570",
+    "last_updated": "2026-04-10T08:57:03.534573",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "smart_contract",
+    "term": "Smart Contract",
+    "definition": "Codice auto-eseguibile su blockchain che enforcea accordi",
+    "category": "defi",
+    "keywords": [
+      "smart contract",
+      "contract",
+      "code",
+      "automate",
+      "execute"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534578",
+    "last_updated": "2026-04-10T08:57:03.534581",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "layer2",
+    "term": "Layer 2",
+    "definition": "Protocolli costruiti sopra una blockchain (L1) per migliorarne la scalabilità",
+    "category": "crypto",
+    "keywords": [
+      "l2",
+      "scalability",
+      "arbitrum",
+      "optimism",
+      "rollup",
+      "zksync"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534598",
+    "last_updated": "2026-04-10T08:57:03.534602",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "inflation",
+    "term": "Inflazione",
+    "definition": "Aumento generalizzato del livello dei prezzi e perdita di potere d'acquisto",
+    "category": "economic",
+    "keywords": [
+      "inflation",
+      "inflazione",
+      "cpi",
+      "prezzi",
+      "purchasing power"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534608",
+    "last_updated": "2026-04-10T08:57:03.534611",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "interest_rate",
+    "term": "Interest Rate",
+    "definition": "Tasso applicato al capitale prestato",
+    "category": "macro",
+    "keywords": [
+      "interest rate",
+      "fed rate",
+      "policy rate",
+      "benchmark"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534625",
+    "last_updated": "2026-04-10T08:57:03.534629",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "recession",
+    "term": "Recessione",
+    "definition": "Periodo di declino economico significativo, spesso definito da due trimestri di PIL negativo",
+    "category": "economic",
+    "keywords": [
+      "recession",
+      "recessione",
+      "downturn",
+      "contrazione"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534635",
+    "last_updated": "2026-04-10T08:57:03.534638",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "quantitative_easing",
+    "term": "Quantitative Easing (QE)",
+    "definition": "Politica monetaria espansiva in cui la banca centrale acquista titoli",
+    "category": "economic",
+    "keywords": [
+      "qe",
+      "printing",
+      "liquidity injection",
+      "monetary base"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534644",
+    "last_updated": "2026-04-10T08:57:03.534648",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "bullish",
+    "term": "Bullish",
+    "definition": "Aspettativa di mercato che i prezzi salgano (Rialzista)",
+    "category": "sentiment",
+    "keywords": [
+      "bullish",
+      "rialzista",
+      "buy",
+      "optimistic",
+      "bull"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534655",
+    "last_updated": "2026-04-10T08:57:03.534674",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "bearish",
+    "term": "Bearish",
+    "definition": "Aspettativa di mercato che i prezzi scendano (Ribassista)",
+    "category": "sentiment",
+    "keywords": [
+      "bearish",
+      "ribassista",
+      "sell",
+      "pessimistic",
+      "bear"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534681",
+    "last_updated": "2026-04-10T08:57:03.534684",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "fomo",
+    "term": "FOMO",
+    "definition": "Fear Of Missing Out - Paura di essere lasciati fuori da un rialzo",
+    "category": "sentiment",
+    "keywords": [
+      "fomo",
+      "miss",
+      "hype",
+      "rush"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534690",
+    "last_updated": "2026-04-10T08:57:03.534693",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "fomo_index",
+    "term": "Indice FOMO",
+    "definition": "Misura quantitativa della paura di perdere opportunità",
+    "category": "sentiment",
+    "keywords": [
+      "fomo",
+      "hype",
+      "greed"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534698",
+    "last_updated": "2026-04-10T08:57:03.534702",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "fud",
+    "term": "FUD",
+    "definition": "Fear, Uncertainty and Doubt - Diffusione di notizie negative per generare paura",
+    "category": "sentiment",
+    "keywords": [
+      "fud",
+      "fear",
+      "uncertainty",
+      "panic"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534707",
+    "last_updated": "2026-04-10T08:57:03.534710",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "fear_greed_index",
+    "term": "Fear & Greed Index",
+    "definition": "Indice che misura le emozioni dominanti nel mercato (0-100)",
+    "category": "sentiment",
+    "keywords": [
+      "fear",
+      "greed",
+      "sentiment index",
+      "emotion"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534716",
+    "last_updated": "2026-04-10T08:57:03.534719",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "mean_reversion",
+    "term": "Mean Reversion",
+    "definition": "Strategia che assume che i prezzi ritornino alla media storica",
+    "category": "strategy",
+    "keywords": [
+      "mean reversion",
+      "revert",
+      "average",
+      "oscillation"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534726",
+    "last_updated": "2026-04-10T08:57:03.534729",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "momentum",
+    "term": "Momentum Trading",
+    "definition": "Strategia che cavalca la forza e la velocità di un trend esistente",
+    "category": "strategy",
+    "keywords": [
+      "momentum",
+      "trend",
+      "forza",
+      "continuation"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534737",
+    "last_updated": "2026-04-10T08:57:03.534740",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "dca",
+    "term": "DCA (Dollar Cost Averaging)",
+    "definition": "Investimento costante di una somma fissa a intervalli regolari",
+    "category": "strategy",
+    "keywords": [
+      "dca",
+      "average",
+      "accumulo",
+      "cost averaging"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534746",
+    "last_updated": "2026-04-10T08:57:03.534749",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "hedging",
+    "term": "Hedging",
+    "definition": "Strategia di copertura per ridurre il rischio di variazioni avverse dei prezzi",
+    "category": "strategy",
+    "keywords": [
+      "hedge",
+      "coverage",
+      "copertura"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534755",
+    "last_updated": "2026-04-10T08:57:03.534758",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "emergency_liquidation",
+    "term": "Emergency Liquidation",
+    "definition": "Chiusura istantanea di tutte le posizioni in caso di superamento dei limiti critici di drawdown",
+    "category": "risk_control",
+    "keywords": [
+      "emergency",
+      "liquidation",
+      "close all",
+      "panic button",
+      "liquidazione"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534763",
+    "last_updated": "2026-04-10T08:57:03.534767",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "correlated_exposure_guard",
+    "term": "Correlated Exposure Guard",
+    "definition": "Sistema preventivo che impedisce l'apertura automatica di posizioni correlate per evitare concentrazione di rischio",
+    "category": "risk_control",
+    "keywords": [
+      "correlation",
+      "correlated",
+      "exposure",
+      "guard",
+      "protezione correlazione"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534772",
+    "last_updated": "2026-04-10T08:57:03.534775",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "volatility_circuit_breaker",
+    "term": "Volatility Circuit Breaker",
+    "definition": "Meccanismo di interruzione automatica del trading durante periodi di estrema volatilità di mercato",
+    "category": "risk_control",
+    "keywords": [
+      "circuit breaker",
+      "halt",
+      "pause",
+      "volatility",
+      "stop trading",
+      "interruzione"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534780",
+    "last_updated": "2026-04-10T08:57:03.534783",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "concentration_risk",
+    "term": "Concentration Risk",
+    "definition": "Rischio derivante dall'avere un'esposizione eccessiva su un singolo asset o settore",
+    "category": "risk",
+    "keywords": [
+      "concentration",
+      "diversification",
+      "portfolio weight",
+      "concentrazione"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534789",
+    "last_updated": "2026-04-10T08:57:03.534792",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "beta_exposure",
+    "term": "Beta Exposure",
+    "definition": "Misura della sensibilità del portafoglio o di un asset rispetto ai movimenti del mercato generale",
+    "category": "risk",
+    "keywords": [
+      "beta",
+      "exposure",
+      "market risk",
+      "sensitività"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534798",
+    "last_updated": "2026-04-10T08:57:03.534801",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "bollinger_bands",
+    "term": "Bollinger Bands",
+    "definition": "Bande di volatilità che si adattano alla volatilità del mercato",
+    "category": "technical",
+    "keywords": [
+      "bollinger",
+      "bands",
+      "volatility",
+      " squeeze",
+      "envelope"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534807",
+    "last_updated": "2026-04-10T08:57:03.534810",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "moving_average",
+    "term": "Moving Average",
+    "definition": "Media mobile che smootha i dati di prezzo su un periodo specifico",
+    "category": "technical",
+    "keywords": [
+      "ma",
+      "sma",
+      "ema",
+      "wma",
+      "average",
+      "trend"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534815",
+    "last_updated": "2026-04-10T08:57:03.534818",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "fibonacci_retracement",
+    "term": "Fibonacci Retracement",
+    "definition": "Livelli di supporto/resistenza basati sulla sequenza di Fibonacci",
+    "category": "technical",
+    "keywords": [
+      "fibonacci",
+      "retracement",
+      "support",
+      "resistance",
+      "golden ratio"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534824",
+    "last_updated": "2026-04-10T08:57:03.534827",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "atr",
+    "term": "ATR (Average True Range)",
+    "definition": "Misura della volatilità del mercato calcolando la media dei range veri",
+    "category": "technical",
+    "keywords": [
+      "atr",
+      "volatility",
+      "range",
+      "true range"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534832",
+    "last_updated": "2026-04-10T08:57:03.534835",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "stochastic_oscillator",
+    "term": "Stochastic Oscillator",
+    "definition": "Indicatore di momentum che confronta il prezzo di chiusura con il range",
+    "category": "technical",
+    "keywords": [
+      "stochastic",
+      "oscillator",
+      "k",
+      "d",
+      "momentum"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534840",
+    "last_updated": "2026-04-10T08:57:03.534861",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "adx",
+    "term": "ADX (Average Directional Index)",
+    "definition": "Misura la forza di un trend senza considerare la direzione",
+    "category": "technical",
+    "keywords": [
+      "adx",
+      "dmi",
+      "trend strength",
+      "directional"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534869",
+    "last_updated": "2026-04-10T08:57:03.534873",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "diversification",
+    "term": "Diversification",
+    "definition": "Strategia di distribuzione del capitale su asset multiple per ridurre il rischio",
+    "category": "portfolio",
+    "keywords": [
+      "diversification",
+      "spread",
+      "allocation",
+      "portfolio"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534879",
+    "last_updated": "2026-04-10T08:57:03.534883",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "asset_allocation",
+    "term": "Asset Allocation",
+    "definition": "Distribuzione del capitale tra diverse classi di asset",
+    "category": "portfolio",
+    "keywords": [
+      "allocation",
+      "asset",
+      "weight",
+      "distribution",
+      "portfolio"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534889",
+    "last_updated": "2026-04-10T08:57:03.534892",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "rebalancing",
+    "term": "Rebalancing",
+    "definition": "Ridistribuzione periodica del portafoglio per mantenere l'allocazione target",
+    "category": "portfolio",
+    "keywords": [
+      "rebalancing",
+      "adjust",
+      "target",
+      "threshold"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534896",
+    "last_updated": "2026-04-10T08:57:03.534908",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "max_drawdown",
+    "term": "Maximum Drawdown",
+    "definition": "La più grande perdita registrata da un picco precedente",
+    "category": "portfolio",
+    "keywords": [
+      "drawdown",
+      "max drawdown",
+      "peak",
+      "trough",
+      "loss"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534914",
+    "last_updated": "2026-04-10T08:57:03.534917",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "compound_annual_growth",
+    "term": "CAGR (Compound Annual Growth Rate)",
+    "definition": "Tasso di crescita annuale composto che smootha la volatilità",
+    "category": "portfolio",
+    "keywords": [
+      "cagr",
+      "growth",
+      "annual",
+      "compound",
+      "return"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534921",
+    "last_updated": "2026-04-10T08:57:03.534924",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "oracle",
+    "term": "Oracle",
+    "definition": "Servizio che fornisce dati esterni alla blockchain",
+    "category": "defi",
+    "keywords": [
+      "oracle",
+      "data feed",
+      "external",
+      "chainlink",
+      "price feed"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534929",
+    "last_updated": "2026-04-10T08:57:03.534931",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "gas_fee",
+    "term": "Gas Fee",
+    "definition": "Fee di transazione sulla blockchain ( Ethereum)",
+    "category": "defi",
+    "keywords": [
+      "gas",
+      "fee",
+      "transaction cost",
+      "network fee"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534936",
+    "last_updated": "2026-04-10T08:57:03.534939",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "slippage",
+    "term": "Slippage",
+    "definition": "Differenza tra prezzo atteso e prezzo eseguito",
+    "category": "defi",
+    "keywords": [
+      "slippage",
+      "price impact",
+      "execution",
+      "spread"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534944",
+    "last_updated": "2026-04-10T08:57:03.534946",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "inflation_rate",
+    "term": "Inflation Rate",
+    "definition": "Tasso di crescita dei prezzi nel tempo",
+    "category": "macro",
+    "keywords": [
+      "inflation",
+      "cpi",
+      "ppi",
+      "price index",
+      "deflation"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534951",
+    "last_updated": "2026-04-10T08:57:03.534954",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "gdp_growth",
+    "term": "GDP Growth",
+    "definition": "Tasso di crescita del prodotto interno lordo",
+    "category": "macro",
+    "keywords": [
+      "gdp",
+      "growth",
+      "economic",
+      "quarterly",
+      "output"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534958",
+    "last_updated": "2026-04-10T08:57:03.534961",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "unemployment_rate",
+    "term": "Unemployment Rate",
+    "definition": "Percentuale della forza lavoro senza impiego",
+    "category": "macro",
+    "keywords": [
+      "unemployment",
+      "jobs",
+      "labor",
+      "employment"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534965",
+    "last_updated": "2026-04-10T08:57:03.534968",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "consumer_sentiment",
+    "term": "Consumer Sentiment",
+    "definition": "Misura della fiducia dei consumatori nell'economia",
+    "category": "macro",
+    "keywords": [
+      "consumer confidence",
+      "sentiment",
+      "survey",
+      "michigan"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534972",
+    "last_updated": "2026-04-10T08:57:03.534975",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "call_option",
+    "term": "Call Option",
+    "definition": "Contratto che dà il diritto di acquistare un asset a un prezzo specifico",
+    "category": "derivatives",
+    "keywords": [
+      "call",
+      "option",
+      "buy right",
+      "strike",
+      "premium"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534980",
+    "last_updated": "2026-04-10T08:57:03.534982",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "put_option",
+    "term": "Put Option",
+    "definition": "Contratto che dà il diritto di vendere un asset a un prezzo specifico",
+    "category": "derivatives",
+    "keywords": [
+      "put",
+      "option",
+      "sell right",
+      "strike",
+      "premium"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534987",
+    "last_updated": "2026-04-10T08:57:03.534989",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "futures_contract",
+    "term": "Futures Contract",
+    "definition": "Contratto standardizzato per acquistare/vendere un asset a una data futura",
+    "category": "derivatives",
+    "keywords": [
+      "futures",
+      "contract",
+      "delivery",
+      "settlement",
+      "margin"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.534994",
+    "last_updated": "2026-04-10T08:57:03.534996",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "option_greeks",
+    "term": "Option Greeks",
+    "definition": "Metriche che misurano la sensitività del prezzo delle opzioni",
+    "category": "derivatives",
+    "keywords": [
+      "greeks",
+      "delta",
+      "gamma",
+      "theta",
+      "vega",
+      "rho"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.535001",
+    "last_updated": "2026-04-10T08:57:03.535003",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "strike_price",
+    "term": "Strike Price",
+    "definition": "Prezzo al quale l'opzione può essere esercitata",
+    "category": "derivatives",
+    "keywords": [
+      "strike",
+      "exercise price",
+      "target price"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.535008",
+    "last_updated": "2026-04-10T08:57:03.535011",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "implied_volatility",
+    "term": "Implied Volatility",
+    "definition": "Volatilità futura attesa derivata dal prezzo delle opzioni",
+    "category": "derivatives",
+    "keywords": [
+      "iv",
+      "implied",
+      "volatility",
+      "option pricing"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.535015",
+    "last_updated": "2026-04-10T08:57:03.535018",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "momentum_trading",
+    "term": "Momentum Trading",
+    "definition": "Strategia che sfrutta trend in corso",
+    "category": "strategy",
+    "keywords": [
+      "momentum",
+      "trend",
+      "follow",
+      "strength"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.535022",
+    "last_updated": "2026-04-10T08:57:03.535025",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "breakout_trading",
+    "term": "Breakout Trading",
+    "definition": "Strategia che entra quando il prezzo rompe livelli di supporto/resistenza",
+    "category": "strategy",
+    "keywords": [
+      "breakout",
+      "break",
+      "resistance",
+      "support",
+      "突破"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.535038",
+    "last_updated": "2026-04-10T08:57:03.535041",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "scalping",
+    "term": "Scalping",
+    "definition": "Strategia che cerca piccoli profitti da micro-movimenti",
+    "category": "strategy",
+    "keywords": [
+      "scalping",
+      "quick",
+      "small",
+      "frequent",
+      "micro"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.535047",
+    "last_updated": "2026-04-10T08:57:03.535050",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "swing_trading",
+    "term": "Swing Trading",
+    "definition": "Strategia che tiene posizioni da giorni a settimane",
+    "category": "strategy",
+    "keywords": [
+      "swing",
+      "medium term",
+      "hold",
+      "days"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.535054",
+    "last_updated": "2026-04-10T08:57:03.535057",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "position_trading",
+    "term": "Position Trading",
+    "definition": "Strategia a lungo termine basata su trend primari",
+    "category": "strategy",
+    "keywords": [
+      "position",
+      "long term",
+      "trend",
+      "holding"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.535062",
+    "last_updated": "2026-04-10T08:57:03.535064",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "position_sizing",
+    "term": "Position Sizing",
+    "definition": "Determinazione della quantità di capitale per ogni trade",
+    "category": "risk",
+    "keywords": [
+      "position sizing",
+      "size",
+      "risk per trade",
+      "capital"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.535069",
+    "last_updated": "2026-04-10T08:57:03.535079",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "risk_reward_ratio",
+    "term": "Risk-Reward Ratio",
+    "definition": "Rapporto tra potenziale perdita e potenziale guadagno",
+    "category": "risk",
+    "keywords": [
+      "risk reward",
+      "ratio",
+      "rr",
+      "reward"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.535086",
+    "last_updated": "2026-04-10T08:57:03.535089",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "kelly_criterion",
+    "term": "Kelly Criterion",
+    "definition": "Formula per determinare la dimensione ottimale della posizione",
+    "category": "risk",
+    "keywords": [
+      "kelly",
+      "optimal",
+      "bet size",
+      "edge"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.535094",
+    "last_updated": "2026-04-10T08:57:03.535105",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  },
+  {
+    "id": "correlation_matrix",
+    "term": "Correlation Matrix",
+    "definition": "Tabella che mostra la correlazione tra asset",
+    "category": "risk",
+    "keywords": [
+      "correlation",
+      "matrix",
+      "correlation",
+      "asset"
+    ],
+    "related_concepts": [],
+    "embedding": null,
+    "first_seen": "2026-04-10T08:57:03.535112",
+    "last_updated": "2026-04-10T08:57:03.535114",
+    "occurrence_count": 1,
+    "confidence": 1.0
+  }
+]
