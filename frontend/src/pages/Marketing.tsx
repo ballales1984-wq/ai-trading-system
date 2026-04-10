@@ -195,8 +195,8 @@ export default function Marketing() {
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { name: 'Basic', price: '€19', features: ['5 assets monitoring', 'Basic Monte Carlo', 'Email alerts', 'End-of-day reports'] },
               { name: 'Pro', price: '€49', featured: true, features: ['Unlimited assets', 'Advanced Monte Carlo (5 levels)', 'Telegram Alerts', 'Real-time WebSockets', 'API access'] },
+              { name: 'Basic', price: '€19', features: ['5 assets monitoring', 'Basic Monte Carlo', 'Email alerts', 'End-of-day reports'] },
               { name: 'Institutional', price: '€199', features: ['Everything in Pro', 'Custom strategies', 'Dedicated account mgr', 'White-label reports', 'SLA 99.9%'] }
             ].map((plan, i) => (
               <div key={i} className={`premium-glass-panel p-8 relative ${plan.featured ? 'border-primary/50 shadow-[0_0_30px_rgba(59,130,246,0.15)] scale-105 z-10' : ''}`}>
