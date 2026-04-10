@@ -24,6 +24,7 @@ import pstats
 import io
 import functools
 import json
+import os
 import inspect
 from datetime import datetime, timedelta, timezone
 from typing import Callable, Dict, List, Optional, Any
@@ -35,6 +36,7 @@ try:
     from sentiment_concept_bridge import create_bridge
     from advanced_ai_assistant import FinancialAIAssistant
     from sentiment_news import SentimentAnalyzer
+
     BRIDGE_AVAILABLE = True
 except ImportError:
     BRIDGE_AVAILABLE = False
@@ -46,73 +48,78 @@ logger = logging.getLogger(__name__)
 def profile_execution(func: Callable) -> Callable:
     """
     Decorator to profile function execution using cProfile.
-    
+
     Usage:
         @profile_execution
         def my_function():
             ...
-    
+
     Results are logged at INFO level with timing stats.
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         profiler = cProfile.Profile()
         profiler.enable()
-        
+
         try:
             result = func(*args, **kwargs)
             return result
         finally:
             profiler.disable()
-            
+
             # Get stats
             s = io.StringIO()
             ps = pstats.Stats(profiler, stream=s)
-            ps.sort_stats('cumulative')
+            ps.sort_stats("cumulative")
             ps.print_stats(10)  # Top 10 functions
-            
+
             logger.info(f"Profile for {func.__name__}:\n{s.getvalue()}")
-    
+
     return wrapper
 
 
 def time_execution(func: Callable) -> Callable:
     """
     Decorator to time function execution.
-    
+
     Usage:
         @time_execution
         def my_function():
             ...
-    
+
     Results are logged at INFO level with execution time.
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         import time
+
         start = time.perf_counter()
-        
+
         try:
             result = func(*args, **kwargs)
             return result
         finally:
             elapsed = time.perf_counter() - start
             logger.info(f"Execution time for {func.__name__}: {elapsed:.4f}s")
-    
+
     return wrapper
 
 
 class ScheduleType(Enum):
     """Types of scheduled tasks"""
-    INTERVAL = "interval"           # Run every N seconds/minutes
-    CRON = "cron"                   # Cron-style scheduling
-    DAILY = "daily"                # Run once per day
-    WEEKLY = "weekly"              # Run once per week
-    ONCE = "once"                  # Run once at specific time
+
+    INTERVAL = "interval"  # Run every N seconds/minutes
+    CRON = "cron"  # Cron-style scheduling
+    DAILY = "daily"  # Run once per day
+    WEEKLY = "weekly"  # Run once per week
+    ONCE = "once"  # Run once at specific time
 
 
 class TaskStatus(Enum):
     """Status of scheduled task"""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -122,7 +129,7 @@ class TaskStatus(Enum):
 
 class ScheduledTask:
     """Represents a scheduled task"""
-    
+
     def __init__(
         self,
         task_id: str,
@@ -133,7 +140,7 @@ class ScheduledTask:
         cron_expression: Optional[str] = None,
         run_time: Optional[datetime] = None,
         enabled: bool = True,
-        **kwargs
+        **kwargs,
     ):
         self.task_id = task_id
         self.name = name
@@ -150,28 +157,22 @@ class ScheduledTask:
         self.run_count = 0
         self.error_count = 0
         self.last_error: Optional[str] = None
-        
+
     def calculate_next_run(self) -> datetime:
         """Calculate next run time based on schedule type"""
         now = datetime.now(timezone.utc)
-        
+
         if self.schedule_type == ScheduleType.INTERVAL:
             self.next_run = now + timedelta(seconds=self.interval_seconds or 60)
         elif self.schedule_type == ScheduleType.DAILY and self.run_time:
             self.next_run = now.replace(
-                hour=self.run_time.hour,
-                minute=self.run_time.minute,
-                second=0,
-                microsecond=0
+                hour=self.run_time.hour, minute=self.run_time.minute, second=0, microsecond=0
             )
             if self.next_run <= now:
                 self.next_run += timedelta(days=1)
         elif self.schedule_type == ScheduleType.WEEKLY and self.run_time:
             self.next_run = now.replace(
-                hour=self.run_time.hour,
-                minute=self.run_time.minute,
-                second=0,
-                microsecond=0
+                hour=self.run_time.hour, minute=self.run_time.minute, second=0, microsecond=0
             )
             days_ahead = self.run_time.weekday() - now.weekday()
             if days_ahead <= 0:
@@ -181,9 +182,9 @@ class ScheduledTask:
             self.next_run = self.run_time
         else:
             self.next_run = now + timedelta(minutes=5)
-            
+
         return self.next_run or now  # Guarantee return type
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert task to dictionary"""
         return {
@@ -198,14 +199,14 @@ class ScheduledTask:
             "next_run": self.next_run.isoformat() if self.next_run else None,
             "run_count": self.run_count,
             "error_count": self.error_count,
-            "last_error": self.last_error
+            "last_error": self.last_error,
         }
 
 
 class TaskScheduler:
     """
     Central scheduler for managing all scheduled tasks.
-    
+
     Features:
     - Multiple schedule types (interval, cron, daily, weekly, once)
     - Task persistence across restarts
@@ -213,14 +214,14 @@ class TaskScheduler:
     - Task status tracking
     - Manual trigger capability
     """
-    
+
     def __init__(self, persistence_path: Optional[Path] = None):
         self.tasks: Dict[str, ScheduledTask] = {}
         self.running = False
         self.scheduler_task: Optional[asyncio.Task] = None
         self.persistence_path = persistence_path or Path("data/scheduler_state.json")
         self._lock = asyncio.Lock()
-        
+
     def add_task(
         self,
         task_id: str,
@@ -231,7 +232,7 @@ class TaskScheduler:
         cron_expression: Optional[str] = None,
         run_time: Optional[datetime] = None,
         enabled: bool = True,
-        **kwargs
+        **kwargs,
     ) -> ScheduledTask:
         """Add a new scheduled task"""
         task = ScheduledTask(
@@ -243,16 +244,16 @@ class TaskScheduler:
             cron_expression=cron_expression,
             run_time=run_time,
             enabled=enabled,
-            **kwargs
+            **kwargs,
         )
         task.calculate_next_run()
         self.tasks[task_id] = task
-        
+
         logger.info(f"Added scheduled task: {task_id} ({name})")
         self._save_state()
-        
+
         return task
-    
+
     def remove_task(self, task_id: str) -> bool:
         """Remove a scheduled task"""
         if task_id in self.tasks:
@@ -261,7 +262,7 @@ class TaskScheduler:
             logger.info(f"Removed scheduled task: {task_id}")
             return True
         return False
-    
+
     def enable_task(self, task_id: str) -> bool:
         """Enable a task"""
         if task_id in self.tasks:
@@ -270,7 +271,7 @@ class TaskScheduler:
             self._save_state()
             return True
         return False
-    
+
     def disable_task(self, task_id: str) -> bool:
         """Disable a task"""
         if task_id in self.tasks:
@@ -278,14 +279,14 @@ class TaskScheduler:
             self._save_state()
             return True
         return False
-    
+
     async def run_task_now(self, task_id: str) -> bool:
         """Manually trigger a task to run immediately"""
         if task_id not in self.tasks:
             return False
-            
+
         task = self.tasks[task_id]
-        
+
         async def run_with_error_handling():
             task.status = TaskStatus.RUNNING
             try:
@@ -305,26 +306,26 @@ class TaskScheduler:
                 task.run_count += 1
                 task.calculate_next_run()
                 self._save_state()
-        
+
         asyncio.create_task(run_with_error_handling())
         return True
-    
+
     async def start(self):
         """Start the scheduler"""
         if self.running:
             return
-            
+
         self.running = True
         self._load_state()
-        
+
         # Calculate next run times for all tasks
         for task in self.tasks.values():
             if task.enabled and not task.next_run:
                 task.calculate_next_run()
-        
+
         self.scheduler_task = asyncio.create_task(self._run_scheduler())
         logger.info("Task scheduler started")
-    
+
     async def stop(self):
         """Stop the scheduler"""
         self.running = False
@@ -336,83 +337,80 @@ class TaskScheduler:
                 pass
         self._save_state()
         logger.info("Task scheduler stopped")
-    
+
     async def _run_scheduler(self):
         """Main scheduler loop"""
         while self.running:
             try:
                 async with self._lock:
                     now = datetime.now(timezone.utc)
-                    
+
                     for task_id, task in list(self.tasks.items()):
                         if not task.enabled:
                             continue
-                            
+
                         if task.next_run and now >= task.next_run:
                             # Execute task
                             asyncio.create_task(self._execute_task(task))
-                            
+
                 await asyncio.sleep(1)  # Check every second
             except Exception as e:
                 logger.error(f"Scheduler error: {e}")
                 await asyncio.sleep(5)
-    
+
     async def _execute_task(self, task: ScheduledTask):
         """Execute a single task"""
         task.status = TaskStatus.RUNNING
-        
+
         try:
             if asyncio.iscoroutinefunction(task.func):
                 await task.func(**task.kwargs)
             else:
                 task.func(**task.kwargs)
-                
+
             task.status = TaskStatus.COMPLETED
             task.last_error = None
             logger.debug(f"Task {task.task_id} completed successfully")
-            
+
         except Exception as e:
             task.status = TaskStatus.FAILED
             task.error_count += 1
             task.last_error = str(e)
             logger.error(f"Task {task.task_id} failed: {e}")
-            
+
         finally:
             task.last_run = datetime.now(timezone.utc)
             task.run_count += 1
             task.calculate_next_run()
             self._save_state()
-    
+
     def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
         """Get status of a specific task"""
         if task_id in self.tasks:
             return self.tasks[task_id].to_dict()
         return None
-    
+
     def get_all_tasks(self) -> List[Dict[str, Any]]:
         """Get status of all tasks"""
         return [task.to_dict() for task in self.tasks.values()]
-    
+
     def _save_state(self):
         """Persist scheduler state to disk"""
         try:
             self.persistence_path.parent.mkdir(parents=True, exist_ok=True)
-            state = {
-                task_id: task.to_dict() 
-                for task_id, task in self.tasks.items()
-            }
-            with open(self.persistence_path, 'w') as f:
+            state = {task_id: task.to_dict() for task_id, task in self.tasks.items()}
+            with open(self.persistence_path, "w") as f:
                 json.dump(state, f, indent=2, default=str)
         except Exception as e:
             logger.error(f"Failed to save scheduler state: {e}")
-    
+
     def _load_state(self):
         """Load scheduler state from disk"""
         try:
             if self.persistence_path.exists():
-                with open(self.persistence_path, 'r') as f:
+                with open(self.persistence_path, "r") as f:
                     state = json.load(f)
-                    
+
                 for task_id, task_data in state.items():
                     # Recreate tasks from saved state
                     # Note: Functions can't be serialized, so skip if not in memory
@@ -425,6 +423,7 @@ class TaskScheduler:
 # =============================================================================
 # Pre-built Task Functions
 # =============================================================================
+
 
 async def run_strategy_interval(strategy_name: str, interval_seconds: int = 60):
     """Example: Run a strategy on an interval"""
@@ -467,48 +466,77 @@ async def update_news_and_learning():
 
     try:
         logger.info("Starting automated news and linguistic update...")
-        
+
         # 1. Initialize bridge and assistant
         bridge = create_bridge()
         assistant = FinancialAIAssistant()
-        
+
         if not bridge:
             logger.error("Failed to create sentiment-concept bridge")
             return
-            
+
         # 2. Fetch news across major assets
         assets = ["BTC", "ETH", "SOL", "MARKET"]
         logger.info(f"Fetching news for: {assets}")
-        
+
         analyzer = SentimentAnalyzer()
         news_items = analyzer.fetch_news(assets=assets)
-        
+
         if not news_items:
             logger.info("No new news found to process.")
             return
-            
+
         # 3. Trigger AI Assistant learning
         # Convert NewsItem to dict format expected by assistant
         news_dicts = []
         for item in news_items:
-            news_dicts.append({
-                "title": item.title,
-                "summary": item.description,
-                "source": item.source,
-                "sentiment": "positive" if item.sentiment > 0.2 else "negative" if item.sentiment < -0.2 else "neutral",
-                "sentiment_score": item.sentiment
-            })
-            
+            news_dicts.append(
+                {
+                    "title": item.title,
+                    "summary": item.description,
+                    "source": item.source,
+                    "sentiment": "positive"
+                    if item.sentiment > 0.2
+                    else "negative"
+                    if item.sentiment < -0.2
+                    else "neutral",
+                    "sentiment_score": item.sentiment,
+                }
+            )
+
         logger.info(f"AI Assistant learning from {len(news_dicts)} news items...")
         assistant.learn_from_news(news_dicts)
-        
+
         # 4. Update Bridge/Concept Engine (Optional enrichment)
         # The bridge already uses news_items for sentiment-concept mapping
-        
+
         logger.info("Automated news and linguistic update completed successfully.")
-        
+
     except Exception as e:
         logger.error(f"Error during news/learning update task: {e}")
+
+
+async def ping_health_check():
+    """
+    Ping health check endpoint to keep the service awake.
+    This prevents Render from putting the free tier to sleep.
+    """
+    import requests
+
+    try:
+        # Determine the base URL based on environment
+        base_url = os.getenv("HEALTH_CHECK_URL", "https://ai-trading-system-1reg.onrender.com")
+
+        # Ping the health endpoint
+        response = requests.get(f"{base_url}/api/v1/health", timeout=10)
+
+        if response.status_code == 200:
+            logger.info(f"Health check ping successful: {response.json()}")
+        else:
+            logger.warning(f"Health check ping returned status {response.status_code}")
+
+    except Exception as e:
+        logger.error(f"Health check ping failed: {e}")
 
 
 # =============================================================================
@@ -529,7 +557,7 @@ def get_scheduler() -> TaskScheduler:
 def init_scheduler() -> TaskScheduler:
     """Initialize and return scheduler with default tasks"""
     scheduler = get_scheduler()
-    
+
     # Add default tasks
     scheduler.add_task(
         task_id="market_data_collection",
@@ -537,32 +565,40 @@ def init_scheduler() -> TaskScheduler:
         func=collect_market_data,
         schedule_type=ScheduleType.INTERVAL,
         interval_seconds=60,
-        symbols=["BTCUSDT", "ETHUSDT"]
+        symbols=["BTCUSDT", "ETHUSDT"],
     )
-    
+
     scheduler.add_task(
         task_id="daily_risk_check",
         name="Daily Risk Check",
         func=perform_risk_check,
         schedule_type=ScheduleType.DAILY,
-        run_time=datetime.now(timezone.utc).replace(hour=8, minute=0, second=0, microsecond=0)
+        run_time=datetime.now(timezone.utc).replace(hour=8, minute=0, second=0, microsecond=0),
     )
-    
+
     scheduler.add_task(
         task_id="weekly_performance_report",
         name="Weekly Performance Report",
         func=generate_performance_report,
         schedule_type=ScheduleType.WEEKLY,
-        run_time=datetime.now(timezone.utc).replace(hour=9, minute=0, second=0, microsecond=0)
+        run_time=datetime.now(timezone.utc).replace(hour=9, minute=0, second=0, microsecond=0),
     )
-    
+
     # News & Linguistic Learning automation
     scheduler.add_task(
         task_id="news_linguistic_learning",
         name="News & AI Linguistic Learning",
         func=update_news_and_learning,
         schedule_type=ScheduleType.INTERVAL,
-        interval_seconds=900  # Every 15 minutes
+        interval_seconds=900,  # Every 15 minutes
     )
-    
+
+    scheduler.add_task(
+        task_id="health_check_ping",
+        name="Health Check Ping",
+        func=ping_health_check,
+        schedule_type=ScheduleType.INTERVAL,
+        interval_seconds=600,  # Every 10 minutes
+    )
+
     return scheduler
