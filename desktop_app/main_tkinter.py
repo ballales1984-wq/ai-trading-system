@@ -17,6 +17,7 @@ from datetime import datetime
 
 APP_NAME = "AI Trading System Pro"
 APP_VERSION = "2.1.2"
+CONFIG_FILE = Path.home() / ".ai_trading_config.json"
 
 # Production URL
 PRODUCTION_URL = "https://ai-trading-system-1reg.onrender.com"
