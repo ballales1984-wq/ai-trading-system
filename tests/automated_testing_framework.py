@@ -1409,18 +1409,90 @@ def main():
         # Run specific level
         print(f"\n=== Running Level {args.level} Validation ===\n")
 
+        output_file = args.output
         if args.level == 1:
             result = framework.run_walk_forward_backtest()
             print(f"Walk-Forward Result: Mean Return = {result.mean_return:.2%}")
+            with open(output_file, "w") as f:
+                json.dump(
+                    {
+                        "level": 1,
+                        "walk_forward": {
+                            "periods": result.periods,
+                            "mean_return": result.mean_return,
+                            "sharpe_mean": result.sharpe_mean,
+                            "sharpe_std": result.sharpe_std,
+                            "bootstrap_ci": [result.bootstrap_ci_lower, result.bootstrap_ci_upper],
+                            "p_value": result.p_value,
+                            "individual_results": result.individual_results,
+                        },
+                    },
+                    f,
+                    indent=2,
+                    default=str,
+                )
         elif args.level == 2:
             result = framework.run_paper_trading_test()
             print(f"Paper Trading: Sharpe = {result.sharpe_ratio:.2f}")
+            with open(output_file, "w") as f:
+                json.dump(
+                    {
+                        "level": 2,
+                        "paper_trading": {
+                            "sharpe_ratio": result.sharpe_ratio,
+                            "sortino_ratio": result.sortino_ratio,
+                            "max_drawdown_percent": result.max_drawdown_percent,
+                            "win_rate": result.win_rate,
+                            "profit_factor": result.profit_factor,
+                            "total_pnl": result.total_pnl,
+                            "total_trades": result.total_trades,
+                        },
+                    },
+                    f,
+                    indent=2,
+                    default=str,
+                )
         elif args.level == 3:
             result = framework.run_small_capital_simulation()
             print(f"Small Capital: Sharpe = {result.sharpe_ratio:.2f}")
+            with open(output_file, "w") as f:
+                json.dump(
+                    {
+                        "level": 3,
+                        "small_capital": {
+                            "sharpe_ratio": result.sharpe_ratio,
+                            "sortino_ratio": result.sortino_ratio,
+                            "max_drawdown_percent": result.max_drawdown_percent,
+                            "win_rate": result.win_rate,
+                            "profit_factor": result.profit_factor,
+                            "total_pnl": result.total_pnl,
+                        },
+                    },
+                    f,
+                    indent=2,
+                    default=str,
+                )
         elif args.level == 4:
             results = framework.run_black_swan_stress_test()
             print(f"Stress Tests: {sum(1 for r in results if r.survived)}/{len(results)} survived")
+            with open(output_file, "w") as f:
+                json.dump(
+                    {
+                        "level": 4,
+                        "stress_tests": [
+                            {
+                                "scenario": r.scenario_name,
+                                "max_drawdown": r.max_drawdown,
+                                "survived": r.survived,
+                                "recovery_time_hours": r.recovery_time_hours,
+                            }
+                            for r in results
+                        ],
+                    },
+                    f,
+                    indent=2,
+                    default=str,
+                )
     else:
         # Run full validation
         report = framework.run_full_validation(args.output)
